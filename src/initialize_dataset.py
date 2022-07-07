@@ -1,6 +1,7 @@
-from google.cloud import bigquery
 from google.api_core.exceptions import Conflict
+from google.cloud import bigquery
 import argparse
+
 
 def create_table(client, project, dataset, tablename, schema):
     table_id = f"{project}.{dataset}.{tablename}"
@@ -12,6 +13,7 @@ def create_table(client, project, dataset, tablename, schema):
         print(f"Created {table_id}")
     except Conflict:
         print(f"Table {table_id} exists, continuing")
+
 
 def create_dataset(client, project, dataset, location):
     dataset_id = f"{project}.{dataset}"
@@ -28,7 +30,8 @@ def create_dataset(client, project, dataset, location):
         print(f"Created dataset {project}.{dataset}")
     except Conflict:
         print(f"Dataset {project}.{dataset} exists, continuing")
-    
+
+
 def process(project, dataset):
     # Construct a BigQuery client object.
     client = bigquery.Client()
@@ -58,15 +61,15 @@ def process(project, dataset):
             bigquery.SchemaField("raw_counts", "INTEGER", mode="REQUIRED")
         ]
     )
-    
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(allow_abbrev=False, description='Initialize CASP tables')
 
-    parser.add_argument('--project',type=str, help='BigQuery Project', required=True)
-    parser.add_argument('--dataset',type=str, help='BigQuery Dataset', required=True)
+    parser.add_argument('--project', type=str, help='BigQuery Project', required=True)
+    parser.add_argument('--dataset', type=str, help='BigQuery Dataset', required=True)
 
     # Execute the parse_args() method
     args = parser.parse_args()
 
     process(args.project, args.dataset)
-    
