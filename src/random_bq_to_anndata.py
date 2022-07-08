@@ -24,7 +24,7 @@ def get_cell_data(project, dataset, num_cells):
     # at some point, we will probably want create temp table of cell_ids and then JOIN on it
     # instead of an IN clause
     sql = f"SELECT original_cell_id, cell_type, original_gene_id, feature_name AS gene_feature, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_gene_info` AS gene, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND matrix.cas_gene_index = gene.cas_gene_index AND" + in_clause
-    print(f"Getting {num_cells} random cell data...")
+    print(f"Getting {num_cells} random cells' data from {project}.{dataset}...")
     query = client.query(sql)
     return query.result()
 
