@@ -46,7 +46,7 @@ bq load -project_id broad-dsp-spec-ops -F tab --skip_leading_rows 1 kc_cas_test_
 
 ### Extract Random Subset
 
-This will randomly get a specified number of cell data from your BigQuery dataset
+This will randomly get a specified number of cells' data from your BigQuery dataset
 
 ```
 python src/random_bq_to_anndata  --project <google-project> --dataset <dataset-name> --num_cells <num>
