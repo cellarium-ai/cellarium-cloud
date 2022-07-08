@@ -5,9 +5,7 @@ This repository is intended to hold the functional prototype for a single cell a
 ### Prerequisites / Installation
 
  - Python 3.7+
-
-TODO: populate requirements.txt with requirements!
-
+ 
 ### Testing Data
 
 For local testing, we are using a small data set from CellXGene.
@@ -47,3 +45,11 @@ bq load -project_id broad-dsp-spec-ops -F tab --skip_leading_rows 1 kc_cas_test_
 ```
 
 ### Extract Random Subset
+
+This will randomly get a specified number of cells' data from your BigQuery dataset
+
+```
+python src/random_bq_to_anndata.py --project <google-project> --dataset <dataset-name> --num_cells <num>
+```
+
+TODO: use data returned from BigQuery to output an AnnData file.
