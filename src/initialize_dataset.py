@@ -3,11 +3,13 @@ from google.cloud import bigquery
 import argparse
 
 
-def create_table(client, project, dataset, tablename, schema):
+def create_table(client, project, dataset, tablename, schema, clustering_fields):
     table_id = f"{project}.{dataset}.{tablename}"
     
     table = bigquery.Table(table_id, schema=schema)
-    
+    if clustering_fields:
+        table.clustering_fields = clustering_fields
+
     try:
         table = client.create_table(table)  # Make an API request.
         print(f"Created {table_id}")
@@ -43,7 +45,8 @@ def process(project, dataset):
             bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
             bigquery.SchemaField("original_cell_id", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("cell_type", "STRING", mode="REQUIRED")
-        ]
+        ],
+        []
     )
 
     create_table(client, project, dataset, "cas_gene_info",
@@ -51,7 +54,8 @@ def process(project, dataset):
             bigquery.SchemaField("cas_gene_index", "INTEGER", mode="REQUIRED"),
             bigquery.SchemaField("original_gene_id", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("feature_name", "STRING", mode="REQUIRED")
-        ]
+        ],
+        []
     )
     
     create_table(client, project, dataset, "cas_raw_count_matrix",
@@ -59,7 +63,8 @@ def process(project, dataset):
             bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
             bigquery.SchemaField("cas_gene_index", "INTEGER", mode="REQUIRED"),
             bigquery.SchemaField("raw_counts", "INTEGER", mode="REQUIRED")
-        ]
+        ],
+        ["cas_cell_index"]
     )
 
 

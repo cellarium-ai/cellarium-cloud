@@ -23,7 +23,7 @@ And a larger data set
 This will create the dataset, and the core data model.  If any of these exist it will continue on
 
 ```
-python src/create_tables.py --project <google-project> --dataset <dataset-name>
+python src/initialize_dataset.py --project <google-project> --dataset <dataset-name>
 ```
 
 ### Convert AnnData to Load Format
