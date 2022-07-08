@@ -19,7 +19,7 @@ def dump_core_matrix(x, row_lookup, col_lookup):
     with gzip.open('cas_raw_counts.tsv.gz', 'wt') as f:
         f.write("cas_cell_index\tcas_gene_index\tdata\n")
         
-        cx = x.tocoo()    
+        cx = x.tocoo(copy=False)
         for i, j, v in zip(cx.row, cx.col, cx.data):
             cas_cell_index = row_lookup[i]
             cas_gene_index = col_lookup[j]

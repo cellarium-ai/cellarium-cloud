@@ -36,7 +36,7 @@ def create_dataset(client, project, dataset, location):
 
 def process(project, dataset):
     # Construct a BigQuery client object.
-    client = bigquery.Client()
+    client = bigquery.Client(project=project)
     
     create_dataset(client, project, dataset, "US")
     
