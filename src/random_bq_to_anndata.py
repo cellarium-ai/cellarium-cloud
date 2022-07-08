@@ -4,6 +4,7 @@ import random
 import anndata as ad
 
 
+# assumes that cas_cell_info.cas_gene_index values are a contiguous list of ints starting at 0
 def get_random_ids(project, dataset, client, num_cells):
     query = client.query(f"SELECT MAX(cas_cell_index) AS max_table_number FROM `{project}.{dataset}.cas_cell_info`")
     max_cell_id = int([row.max_table_number for row in list(query.result())][0])
