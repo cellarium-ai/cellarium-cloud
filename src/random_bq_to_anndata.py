@@ -4,22 +4,19 @@ import random
 import anndata as ad
 
 
-def get_random_ids(project, dataset, num_cells):
-    client = bigquery.Client()
+def get_random_ids(project, dataset, client, num_cells):
     query = client.query(f"SELECT MAX(cas_cell_index) AS max_table_number FROM `{project}.{dataset}.cas_cell_info`")
     max_cell_id = int([row.max_table_number for row in list(query.result())][0])
     print(f"Getting {num_cells} random IDs between 0 and {max_cell_id}...")
-    cell_ids = list(range(0, max_cell_id))
+    cell_ids = list(range(0, max_cell_id + 1))
     random.shuffle(cell_ids)
     del cell_ids[num_cells:]
     return cell_ids
 
 
-def get_cell_data(project, dataset, num_cells):
-    random_ids = get_random_ids(project, dataset, num_cells)
-
+def get_cell_data(project, dataset, client, num_cells):
+    random_ids = get_random_ids(project, dataset, client, num_cells)
     in_clause = f" matrix.cas_cell_index IN ({','.join(map(str, random_ids))})"
-    client = bigquery.Client()
 
     # at some point, we will probably want create temp table of cell_ids and then JOIN on it
     # instead of an IN clause
@@ -30,7 +27,8 @@ def get_cell_data(project, dataset, num_cells):
 
 
 def random_bq_to_anndata(project, dataset, num_cells):
-    cell_data = get_cell_data(project, dataset, num_cells)
+    client = bigquery.Client(project=project)
+    cell_data = get_cell_data(project, dataset, client, num_cells)
     adata = ad.AnnData()
     for row in list(cell_data):
         ...
