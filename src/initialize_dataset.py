@@ -49,10 +49,10 @@ def process(project, dataset):
         []
     )
 
-    create_table(client, project, dataset, "cas_gene_info",
+    create_table(client, project, dataset, "cas_feature_info",
         [
-            bigquery.SchemaField("cas_gene_index", "INTEGER", mode="REQUIRED"),
-            bigquery.SchemaField("original_gene_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("cas_feature_index", "INTEGER", mode="REQUIRED"),
+            bigquery.SchemaField("original_feature_id", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("feature_name", "STRING", mode="REQUIRED")
         ],
         []
@@ -61,7 +61,7 @@ def process(project, dataset):
     create_table(client, project, dataset, "cas_raw_count_matrix",
         [
             bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
-            bigquery.SchemaField("cas_gene_index", "INTEGER", mode="REQUIRED"),
+            bigquery.SchemaField("cas_feature_index", "INTEGER", mode="REQUIRED"),
             bigquery.SchemaField("raw_counts", "INTEGER", mode="REQUIRED")
         ],
         ["cas_cell_index"]
