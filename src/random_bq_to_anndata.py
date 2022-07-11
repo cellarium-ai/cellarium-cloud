@@ -4,7 +4,7 @@ import random
 import anndata as ad
 
 
-# assumes that cas_cell_info.cas_gene_index values are a contiguous list of ints starting at 0
+# assumes that cas_cell_info.cas_feature_index values are a contiguous list of ints starting at 0
 def get_random_ids(project, dataset, client, num_cells):
     query = client.query(f"SELECT MAX(cas_cell_index) AS max_table_number FROM `{project}.{dataset}.cas_cell_info`")
     max_cell_id = int([row.max_table_number for row in list(query.result())][0])
@@ -21,7 +21,7 @@ def get_cell_data(project, dataset, client, num_cells):
 
     # at some point, we will probably want create temp table of cell_ids and then JOIN on it
     # instead of an IN clause
-    sql = f"SELECT original_cell_id, cell_type, original_gene_id, feature_name AS gene_feature, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_gene_info` AS gene, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND matrix.cas_gene_index = gene.cas_gene_index AND" + in_clause
+    sql = f"SELECT original_cell_id, cell_type, original_feature_id, feature_name, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_feature_info` AS feature, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND matrix.cas_feature_index = feature.cas_feature_index AND" + in_clause
     print(f"Getting {num_cells} random cells' data from {project}.{dataset}...")
     query = client.query(sql)
     return query.result()
@@ -32,7 +32,8 @@ def random_bq_to_anndata(project, dataset, num_cells):
     cell_data = get_cell_data(project, dataset, client, num_cells)
     adata = ad.AnnData()
     for row in list(cell_data):
-        ...
+        # insert VS-507 here
+        pass
 
 
 if __name__ == '__main__':
