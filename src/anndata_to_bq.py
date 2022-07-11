@@ -36,7 +36,7 @@ def dump_core_matrix(x, row_lookup, col_lookup):
 
 def process(input_file, cas_cell_index_start, cas_feature_index_start):
     print("Loading data...")
-    adata = ad.read(input_file)
+    adata = ad.read(input_file, backed='r')
     
     # dump out cell info (obs) -- cell_id is index (26 columns)
     print("Processing cell/observation metadata...")
