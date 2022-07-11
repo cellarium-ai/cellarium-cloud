@@ -36,7 +36,7 @@ NOTE: if multiple data sets are being loaded into the same dataset, offsets for 
 
 ### Ingest into BigQuery
 
-Example using a specific projct (broad-dsp-spec-ops) and dataset (kc_cas_test_v1)
+Example using a specific project (broad-dsp-spec-ops) and dataset (kc_cas_test_v1)
 
 ```
 bq load -project_id broad-dsp-spec-ops -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_cell_info cas_cell_info.tsv.gz
