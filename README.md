@@ -18,7 +18,7 @@ And a larger data set
 
 ### Initialize BigQuery Data Set
 
-This will create the dataset, and the core data model.  If any of these exist it will continue on
+This will create the dataset, and the core data model.  If any of these exist it will continue on:
 
 ```
 python src/initialize_dataset.py --project <google-project> --dataset <dataset-name>
@@ -29,24 +29,24 @@ python src/initialize_dataset.py --project <google-project> --dataset <dataset-n
 For example, to load the retina data set
 
 ```
-python src/anndata_to_bq.py --input data/horizontal-cells-in-human-retina.h5ad --cas_cell_index_start 1000 --cas_gene_index_start 5000
+python src/anndata_to_bq.py --input data/horizontal-cells-in-human-retina.h5ad --cas_cell_index_start 1000 --cas_feature_index_start 5000
 ```
 
-NOTE: if multiple data sets are being loaded into the same dataset, offsets for the cell and gene indexes must be provided via the `cas_cell_index_start` and `cas_gene_index_start` parameters respectively
+NOTE: if multiple data sets are being loaded into the same dataset, offsets for the cell and feature indexes must be provided via the `cas_cell_index_start` and `cas_feature_index_start` parameters respectively.
 
 ### Ingest into BigQuery
 
-Example using a specific project (broad-dsp-spec-ops) and dataset (kc_cas_test_v1)
+Example using a specific project (gvs-internal) and dataset (kc_cas_test_v1):
 
 ```
-bq load -project_id broad-dsp-spec-ops -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_cell_info cas_cell_info.tsv.gz
-bq load -project_id broad-dsp-spec-ops -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_gene_info cas_gene_info.tsv.gz
-bq load -project_id broad-dsp-spec-ops -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_raw_count_matrix cas_raw_counts.tsv.gz
+bq load -project_id gvs-internal -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_cell_info cas_cell_info.tsv.gz
+bq load -project_id gvs-internal -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_feature_info cas_feature_info.tsv.gz
+bq load -project_id gvs-internal -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_raw_count_matrix cas_raw_counts.tsv.gz
 ```
 
 ### Extract Random Subset
 
-This will randomly get a specified number of cells' data from your BigQuery dataset
+This will randomly get a specified number of cells' data from your BigQuery dataset:
 
 ```
 python src/random_bq_to_anndata.py --project <google-project> --dataset <dataset-name> --num_cells <num>
