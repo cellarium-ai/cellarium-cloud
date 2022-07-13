@@ -6,6 +6,7 @@ import anndata as ad
 import argparse
 from fastavro import writer, parse_schema
 import numpy as np
+import pandavro as pdx
 import time
 
 
@@ -46,7 +47,6 @@ def dump_core_matrix(x, row_lookup, col_lookup):
                 u'cas_feature_index': cas_feature_index.item(),
                 u'data': v_int
             })
-
             counter = counter + 1
 
             # Write in batches for reasonable performance, one by one is extremely slow.
@@ -59,8 +59,8 @@ def dump_core_matrix(x, row_lookup, col_lookup):
                 print(f"    Processed {counter} rows... in {end-start} ms")
                 start = end
 
+        # Write any leftover records.
         if len(records) > 0:
-            print(f"Writing {len(records)} straggler records")
             writer(out, parsed_schema, records)
 
 
@@ -77,8 +77,9 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start):
     for row in range(0, len(adata.obs)):
         row_index_to_cas_cell_index[row] = adata.obs['cas_cell_index'].iloc[[row]][0]
     
-    adata.obs[['cas_cell_index', 'original_cell_id', 'cell_type']].to_csv(
-        'cas_cell_info.tsv.gz', index=False, sep='\t', compression='gzip')
+    cells = adata.obs[['cas_cell_index', 'original_cell_id', 'cell_type']].copy()
+    cells['cell_type'] = cells.cell_type.astype(str)
+    pdx.to_avro('cas_cell_info.avro', cells)
     
     # dump out feature info -- feature_id is index (12 columns)
     print("Processing feature/gene/variable metadata...")
@@ -89,8 +90,9 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start):
     for col in range(0, len(adata.var)):
         col_index_to_cas_feature_index[col] = adata.var['cas_feature_index'].iloc[[col]][0]
     
-    adata.var[['cas_feature_index', 'original_feature_id', 'feature_name']].to_csv(
-        'cas_feature_info.tsv.gz', index=False, sep='\t', compression='gzip')
+    features = adata.var[['cas_feature_index', 'original_feature_id', 'feature_name']].copy()
+    features['feature_name'] = features.feature_name.astype(str)
+    pdx.to_avro('cas_feature_info.avro', features)
     
     print("Processing core data...")
     
