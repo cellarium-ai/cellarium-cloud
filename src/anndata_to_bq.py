@@ -2,9 +2,9 @@
 # https://stackoverflow.com/questions/4319014/iterating-through-a-scipy-sparse-vector-or-matrix
 # https://github.com/theislab/anndata2ri/blob/master/src/anndata2ri/scipy2ri/py2r.py
 
-import argparse
 import anndata as ad
-import gzip
+import argparse
+from fastavro import writer, parse_schema
 import numpy as np
 import time
 
@@ -14,24 +14,54 @@ def current_milli_time():
 
 
 def dump_core_matrix(x, row_lookup, col_lookup):
+    schema = {
+        'doc': 'A raw datum indexed by cell and feature id in the CAS BigQuery schema',
+        'namespace': 'cas',
+        'name': 'CellFeature',
+        'type': 'record',
+        'fields': [
+            {'name': 'cas_cell_index', 'type': 'int'},
+            {'name': 'cas_feature_index', 'type': 'int'},
+            {'name': 'data', 'type': 'int'}
+        ]
+    }
+    parsed_schema = parse_schema(schema)
+
     counter = 0
+    records = []
     start = current_milli_time()
-    with gzip.open('cas_raw_counts.tsv.gz', 'wt') as f:
-        f.write("cas_cell_index\tcas_feature_index\tdata\n")
-        
+
+    # Write data to an Avro file
+    with open('cas_raw_counts.avro', 'a+b') as out:
         cx = x.tocoo(copy=False)
+
         for i, j, v in zip(cx.row, cx.col, cx.data):
             cas_cell_index = row_lookup[i]
             cas_feature_index = col_lookup[j]
             
             # Todo -- how can we ensure this is safe/right?
             v_int = int(v)
-            f.write(f"{cas_cell_index}\t{cas_feature_index}\t{v_int}\n")
+            records.append({
+                u'cas_cell_index': cas_cell_index.item(),
+                u'cas_feature_index': cas_feature_index.item(),
+                u'data': v_int
+            })
+
             counter = counter + 1
+
+            # Write in batches for reasonable performance, one by one is extremely slow.
+            if counter % 10000 == 0:
+                writer(out, parsed_schema, records)
+                records = []
+
             if counter % 1000000 == 0:
                 end = current_milli_time()
                 print(f"    Processed {counter} rows... in {end-start} ms")
                 start = end
+
+        if len(records) > 0:
+            print(f"Writing {len(records)} straggler records")
+            writer(out, parsed_schema, records)
 
 
 def process(input_file, cas_cell_index_start, cas_feature_index_start):
