@@ -35,7 +35,7 @@ def write_avro(generator, parsed_schema, filename, flush_batch_size, progress_ba
             writer(out, parsed_schema, records)
 
 
-def dump_core_matrix(x, row_lookup, col_lookup, basename, flush_batch_size, progress_batch_size):
+def dump_core_matrix(x, row_lookup, col_lookup, filename, flush_batch_size, progress_batch_size):
     schema = {
         'doc': 'A raw datum indexed by cell and feature id in the CAS BigQuery schema',
         'namespace': 'cas',
@@ -64,11 +64,10 @@ def dump_core_matrix(x, row_lookup, col_lookup, basename, flush_batch_size, prog
                 u'raw_counts': v_int
             }
 
-    write_avro(raw_counts_generator, parsed_schema, f'{basename}_raw_counts.avro',
-               flush_batch_size, progress_batch_size)
+    write_avro(raw_counts_generator, parsed_schema, filename, flush_batch_size, progress_batch_size)
 
 
-def dump_cell_info(adata, basename, cas_cell_index_start, flush_batch_size, progress_batch_size):
+def dump_cell_info(adata, filename, cas_cell_index_start, flush_batch_size, progress_batch_size):
     # Dump out cell info (obs) -- cell_id is index (26 columns).
     adata.obs['original_cell_id'] = adata.obs.index
     adata.obs['cas_cell_index'] = np.arange(cas_cell_index_start, cas_cell_index_start + len(adata.obs))
@@ -100,13 +99,12 @@ def dump_cell_info(adata, basename, cas_cell_index_start, flush_batch_size, prog
                 u'cell_type': r['cell_type']
             }
 
-    write_avro(cell_generator, parsed_schema, f'{basename}_cell_info.avro',
-               flush_batch_size, progress_batch_size)
+    write_avro(cell_generator, parsed_schema, filename, flush_batch_size, progress_batch_size)
 
     return row_index_to_cas_cell_index
 
 
-def dump_feature_info(adata, basename, cas_feature_index_start, flush_batch_size, progress_batch_size):
+def dump_feature_info(adata, filename, cas_feature_index_start, flush_batch_size, progress_batch_size):
     # Dump out feature info -- feature_id is index (12 columns).
     adata.var['original_feature_id'] = adata.var.index
 
@@ -138,29 +136,42 @@ def dump_feature_info(adata, basename, cas_feature_index_start, flush_batch_size
                 u'feature_name': row['feature_name']
             }
 
-    write_avro(feature_generator, parsed_schema, f'{basename}_feature_info.avro',
-               flush_batch_size, progress_batch_size)
+    write_avro(feature_generator, parsed_schema, filename, flush_batch_size, progress_batch_size)
     return col_index_to_cas_feature_index
 
 
-def process(input_file, cas_cell_index_start, cas_feature_index_start, basename, flush_batch_size, progress_batch_size):
-    basename = "cas" if not basename else basename
+def check_output_files(avro_prefix):
+    file_types = ['cell_info', 'feature_info', 'raw_counts']
+    filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
+    import os
+    existing = list(filter(lambda f: os.path.exists(f), filenames))
+    if len(existing) > 0:
+        raise ValueError(
+            f"Found existing output files, please rename or remove before running conversion: {', '.join(existing)}")
+    return filenames
+
+
+def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix, flush_batch_size, progress_batch_size):
+    avro_prefix = "cas" if not avro_prefix else avro_prefix
     flush_batch_size = 10000 if not flush_batch_size else flush_batch_size
     progress_batch_size = 1000000 if not progress_batch_size else progress_batch_size
+
+    (cell_filename, feature_filename, raw_counts_filename) = check_output_files(avro_prefix)
+
     print("Loading data...")
     adata = ad.read(input_file)
 
     print("Processing cell/observation metadata...")
-    row_index_to_cas_cell_index = dump_cell_info(adata, basename, cas_cell_index_start,
+    row_index_to_cas_cell_index = dump_cell_info(adata, cell_filename, cas_cell_index_start,
                                                  flush_batch_size, progress_batch_size)
     # dump out feature info -- feature_id is index (12 columns)
     print("Processing feature/gene/variable metadata...")
-    col_index_to_cas_feature_index = dump_feature_info(adata, basename, cas_feature_index_start,
+    col_index_to_cas_feature_index = dump_feature_info(adata, feature_filename, cas_feature_index_start,
                                                        flush_batch_size, progress_batch_size)
 
     print("Processing core data...")
     # recode the indexes to be the indexes of obs/var or should obs/var include these indices?
-    dump_core_matrix(adata.raw.X, row_index_to_cas_cell_index, col_index_to_cas_feature_index, basename,
+    dump_core_matrix(adata.raw.X, row_index_to_cas_cell_index, col_index_to_cas_feature_index, raw_counts_filename,
                      flush_batch_size, progress_batch_size)
         
 # TODO: naive dump, compare
@@ -177,8 +188,9 @@ if __name__ == '__main__':
         description='Convert AnnData Single Cell Expression Data into format for loading into BQ')
 
     parser.add_argument('--input', type=str, help='AnnData format input file', required=True)
-    parser.add_argument('--basename', type=str,
-                        help='Base filename to use for output files, e.g. <base>_cell_info.avro etc', required=False)
+    parser.add_argument('--avro_prefix', type=str,
+                        help='Prefix to use for output Avro files, e.g. <avro_prefix>_cell_info.avro etc',
+                        required=False)
     parser.add_argument('--cas_cell_index_start', type=int, help='starting number for cell index', required=False,
                         default=0)
     parser.add_argument('--cas_feature_index_start', type=int, help='starting number for feature index', required=False,
@@ -190,5 +202,5 @@ if __name__ == '__main__':
     # Execute the parse_args() method
     args = parser.parse_args()
 
-    process(args.input, args.cas_cell_index_start, args.cas_feature_index_start, args.basename,
+    process(args.input, args.cas_cell_index_start, args.cas_feature_index_start, args.avro_prefix,
             args.flush_batch_size, args.progress_batch_size)

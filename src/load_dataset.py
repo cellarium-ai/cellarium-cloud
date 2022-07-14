@@ -12,9 +12,9 @@ def create_table(client, project, dataset, tablename, schema, clustering_fields)
 
     try:
         table = client.create_table(table)  # Make an API request.
-        print(f"Created {table_id}")
+        print(f"Created '{table_id}'")
     except Conflict:
-        print(f"Table {table_id} exists, continuing")
+        print(f"Table '{table_id}' exists, continuing")
 
 
 def create_dataset(client, project, dataset, location):
@@ -34,7 +34,18 @@ def create_dataset(client, project, dataset, location):
         print(f"Dataset {project}.{dataset} exists, continuing")
 
 
-def process(project, dataset):
+def check_avro_files(avro_prefix):
+    file_types = ['cell_info', 'feature_info', 'raw_counts']
+    filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
+    import os
+    missing = list(filter(lambda f: not os.path.exists(f), filenames))
+    if len(missing) > 0:
+        raise ValueError(
+            f"Missing Avro files for loading to BigQuery: {', '.join(missing)}")
+    return filenames
+
+
+def process(project, dataset, avro_prefix, gcs_prefix):
     # Construct a BigQuery client object.
     client = bigquery.Client(project=project)
     
@@ -67,14 +78,52 @@ def process(project, dataset):
         ["cas_cell_index"]
     )
 
+    (cell_filename, feature_filename, raw_counts_filename) = check_avro_files(avro_prefix)
+    query = f"""select table_name, total_rows from `{dataset}.INFORMATION_SCHEMA.PARTITIONS` where total_rows > 0"""
+    job = client.query(query)
+    tables_with_data = [r[0] for r in list(job.result())]
+
+    import subprocess
+    proc = subprocess.Popen(['gsutil', '-m', 'cp', cell_filename, feature_filename, raw_counts_filename, gcs_prefix],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    print(f"Staged Avro files to {gcs_prefix}")
+
+    bqload_template = ["bq", "load", "-project_id", project, "--source_format=AVRO"]
+    gcs_prefix = gcs_prefix.rstrip('/')
+    pairs = [("cell_info", cell_filename), ("feature_info", feature_filename), ("raw_count_matrix", raw_counts_filename)]
+    for table, file in pairs:
+        table = f"cas_{table}"
+
+        if table in tables_with_data:
+            print(f"Table '{project}.{dataset}.{table}' already contains data, skipping load of '{file}'")
+            continue
+
+        proc = subprocess.Popen(
+            bqload_template + [f'{dataset}.{table}', f'{gcs_prefix}/{file}'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        print(f"Loaded '{file}' to '{table}' table")
+
+    files = [f'{gcs_prefix}/{f}' for f in [cell_filename, feature_filename, raw_counts_filename]]
+    proc = subprocess.Popen(['gsutil', 'rm'] + files,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    print("Removed Avro files from GCS staging area")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(allow_abbrev=False, description='Initialize CASP tables')
 
     parser.add_argument('--project', type=str, help='BigQuery Project', required=True)
     parser.add_argument('--dataset', type=str, help='BigQuery Dataset', required=True)
+    parser.add_argument('--avro_prefix', type=str, help='Prefix with which Avro files are named', required=True)
+    parser.add_argument('--gcs_prefix', type=str, help='GCS prefix to which Avro files should be staged', required=True)
 
     # Execute the parse_args() method
     args = parser.parse_args()
 
-    process(args.project, args.dataset)
+    process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix)
