@@ -139,7 +139,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, help='BigQuery Dataset', required=True)
     parser.add_argument('--avro_prefix', type=str, help='Prefix with which Avro files are named', required=True)
     parser.add_argument('--gcs_prefix', type=str, help='GCS prefix to which Avro files should be staged', required=True)
-    parser.add_argument('--force_bq_append', type=str,
+    parser.add_argument('--force_bq_append', type=bool,
                         help='Append data to BigQuery tables even if data some data is already loaded', required=False)
 
     # Execute the parse_args() method
