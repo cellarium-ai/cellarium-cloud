@@ -1,7 +1,7 @@
 import argparse
 from google.api_core.exceptions import Conflict
 from google.cloud import bigquery
-import subprocess
+from google.cloud import storage
 
 
 def create_table(client, project, dataset, tablename, schema, clustering_fields):
@@ -12,10 +12,10 @@ def create_table(client, project, dataset, tablename, schema, clustering_fields)
         table.clustering_fields = clustering_fields
 
     try:
-        table = client.create_table(table)  # Make an API request.
-        print(f"Created '{table_id}'")
+        _ = client.create_table(table)  # Make an API request.
+        print(f"Created '{table_id}'.")
     except Conflict:
-        print(f"Table '{table_id}' exists, continuing")
+        print(f"Table '{table_id}' exists, continuing.")
 
 
 def create_dataset(client, project, dataset, location):
@@ -30,12 +30,12 @@ def create_dataset(client, project, dataset, location):
     # exists within the project.
     try:
         dataset = client.create_dataset(dataset, timeout=30)  # Make an API request.
-        print(f"Created dataset {project}.{dataset}")
+        print(f"Created dataset {project}.{dataset}.")
     except Conflict:
-        print(f"Dataset {project}.{dataset} exists, continuing")
+        print(f"Dataset {project}.{dataset} exists, continuing.")
 
 
-def check_avro_files(avro_prefix):
+def check_avro_files_exist(avro_prefix):
     file_types = ['cell_info', 'feature_info', 'raw_counts']
     filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
     import os
@@ -46,12 +46,18 @@ def check_avro_files(avro_prefix):
     return filenames
 
 
+def bucket_and_prefix(project, gcs_prefix):
+    import re
+    client = storage.Client(project=project)
+    (bucket_name, object_prefix) = re.search(r'gs://([^/]+)/(.*)$', gcs_prefix).groups()
+    bucket = client.bucket(bucket_name)
+    return bucket, object_prefix.rstrip('/')
+
+
 def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
-    # Construct a BigQuery client object.
     client = bigquery.Client(project=project)
-    
     create_dataset(client, project, dataset, "US")
-    
+
     create_table(client, project, dataset, "cas_cell_info",
         [
             bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
@@ -79,46 +85,51 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
         ["cas_cell_index"]
     )
 
-    (cell_filename, feature_filename, raw_counts_filename) = check_avro_files(avro_prefix)
+    (cell_filename, feature_filename, raw_counts_filename) = check_avro_files_exist(avro_prefix)
     query = f"""select table_name, total_rows from `{dataset}.INFORMATION_SCHEMA.PARTITIONS` where total_rows > 0"""
     job = client.query(query)
     tables_with_data = [r[0] for r in list(job.result())]
 
+    (bucket, object_prefix) = bucket_and_prefix(project, gcs_prefix)
+
     def stage_file(file_to_stage):
-        proc = subprocess.Popen(['gsutil', '-m', 'cp', file_to_stage, gcs_prefix],
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-        staged_files.append(file_to_stage)
+        blob = bucket.blob(f'{object_prefix}/{file_to_stage}')
+        blob.upload_from_filename(file_to_stage)
+        print(f"Staged '{file}' to '{gcs_prefix}/{file}'.")
+
+    def unstage_file(file_to_unstage):
+        blob = bucket.blob(f'{object_prefix}/{file_to_unstage}')
+        blob.delete()
+        print(f"Removed staged file '{gcs_prefix}/{file}'.")
 
     staged_files = []
-    bqload_template = ["bq", "load", "-project_id", project, "--source_format=AVRO"]
     gcs_prefix = gcs_prefix.rstrip('/')
     pairs = [("cell_info", cell_filename), ("feature_info", feature_filename), ("raw_count_matrix", raw_counts_filename)]
+    job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.AVRO)
+
     for table, file in pairs:
         table = f"cas_{table}"
+        table_id = f'{project}.{dataset}.{table}'
 
         if table in tables_with_data and not force_bq_append:
-            table_id = f'{project}.{dataset}.{table}'
-            print(f"Table '{table_id}' contains data and `--force_bq_append` not specified, skipping load of '{file}'")
+            print(f"Table '{table_id}' contains data and `--force_bq_append` not specified, skipping load of '{file}'.")
             continue
 
         stage_file(file)
-        print(f"Staged '{file}' to '{gcs_prefix}'")
-        proc = subprocess.Popen(
-            bqload_template + [f'{dataset}.{table}', f'{gcs_prefix}/{file}'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-        print(f"Loaded '{file}' to '{table}' table")
+        staged_files.append(file)
 
-    if len(staged_files) > 0:
-        files = [f'{gcs_prefix}/{f}' for f in staged_files]
-        proc = subprocess.Popen(['gsutil', 'rm'] + files,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-        print("Removed Avro files from GCS staging area")
+        uri = f'{gcs_prefix}/{file}'
+        load_job = client.load_table_from_uri(
+            uri, table_id, job_config=job_config
+        )  # Make an API request.
+        load_job.result()  # Waits for the job to complete.
+        destination_table = client.get_table(table_id)
+        print(f"{destination_table.num_rows} rows loaded into BigQuery table '{table_id}'.")
+
+    for f in staged_files:
+        unstage_file(f)
+
+    print("Done.")
 
 
 if __name__ == '__main__':
