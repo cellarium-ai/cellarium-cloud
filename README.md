@@ -24,7 +24,7 @@ This will create the dataset, and the core data model.  If any of these exist it
 python src/initialize_dataset.py --project <google-project> --dataset <dataset-name>
 ```
 
-### Convert AnnData to Load Format
+### Convert AnnData to Avro Load Format
 
 For example, to load the retina data set
 
@@ -36,12 +36,25 @@ NOTE: if multiple data sets are being loaded into the same dataset, offsets for 
 
 ### Ingest into BigQuery
 
-Example using a specific project (gvs-internal) and dataset (kc_cas_test_v1):
+Example using a specific project (gvs-internal) and dataset (mydataset).
+
+First stage the Avro files output by the step above into GCS. Specify the GCS path prefix and basename in the shell
+variables `CAS_GCS_PREFIX` and `CAS_AVRO_PREFIX`:
 
 ```
-bq load -project_id gvs-internal -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_cell_info cas_cell_info.tsv.gz
-bq load -project_id gvs-internal -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_feature_info cas_feature_info.tsv.gz
-bq load -project_id gvs-internal -F tab --skip_leading_rows 1 kc_cas_test_v1.cas_raw_count_matrix cas_raw_counts.tsv.gz
+CAS_GCS_PREFIX=gs://mybucket/...
+CAS_AVRO_PREFIX=cas
+gsutil -m cp "${CAS_AVRO_PREFIX}*.avro" ${CAS_GCS_PREFIX}
+```
+
+Then specify appropriate values for `CAS_PROJECT` and `CAS_DATASET` to load into BigQuery: 
+
+```
+CAS_PROJECT=gvs-internal
+CAS_DATASET=mydataset
+bq load -project_id ${CAS_PROJECT} --source_format=AVRO ${CAS_DATASET}.cas_cell_info "${CAS_GCS_PREFIX}/${CAS_AVRO_PREFIX}_cell_info.avro"
+bq load -project_id ${CAS_PROJECT} --source_format=AVRO ${CAS_DATASET}.cas_feature_info "${CAS_GCS_PREFIX}/${CAS_AVRO_PREFIX}_feature_info.avro"
+bq load -project_id ${CAS_PROJECT} --source_format=AVRO ${CAS_DATASET}.cas_raw_count_matrix "${CAS_GCS_PREFIX}/${CAS_AVRO_PREFIX}_raw_counts.avro"
 ```
 
 ### Extract Random Subset
