@@ -32,7 +32,7 @@ NOTE: if multiple data sets are being loaded into the same dataset, offsets for 
 Continuing this example:
 
 ```
-python src/load_cas_tables.py --project <google-project> --dataset <dataset-name> --avro_prefix retina --gcs_prefix <gcs-prefix-to-avro-files>
+python src/load_dataset.py --project <google-project> --dataset <dataset-name> --avro_prefix retina --gcs_prefix <gcs-prefix-to-avro-files>
 ```
 
 All of these parameters are required.
