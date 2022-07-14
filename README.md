@@ -47,7 +47,7 @@ CAS_AVRO_PREFIX=cas
 gsutil -m cp "${CAS_AVRO_PREFIX}*.avro" ${CAS_GCS_PREFIX}
 ```
 
-Then specify appropriate values for `CAS_PROJECT` and `CAS_DATASET` to load into BigQuery: 
+Then specify appropriate values for `CAS_PROJECT` and `CAS_DATASET` to load into BigQuery:
 
 ```
 CAS_PROJECT=gvs-internal
