@@ -85,25 +85,32 @@ def dump_cell_info(adata, basename, cas_cell_index_start):
     }
 
     parsed_schema = parse_schema(schema)
-    records = []
-    counter = 0
 
-    with open(f'{basename}_cell_info.avro', 'a+b') as out:
+    def cell_generator():
         cells = adata.obs[['cas_cell_index', 'original_cell_id', 'cell_type']]
-        for _, row in cells.iterrows():
-            counter = counter + 1
-            records.append({
-                u'cas_cell_index': row['cas_cell_index'],
-                u'original_cell_id': row['original_cell_id'],
-                u'cell_type': row['cell_type']
-            })
+        for _, r in cells.iterrows():
+            yield {
+                u'cas_cell_index': r['cas_cell_index'],
+                u'original_cell_id': r['original_cell_id'],
+                u'cell_type': r['cell_type']
+            }
 
-            if counter % 10000 == 0:
+    def write_cells(generator, filename):
+        with open(filename, 'a+b') as out:
+            records = []
+            counter = 0
+            for record in generator():
+                counter = counter + 1
+                records.append(record)
+
+                if counter % 10000 == 0:
+                    writer(out, parsed_schema, records)
+                    records = []
+
+            if len(records) > 0:
                 writer(out, parsed_schema, records)
-                records = []
 
-        if len(records) > 0:
-            writer(out, parsed_schema, records)
+    write_cells(cell_generator, f'{basename}_cell_info.avro')
 
     return row_index_to_cas_cell_index
 
