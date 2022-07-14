@@ -1,6 +1,7 @@
+import argparse
 from google.api_core.exceptions import Conflict
 from google.cloud import bigquery
-import argparse
+import subprocess
 
 
 def create_table(client, project, dataset, tablename, schema, clustering_fields):
@@ -45,7 +46,7 @@ def check_avro_files(avro_prefix):
     return filenames
 
 
-def process(project, dataset, avro_prefix, gcs_prefix):
+def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     # Construct a BigQuery client object.
     client = bigquery.Client(project=project)
     
@@ -83,23 +84,27 @@ def process(project, dataset, avro_prefix, gcs_prefix):
     job = client.query(query)
     tables_with_data = [r[0] for r in list(job.result())]
 
-    import subprocess
-    proc = subprocess.Popen(['gsutil', '-m', 'cp', cell_filename, feature_filename, raw_counts_filename, gcs_prefix],
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
-    stdout, stderr = proc.communicate()
-    print(f"Staged Avro files to {gcs_prefix}")
+    def stage_file(file_to_stage):
+        proc = subprocess.Popen(['gsutil', '-m', 'cp', file_to_stage, gcs_prefix],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        staged_files.append(file_to_stage)
 
+    staged_files = []
     bqload_template = ["bq", "load", "-project_id", project, "--source_format=AVRO"]
     gcs_prefix = gcs_prefix.rstrip('/')
     pairs = [("cell_info", cell_filename), ("feature_info", feature_filename), ("raw_count_matrix", raw_counts_filename)]
     for table, file in pairs:
         table = f"cas_{table}"
 
-        if table in tables_with_data:
-            print(f"Table '{project}.{dataset}.{table}' already contains data, skipping load of '{file}'")
+        if table in tables_with_data and not force_bq_append:
+            table_id = f'{project}.{dataset}.{table}'
+            print(f"Table '{table_id}' contains data and `--force_bq_append` not specified, skipping load of '{file}'")
             continue
 
+        stage_file(file)
+        print(f"Staged '{file}' to '{gcs_prefix}'")
         proc = subprocess.Popen(
             bqload_template + [f'{dataset}.{table}', f'{gcs_prefix}/{file}'],
             stdout=subprocess.PIPE,
@@ -107,12 +112,13 @@ def process(project, dataset, avro_prefix, gcs_prefix):
         stdout, stderr = proc.communicate()
         print(f"Loaded '{file}' to '{table}' table")
 
-    files = [f'{gcs_prefix}/{f}' for f in [cell_filename, feature_filename, raw_counts_filename]]
-    proc = subprocess.Popen(['gsutil', 'rm'] + files,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
-    stdout, stderr = proc.communicate()
-    print("Removed Avro files from GCS staging area")
+    if len(staged_files) > 0:
+        files = [f'{gcs_prefix}/{f}' for f in staged_files]
+        proc = subprocess.Popen(['gsutil', 'rm'] + files,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        print("Removed Avro files from GCS staging area")
 
 
 if __name__ == '__main__':
@@ -122,8 +128,10 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, help='BigQuery Dataset', required=True)
     parser.add_argument('--avro_prefix', type=str, help='Prefix with which Avro files are named', required=True)
     parser.add_argument('--gcs_prefix', type=str, help='GCS prefix to which Avro files should be staged', required=True)
+    parser.add_argument('--force_bq_append', type=str,
+                        help='Append data to BigQuery tables even if data some data is already loaded', required=False)
 
     # Execute the parse_args() method
     args = parser.parse_args()
 
-    process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix)
+    process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix, args.force_bq_append)
