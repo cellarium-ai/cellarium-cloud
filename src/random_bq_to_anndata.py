@@ -32,6 +32,7 @@ def get_cell_data(project, dataset, client, num_cells):
 
 def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     client = bigquery.Client(project=project)
+    # Note that this method requires that the result set returned by get_cell_data be sorted by cas_cell_index (or, could also be sorted by original_cell_id)
     cell_data = get_cell_data(project, dataset, client, num_cells)
 
     column_count = 0
@@ -93,6 +94,8 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
         indices.append(col_num)
         data.append(count)
 
+#TODO - catch the edge case if the last row is different from last-1
+# And add a test - especially for last-1
     # Deal with the last row.
     index_ptr.append(len(indices))
     cell_names.append(last_original_cell_id)
@@ -107,6 +110,9 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     adata.obs["cell_type"] = cell_types
     adata.var_names = feature_ids
     adata.var["feature_name"] = feature_names
+
+    # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
+    #  for why we set raw thusly: "The raw attribute is initialized with the current content of an object by setting:"
     adata.raw = adata
     adata.write(f'{output_file_prefix}.h5ad', compression="gzip")
 
