@@ -5,13 +5,13 @@ import numpy as np
 import anndata as ad
 from scipy.sparse import csr_matrix
 
-# assumes that cas_cell_info.cas_feature_index values are a contiguous list of ints starting at 0
+# assumes that cas_cell_info.cas_feature_index values are a contiguous list of ints
 def get_random_ids(project, dataset, client, num_cells):
-    query = client.query(f"SELECT MIN(cas_cell_index) AS min_table_number, MAX(cas_cell_index) AS max_table_number FROM `{project}.{dataset}.cas_cell_info`")
-    min_cell_id = int([row.min_table_number for row in list(query.result())][0])
-    max_cell_id = int([row.max_table_number for row in list(query.result())][0])
-    print(f"Getting {num_cells} random IDs between {min_cell_id} and {max_cell_id}...")
-    cell_ids = list(range(min_cell_id, max_cell_id + 1))
+    query = client.query(f"SELECT MIN(cas_cell_index) AS min_cas_cell_index, MAX(cas_cell_index) AS max_cas_cell_index FROM `{project}.{dataset}.cas_cell_info`")
+    min_cas_cell_index = int([row.min_cas_cell_index for row in list(query.result())][0])
+    max_cas_cell_index = int([row.max_cas_cell_index for row in list(query.result())][0])
+    print(f"Getting {num_cells} random IDs between {min_cas_cell_index} and {max_cas_cell_index}...")
+    cell_ids = list(range(min_cas_cell_index, max_cas_cell_index + 1))
     random.shuffle(cell_ids)
     del cell_ids[num_cells:]
     print(f"Random IDs: {cell_ids}")
@@ -47,6 +47,21 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     cell_types = []
     feature_ids = []
     feature_names = []
+
+    # Builds the sparse matrix for storing the original_cell_ids (as obs) and features (as var).
+    # From: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
+    # If we want to store the following sparse matrix:
+    # OBS \ VAR
+    #       ENS1 ENS2 ENS3 ENS4
+    # AAA   1    n/a   2   n/a
+    # AAC   0    2     4   n/a
+    # AAG   3    n/a   0   1
+    #
+    # we represent it as:
+    # indptr  = [0, 2, 5, 8]
+    # indices = [0, 2, 0, 1, 2, 0, 2, 3]
+    # data    = [1, 2, 0, 2, 4, 3, 0, 1]
+
 
     for row in list(cell_data):
         # print("cas_cell_index={}, original_cell_id={}, cell_type={}, cas_feature_index={}, original_feature_id={}, feature_name={}, count={}".format(row["cas_cell_index"], row["original_cell_id"], row["cell_type"], row["cas_feature_index"], row["original_feature_id"], row["feature_name"], row["count"]))
