@@ -34,15 +34,16 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     client = bigquery.Client(project=project)
     cell_data = get_cell_data(project, dataset, client, num_cells)
 
-    col_count = 0
+    column_count = 0
     feature_to_column = {}
-    row_num = -1
-    last_original_cell_id = None
     last_cell_type = None
 
-    indptr = [0]
+    # For representation of the sparse matrix
+    index_ptr = [0]
     indices = []
     data = []
+
+    # For storage of the metadata
     cell_names = []
     cell_types = []
     feature_ids = []
@@ -53,60 +54,60 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     # If we want to store the following sparse matrix:
     # OBS \ VAR
     #       ENS1 ENS2 ENS3 ENS4
-    # AAA   1    n/a   2   n/a
-    # AAC   0    2     4   n/a
+    # AAA   1    7     2   n/a
+    # AAC   0    n/a   4   n/a
     # AAG   3    n/a   0   1
     #
     # we represent it as:
-    # indptr  = [0, 2, 5, 8]
-    # indices = [0, 2, 0, 1, 2, 0, 2, 3]
-    # data    = [1, 2, 0, 2, 4, 3, 0, 1]
+    # index_ptr = [0, 3, 5, 8]
+    # indices   = [0, 1, 2, 0, 2, 0, 2, 3]
+    # data      = [1, 7, 2, 0, 4, 3, 0, 1]
 
-
+    last_original_cell_id = None
     for row in list(cell_data):
         # print("cas_cell_index={}, original_cell_id={}, cell_type={}, cas_feature_index={}, original_feature_id={}, feature_name={}, count={}".format(row["cas_cell_index"], row["original_cell_id"], row["cell_type"], row["cas_feature_index"], row["original_feature_id"], row["feature_name"], row["count"]))
         original_cell_id = row["original_cell_id"]
         cell_type = row["cell_type"]
         original_feature_id = row["original_feature_id"]
-        feature_name = row["feature_name"]
         count = row["count"]
 
         if original_cell_id != last_original_cell_id:
             if last_original_cell_id is not None:
-                # We have just started a New row (and it's not the very first), update indptr to point to the next row
-                row_num += 1
+                # We have just started reading data for a new 'original_cell_id'.
+                index_ptr.append(len(indices))
                 cell_names.append(last_original_cell_id)
                 cell_types.append(last_cell_type)
-                indptr.append(len(indices))
-                print(f"Row Number: {row_num}, original_cell_id: {last_original_cell_id}")
-                print(f"Indptr: {indptr}")
+                print(f"finishing record for original_cell_id: {last_original_cell_id}")
+                print(f"index_ptr: {index_ptr}")
             last_original_cell_id = original_cell_id
             last_cell_type = cell_type
 
         if original_feature_id not in feature_to_column:
-            feature_to_column[original_feature_id] = col_count
+            # We have not seen this 'original_feature_id' before.
+            feature_to_column[original_feature_id] = column_count
             feature_ids.append(original_feature_id)
-            feature_names.append(feature_name)
-            col_count += 1
+            feature_names.append(row["feature_name"])
+            column_count += 1
         col_num = feature_to_column[original_feature_id]
 
         indices.append(col_num)
         data.append(count)
 
     # Deal with the last row.
-    row_num += 1
+    index_ptr.append(len(indices))
     cell_names.append(last_original_cell_id)
     cell_types.append(last_cell_type)
-    indptr.append(len(indices))
-    print(f"Row Number: {row_num}, original_cell_id: {last_original_cell_id}")
-    print(f"Indptr: {indptr}")
+    print(f"finishing record for original_cell_id: {last_original_cell_id}")
+    print(f"index_ptr: {index_ptr}")
 
-    counts = csr_matrix((data, indices, indptr), dtype=np.float32)
+    # Create the matrix from the sparse data representation generated above.
+    counts = csr_matrix((data, indices, index_ptr), dtype=np.float32)
     adata = ad.AnnData(counts)
     adata.obs_names = cell_names
     adata.obs["cell_type"] = cell_types
     adata.var_names = feature_ids
     adata.var["feature_name"] = feature_names
+    adata.raw = adata
     adata.write(f'{output_file_prefix}.h5ad', compression="gzip")
 
 
