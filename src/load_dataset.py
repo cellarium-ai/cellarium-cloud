@@ -6,7 +6,7 @@ from google.cloud import storage
 
 def create_table(client, project, dataset, tablename, schema, clustering_fields):
     table_id = f"{project}.{dataset}.{tablename}"
-    
+
     table = bigquery.Table(table_id, schema=schema)
     if clustering_fields:
         table.clustering_fields = clustering_fields
@@ -29,10 +29,10 @@ def create_dataset(client, project, dataset, location):
     # Raises google.api_core.exceptions.Conflict if the Dataset already
     # exists within the project.
     try:
-        dataset = client.create_dataset(dataset, timeout=30)  # Make an API request.
-        print(f"Created dataset {project}.{dataset}.")
+        _ = client.create_dataset(dataset, timeout=30)  # Make an API request.
+        print(f"Created dataset {dataset_id}.")
     except Conflict:
-        print(f"Dataset {project}.{dataset} exists, continuing.")
+        print(f"Dataset {dataset_id} exists, continuing.")
 
 
 def check_avro_files_exist(avro_prefix):
@@ -59,33 +59,34 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     create_dataset(client, project, dataset, "US")
 
     create_table(client, project, dataset, "cas_cell_info",
-        [
-            bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
-            bigquery.SchemaField("original_cell_id", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("cell_type", "STRING", mode="REQUIRED")
-        ],
-        []
-    )
+                 [
+                     bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
+                     bigquery.SchemaField("original_cell_id", "STRING", mode="REQUIRED"),
+                     bigquery.SchemaField("cell_type", "STRING", mode="REQUIRED")
+                 ],
+                 []
+                 )
 
     create_table(client, project, dataset, "cas_feature_info",
-        [
-            bigquery.SchemaField("cas_feature_index", "INTEGER", mode="REQUIRED"),
-            bigquery.SchemaField("original_feature_id", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("feature_name", "STRING", mode="REQUIRED")
-        ],
-        []
-    )
-    
+                 [
+                     bigquery.SchemaField("cas_feature_index", "INTEGER", mode="REQUIRED"),
+                     bigquery.SchemaField("original_feature_id", "STRING", mode="REQUIRED"),
+                     bigquery.SchemaField("feature_name", "STRING", mode="REQUIRED")
+                 ],
+                 []
+                 )
+
     create_table(client, project, dataset, "cas_raw_count_matrix",
-        [
-            bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
-            bigquery.SchemaField("cas_feature_index", "INTEGER", mode="REQUIRED"),
-            bigquery.SchemaField("raw_counts", "INTEGER", mode="REQUIRED")
-        ],
-        ["cas_cell_index"]
-    )
+                 [
+                     bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
+                     bigquery.SchemaField("cas_feature_index", "INTEGER", mode="REQUIRED"),
+                     bigquery.SchemaField("raw_counts", "INTEGER", mode="REQUIRED")
+                 ],
+                 ["cas_cell_index"]
+                 )
 
     (cell_filename, feature_filename, raw_counts_filename) = check_avro_files_exist(avro_prefix)
+    # noinspection SqlResolve
     query = f"""select table_name, total_rows from `{dataset}.INFORMATION_SCHEMA.PARTITIONS` where total_rows > 0"""
     job = client.query(query)
     tables_with_data = [r[0] for r in list(job.result())]
@@ -104,7 +105,11 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
 
     staged_files = []
     gcs_prefix = gcs_prefix.rstrip('/')
-    pairs = [("cell_info", cell_filename), ("feature_info", feature_filename), ("raw_count_matrix", raw_counts_filename)]
+    pairs = [
+        ("cell_info", cell_filename),
+        ("feature_info", feature_filename),
+        ("raw_count_matrix", raw_counts_filename)
+    ]
     job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.AVRO)
 
     for table, file in pairs:
@@ -142,7 +147,6 @@ if __name__ == '__main__':
     parser.add_argument('--force_bq_append', type=bool,
                         help='Append data to BigQuery tables even if data some data is already loaded', required=False)
 
-    # Execute the parse_args() method
     args = parser.parse_args()
 
     process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix, args.force_bq_append)
