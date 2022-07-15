@@ -47,7 +47,7 @@ This step:
 * Creates the dataset in this specified project
 * Creates the CASP tables in the specified dataset
 * Stages the specified Avro files to the specified GCS path
-* Loads the specified tables from the specified Avro files
+* Loads the specified tables from the staged Avro files
 * Cleans up the staged Avro files from GCS
 
 
