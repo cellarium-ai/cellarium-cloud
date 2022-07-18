@@ -2,6 +2,7 @@ import argparse
 from google.api_core.exceptions import Conflict
 from google.cloud import bigquery
 from google.cloud import storage
+import os
 
 
 def create_table(client, project, dataset, tablename, schema, clustering_fields):
@@ -38,7 +39,6 @@ def create_dataset(client, project, dataset, location):
 def check_avro_files_exist(avro_prefix):
     file_types = ['cell_info', 'feature_info', 'raw_counts']
     filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
-    import os
     missing = list(filter(lambda f: not os.path.exists(f), filenames))
     if len(missing) > 0:
         raise ValueError(

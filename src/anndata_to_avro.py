@@ -6,6 +6,7 @@ import anndata as ad
 import argparse
 from fastavro import writer, parse_schema
 import numpy as np
+import os
 import time
 
 
@@ -140,21 +141,20 @@ def dump_feature_info(adata, filename, cas_feature_index_start):
     return col_index_to_cas_feature_index
 
 
-def check_output_files(avro_prefix):
-    file_types = ['cell_info', 'feature_info', 'raw_counts']
-    filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
-    import os
+def confirm_output_files_do_not_exist(filenames):
     existing = list(filter(lambda f: os.path.exists(f), filenames))
     if len(existing) > 0:
         raise ValueError(
             f"Found existing output files, please rename or remove before running conversion: {', '.join(existing)}")
-    return filenames
 
 
 def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix):
     avro_prefix = "cas" if not avro_prefix else avro_prefix
 
-    (cell_filename, feature_filename, raw_counts_filename) = check_output_files(avro_prefix)
+    file_types = ['cell_info', 'feature_info', 'raw_counts']
+    filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
+    confirm_output_files_do_not_exist(filenames)
+    (cell_filename, feature_filename, raw_counts_filename) = filenames
 
     print("Loading data...")
     adata = ad.read(input_file)
