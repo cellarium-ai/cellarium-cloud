@@ -8,8 +8,8 @@ from scipy.sparse import csr_matrix
 # assumes that cas_cell_info.cas_feature_index values are a contiguous list of ints
 def get_random_ids(project, dataset, client, num_cells):
     query = client.query(f"SELECT MIN(cas_cell_index) AS min_cas_cell_index, MAX(cas_cell_index) AS max_cas_cell_index FROM `{project}.{dataset}.cas_cell_info`")
-    min_cas_cell_index = int([row.min_cas_cell_index for row in list(query.result())][0])
-    max_cas_cell_index = int([row.max_cas_cell_index for row in list(query.result())][0])
+    row = list(result)[0]
+    min_cas_cell_index, max_cas_cell_index = row.min_cas_cell_index, row.max_cas_cell_index
     print(f"Getting {num_cells} random IDs between {min_cas_cell_index} and {max_cas_cell_index}...")
     cell_ids = list(range(min_cas_cell_index, max_cas_cell_index + 1))
     random.shuffle(cell_ids)
