@@ -32,7 +32,7 @@ def get_random_cell_ids(project, dataset, client, num_cells):
     min_cas_cell_index, max_cas_cell_index = row.min_cas_cell_index, row.max_cas_cell_index
     print(f"Getting {num_cells} random IDs between {min_cas_cell_index} and {max_cas_cell_index}...")
     cell_ids = list(range(min_cas_cell_index, max_cas_cell_index + 1))
-    # random.shuffle(cell_ids)
+    random.shuffle(cell_ids)
     del cell_ids[num_cells:]
     print(f"Random IDs: {cell_ids}")
     return cell_ids
