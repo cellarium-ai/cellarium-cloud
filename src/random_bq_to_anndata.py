@@ -35,6 +35,22 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     # Note that this method requires that the result set returned by get_cell_data be sorted by cas_cell_index (or, could also be sorted by original_cell_id)
     cell_data = get_cell_data(project, dataset, client, num_cells)
 
+    (index_ptr, indices, data, cell_names, cell_types, feature_ids, feature_names) = generate_sparse_matrix(cell_data)
+
+    # Create the matrix from the sparse data representation generated above.
+    counts = csr_matrix((data, indices, index_ptr), dtype=np.float32)
+    adata = ad.AnnData(counts)
+    adata.obs_names = cell_names
+    adata.obs["cell_type"] = cell_types
+    adata.var_names = feature_ids
+    adata.var["feature_name"] = feature_names
+
+    # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
+    #  for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
+    adata.raw = adata
+    adata.write(f'{output_file_prefix}.h5ad', compression="gzip")
+
+def generate_sparse_matrix(cell_data):
     column_count = 0
     feature_to_column = {}
     last_cell_type = None
@@ -65,8 +81,9 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     # data      = [1, 7, 2, 0, 4, 3, 0, 1]
 
     last_original_cell_id = None
-    for row in list(cell_data):
+    for row in cell_data:
         # print("cas_cell_index={}, original_cell_id={}, cell_type={}, cas_feature_index={}, original_feature_id={}, feature_name={}, count={}".format(row["cas_cell_index"], row["original_cell_id"], row["cell_type"], row["cas_feature_index"], row["original_feature_id"], row["feature_name"], row["count"]))
+        # print(f"{row}")
         original_cell_id = row["original_cell_id"]
         cell_type = row["cell_type"]
         original_feature_id = row["original_feature_id"]
@@ -94,27 +111,18 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
         indices.append(col_num)
         data.append(count)
 
-#TODO - catch the edge case if the last row is different from last-1
-# And add a test - especially for last-1
+    #TODO - catch the edge case if the last row is different from last-1
+    # And add a test - especially for last-1
     # Deal with the last row.
     index_ptr.append(len(indices))
     cell_names.append(last_original_cell_id)
     cell_types.append(last_cell_type)
     print(f"finishing record for original_cell_id: {last_original_cell_id}")
     print(f"index_ptr: {index_ptr}")
+    # print(f"indices:   {indices}")
+    # print(f"data:      {data}")
 
-    # Create the matrix from the sparse data representation generated above.
-    counts = csr_matrix((data, indices, index_ptr), dtype=np.float32)
-    adata = ad.AnnData(counts)
-    adata.obs_names = cell_names
-    adata.obs["cell_type"] = cell_types
-    adata.var_names = feature_ids
-    adata.var["feature_name"] = feature_names
-
-    # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
-    #  for why we set raw thusly: "The raw attribute is initialized with the current content of an object by setting:"
-    adata.raw = adata
-    adata.write(f'{output_file_prefix}.h5ad', compression="gzip")
+    return index_ptr, indices, data, cell_names, cell_types, feature_ids, feature_names
 
 
 if __name__ == '__main__':
