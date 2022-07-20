@@ -1,6 +1,5 @@
 from google.cloud import bigquery
 import argparse
-import random
 import numpy as np
 import anndata as ad
 from scipy.sparse import csr_matrix
@@ -17,17 +16,14 @@ class Feature:
         self.original_feature_id = original_feature_id
         self.feature_name = feature_name
 
-# assumes that cas_cell_info.cas_cell_index values are a contiguous list of ints
+# Returns an array of <num_cells> cas_cell_index values pulled at random from the cas_cell_info table
 def get_random_cell_ids(project, dataset, client, num_cells):
-    query = client.query(f"SELECT MIN(cas_cell_index) AS min_cas_cell_index, MAX(cas_cell_index) AS max_cas_cell_index FROM `{project}.{dataset}.cas_cell_info`")
-    row = list(query.result())[0]
-    min_cas_cell_index, max_cas_cell_index = row.min_cas_cell_index, row.max_cas_cell_index
-    print(f"Getting {num_cells} random IDs between {min_cas_cell_index} and {max_cas_cell_index}...")
-    cell_ids = list(range(min_cas_cell_index, max_cas_cell_index + 1))
-    random.shuffle(cell_ids)
-    del cell_ids[num_cells:]
-    print(f"Random IDs: {cell_ids}")
-    return cell_ids
+    query = client.query(f"SELECT cas_cell_index, rand() AS rand_val FROM `{project}.{dataset}.cas_cell_info` ORDER BY rand_val LIMIT {num_cells}")
+    cas_cell_indices = []
+    for row in query:
+        cas_cell_indices.append(row["cas_cell_index"])
+    print(f"Random IDs: {cas_cell_indices}")
+    return cas_cell_indices
 
 # Retrieve a list of all feature objects, ordered by cas_feature_index
 def get_features(project, dataset, client):
@@ -42,7 +38,7 @@ def get_features(project, dataset, client):
         features.append(feature)
     return features
 
-# Return a list of cell objects (for the random_cell_ids), ordered by cas_cell_index
+# Given a list of cell_ids (= cas_cell_index) this method will return a list of cell objects for them, ordered by cas_cell_index
 def get_cells(project, dataset, client, cell_ids):
     in_clause = f" cas_cell_index IN ({','.join(map(str, cell_ids))})"
     sql = f"SELECT cas_cell_index, original_cell_id, cell_type FROM `{project}.{dataset}.cas_cell_info` WHERE {in_clause} ORDER BY cas_cell_index"
