@@ -25,7 +25,7 @@ class Feature:
         self.original_feature_id = original_feature_id
         self.feature_name = feature_name
 
-# assumes that cas_cell_info.cas_cell_index values are a contiguous list of ints
+# assumes that cas_cell_info.cas_cell_index values are a continuous list of ints
 def get_random_cell_ids(project, dataset, client, num_cells):
     query = client.query(f"SELECT MIN(cas_cell_index) AS min_cas_cell_index, MAX(cas_cell_index) AS max_cas_cell_index FROM `{project}.{dataset}.cas_cell_info`")
     row = list(query.result())[0]
@@ -66,7 +66,7 @@ def get_matrix_data(project, dataset, client, random_cell_ids):
     # at some point, we will probably want create temp table of cell_ids and then JOIN on it
     # instead of an IN clause
     # NOTE - really don't need to join to cas_cell_index and cas_feature_index here anymore.
-    sql = f"SELECT matrix.cas_cell_index, original_cell_id, matrix.cas_feature_index, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND" + in_clause + " ORDER BY matrix.cas_cell_index, matrix.cas_feature_index"
+    sql = f"SELECT matrix.cas_cell_index, matrix.cas_feature_index, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND" + in_clause + " ORDER BY matrix.cas_cell_index, matrix.cas_feature_index"
     query = client.query(sql)
     return query.result()
 
@@ -97,7 +97,7 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     # Note that this method requires that the result set returned by get_cell_data be sorted by cas_cell_index (or, could also be sorted by original_cell_id)
     cell_data = get_matrix_data(project, dataset, client, random_cell_ids)
 
-    (index_ptr, indices, data) = generate_sparse_matrix(cell_data, features[0].cas_feature_index)
+    (index_ptr, indices, data) = generate_sparse_matrix(cell_data, features[0].cas_feature_index, features[-1].cas_feature_index)
 
     # Create the matrix from the sparse data representation generated above.
     counts = csr_matrix((data, indices, index_ptr), dtype=np.float32)
@@ -112,7 +112,7 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     adata.raw = adata
     adata.write(f'{output_file_prefix}.h5ad', compression="gzip")
 
-def generate_sparse_matrix(cell_data, minimum_feature_index):
+def generate_sparse_matrix(cell_data, minimum_feature_index, maximum_feature_index):
     # For representation of the sparse matrix
     index_ptr = [0]
     indices = []
@@ -132,29 +132,40 @@ def generate_sparse_matrix(cell_data, minimum_feature_index):
     # indices   = [0, 1, 2, 0, 2, 0, 2, 3]
     # data      = [1, 7, 2, 0, 4, 3, 0, 1]
 
-    last_original_cell_id = None
-    for row in cell_data:
-        original_cell_id = row["original_cell_id"]
-        col_num = row["cas_feature_index"] - minimum_feature_index
-        count = row["count"]
+    max_col_num = maximum_feature_index - minimum_feature_index
+    max_col_num_populated = False
 
-        if original_cell_id != last_original_cell_id:
-            if last_original_cell_id is not None:
-                # We have just started reading data for a new 'original_cell_id'.
+    last_cas_cell_index = None
+    for row in cell_data:
+        cas_cell_index = row["cas_cell_index"]
+        col_num = row["cas_feature_index"] - minimum_feature_index
+        if col_num == max_col_num:
+            max_col_num_populated = True
+
+        if cas_cell_index != last_cas_cell_index:
+            if last_cas_cell_index is not None:
+                # We have just started reading data for a new 'cas_cell_index'.
                 index_ptr.append(len(indices))
-                # print(f"finishing record for original_cell_id: {last_original_cell_id}")
-                # print(f"index_ptr: {index_ptr}")
-            last_original_cell_id = original_cell_id
+                print(f"finishing record for cas_cell_index: {last_cas_cell_index}")
+
+            last_cas_cell_index = cas_cell_index
 
         indices.append(col_num)
-        data.append(count)
+        data.append(row["count"])
+
+    # NOTE: In order to satisfy the dimensionality of anndata object that will be generated for this sparse matrix,
+    # we need to ensure that there is a value in the sparse data matrix for the MAXIMUM feature index (that is,
+    # the right-most possible column. It is possible that there will be NO data in the passed cell_data for this feature,
+    # so we check to see if there is any data for that MAXIMUM feature index and if there is not, add a 0.
+    if not max_col_num_populated:
+        print(f"No data populated for maximum cas_feature_index {maximum_feature_index} - inserting a count of 0 here")
+        indices.append(max_col_num)
+        data.append(0)
 
     index_ptr.append(len(indices))
-    # print(f"finishing record for original_cell_id: {last_original_cell_id}")
-    # print(f"index_ptr: {index_ptr}")
+    print(f"finishing record for cas_cell_index: {last_cas_cell_index}")
 
     return index_ptr, indices, data
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(allow_abbrev=False, description='Query CASP tables for random cells')
