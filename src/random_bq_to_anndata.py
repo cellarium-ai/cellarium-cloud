@@ -45,7 +45,7 @@ def get_features(project, dataset, client):
 # Return a list of cell objects (for the random_cell_ids), ordered by cas_cell_index
 def get_cells(project, dataset, client, cell_ids):
     in_clause = f" cas_cell_index IN ({','.join(map(str, cell_ids))})"
-    sql = f"SELECT cas_cell_index, original_cell_id, cell_type FROM `{project}.{dataset}.cas_cell_info` WHERE " + in_clause + " ORDER BY cas_cell_index"
+    sql = f"SELECT cas_cell_index, original_cell_id, cell_type FROM `{project}.{dataset}.cas_cell_info` WHERE {in_clause} ORDER BY cas_cell_index"
     query = client.query(sql)
     cells = []
     for row in query:
