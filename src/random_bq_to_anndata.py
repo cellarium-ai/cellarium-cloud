@@ -37,30 +37,28 @@ def get_random_cell_ids(project, dataset, client, num_cells):
     print(f"Random IDs: {cell_ids}")
     return cell_ids
 
-# Retrieve all of the features from the database
+# Retrieve a list of all feature objects, ordered by cas_feature_index
 def get_features(project, dataset, client):
     sql = f"SELECT cas_feature_index, original_feature_id, feature_name FROM `{project}.{dataset}.cas_feature_info` ORDER BY cas_feature_index"
     query = client.query(sql)
-    ordered_feature_indices = []
-    feature_index_to_feature = {}
+    features = []
     for row in query:
-        index = row["cas_feature_index"]
-        ordered_feature_indices.append(index)
-        feature_index_to_feature[index] = Feature(row["cas_feature_index"], row["original_feature_id"], row["feature_name"])
-    return ordered_feature_indices, feature_index_to_feature
+        feature = Feature(row["cas_feature_index"], row["original_feature_id"], row["feature_name"])
+        if (len(features) > 0) and (feature.cas_feature_index != features[-1].cas_feature_index + 1):
+            # It's not the first element in the list, and it's cas_feature_index is not one more than the previous element's
+            raise Exception("ERROR: Non-continuous values for `cas_feature_index` in table `cas_feature_info`")
+        features.append(feature)
+    return features
 
-# Retrieve data for the selected (random) cells from the database
-def get_cells(project, dataset, client, random_cell_ids):
-    in_clause = f" cas_cell_index IN ({','.join(map(str, random_cell_ids))})"
+# Return a list of cell objects (for the random_cell_ids), ordered by cas_cell_index
+def get_cells(project, dataset, client, cell_ids):
+    in_clause = f" cas_cell_index IN ({','.join(map(str, cell_ids))})"
     sql = f"SELECT cas_cell_index, original_cell_id, cell_type FROM `{project}.{dataset}.cas_cell_info` WHERE " + in_clause + " ORDER BY cas_cell_index"
     query = client.query(sql)
-    ordered_cell_indices = []
-    cell_index_to_cell = {}
+    cells = []
     for row in query:
-        index = row["cas_cell_index"]
-        ordered_cell_indices.append(index)
-        cell_index_to_cell[index] = Cell(row["cas_cell_index"], row["original_cell_id"], row["cell_type"])
-    return ordered_cell_indices, cell_index_to_cell
+        cells.append(Cell(row["cas_cell_index"], row["original_cell_id"], row["cell_type"]))
+    return cells
 
 def get_matrix_data(project, dataset, client, random_cell_ids):
     in_clause = f" matrix.cas_cell_index IN ({','.join(map(str, random_cell_ids))})"
@@ -68,7 +66,7 @@ def get_matrix_data(project, dataset, client, random_cell_ids):
     # at some point, we will probably want create temp table of cell_ids and then JOIN on it
     # instead of an IN clause
     # NOTE - really don't need to join to cas_cell_index and cas_feature_index here anymore.
-    sql = f"SELECT matrix.cas_cell_index, original_cell_id, matrix.cas_feature_index, original_feature_id, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_feature_info` AS feature, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND matrix.cas_feature_index = feature.cas_feature_index AND" + in_clause + " ORDER BY matrix.cas_cell_index, matrix.cas_feature_index"
+    sql = f"SELECT matrix.cas_cell_index, original_cell_id, matrix.cas_feature_index, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND" + in_clause + " ORDER BY matrix.cas_cell_index, matrix.cas_feature_index"
     query = client.query(sql)
     return query.result()
 
@@ -80,35 +78,26 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     random_cell_ids = get_random_cell_ids(project, dataset, client, num_cells)
 
     # Read the cell information and store for later
-    ordered_cell_indices, cell_index_to_cell = get_cells(project, dataset, client, random_cell_ids)
-
+    cells = get_cells(project, dataset, client, random_cell_ids)
     original_cell_ids = []
     cell_types = []
-    for cell_index in ordered_cell_indices:
-        original_cell_ids.append(cell_index_to_cell[cell_index].original_cell_id)
-        cell_types.append(cell_index_to_cell[cell_index].cell_type)
+    for cell in cells:
+        original_cell_ids.append(cell.original_cell_id)
+        cell_types.append(cell.cell_type)
 
     # Read the feature information and store for later.
-    ordered_feature_indices, feature_index_to_feature = get_features(project, dataset, client)
+    features = get_features(project, dataset, client)
 
     feature_ids = []
     feature_names = []
-    last_feature_index = None
-    for feature_index in ordered_feature_indices:
-        if last_feature_index is None:
-            last_feature_index = feature_index - 1
-        # We expect all entries in cas_feature_info to be stored in continuous fashion. (1, 2, 3, ...)
-        if feature_index != last_feature_index + 1:
-            raise Exception("ERROR: Non-continuous values for `cas_feature_index` in table `cas_feature_info`")
-
-        feature_ids.append(feature_index_to_feature[feature_index].original_feature_id)
-        feature_names.append(feature_index_to_feature[feature_index].feature_name)
-        last_feature_index = feature_index
+    for feature in features:
+        feature_ids.append(feature.original_feature_id)
+        feature_names.append(feature.feature_name)
 
     # Note that this method requires that the result set returned by get_cell_data be sorted by cas_cell_index (or, could also be sorted by original_cell_id)
     cell_data = get_matrix_data(project, dataset, client, random_cell_ids)
 
-    (index_ptr, indices, data) = generate_sparse_matrix(cell_data, ordered_feature_indices[0])
+    (index_ptr, indices, data) = generate_sparse_matrix(cell_data, features[0].cas_feature_index)
 
     # Create the matrix from the sparse data representation generated above.
     counts = csr_matrix((data, indices, index_ptr), dtype=np.float32)
