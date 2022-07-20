@@ -6,26 +6,18 @@ import anndata as ad
 from scipy.sparse import csr_matrix
 
 class Cell:
-    cas_cell_index = 0
-    original_cell_id = ""
-    cell_type = ""
-
     def __init__(self, cas_cell_index, original_cell_id, cell_type):
         self.cas_cell_index = cas_cell_index
         self.original_cell_id = original_cell_id
         self.cell_type = cell_type
 
 class Feature:
-    cas_feature_index = 0
-    original_feature_id = ""
-    feature_name = ""
-
     def __init__(self, cas_feature_index, original_feature_id, feature_name):
         self.cas_feature_index = cas_feature_index
         self.original_feature_id = original_feature_id
         self.feature_name = feature_name
 
-# assumes that cas_cell_info.cas_cell_index values are a continuous list of ints
+# assumes that cas_cell_info.cas_cell_index values are a contiguous list of ints
 def get_random_cell_ids(project, dataset, client, num_cells):
     query = client.query(f"SELECT MIN(cas_cell_index) AS min_cas_cell_index, MAX(cas_cell_index) AS max_cas_cell_index FROM `{project}.{dataset}.cas_cell_info`")
     row = list(query.result())[0]
