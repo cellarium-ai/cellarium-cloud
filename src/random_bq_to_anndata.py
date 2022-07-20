@@ -49,7 +49,7 @@ def get_features(project, dataset, client):
         feature_index_to_feature[index] = Feature(row["cas_feature_index"], row["original_feature_id"], row["feature_name"])
     return ordered_feature_indices, feature_index_to_feature
 
-# Retrieve metadata for the selected (random) cells from the database
+# Retrieve data for the selected (random) cells from the database
 def get_cells(project, dataset, client, random_cell_ids):
     in_clause = f" cas_cell_index IN ({','.join(map(str, random_cell_ids))})"
     sql = f"SELECT cas_cell_index, original_cell_id, cell_type FROM `{project}.{dataset}.cas_cell_info` WHERE " + in_clause + " ORDER BY cas_cell_index"
@@ -79,7 +79,7 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     print(f"Getting {num_cells} random cells' data from {project}.{dataset}...")
     random_cell_ids = get_random_cell_ids(project, dataset, client, num_cells)
 
-    # Read the cell information and store metadata for later
+    # Read the cell information and store for later
     ordered_cell_indices, cell_index_to_cell = get_cells(project, dataset, client, random_cell_ids)
 
     original_cell_ids = []
@@ -88,17 +88,17 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
         original_cell_ids.append(cell_index_to_cell[cell_index].original_cell_id)
         cell_types.append(cell_index_to_cell[cell_index].cell_type)
 
-    # Read the feature information and store metadata for later.
+    # Read the feature information and store for later.
     ordered_feature_indices, feature_index_to_feature = get_features(project, dataset, client)
 
     feature_ids = []
     feature_names = []
     last_feature_index = None
     for feature_index in ordered_feature_indices:
-        if (last_feature_index is None):
+        if last_feature_index is None:
             last_feature_index = feature_index - 1
-        # # We expect all entries in cas_feature_info to be stored in continuous fashion. (1, 2, 3, ...)
-        if (feature_index != last_feature_index + 1):
+        # We expect all entries in cas_feature_info to be stored in continuous fashion. (1, 2, 3, ...)
+        if feature_index != last_feature_index + 1:
             raise Exception("ERROR: Non-continuous values for `cas_feature_index` in table `cas_feature_info`")
 
         feature_ids.append(feature_index_to_feature[feature_index].original_feature_id)

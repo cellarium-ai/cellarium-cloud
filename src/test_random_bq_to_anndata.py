@@ -3,7 +3,7 @@ import numpy
 
 from random_bq_to_anndata import generate_sparse_matrix
 
-class TestRandomBqToAnndata(unittest.TestCase):
+class TestRandomBqToAnnData(unittest.TestCase):
     def test_one_cell_sparse_matrix(self):
         #       ENS1
         # AAA   1
