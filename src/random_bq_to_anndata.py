@@ -70,12 +70,10 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     original_cell_ids = []
     cell_types = []
     cas_cell_index_to_row_num = {}
-    row_num = 0
-    for cell in cells:
+    for row_num, cell in enumerate(cells):
         original_cell_ids.append(cell.original_cell_id)
         cell_types.append(cell.cell_type)
         cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
-        row_num += 1
 
     # Read the feature information and store for later.
     features = get_features(project, dataset, client)
@@ -83,12 +81,10 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     feature_ids = []
     feature_names = []
     cas_feature_index_to_col_num = {}
-    col_num = 0
-    for feature in features:
+    for col_num, feature in enumerate(features):
         feature_ids.append(feature.original_feature_id)
         feature_names.append(feature.feature_name)
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
-        col_num += 1
 
     # Note that this method requires that the result set returned by get_cell_data be sorted by cas_cell_index (or, could also be sorted by original_cell_id)
     cell_data = get_matrix_data(project, dataset, client, random_cell_ids)
