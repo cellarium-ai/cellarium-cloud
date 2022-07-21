@@ -1,3 +1,4 @@
+from pathlib import Path
 from google.cloud import bigquery
 import argparse
 import numpy as np
@@ -49,12 +50,11 @@ def get_cells(project, dataset, client, cell_ids):
     return cells
 
 def get_matrix_data(project, dataset, client, random_cell_ids):
-    in_clause = f" matrix.cas_cell_index IN ({','.join(map(str, random_cell_ids))})"
+    in_clause = f" cas_cell_index IN ({','.join(map(str, random_cell_ids))})"
 
     # at some point, we will probably want create temp table of cell_ids and then JOIN on it
     # instead of an IN clause
-    # NOTE - really don't need to join to cas_cell_index and cas_feature_index here anymore.
-    sql = f"SELECT matrix.cas_cell_index, matrix.cas_feature_index, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND {in_clause} ORDER BY matrix.cas_cell_index, matrix.cas_feature_index"
+    sql = f"SELECT cas_cell_index, cas_feature_index, raw_counts AS count FROM `{project}.{dataset}.cas_raw_count_matrix` WHERE {in_clause} ORDER BY cas_cell_index, cas_feature_index"
     query = client.query(sql)
     return query.result()
 
@@ -95,15 +95,15 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
 
     # Had to convert the COO matrix to CSR for loading into AnnData
     adata = ad.AnnData(counts.tocsr(copy=False))
-    adata.obs_names = original_cell_ids
+    adata.obs.index = original_cell_ids
     adata.obs["cell_type"] = cell_types
-    adata.var_names = feature_ids
+    adata.var.index = feature_ids
     adata.var["feature_name"] = feature_names
 
     # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
     #  for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
     adata.raw = adata
-    adata.write(f'{output_file_prefix}.h5ad', compression="gzip")
+    adata.write(Path(f'{output_file_prefix}.h5ad'), compression="gzip")
 
 def convert_matrix_data_to_coo_matrix_input_format(cell_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num):
     rows = []
