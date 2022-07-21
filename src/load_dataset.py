@@ -69,6 +69,7 @@ def create_bigquery_objects(client, project, dataset):
                      bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
                      bigquery.SchemaField("original_cell_id", "STRING", mode="REQUIRED"),
                      bigquery.SchemaField("cell_type", "STRING", mode="REQUIRED"),
+                     bigquery.SchemaField("obs_metadata", "STRING", mode="REQUIRED"),
                      bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED")
                  ],
                  []
@@ -79,6 +80,7 @@ def create_bigquery_objects(client, project, dataset):
                      bigquery.SchemaField("cas_feature_index", "INTEGER", mode="REQUIRED"),
                      bigquery.SchemaField("original_feature_id", "STRING", mode="REQUIRED"),
                      bigquery.SchemaField("feature_name", "STRING", mode="REQUIRED"),
+                     bigquery.SchemaField("var_metadata", "STRING", mode="REQUIRED"),
                      bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED")
                  ],
                  []

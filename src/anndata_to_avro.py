@@ -15,7 +15,7 @@ def current_milli_time():
     return round(time.time() * 1000)
 
 
-def write_avro(generator, parsed_schema, filename):
+def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
     start = current_milli_time()
     with open(filename, 'a+b') as out:
         records = []
@@ -66,11 +66,10 @@ def dump_core_matrix(x, row_lookup, col_lookup, filename):
                 u'raw_counts': v_int
             }
 
-    write_avro(raw_counts_generator, parsed_schema, filename)
+    write_avro(raw_counts_generator, parsed_schema, filename, progress_batch_size=1000000)
 
 
 def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
-    # Dump out cell info (obs) -- cell_id is index (26 columns).
     adata.obs['original_cell_id'] = adata.obs.index
     adata.obs['cas_cell_index'] = np.arange(cas_cell_index_start, cas_cell_index_start + len(adata.obs))
 
@@ -87,19 +86,23 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
             {'name': 'cas_cell_index', 'type': 'int'},
             {'name': 'original_cell_id', 'type': 'string'},
             {'name': 'cell_type', 'type': 'string'},
+            {'name': 'obs_metadata', 'type': 'string'},
             {'name': 'cas_ingest_id', 'type': 'string'},
         ]
     }
 
     parsed_schema = parse_schema(schema)
+    added_columns = ['cas_cell_index', 'original_cell_id', 'cell_type']
+    cells = adata.obs[added_columns]
+    obs_original = adata.obs.drop(columns=added_columns)
 
     def cell_generator():
-        cells = adata.obs[['cas_cell_index', 'original_cell_id', 'cell_type']]
-        for _, r in cells.iterrows():
+        for i, r in cells.iterrows():
             yield {
                 u'cas_cell_index': r['cas_cell_index'],
                 u'original_cell_id': r['original_cell_id'],
                 u'cell_type': r['cell_type'],
+                u'obs_metadata': obs_original.loc[i].to_json(),
                 u'cas_ingest_id': ingest_id,
             }
 
@@ -109,10 +112,9 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
 
 
 def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
-    # Dump out feature info -- feature_id is index (12 columns).
     adata.var['original_feature_id'] = adata.var.index
-
     adata.var['cas_feature_index'] = np.arange(cas_feature_index_start, cas_feature_index_start + len(adata.var))
+
     col_index_to_cas_feature_index = [None] * len(adata.var)
     for col in range(0, len(adata.var)):
         col_index_to_cas_feature_index[col] = adata.var['cas_feature_index'].iloc[[col]][0]
@@ -126,19 +128,23 @@ def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
             {'name': 'cas_feature_index', 'type': 'int'},
             {'name': 'original_feature_id', 'type': 'string'},
             {'name': 'feature_name', 'type': 'string'},
+            {'name': 'var_metadata', 'type': 'string'},
             {'name': 'cas_ingest_id', 'type': 'string'},
         ]
     }
 
     parsed_schema = parse_schema(schema)
+    added_columns = ['cas_feature_index', 'original_feature_id', 'feature_name']
+    var_original = adata.var.drop(columns=added_columns)
+    features = adata.var[added_columns]
 
     def feature_generator():
-        features = adata.var[['cas_feature_index', 'original_feature_id', 'feature_name']]
-        for _, row in features.iterrows():
+        for i, row in features.iterrows():
             yield {
                 u'cas_feature_index': row['cas_feature_index'],
                 u'original_feature_id': row['original_feature_id'],
                 u'feature_name': row['feature_name'],
+                u'var_metadata': var_original.loc[i].to_json(),
                 u'cas_ingest_id': ingest_id,
             }
 
@@ -208,15 +214,11 @@ if __name__ == '__main__':
     parser.add_argument('--cas_feature_index_start', type=int, help='starting number for feature index', required=False,
                         default=0)
     parser.add_argument('--flush_batch_size', type=int, help='max size of Avro batches to flush', required=False)
-    parser.add_argument('--progress_batch_size', type=int, help='size of batches on which to report progress',
-                        required=False)
 
     args = parser.parse_args()
 
     global flush_batch_size
-    global progress_batch_size
 
     flush_batch_size = 10000 if not args.flush_batch_size else args.flush_batch_size
-    progress_batch_size = 1000000 if not args.progress_batch_size else args.progress_batch_size
 
     process(args.input, args.cas_cell_index_start, args.cas_feature_index_start, args.avro_prefix)
