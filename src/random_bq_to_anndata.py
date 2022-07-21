@@ -86,10 +86,10 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
         feature_names.append(feature.feature_name)
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
-    # Note that this method requires that the result set returned by get_cell_data be sorted by cas_cell_index (or, could also be sorted by original_cell_id)
-    cell_data = get_matrix_data(project, dataset, client, random_cell_ids)
+    # Note that this method requires that the result set returned by get_cell_data be sorted by cas_cell_index
+    matrix_data = get_matrix_data(project, dataset, client, random_cell_ids)
 
-    (rows, columns, data) = generate_coo_sparse_matrix(cell_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num)
+    (rows, columns, data) = convert_matrix_data_to_coo_matrix_input_format(matrix_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num)
     # Create the matrix from the sparse data representation generated above.
     counts = coo_matrix((data, (rows, columns)), shape=(len(cells), len(features)), dtype=np.float32)
 
@@ -105,7 +105,7 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     adata.raw = adata
     adata.write(f'{output_file_prefix}.h5ad', compression="gzip")
 
-def generate_coo_sparse_matrix(cell_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num):
+def convert_matrix_data_to_coo_matrix_input_format(cell_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num):
     rows = []
     columns = []
     data = []
