@@ -32,11 +32,7 @@ def get_features(project, dataset, client):
     query = client.query(sql)
     features = []
     for row in query:
-        feature = Feature(row["cas_feature_index"], row["original_feature_id"], row["feature_name"])
-        if (len(features) > 0) and (feature.cas_feature_index != features[-1].cas_feature_index + 1):
-            # It's not the first element in the list, and it's cas_feature_index is not one more than the previous element's
-            raise Exception("ERROR: Non-continuous values for `cas_feature_index` in table `cas_feature_info`")
-        features.append(feature)
+        features.append(Feature(row["cas_feature_index"], row["original_feature_id"], row["feature_name"]))
     return features
 
 # Given a list of cell_ids (= cas_cell_index) this method will return a list of cell objects for them, ordered by cas_cell_index
@@ -93,7 +89,7 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     # Create the matrix from the sparse data representation generated above.
     counts = coo_matrix((data, (rows, columns)), shape=(len(cells), len(features)), dtype=np.float32)
 
-    # Had to convert the COO matrix to CSR for loading into AnnData
+    # Convert the COO matrix to CSR for loading into AnnData
     adata = ad.AnnData(counts.tocsr(copy=False))
     adata.obs.index = original_cell_ids
     adata.obs["cell_type"] = cell_types
