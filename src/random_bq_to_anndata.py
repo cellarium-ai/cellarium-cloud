@@ -2,7 +2,7 @@ from google.cloud import bigquery
 import argparse
 import numpy as np
 import anndata as ad
-from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
 
 class Cell:
     def __init__(self, cas_cell_index, original_cell_id, cell_type):
@@ -69,27 +69,36 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     cells = get_cells(project, dataset, client, random_cell_ids)
     original_cell_ids = []
     cell_types = []
+    cas_cell_index_to_row_num = {}
+    row_num = 0
     for cell in cells:
         original_cell_ids.append(cell.original_cell_id)
         cell_types.append(cell.cell_type)
+        cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
+        row_num += 1
 
     # Read the feature information and store for later.
     features = get_features(project, dataset, client)
 
     feature_ids = []
     feature_names = []
+    cas_feature_index_to_col_num = {}
+    col_num = 0
     for feature in features:
         feature_ids.append(feature.original_feature_id)
         feature_names.append(feature.feature_name)
+        cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
+        col_num += 1
 
     # Note that this method requires that the result set returned by get_cell_data be sorted by cas_cell_index (or, could also be sorted by original_cell_id)
     cell_data = get_matrix_data(project, dataset, client, random_cell_ids)
 
-    (index_ptr, indices, data) = generate_sparse_matrix(cell_data, features[0].cas_feature_index, features[-1].cas_feature_index)
-
+    (rows, columns, data) = generate_coo_sparse_matrix(cell_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num)
     # Create the matrix from the sparse data representation generated above.
-    counts = csr_matrix((data, indices, index_ptr), dtype=np.float32)
-    adata = ad.AnnData(counts)
+    counts = coo_matrix((data, (rows, columns)), shape=(len(cells), len(features)), dtype=np.float32)
+
+    # Had to convert the COO matrix to CSR for loading into AnnData
+    adata = ad.AnnData(counts.tocsr(copy=False))
     adata.obs_names = original_cell_ids
     adata.obs["cell_type"] = cell_types
     adata.var_names = feature_ids
@@ -100,60 +109,29 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     adata.raw = adata
     adata.write(f'{output_file_prefix}.h5ad', compression="gzip")
 
-def generate_sparse_matrix(cell_data, minimum_feature_index, maximum_feature_index):
-    # For representation of the sparse matrix
-    index_ptr = [0]
-    indices = []
+def generate_coo_sparse_matrix(cell_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num):
+    rows = []
+    columns = []
     data = []
 
-    # Builds the sparse matrix for storing the original_cell_ids (as obs) and features (as var).
-    # From: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
-    # If we want to store the following sparse matrix:
-    # OBS \ VAR
-    #       ENS1 ENS2 ENS3 ENS4
-    # AAA   1    7     2   n/a
-    # AAC   0    n/a   4   n/a
-    # AAG   3    n/a   0   1
-    #
-    # we represent it as:
-    # index_ptr = [0, 3, 5, 8]
-    # indices   = [0, 1, 2, 0, 2, 0, 2, 3]
-    # data      = [1, 7, 2, 0, 4, 3, 0, 1]
-
-    max_col_num = maximum_feature_index - minimum_feature_index
-    max_col_num_populated = False
-
-    last_cas_cell_index = None
     for row in cell_data:
         cas_cell_index = row["cas_cell_index"]
-        col_num = row["cas_feature_index"] - minimum_feature_index
-        if col_num == max_col_num:
-            max_col_num_populated = True
+        cas_feature_index = row["cas_feature_index"]
+        try:
+            row_num = cas_cell_index_to_row_num[cas_cell_index]
+        except KeyError:
+            raise Exception(f"ERROR: Unable to find entry for cas_cell_index: {cas_cell_index} in lookup table")
 
-        if cas_cell_index != last_cas_cell_index:
-            if last_cas_cell_index is not None:
-                # We have just started reading data for a new 'cas_cell_index'.
-                index_ptr.append(len(indices))
-                print(f"finishing record for cas_cell_index: {last_cas_cell_index}")
+        try:
+            col_num = cas_feature_index_to_col_num[cas_feature_index]
+        except KeyError:
+            raise Exception(f"ERROR: Unable to find entry for cas_feature_index: {cas_feature_index} in lookup table")
 
-            last_cas_cell_index = cas_cell_index
-
-        indices.append(col_num)
+        rows.append(row_num)
+        columns.append(col_num)
         data.append(row["count"])
 
-    # NOTE: In order to satisfy the dimensionality of anndata object that will be generated for this sparse matrix,
-    # we need to ensure that there is a value in the sparse data matrix for the MAXIMUM feature index (that is,
-    # the right-most possible column. It is possible that there will be NO data in the passed cell_data for this feature,
-    # so we check to see if there is any data for that MAXIMUM feature index and if there is not, add a 0.
-    if not max_col_num_populated:
-        print(f"No data populated for maximum cas_feature_index {maximum_feature_index} - inserting a count of 0 here")
-        indices.append(max_col_num)
-        data.append(0)
-
-    index_ptr.append(len(indices))
-    print(f"finishing record for cas_cell_index: {last_cas_cell_index}")
-
-    return index_ptr, indices, data
+    return rows, columns, data
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(allow_abbrev=False, description='Query CASP tables for random cells')
