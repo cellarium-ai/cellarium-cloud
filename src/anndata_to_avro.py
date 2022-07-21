@@ -1,7 +1,6 @@
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
 # https://stackoverflow.com/questions/4319014/iterating-through-a-scipy-sparse-vector-or-matrix
 # https://github.com/theislab/anndata2ri/blob/master/src/anndata2ri/scipy2ri/py2r.py
-import uuid
 
 import anndata as ad
 import argparse
