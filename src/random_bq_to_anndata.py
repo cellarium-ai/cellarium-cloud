@@ -54,7 +54,7 @@ def get_matrix_data(project, dataset, client, random_cell_ids):
     # at some point, we will probably want create temp table of cell_ids and then JOIN on it
     # instead of an IN clause
     # NOTE - really don't need to join to cas_cell_index and cas_feature_index here anymore.
-    sql = f"SELECT matrix.cas_cell_index, matrix.cas_feature_index, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND" + in_clause + " ORDER BY matrix.cas_cell_index, matrix.cas_feature_index"
+    sql = f"SELECT matrix.cas_cell_index, matrix.cas_feature_index, raw_counts AS count FROM `{project}.{dataset}.cas_cell_info` AS cell, `{project}.{dataset}.cas_raw_count_matrix` AS matrix WHERE matrix.cas_cell_index = cell.cas_cell_index AND {in_clause} ORDER BY matrix.cas_cell_index, matrix.cas_feature_index"
     query = client.query(sql)
     return query.result()
 
