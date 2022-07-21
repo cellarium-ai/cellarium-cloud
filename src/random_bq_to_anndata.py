@@ -75,18 +75,18 @@ def get_matrix_data(project, dataset, client, random_cell_ids):
     return query.result()
 
 
-def assign_metadata(df, json_strings):
+def assign_metadata(dataframe, json_strings):
     """
-
-    :param df: Pandas DataFrame into which metadata should be written back
-    :param json_strings: strings to be parsed as JSON and written into corresponding entries in the DataFrame
+    :param dataframe: Pandas DataFrame into which metadata should be written back
+    :param json_strings: An iterable of strings stringified JSON to be written back to the DataFrame
     :return:
     """
     jsons = [json.loads(s) for s in json_strings]
 
+    # The keys will be the same for all JSONs so iterate over the keys of the first:
     for key in jsons[0].keys():
         values = [j[key] for j in jsons]
-        df[key] = values
+        dataframe[key] = values
 
 
 def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
