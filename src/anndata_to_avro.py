@@ -92,9 +92,9 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
     }
 
     parsed_schema = parse_schema(schema)
-    added_columns = ['cas_cell_index', 'original_cell_id', 'cell_type']
-    cells = adata.obs[added_columns]
+    added_columns = ['cas_cell_index', 'original_cell_id']
     obs_original = adata.obs.drop(columns=added_columns)
+    cells = adata.obs[added_columns + ['cell_type']]
 
     def cell_generator():
         for i, r in cells.iterrows():
@@ -134,9 +134,9 @@ def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
     }
 
     parsed_schema = parse_schema(schema)
-    added_columns = ['cas_feature_index', 'original_feature_id', 'feature_name']
+    added_columns = ['cas_feature_index', 'original_feature_id']
     var_original = adata.var.drop(columns=added_columns)
-    features = adata.var[added_columns]
+    features = adata.var[added_columns + ['feature_name']]
 
     def feature_generator():
         for i, row in features.iterrows():
