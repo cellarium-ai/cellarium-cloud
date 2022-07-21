@@ -6,6 +6,7 @@ import uuid
 import anndata as ad
 import argparse
 from fastavro import writer, parse_schema
+import hashlib
 import numpy as np
 import os
 import time
@@ -39,7 +40,7 @@ def write_avro(generator, parsed_schema, filename):
 
 def dump_core_matrix(x, row_lookup, col_lookup, filename):
     schema = {
-        'doc': 'A raw datum indexed by cell and feature id in the CAS BigQuery schema',
+        'doc': 'Raw data indexed by cell and feature id in the CAS BigQuery schema',
         'namespace': 'cas',
         'name': 'CellFeature',
         'type': 'record',
@@ -153,9 +154,19 @@ def confirm_output_files_do_not_exist(filenames):
             f"Found existing output files, please rename or remove before running conversion: {', '.join(existing)}")
 
 
+# https://stackoverflow.com/a/3431838
+def md5(filename):
+    hash_md5 = hashlib.md5()
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+
 def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix):
     avro_prefix = "cas" if not avro_prefix else avro_prefix
-    ingest_id = f'cas_ingest_{uuid.uuid4().hex[:8]}'
+    print(f"Hashing input AnnData file '{input_file}'...")
+    ingest_id = f'cas-ingest-{md5(input_file)[:8]}'
 
     file_types = ['cell_info', 'feature_info', 'raw_counts']
     filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
