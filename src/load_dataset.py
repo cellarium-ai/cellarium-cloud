@@ -103,6 +103,7 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     confirm_input_files_exist(input_filenames)
     cell_filename, feature_filename, raw_counts_filename = input_filenames
 
+    # Grab the `cas_ingest_id` from the first record in the cell file.
     with open(cell_filename, 'rb') as f:
         reader = fastavro.reader(f)
         ingest_id = next(reader)['cas_ingest_id']
@@ -111,6 +112,7 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     # noinspection SqlResolve
     query = f"""select ingest_timestamp as ts from `{dataset}.cas_ingest_info` where cas_ingest_id = "{ingest_id}" """
     job = client.query(query)
+    # We do not expect the query above to return any rows as this AnnData file should not have been previously ingested.
     for row in job.result():
         raise ValueError(f"Found previous ingest of '{ingest_id}' at {str(row['ts'])}, exiting")
 
