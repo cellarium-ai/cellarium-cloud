@@ -165,6 +165,7 @@ def md5(filename):
 def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix):
     avro_prefix = "cas" if not avro_prefix else avro_prefix
     print(f"Hashing input AnnData file '{input_file}'...")
+    # This will look like 'cas-ingest-00d00dad'
     ingest_id = f'cas-ingest-{md5(input_file)[:8]}'
 
     file_types = ['cell_info', 'feature_info', 'raw_counts']
