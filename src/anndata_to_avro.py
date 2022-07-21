@@ -1,6 +1,7 @@
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
 # https://stackoverflow.com/questions/4319014/iterating-through-a-scipy-sparse-vector-or-matrix
 # https://github.com/theislab/anndata2ri/blob/master/src/anndata2ri/scipy2ri/py2r.py
+import uuid
 
 import anndata as ad
 import argparse
@@ -68,7 +69,7 @@ def dump_core_matrix(x, row_lookup, col_lookup, filename):
     write_avro(raw_counts_generator, parsed_schema, filename)
 
 
-def dump_cell_info(adata, filename, cas_cell_index_start):
+def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
     # Dump out cell info (obs) -- cell_id is index (26 columns).
     adata.obs['original_cell_id'] = adata.obs.index
     adata.obs['cas_cell_index'] = np.arange(cas_cell_index_start, cas_cell_index_start + len(adata.obs))
@@ -85,7 +86,8 @@ def dump_cell_info(adata, filename, cas_cell_index_start):
         'fields': [
             {'name': 'cas_cell_index', 'type': 'int'},
             {'name': 'original_cell_id', 'type': 'string'},
-            {'name': 'cell_type', 'type': 'string'}
+            {'name': 'cell_type', 'type': 'string'},
+            {'name': 'cas_ingest_id', 'type': 'string'},
         ]
     }
 
@@ -97,7 +99,8 @@ def dump_cell_info(adata, filename, cas_cell_index_start):
             yield {
                 u'cas_cell_index': r['cas_cell_index'],
                 u'original_cell_id': r['original_cell_id'],
-                u'cell_type': r['cell_type']
+                u'cell_type': r['cell_type'],
+                u'cas_ingest_id': ingest_id,
             }
 
     write_avro(cell_generator, parsed_schema, filename)
@@ -105,7 +108,7 @@ def dump_cell_info(adata, filename, cas_cell_index_start):
     return row_index_to_cas_cell_index
 
 
-def dump_feature_info(adata, filename, cas_feature_index_start):
+def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
     # Dump out feature info -- feature_id is index (12 columns).
     adata.var['original_feature_id'] = adata.var.index
 
@@ -122,7 +125,8 @@ def dump_feature_info(adata, filename, cas_feature_index_start):
         'fields': [
             {'name': 'cas_feature_index', 'type': 'int'},
             {'name': 'original_feature_id', 'type': 'string'},
-            {'name': 'feature_name', 'type': 'string'}
+            {'name': 'feature_name', 'type': 'string'},
+            {'name': 'cas_ingest_id', 'type': 'string'},
         ]
     }
 
@@ -134,7 +138,8 @@ def dump_feature_info(adata, filename, cas_feature_index_start):
             yield {
                 u'cas_feature_index': row['cas_feature_index'],
                 u'original_feature_id': row['original_feature_id'],
-                u'feature_name': row['feature_name']
+                u'feature_name': row['feature_name'],
+                u'cas_ingest_id': ingest_id,
             }
 
     write_avro(feature_generator, parsed_schema, filename)
@@ -150,6 +155,7 @@ def confirm_output_files_do_not_exist(filenames):
 
 def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix):
     avro_prefix = "cas" if not avro_prefix else avro_prefix
+    ingest_id = f'cas_ingest_{uuid.uuid4().hex[:8]}'
 
     file_types = ['cell_info', 'feature_info', 'raw_counts']
     filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
@@ -160,10 +166,10 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_pref
     adata = ad.read(input_file)
 
     print("Processing cell/observation metadata...")
-    row_index_to_cas_cell_index = dump_cell_info(adata, cell_filename, cas_cell_index_start)
+    row_index_to_cas_cell_index = dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
     # dump out feature info -- feature_id is index (12 columns)
     print("Processing feature/gene/variable metadata...")
-    col_index_to_cas_feature_index = dump_feature_info(adata, feature_filename, cas_feature_index_start)
+    col_index_to_cas_feature_index = dump_feature_info(adata, feature_filename, cas_feature_index_start, ingest_id)
 
     print("Processing core data...")
     # recode the indexes to be the indexes of obs/var or should obs/var include these indices?
