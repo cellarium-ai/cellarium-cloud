@@ -171,11 +171,17 @@ def dump_ingest_info(adata, filename, ingest_id):
     parsed_schema = parse_schema(schema)
 
     def sanitize_uns():
+        """
+        AnnData `uns` sometimes contains numpy arrays which the json library does not know how to serialize.
+        Be on the lookout for these and if we find any convert them to regular Python arrays.
+        :return: `uns` sanitized of numpy `ndarray`s.
+        """
         ret = {}
         for k, v in adata.uns.items():
             if isinstance(v, (np.ndarray,)):
                 v = v.tolist()
             ret[k] = v
+        return ret
 
     def ingest_generator():
         yield {
