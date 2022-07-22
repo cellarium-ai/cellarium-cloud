@@ -61,7 +61,7 @@ def create_bigquery_objects(client, project, dataset):
                      bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
                      # TODO get direct JSON metadata loading working
                      # bigquery.SchemaField("uns_metadata", "JSON", mode="REQUIRED"),
-                     bigquery.SchemaField("uns_metadata", "JSON", mode="REQUIRED"),
+                     bigquery.SchemaField("uns_metadata", "STRING", mode="REQUIRED"),
                      bigquery.SchemaField("ingest_timestamp", "TIMESTAMP", mode="NULLABLE"),
                  ],
                  []
