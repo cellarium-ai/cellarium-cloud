@@ -170,22 +170,24 @@ def dump_ingest_info(adata, filename, ingest_id):
 
     parsed_schema = parse_schema(schema)
 
-    def sanitize_uns():
-        """
-        AnnData `uns` sometimes contains numpy arrays which the json library does not know how to serialize.
-        Be on the lookout for these and if we find any convert them to regular Python arrays.
-        :return: `uns` sanitized of numpy `ndarray`s.
-        """
-        ret = {}
-        for k, v in adata.uns.items():
-            if isinstance(v, (np.ndarray,)):
-                v = v.tolist()
-            ret[k] = v
-        return ret
+    # `uns` metadata is contained in a dict-like `OverloadedDict` type which does not offer a nice `tojson` method.
+    # In practice there are often numpy value types embedded within `uns` which the `json` library does not handle
+    # appropriately by default, hence the custom encoder class below.
+    # https://stackoverflow.com/a/49677241
+    class NumpyEncoder(json.JSONEncoder):
+        """ Special json encoder for numpy types """
+        def default(self, obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            return json.JSONEncoder.default(self, obj)
 
     def ingest_generator():
         yield {
-            u'uns_metadata': json.dumps(sanitize_uns()),
+            u'uns_metadata': json.dumps(adata.uns.data, cls=NumpyEncoder),
             u'cas_ingest_id': ingest_id,
             u'ingest_timestamp': None
         }
