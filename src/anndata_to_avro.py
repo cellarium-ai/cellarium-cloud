@@ -190,24 +190,29 @@ def confirm_output_files_do_not_exist(filenames):
 # https://stackoverflow.com/a/3431838
 def md5(filename):
     hash_md5 = hashlib.md5()
+    chunks = 0
+    progress_chunks = 2 ** 18
     with open(filename, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
+            chunks += 1
             hash_md5.update(chunk)
+            if chunks % progress_chunks == 0:
+                print(f"    {chunks / progress_chunks} GiB...")
     return hash_md5.hexdigest()
 
 
 def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix):
     avro_prefix = "cas" if not avro_prefix else avro_prefix
-    print(f"Hashing input AnnData file '{input_file}'...")
-    # This will look like 'cas-ingest-00d00dad'
+    print(f"Hashing input AnnData file '{input_file}' to generate ingest id...")
     ingest_id = f'cas-ingest-{md5(input_file)[:8]}'
+    print(f"Generated ingest id '{ingest_id}'.")
 
     file_types = ['ingest_info', 'cell_info', 'feature_info', 'raw_counts']
     filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
     confirm_output_files_do_not_exist(filenames)
     (ingest_filename, cell_filename, feature_filename, raw_counts_filename) = filenames
 
-    print("Loading data...")
+    print(f"Loading input AnnData file '{input_file}'...")
     adata = ad.read(input_file)
 
     print("Processing ingest metadata...")
