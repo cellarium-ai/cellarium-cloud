@@ -170,9 +170,16 @@ def dump_ingest_info(adata, filename, ingest_id):
 
     parsed_schema = parse_schema(schema)
 
+    def sanitize_uns():
+        ret = {}
+        for k, v in adata.uns.items():
+            if isinstance(v, (np.ndarray,)):
+                v = v.tolist()
+            ret[k] = v
+
     def ingest_generator():
         yield {
-            u'uns_metadata': json.dumps(adata.uns.data),
+            u'uns_metadata': json.dumps(sanitize_uns()),
             u'cas_ingest_id': ingest_id,
             u'ingest_timestamp': None
         }
