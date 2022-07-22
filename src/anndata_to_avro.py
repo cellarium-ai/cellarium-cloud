@@ -87,6 +87,25 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
             {'name': 'cas_cell_index', 'type': 'int'},
             {'name': 'original_cell_id', 'type': 'string'},
             {'name': 'cell_type', 'type': 'string'},
+            # {'name': 'obs_metadata', 'type': {'type': 'string', 'sqlType': 'JSON'}},
+            #
+            # https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#extract_json_data_from_avro_data
+            # https://cloud.google.com/bigquery/docs/reference/standard-sql/json-data#use_a_batch_load_job
+            #
+            # It would be great to store JSON-formatted metadata into a JSON column rather than a string column. But
+            # despite what the documentation above says I see "Unsupported field type: JSON" errors like the following
+            # using either the Python API or `bq load` when the CAS tables have JSON metadata fields:
+            #
+            # Traceback (most recent call last):
+            #   File "/blah/gitrepos/cell-annotation-service-pilot/src/load_dataset.py", line 193, in <module>
+            #     process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix, args.force_bq_append)
+            #   File "/blah/gitrepos/cell-annotation-service-pilot/src/load_dataset.py", line 164, in process
+            #     load_job.result()  # Waits for the job to complete.
+            #   File "/blah/gitrepos/cell-annotation-service-pilot/venv/lib/python3.10/site-packages/google/cloud/bigquery/job/base.py", line 728, in result
+            #     return super(_AsyncJob, self).result(timeout=timeout, **kwargs)
+            #   File "/blah/gitrepos/cell-annotation-service-pilot/venv/lib/python3.10/site-packages/google/api_core/future/polling.py", line 137, in result
+            #     raise self._exception
+            # google.api_core.exceptions.BadRequest: 400 Unsupported field type: JSON
             {'name': 'obs_metadata', 'type': 'string'},
             {'name': 'cas_ingest_id', 'type': 'string'},
         ]
@@ -130,6 +149,8 @@ def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
             {'name': 'cas_feature_index', 'type': 'int'},
             {'name': 'original_feature_id', 'type': 'string'},
             {'name': 'feature_name', 'type': 'string'},
+            # See remarks at `dump_cell_info` regarding BQ JSON field issues.
+            # {'name': 'var_metadata', 'type': {'type': 'string', 'sqlType': 'JSON'}},
             {'name': 'var_metadata', 'type': 'string'},
             {'name': 'cas_ingest_id', 'type': 'string'},
         ]
@@ -163,6 +184,8 @@ def dump_ingest_info(adata, filename, ingest_id):
         'type': 'record',
         'fields': [
             {'name': 'cas_ingest_id', 'type': 'string'},
+            # See remarks at `dump_cell_info` regarding BQ JSON field issues.
+            # {'name': 'uns_metadata', 'type': {'type': 'string', 'sqlType': 'JSON'}},
             {'name': 'uns_metadata', 'type': 'string'},
             {'name': 'ingest_timestamp', 'type': ['null', 'long'], 'logicalType': ['null', 'timestamp-millis']},
         ]
