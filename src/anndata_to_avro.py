@@ -6,6 +6,7 @@ import anndata as ad
 import argparse
 from fastavro import writer, parse_schema
 import hashlib
+import json
 import numpy as np
 import os
 import time
@@ -15,7 +16,7 @@ def current_milli_time():
     return round(time.time() * 1000)
 
 
-def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
+def write_avro(generator, parsed_schema, filename, progress_batch_size=1000):
     start = current_milli_time()
     with open(filename, 'a+b') as out:
         records = []
@@ -154,6 +155,31 @@ def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
     return col_index_to_cas_feature_index
 
 
+def dump_ingest_info(adata, filename, ingest_id):
+    schema = {
+        'doc': 'CAS Ingest Info',
+        'namespace': 'cas',
+        'name': 'IngestInfo',
+        'type': 'record',
+        'fields': [
+            {'name': 'cas_ingest_id', 'type': 'string'},
+            {'name': 'uns_metadata', 'type': 'string'},
+            {'name': 'ingest_timestamp', 'type': ['null', 'long'], 'logicalType': ['null', 'timestamp-millis']},
+        ]
+    }
+
+    parsed_schema = parse_schema(schema)
+
+    def ingest_generator():
+        yield {
+            u'uns_metadata': json.dumps(adata.uns.data),
+            u'cas_ingest_id': ingest_id,
+            u'ingest_timestamp': None
+        }
+
+    write_avro(ingest_generator, parsed_schema, filename)
+
+
 def confirm_output_files_do_not_exist(filenames):
     existing = list(filter(lambda f: os.path.exists(f), filenames))
     if len(existing) > 0:
@@ -176,17 +202,20 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_pref
     # This will look like 'cas-ingest-00d00dad'
     ingest_id = f'cas-ingest-{md5(input_file)[:8]}'
 
-    file_types = ['cell_info', 'feature_info', 'raw_counts']
+    file_types = ['ingest_info', 'cell_info', 'feature_info', 'raw_counts']
     filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in file_types]
     confirm_output_files_do_not_exist(filenames)
-    (cell_filename, feature_filename, raw_counts_filename) = filenames
+    (ingest_filename, cell_filename, feature_filename, raw_counts_filename) = filenames
 
     print("Loading data...")
     adata = ad.read(input_file)
 
+    print("Processing ingest metadata...")
+    dump_ingest_info(adata, ingest_filename, ingest_id)
+
     print("Processing cell/observation metadata...")
     row_index_to_cas_cell_index = dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
-    # dump out feature info -- feature_id is index (12 columns)
+
     print("Processing feature/gene/variable metadata...")
     col_index_to_cas_feature_index = dump_feature_info(adata, feature_filename, cas_feature_index_start, ingest_id)
 

@@ -59,7 +59,8 @@ def create_bigquery_objects(client, project, dataset):
     create_table(client, project, dataset, "cas_ingest_info",
                  [
                      bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
-                     bigquery.SchemaField("ingest_timestamp", "TIMESTAMP", mode="REQUIRED"),
+                     bigquery.SchemaField("uns_metadata", "STRING", mode="REQUIRED"),
+                     bigquery.SchemaField("ingest_timestamp", "TIMESTAMP", mode="NULLABLE"),
                  ],
                  []
                  )
@@ -100,13 +101,13 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     client = bigquery.Client(project=project)
     create_bigquery_objects(client, project, dataset)
 
-    input_file_types = ['cell_info', 'feature_info', 'raw_counts']
+    input_file_types = ['ingest_info', 'cell_info', 'feature_info', 'raw_counts']
     input_filenames = [f'{avro_prefix}_{file_type}.avro' for file_type in input_file_types]
     confirm_input_files_exist(input_filenames)
-    cell_filename, feature_filename, raw_counts_filename = input_filenames
+    ingest_filename, cell_filename, feature_filename, raw_counts_filename = input_filenames
 
-    # Grab the `cas_ingest_id` from the first record in the cell file.
-    with open(cell_filename, 'rb') as f:
+    # Grab the `cas_ingest_id` from the ingest file.
+    with open(ingest_filename, 'rb') as f:
         reader = fastavro.reader(f)
         ingest_id = next(reader)['cas_ingest_id']
 
@@ -117,13 +118,6 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     # We do not expect the query above to return any rows as this AnnData file should not have been previously ingested.
     for row in job.result():
         raise ValueError(f"Found previous ingest of '{ingest_id}' at {str(row['ts'])}, exiting")
-
-    print("Recording ingest")
-    # noinspection SqlResolve
-    query = f"""insert into `{dataset}.cas_ingest_info` (cas_ingest_id, ingest_timestamp) """ + \
-            f"""values("{ingest_id}", CURRENT_TIMESTAMP())"""
-    job = client.query(query)
-    job.result()
 
     # noinspection SqlResolve
     query = f"""select table_name, total_rows from `{dataset}.INFORMATION_SCHEMA.PARTITIONS` where total_rows > 0"""
@@ -145,6 +139,7 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     staged_files = []
     gcs_prefix = gcs_prefix.rstrip('/')
     pairs = [
+        ("ingest_info", ingest_filename),
         ("cell_info", cell_filename),
         ("feature_info", feature_filename),
         ("raw_count_matrix", raw_counts_filename)
@@ -172,6 +167,13 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
 
     for f in staged_files:
         unstage_file(f)
+
+    print("Updating ingest timestamp")
+    # noinspection SqlResolve
+    query = f"""UPDATE `{dataset}.cas_ingest_info` SET ingest_timestamp = CURRENT_TIMESTAMP() """ +\
+            f"""WHERE cas_ingest_id = "{ingest_id}" """
+    job = client.query(query)
+    job.result()
 
     print("Done.")
 

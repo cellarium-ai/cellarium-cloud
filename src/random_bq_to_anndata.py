@@ -8,11 +8,12 @@ from scipy.sparse import coo_matrix
 
 
 class Cell:
-    def __init__(self, cas_cell_index, original_cell_id, cell_type, obs_metadata):
+    def __init__(self, cas_cell_index, original_cell_id, cell_type, obs_metadata, ingest_id):
         self.cas_cell_index = cas_cell_index
         self.original_cell_id = original_cell_id
         self.cell_type = cell_type
         self.obs_metadata = obs_metadata
+        self.ingest_id = ingest_id
 
 
 class Feature:
@@ -52,7 +53,7 @@ def get_features(project, dataset, client):
 # cas_cell_index
 def get_cells(project, dataset, client, cell_ids):
     in_clause = f" cas_cell_index IN ({','.join(map(str, cell_ids))})"
-    sql = "SELECT cas_cell_index, original_cell_id, cell_type, obs_metadata FROM " + \
+    sql = "SELECT cas_cell_index, original_cell_id, cell_type, obs_metadata, cas_ingest_id FROM " + \
           f"`{project}.{dataset}.cas_cell_info` WHERE {in_clause} ORDER BY cas_cell_index"
     query = client.query(sql)
     cells = []
@@ -60,8 +61,20 @@ def get_cells(project, dataset, client, cell_ids):
         cells.append(Cell(row["cas_cell_index"],
                           row["original_cell_id"],
                           row["cell_type"],
-                          row["obs_metadata"]))
+                          row["obs_metadata"],
+                          row["cas_ingest_id"]))
     return cells
+
+
+def get_ingest_info(project, dataset, client, ingest_ids):
+    ids = ', '.join([f'"{i}"' for i in ingest_ids])
+    sql = f"""SELECT cas_ingest_id, uns_metadata FROM `{project}.{dataset}.cas_ingest_info` WHERE """ + \
+          f"""cas_ingest_id IN ({ids})"""
+
+    info = {}
+    for row in client.query(sql):
+        info[row['cas_ingest_id']] = row['uns_metadata']
+    return info
 
 
 def get_matrix_data(project, dataset, client, random_cell_ids):
@@ -75,7 +88,7 @@ def get_matrix_data(project, dataset, client, random_cell_ids):
     return query.result()
 
 
-def assign_metadata(dataframe, json_strings):
+def assign_obs_var_metadata(dataframe, json_strings):
     """
     :param dataframe: Pandas DataFrame into which metadata should be written back
     :param json_strings: An iterable of strings stringified JSON to be written back to the DataFrame
@@ -87,6 +100,12 @@ def assign_metadata(dataframe, json_strings):
     for key in jsons[0].keys():
         values = [j[key] for j in jsons]
         dataframe[key] = values
+
+
+def assign_uns_metadata(anndata, json_string):
+    json_dict = json.loads(json_string)
+    for k, v in json_dict.items():
+        anndata.uns[k] = v
 
 
 def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
@@ -124,8 +143,11 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     adata = ad.AnnData(counts.tocsr(copy=False))
     adata.obs.index = original_cell_ids
     adata.var.index = feature_ids
-    assign_metadata(adata.obs, [c.obs_metadata for c in cells])
-    assign_metadata(adata.var, [f.var_metadata for f in features])
+    assign_obs_var_metadata(adata.obs, [c.obs_metadata for c in cells])
+    assign_obs_var_metadata(adata.var, [f.var_metadata for f in features])
+    # TODO make this work with random subsets that span multiple ingested AnnData files
+    ingest_metadata = get_ingest_info(project, dataset, client, [cells[0].ingest_id])
+    assign_uns_metadata(adata, ingest_metadata[cells[0].ingest_id])
 
     # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
     # for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
