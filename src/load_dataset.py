@@ -56,13 +56,21 @@ def bucket_and_prefix(project, gcs_prefix):
 def create_bigquery_objects(client, project, dataset):
     create_dataset(client, project, dataset, "US")
 
+    create_table(client, project, dataset, "cas_load_status",
+                 [
+                     bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
+                     bigquery.SchemaField("cas_table_name", "STRING", mode="REQUIRED"),
+                     bigquery.SchemaField("load_timestamp", "TIMESTAMP", mode="NULLABLE"),
+                 ],
+                 []
+                 )
+
     create_table(client, project, dataset, "cas_ingest_info",
                  [
                      bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
                      # TODO get direct JSON metadata loading working
                      # bigquery.SchemaField("uns_metadata", "JSON", mode="REQUIRED"),
                      bigquery.SchemaField("uns_metadata", "STRING", mode="REQUIRED"),
-                     bigquery.SchemaField("ingest_timestamp", "TIMESTAMP", mode="NULLABLE"),
                  ],
                  []
                  )
@@ -117,25 +125,13 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
         reader = fastavro.reader(f)
         ingest_id = next(reader)['cas_ingest_id']
 
-    print("Checking for previous ingest")
-    # noinspection SqlResolve
-    query = f"""select ingest_timestamp as ts from `{dataset}.cas_ingest_info` where cas_ingest_id = "{ingest_id}" """
-    job = client.query(query)
-    # We do not expect the query above to return any rows as this AnnData file should not have been previously ingested.
-    for row in job.result():
-        raise ValueError(f"Found previous ingest of '{ingest_id}' at {str(row['ts'])}, exiting")
-
-    # noinspection SqlResolve
-    query = f"""select table_name, total_rows from `{dataset}.INFORMATION_SCHEMA.PARTITIONS` where total_rows > 0"""
-    job = client.query(query)
-    tables_with_data = [r[0] for r in list(job.result())]
-
     (bucket, object_prefix) = bucket_and_prefix(project, gcs_prefix)
 
     def stage_file(file_to_stage):
+        print(f"Staging '{file}' to '{gcs_prefix}/{file}'...")
         blob = bucket.blob(f'{object_prefix}/{file_to_stage}')
         blob.upload_from_filename(file_to_stage)
-        print(f"Staged '{file}' to '{gcs_prefix}/{file}'.")
+        print(f"Staged '{file}'.")
 
     def unstage_file(file_to_unstage):
         blob = bucket.blob(f'{object_prefix}/{file_to_unstage}')
@@ -155,9 +151,20 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     for table, file in pairs:
         table = f"cas_{table}"
         table_id = f'{project}.{dataset}.{table}'
+        load_table_id = f'{project}.{dataset}.cas_load_status'
 
-        if table in tables_with_data and not force_bq_append:
-            print(f"Table '{table_id}' contains data and `--force_bq_append` not specified, skipping load of '{file}'.")
+        # Check if this data needs to be loaded
+        # noinspection SqlResolve
+        print(f"Checking load status of table '{table_id}'...")
+        query = f"""SELECT COUNT(*) AS row_count FROM `{load_table_id}` """ + \
+                f"""WHERE cas_ingest_id = "{ingest_id}" AND cas_table_name = "{table}" """
+        job = client.query(query)
+        row_count = 0
+        for row in job.result():
+            row_count = row['row_count']
+
+        if row_count > 0:
+            print(f"'{table_id}' was already loaded, skipping.")
             continue
 
         stage_file(file)
@@ -167,19 +174,20 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
         load_job = client.load_table_from_uri(
             uri, table_id, job_config=job_config
         )  # Make an API request.
-        load_job.result()  # Waits for the job to complete.
-        destination_table = client.get_table(table_id)
-        print(f"{destination_table.num_rows} rows loaded into BigQuery table '{table_id}'.")
+        result = load_job.result()  # Waits for the job to complete.
+        print(f"{result.output_rows} rows loaded into BigQuery table '{table_id}'.")
+
+        # Record the load of this data
+        # noinspection SqlResolve
+        print(f"Recording '{table_id}' as loaded")
+        query = \
+            f"""INSERT INTO `{project}.{dataset}.cas_load_status`(cas_ingest_id, cas_table_name, load_timestamp)""" + \
+            f""" VALUES ("{ingest_id}", "{table}", CURRENT_TIMESTAMP()) """
+        job = client.query(query)
+        job.result()
 
     for f in staged_files:
         unstage_file(f)
-
-    print("Updating ingest timestamp")
-    # noinspection SqlResolve
-    query = f"""UPDATE `{dataset}.cas_ingest_info` SET ingest_timestamp = CURRENT_TIMESTAMP() """ +\
-            f"""WHERE cas_ingest_id = "{ingest_id}" """
-    job = client.query(query)
-    job.result()
 
     print("Done.")
 

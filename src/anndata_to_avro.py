@@ -5,6 +5,8 @@
 import anndata as ad
 import argparse
 from fastavro import writer, parse_schema
+from google.api_core.exceptions import NotFound
+from google.cloud import bigquery
 import hashlib
 import json
 import numpy as np
@@ -187,7 +189,6 @@ def dump_ingest_info(adata, filename, ingest_id):
             # See remarks at `dump_cell_info` regarding BQ JSON field issues.
             # {'name': 'uns_metadata', 'type': {'type': 'string', 'sqlType': 'JSON'}},
             {'name': 'uns_metadata', 'type': 'string'},
-            {'name': 'ingest_timestamp', 'type': ['null', 'long'], 'logicalType': ['null', 'timestamp-millis']},
         ]
     }
 
@@ -255,7 +256,51 @@ def md5(filename):
     return hash_md5.hexdigest()
 
 
-def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix):
+def find_max_index(client, project, dataset, table, column):
+    dataset_id = f'{project}.{dataset}'
+    table_id = f'{dataset_id}.{table}'
+    try:
+        _ = client.get_dataset(dataset_id)
+    except NotFound:
+        raise ValueError(f"Dataset '{dataset_id}' not found, required to find max index in '{table_id}'.")
+
+    try:
+        _ = client.get_table(table_id)
+    except NotFound:
+        raise ValueError(f"Table '{table_id}' not found, required to find max index.")
+
+    query = f"""SELECT MAX({column}) AS max_id FROM `{dataset_id}.{table}`"""
+    # Default to zero if no rows found.
+    max_id = 0
+    job = client.query(query)
+    for row in job.result():
+        max_id = row['max_id']
+
+    if max_id is None:
+        max_id = 0
+        
+    return max_id
+
+
+def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix, project, dataset):
+    bq_client = None
+    if cas_cell_index_start is None:
+        bq_client = bigquery.Client(project=project)
+        print("Looking for max id in `cas_cell_info`...")
+        cas_cell_index_start = find_max_index(bq_client, project, dataset, "cas_cell_info", "cas_cell_index")
+        print(f"Found max id {cas_cell_index_start}")
+        if cas_cell_index_start != 0:
+            cas_cell_index_start += 1
+
+    if cas_feature_index_start is None:
+        if not bq_client:
+            bq_client = bigquery.Client(project=project)
+        print("Looking for max id in `cas_feature_info`...")
+        cas_feature_index_start = find_max_index(bq_client, project, dataset, "cas_feature_info", "cas_feature_index")
+        print(f"Found max id {cas_feature_index_start}")
+        if cas_feature_index_start != 0:
+            cas_feature_index_start += 1
+
     avro_prefix = "cas" if not avro_prefix else avro_prefix
     print(f"Hashing input AnnData file '{input_file}' to generate ingest id...")
     ingest_id = f'cas-ingest-{md5(input_file)[:8]}'
@@ -299,16 +344,28 @@ if __name__ == '__main__':
     parser.add_argument('--avro_prefix', type=str,
                         help='Prefix to use for output Avro files, e.g. <avro_prefix>_cell_info.avro etc',
                         required=False)
-    parser.add_argument('--cas_cell_index_start', type=int, help='starting number for cell index', required=False,
-                        default=0)
-    parser.add_argument('--cas_feature_index_start', type=int, help='starting number for feature index', required=False,
-                        default=0)
+    parser.add_argument('--cas_cell_index_start', type=int, help='starting number for cell index', required=False)
+    parser.add_argument('--cas_feature_index_start', type=int, help='starting number for feature index', required=False)
     parser.add_argument('--flush_batch_size', type=int, help='max size of Avro batches to flush', required=False)
+    parser.add_argument('--project', type=str, help='BigQuery Project', required=False)
+    parser.add_argument('--dataset', type=str, help='BigQuery Dataset', required=False)
 
     args = parser.parse_args()
 
-    global flush_batch_size
+    errors = []
+    if not args.cas_cell_index_start and not (args.project and args.dataset):
+        error = "if `--cas_cell_index_start` is not specified, --project and --dataset required to find start value"
+        errors.append(error)
 
+    if not args.cas_feature_index_start and not (args.project and args.dataset):
+        error = "if `--cas_feature_index_start` is not specified, --project and --dataset required to find start value"
+        errors.append(error)
+
+    if errors:
+        raise ValueError('\n\n'.join(errors))
+
+    global flush_batch_size
     flush_batch_size = 10000 if not args.flush_batch_size else args.flush_batch_size
 
-    process(args.input, args.cas_cell_index_start, args.cas_feature_index_start, args.avro_prefix)
+    process(args.input, args.cas_cell_index_start, args.cas_feature_index_start, args.avro_prefix,
+            args.project, args.dataset)
