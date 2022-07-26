@@ -218,7 +218,7 @@ def dump_ingest_info(adata, filename, ingest_id):
         for k, uncapped_v in adata.uns.data.items():
             j = json.dumps(uncapped_v, cls=NumpyEncoder)
             if len(j) > metadata_limit:
-                print(f"AnnData unstructured data (`uns`) has a key `{k}` whose JSON value would have size {len(j)}.")
+                print(f"AnnData unstructured data `uns` has a key `{k}` whose value as JSON would have size {len(j)}.")
                 print("Values this large can cause extraction to fail so this value is being nulled out.")
                 v = None
             else:
