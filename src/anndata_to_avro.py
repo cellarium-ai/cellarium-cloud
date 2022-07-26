@@ -213,7 +213,7 @@ def dump_ingest_info(adata, filename, ingest_id):
         # a `None` value in these cases.
         metadata_limit = 2 ** 20
         uns = {}
-        for k, uncapped_v in adata.uns.data.items:
+        for k, uncapped_v in adata.uns.data.items():
             j = json.dumps(uncapped_v, cls=NumpyEncoder)
             v = None if len(j) > metadata_limit else v
             uns[k] = v
