@@ -215,7 +215,7 @@ def dump_ingest_info(adata, filename, ingest_id):
         uns = {}
         for k, uncapped_v in adata.uns.data.items():
             j = json.dumps(uncapped_v, cls=NumpyEncoder)
-            v = None if len(j) > metadata_limit else v
+            v = None if len(j) > metadata_limit else uncapped_v
             uns[k] = v
 
         yield {
