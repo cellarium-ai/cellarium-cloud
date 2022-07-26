@@ -209,8 +209,17 @@ def dump_ingest_info(adata, filename, ingest_id):
             return json.JSONEncoder.default(self, obj)
 
     def ingest_generator():
+        # Some `uns` metadata has extremely large values that frustrate extract. Cap the allowed size and substitute
+        # a `None` value in these cases.
+        metadata_limit = 2 ** 20
+        uns = {}
+        for k, uncapped_v in adata.uns.data.items:
+            j = json.dumps(uncapped_v, cls=NumpyEncoder)
+            v = None if len(j) > metadata_limit else v
+            uns[k] = v
+
         yield {
-            u'uns_metadata': json.dumps(adata.uns.data, cls=NumpyEncoder),
+            u'uns_metadata': json.dumps(uns, cls=NumpyEncoder),
             u'cas_ingest_id': ingest_id,
             u'ingest_timestamp': None
         }
