@@ -209,13 +209,20 @@ def dump_ingest_info(adata, filename, ingest_id):
             return json.JSONEncoder.default(self, obj)
 
     def ingest_generator():
-        # Some `uns` metadata has extremely large values that frustrate extract. Cap the allowed size and substitute
-        # a `None` value in these cases.
+        # Some `uns` metadata has extremely large values that frustrate extract. Cap the allowed size of values and
+        # substitute a `None` if values exceed the cap. This particular limit of 1 MiB was chosen somewhat arbitrarily;
+        # it's plenty big but allows extracting the Tabula Sapiens endothlelial dataset that could not be extracted
+        # without imposing this limit.
         metadata_limit = 2 ** 20
         uns = {}
         for k, uncapped_v in adata.uns.data.items():
             j = json.dumps(uncapped_v, cls=NumpyEncoder)
-            v = None if len(j) > metadata_limit else uncapped_v
+            if len(j) > metadata_limit:
+                print(f"AnnData unstructured data (`uns`) has a key `{k}` whose JSON value would have size {len(j)}.")
+                print("Values this large can cause extraction to fail so this value is being nulled out.")
+                v = None
+            else:
+                v = uncapped_v
             uns[k] = v
 
         yield {
