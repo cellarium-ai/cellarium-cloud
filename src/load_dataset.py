@@ -56,21 +56,13 @@ def bucket_and_prefix(project, gcs_prefix):
 def create_bigquery_objects(client, project, dataset):
     create_dataset(client, project, dataset, "US")
 
-    create_table(client, project, dataset, "cas_load_status",
-                 [
-                     bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
-                     bigquery.SchemaField("cas_table_name", "STRING", mode="REQUIRED"),
-                     bigquery.SchemaField("load_timestamp", "TIMESTAMP", mode="NULLABLE"),
-                 ],
-                 []
-                 )
-
     create_table(client, project, dataset, "cas_ingest_info",
                  [
                      bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
                      # TODO get direct JSON metadata loading working
                      # bigquery.SchemaField("uns_metadata", "JSON", mode="REQUIRED"),
                      bigquery.SchemaField("uns_metadata", "STRING", mode="REQUIRED"),
+                     bigquery.SchemaField("ingest_timestamp", "TIMESTAMP", mode="NULLABLE"),
                  ],
                  []
                  )
@@ -111,7 +103,7 @@ def create_bigquery_objects(client, project, dataset):
                  )
 
 
-def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
+def process(project, dataset, avro_prefix, gcs_prefix):
     client = bigquery.Client(project=project)
     create_bigquery_objects(client, project, dataset)
 
@@ -151,21 +143,6 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
     for table, file in pairs:
         table = f"cas_{table}"
         table_id = f'{project}.{dataset}.{table}'
-        load_table_id = f'{project}.{dataset}.cas_load_status'
-
-        # Check if this data needs to be loaded
-        # noinspection SqlResolve
-        print(f"Checking load status of table '{table_id}'...")
-        query = f"""SELECT COUNT(*) AS row_count FROM `{load_table_id}` """ + \
-                f"""WHERE cas_ingest_id = "{ingest_id}" AND cas_table_name = "{table}" """
-        job = client.query(query)
-        row_count = 0
-        for row in job.result():
-            row_count = row['row_count']
-
-        if row_count > 0:
-            print(f"'{table_id}' was already loaded, skipping.")
-            continue
 
         stage_file(file)
         staged_files.append(file)
@@ -176,15 +153,6 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
         )  # Make an API request.
         result = load_job.result()  # Waits for the job to complete.
         print(f"{result.output_rows} rows loaded into BigQuery table '{table_id}'.")
-
-        # Record the load of this data
-        # noinspection SqlResolve
-        print(f"Recording '{table_id}' as loaded")
-        query = \
-            f"""INSERT INTO `{project}.{dataset}.cas_load_status`(cas_ingest_id, cas_table_name, load_timestamp)""" + \
-            f""" VALUES ("{ingest_id}", "{table}", CURRENT_TIMESTAMP()) """
-        job = client.query(query)
-        job.result()
 
     for f in staged_files:
         unstage_file(f)
@@ -199,9 +167,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, help='BigQuery Dataset', required=True)
     parser.add_argument('--avro_prefix', type=str, help='Prefix with which Avro files are named', required=True)
     parser.add_argument('--gcs_prefix', type=str, help='GCS prefix to which Avro files should be staged', required=True)
-    parser.add_argument('--force_bq_append', type=bool,
-                        help='Append data to BigQuery tables even if data some data is already loaded', required=False)
 
     args = parser.parse_args()
 
-    process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix, args.force_bq_append)
+    process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix)

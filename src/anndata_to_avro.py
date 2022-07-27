@@ -189,6 +189,7 @@ def dump_ingest_info(adata, filename, ingest_id):
             # See remarks at `dump_cell_info` regarding BQ JSON field issues.
             # {'name': 'uns_metadata', 'type': {'type': 'string', 'sqlType': 'JSON'}},
             {'name': 'uns_metadata', 'type': 'string'},
+            {'name': 'ingest_timestamp', 'type': ['null', 'long'], 'logicalType': ['null', 'timestamp-millis']},
         ]
     }
 
@@ -270,15 +271,16 @@ def find_max_index(client, project, dataset, table, column):
         raise ValueError(f"Table '{table_id}' not found, required to find max index.")
 
     query = f"""SELECT MAX({column}) AS max_id FROM `{dataset_id}.{table}`"""
-    # Default to zero if no rows found.
-    max_id = 0
+
+    max_id = None
     job = client.query(query)
     for row in job.result():
         max_id = row['max_id']
 
+    # Default to 0 if no max id found. Even if the table is empty the query above will return a row with a null id.
     if max_id is None:
         max_id = 0
-        
+
     return max_id
 
 
