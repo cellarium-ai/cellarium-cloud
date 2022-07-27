@@ -277,31 +277,27 @@ def find_max_index(client, project, dataset, table, column):
     for row in job.result():
         max_id = row['max_id']
 
-    # Default to 0 if no max id found. Even if the table is empty the query above will return a row with a null id.
+    # Default to -1 if no max id found. If the table is empty the query above will return a row with a null id.
     if max_id is None:
-        max_id = 0
+        max_id = -1
 
     return max_id
 
 
 def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix, project, dataset):
-    bq_client = None
+    client = None
     if cas_cell_index_start is None:
-        bq_client = bigquery.Client(project=project)
+        client = bigquery.Client(project=project)
         print("Looking for max id in `cas_cell_info`...")
-        cas_cell_index_start = find_max_index(bq_client, project, dataset, "cas_cell_info", "cas_cell_index")
-        print(f"Found max id {cas_cell_index_start}")
-        if cas_cell_index_start != 0:
-            cas_cell_index_start += 1
+        cas_cell_index_start = find_max_index(client, project, dataset, "cas_cell_info", "cas_cell_index") + 1
+        print(f"cas_cell_index_start will be {cas_cell_index_start}")
 
     if cas_feature_index_start is None:
-        if not bq_client:
-            bq_client = bigquery.Client(project=project)
+        if not client:
+            client = bigquery.Client(project=project)
         print("Looking for max id in `cas_feature_info`...")
-        cas_feature_index_start = find_max_index(bq_client, project, dataset, "cas_feature_info", "cas_feature_index")
-        print(f"Found max id {cas_feature_index_start}")
-        if cas_feature_index_start != 0:
-            cas_feature_index_start += 1
+        cas_feature_index_start = find_max_index(client, project, dataset, "cas_feature_info", "cas_feature_index") + 1
+        print(f"cas_feature_index_start will be {cas_feature_index_start}")
 
     avro_prefix = "cas" if not avro_prefix else avro_prefix
     print(f"Hashing input AnnData file '{input_file}' to generate ingest id...")
