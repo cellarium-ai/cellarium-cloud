@@ -355,11 +355,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     errors = []
-    if not args.cas_cell_index_start and not (args.project and args.dataset):
+    if args.cas_cell_index_start is None and not (args.project and args.dataset):
         error = "if `--cas_cell_index_start` is not specified, --project and --dataset required to find start value"
         errors.append(error)
 
-    if not args.cas_feature_index_start and not (args.project and args.dataset):
+    if args.cas_feature_index_start is None and not (args.project and args.dataset):
         error = "if `--cas_feature_index_start` is not specified, --project and --dataset required to find start value"
         errors.append(error)
 
