@@ -159,8 +159,12 @@ def process(project, dataset, avro_prefix, gcs_prefix):
 
     print("Updating ingest timestamp")
     # noinspection SqlResolve
-    query = f"""UPDATE `{dataset}.cas_ingest_info` SET ingest_timestamp = CURRENT_TIMESTAMP() """ + \
-            f"""WHERE cas_ingest_id = "{ingest_id}" """
+    query = f"""
+
+    UPDATE `{dataset}.cas_ingest_info` SET ingest_timestamp = CURRENT_TIMESTAMP()
+        WHERE cas_ingest_id = "{ingest_id}"
+
+"""
     job = client.query(query)
     job.result()
 

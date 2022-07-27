@@ -82,8 +82,8 @@ def get_matrix_data(project, dataset, client, cells):
     in_clause = f" cas_cell_index IN ({','.join(str_cell_ids)})"
 
     # This data is going into minibatches, which if they stay "mini" (say <= 1024) should not present scaling issues
-    # with this "in clause" query structure. However if the number of cells to be selected grows larger reason we may
-    # want to create a temp table of the cell_ids and then JOIN on it instead.
+    # with this "in clause" query structure. However, if the number of cells to be selected does grow larger we may want
+    # to create a temp table of the cell_ids and then JOIN on it instead.
     sql = f"""
 
     SELECT cas_cell_index, cas_feature_index, raw_counts AS count FROM
