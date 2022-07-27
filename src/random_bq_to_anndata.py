@@ -28,8 +28,10 @@ class Feature:
 # Returns an array of <num_cells> cells pulled at random from the cas_cell_info table.
 def get_random_cells(project, dataset, client, num_cells):
     query = f"""
+
         SELECT cas_cell_index, original_cell_id, cell_type, obs_metadata, cas_ingest_id, rand() AS rand_val FROM
-        `{project}.{dataset}.cas_cell_info` ORDER BY rand_val LIMIT {num_cells}
+            `{project}.{dataset}.cas_cell_info` ORDER BY rand_val LIMIT {num_cells}
+
     """
 
     result = client.query(query)
@@ -41,15 +43,16 @@ def get_random_cells(project, dataset, client, num_cells):
              cas_ingest_id=row["cas_ingest_id"])
         for row in result
     ]
-    print(f"Random IDs: {[c.cas_cell_index for c in cells]}")
     return cells
 
 
 # Retrieve a list of all feature objects, ordered by cas_feature_index
 def get_features(project, dataset, client, ingest_id):
     sql = f"""
-    SELECT cas_feature_index, original_feature_id, feature_name, var_metadata FROM 
-    `{project}.{dataset}.cas_feature_info` WHERE cas_ingest_id = "{ingest_id}" ORDER BY cas_feature_index
+
+    SELECT cas_feature_index, original_feature_id, feature_name, var_metadata FROM
+        `{project}.{dataset}.cas_feature_info` WHERE cas_ingest_id = "{ingest_id}" ORDER BY cas_feature_index
+
     """
 
     query = client.query(sql)
@@ -62,25 +65,31 @@ def get_features(project, dataset, client, ingest_id):
     return features
 
 
-def get_ingest_info(project, dataset, client, ingest_ids):
-    ids = ', '.join([f'"{i}"' for i in ingest_ids])
-    sql = f"""SELECT cas_ingest_id, uns_metadata FROM `{project}.{dataset}.cas_ingest_info` WHERE """ + \
-          f"""cas_ingest_id IN ({ids})"""
+def get_ingest_info(project, dataset, client, ingest_id):
+    sql = f"""
 
-    info = {}
+    SELECT cas_ingest_id, uns_metadata FROM `{project}.{dataset}.cas_ingest_info` WHERE
+        cas_ingest_id = "{ingest_id}"
+
+    """
+
     for row in client.query(sql):
-        info[row['cas_ingest_id']] = row['uns_metadata']
-    return info
+        return row['uns_metadata']
 
 
 def get_matrix_data(project, dataset, client, cells):
     str_cell_ids = map(str, [c.cas_cell_index for c in cells])
     in_clause = f" cas_cell_index IN ({','.join(str_cell_ids)})"
 
-    # If the number of cells to be selected becomes large, we may want to create a temp table of the cell_ids and then
-    # JOIN on it instead of using an IN clause.
-    sql = "SELECT cas_cell_index, cas_feature_index, raw_counts AS count FROM " + \
-          f"`{project}.{dataset}.cas_raw_count_matrix` WHERE {in_clause} ORDER BY cas_cell_index, cas_feature_index"
+    # This data is going into minibatches, which if they stay "mini" (say <= 1024) should not present scaling issues
+    # with this "in clause" query structure. However if the number of cells to be selected grows larger reason we may
+    # want to create a temp table of the cell_ids and then JOIN on it instead.
+    sql = f"""
+
+    SELECT cas_cell_index, cas_feature_index, raw_counts AS count FROM
+        `{project}.{dataset}.cas_raw_count_matrix` WHERE {in_clause} ORDER BY cas_cell_index, cas_feature_index
+
+    """
     query = client.query(sql)
     return query.result()
 
@@ -150,8 +159,8 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
         assign_obs_var_metadata(adata.obs, [c.obs_metadata for c in cells])
         assign_obs_var_metadata(adata.var, [f.var_metadata for f in features])
 
-        ingest_metadata = get_ingest_info(project, dataset, client, [cells[0].cas_ingest_id])
-        assign_uns_metadata(adata, ingest_metadata[cells[0].cas_ingest_id])
+        ingest_metadata = get_ingest_info(project, dataset, client, ingest_id)
+        assign_uns_metadata(adata, ingest_metadata)
 
         # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
         # for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
