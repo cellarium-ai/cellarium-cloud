@@ -21,7 +21,7 @@ And a larger data set
 
 First convert from AnnData to the Avro format that will be used to load BigQuery. The `anndata_to_avro.py` script needs
 to know the appropriate values to use for cell and feature indexes. These can either be specified explicitly as command
-line arguments, or the script can be pointed to an existing dataset / project to figure those out itself:
+line arguments, or the script can be pointed to an existing dataset / project to figure those out itself.
 
 With explicit start values:
 
@@ -64,10 +64,12 @@ This step:
 This will randomly get a specified number of cells' data from your BigQuery dataset:
 
 ```
-python src/random_bq_to_anndata.py --project <google-project> --dataset <dataset-name> --num_cells <num> output_file_prefix <output prefix>
+python src/random_bq_to_anndata.py --project <google-project> --dataset <dataset-name> --num_cells <num> --output_file_prefix <output prefix>
 ```
 
-One AnnData file will be written for as many ingests (input AnnData files) as correspond to the randomly selected cells.
-Files will have names like `<output prefix>-<ingest id>.h5ad`. Each file will contain only the features associated with
-that particular ingest, and only the cells from the random subset corresponding to that ingest. Features and cells will 
-be assigned `var` and `obs` metadata respectively, and the overall AnnData file will have the original `uns` metadata.
+One AnnData file will be written for each ingest (input AnnData file) in which the randomly selected cells were loaded.
+e.g. if 100 cells are randomly selected that were ingested from three separate AnnData files, three output files will be
+written. Files will have names like `<output prefix>-<ingest id>.h5ad`. Each file will contain only the features
+associated with that particular ingest, and only the sub-subset of cells from that ingest within the random subset.
+Features and cells will be assigned `var` and `obs` metadata respectively, and the overall AnnData file will have its
+original `uns` metadata.
