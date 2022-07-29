@@ -25,7 +25,7 @@ class Feature:
         self.var_metadata = var_metadata
 
 
-# Returns an array of <num_cells> cells pulled at random from the cas_cell_info table.
+# Returns an array of <num_cells> cells pulled at random from the cas_cell_info table, sorted by `cas_cell_index`.
 def get_random_cells(project, dataset, client, num_cells):
     query = f"""
 
@@ -43,6 +43,7 @@ def get_random_cells(project, dataset, client, num_cells):
              cas_ingest_id=row["cas_ingest_id"])
         for row in result
     ]
+    cells.sort(key=lambda c: c.cas_cell_index)
     return cells
 
 
@@ -143,7 +144,6 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
             feature_ids.append(feature.original_feature_id)
             cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
-        # Note that this method requires that the result set returned by get_random_cells be sorted by cas_cell_index
         matrix_data = get_matrix_data(project, dataset, client, cells)
 
         rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(matrix_data, cas_cell_index_to_row_num,
@@ -168,12 +168,12 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     print("Done.")
 
 
-def convert_matrix_data_to_coo_matrix_input_format(cell_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num):
+def convert_matrix_data_to_coo_matrix_input_format(matrix_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num):
     rows = []
     columns = []
     data = []
 
-    for row in cell_data:
+    for row in matrix_data:
         cas_cell_index = row["cas_cell_index"]
         cas_feature_index = row["cas_feature_index"]
         try:
