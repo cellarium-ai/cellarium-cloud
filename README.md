@@ -20,16 +20,16 @@ Create a virtual python environment:
     pip install tox
 ```
 
-To lint:
-
-```shell
-    tox -e lint
-```
-
 To run unit tests:
 
 ```shell
     tox -e unit
+```
+
+To lint:
+
+```shell
+    tox -e lint
 ```
 
 To automatically fix formatting issues:
