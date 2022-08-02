@@ -61,12 +61,12 @@ def confirm_input_files_exist(filenames):
         raise ValueError(f"Missing Avro files for loading to BigQuery: {', '.join(missing)}")
 
 
-def bucket_and_prefix(project, gcs_prefix):
+def bucket_and_prefix(project, gcs_path_prefix):
     """
     Extract a GCS bucket and object prefix from the specified GCS bucket + prefix.
     """
     client = storage.Client(project=project)
-    (bucket_name, object_prefix) = re.search(r"gs://([^/]+)/(.*)$", gcs_prefix).groups()
+    (bucket_name, object_prefix) = re.search(r"gs://([^/]+)/(.*)$", gcs_path_prefix).groups()
     bucket = client.bucket(bucket_name)
     return bucket, object_prefix.rstrip("/")
 
@@ -140,7 +140,7 @@ def create_bigquery_objects(client, project, dataset):
     )
 
 
-def process(project, dataset, avro_prefix, gcs_prefix):
+def process(project, dataset, avro_prefix, gcs_path_prefix):
     """
     Main method that drives the 5 high level steps of BigQuery data loading.
     """
@@ -157,10 +157,10 @@ def process(project, dataset, avro_prefix, gcs_prefix):
         reader = fastavro.reader(file)
         ingest_id = next(reader)["cas_ingest_id"]
 
-    (bucket, object_prefix) = bucket_and_prefix(project, gcs_prefix)
+    (bucket, object_prefix) = bucket_and_prefix(project, gcs_path_prefix)
 
     def stage_file(file_to_stage):
-        print(f"Staging '{file}' to '{gcs_prefix}/{file}'...")
+        print(f"Staging '{file}' to '{gcs_path_prefix}/{file}'...")
         blob = bucket.blob(f"{object_prefix}/{file_to_stage}")
         blob.upload_from_filename(file_to_stage)
         print(f"Staged '{file}'.")
@@ -168,10 +168,10 @@ def process(project, dataset, avro_prefix, gcs_prefix):
     def unstage_file(file_to_unstage):
         blob = bucket.blob(f"{object_prefix}/{file_to_unstage}")
         blob.delete()
-        print(f"Removed staged file '{gcs_prefix}/{file}'.")
+        print(f"Removed staged file '{gcs_path_prefix}/{file}'.")
 
     staged_files = []
-    gcs_prefix = gcs_prefix.rstrip("/")
+    gcs_path_prefix = gcs_path_prefix.rstrip("/")
     pairs = [
         ("ingest_info", ingest_filename),
         ("cell_info", cell_filename),
@@ -187,7 +187,7 @@ def process(project, dataset, avro_prefix, gcs_prefix):
         stage_file(file)
         staged_files.append(file)
 
-        uri = f"{gcs_prefix}/{file}"
+        uri = f"{gcs_path_prefix}/{file}"
         load_job = client.load_table_from_uri(uri, table_id, job_config=job_config)  # Make an API request.
         result = load_job.result()  # Waits for the job to complete.
         print(f"{result.output_rows} rows loaded into BigQuery table '{table_id}'.")
@@ -215,8 +215,8 @@ if __name__ == "__main__":
     parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
     parser.add_argument("--avro_prefix", type=str, help="Prefix with which Avro files are named", required=True)
-    parser.add_argument("--gcs_prefix", type=str, help="GCS prefix to which Avro files should be staged", required=True)
+    parser.add_argument("--gcs_path_prefix", type=str, help="GCS prefix to which Avro files should be staged", required=True)
 
     args = parser.parse_args()
 
-    process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix)
+    process(args.project, args.dataset, args.avro_prefix, args.gcs_path_prefix)

@@ -71,7 +71,7 @@ python src/casp/anndata_to_avro.py --input data/horizontal-cells-in-human-retina
 Continuing this example:
 
 ```
-python src/casp/load_dataset.py --project <google-project> --dataset <dataset-name> --avro_prefix retina --gcs_prefix <gcs-prefix-to-avro-files>
+python src/casp/load_dataset.py --project <google-project> --dataset <dataset-name> --avro_prefix retina --gcs_path_prefix <gcs-prefix-to-avro-files>
 ```
 
 All of these parameters are required.
@@ -79,7 +79,7 @@ All of these parameters are required.
 * `project` specifies the Google project id that will contain the BigQuery dataset.
 * `dataset` specifies the dataset name that will contain the BigQuery tables.
 * `avro_prefix` specifies the prefix used to name the output Avro from the AnnData conversion in the previous step.
-* `gcs_prefix` specifies the GCS prefix to which the Avro files should be staged for BigQuery ingestion.
+* `gcs_path_prefix` specifies the GCS prefix to which the Avro files should be staged for BigQuery ingestion.
 
 This step:
 

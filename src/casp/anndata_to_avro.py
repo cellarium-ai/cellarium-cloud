@@ -119,7 +119,7 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
             #
             # Traceback (most recent call last):
             #   File "/blah/gitrepos/cell-annotation-service-pilot/src/load_dataset.py", line 193, in <module>
-            #     process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix, args.force_bq_append)
+            #     process(args.project, args.dataset, args.avro_prefix, args.gcs_path_prefix, args.force_bq_append)
             #   File "/blah/gitrepos/cell-annotation-service-pilot/src/load_dataset.py", line 164, in process
             #     load_job.result()  # Waits for the job to complete.
             #   File "/blah/gitrepos/cell-annotation-service-pilot/venv/lib/python3.10/site-packages/google/cloud/bigquery/job/base.py", line 728, in result
