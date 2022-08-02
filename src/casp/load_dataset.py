@@ -215,7 +215,9 @@ if __name__ == "__main__":
     parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
     parser.add_argument("--avro_prefix", type=str, help="Prefix with which Avro files are named", required=True)
-    parser.add_argument("--gcs_path_prefix", type=str, help="GCS prefix to which Avro files should be staged", required=True)
+    parser.add_argument(
+        "--gcs_path_prefix", type=str, help="GCS prefix to which Avro files should be staged", required=True
+    )
 
     args = parser.parse_args()
 
