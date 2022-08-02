@@ -103,7 +103,7 @@ def create_bigquery_objects(client, project, dataset):
                  )
 
 
-def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
+def process(project, dataset, avro_prefix, gcs_prefix):
     client = bigquery.Client(project=project)
     create_bigquery_objects(client, project, dataset)
 
@@ -117,25 +117,13 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
         reader = fastavro.reader(f)
         ingest_id = next(reader)['cas_ingest_id']
 
-    print("Checking for previous ingest")
-    # noinspection SqlResolve
-    query = f"""select ingest_timestamp as ts from `{dataset}.cas_ingest_info` where cas_ingest_id = "{ingest_id}" """
-    job = client.query(query)
-    # We do not expect the query above to return any rows as this AnnData file should not have been previously ingested.
-    for row in job.result():
-        raise ValueError(f"Found previous ingest of '{ingest_id}' at {str(row['ts'])}, exiting")
-
-    # noinspection SqlResolve
-    query = f"""select table_name, total_rows from `{dataset}.INFORMATION_SCHEMA.PARTITIONS` where total_rows > 0"""
-    job = client.query(query)
-    tables_with_data = [r[0] for r in list(job.result())]
-
     (bucket, object_prefix) = bucket_and_prefix(project, gcs_prefix)
 
     def stage_file(file_to_stage):
+        print(f"Staging '{file}' to '{gcs_prefix}/{file}'...")
         blob = bucket.blob(f'{object_prefix}/{file_to_stage}')
         blob.upload_from_filename(file_to_stage)
-        print(f"Staged '{file}' to '{gcs_prefix}/{file}'.")
+        print(f"Staged '{file}'.")
 
     def unstage_file(file_to_unstage):
         blob = bucket.blob(f'{object_prefix}/{file_to_unstage}')
@@ -156,10 +144,6 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
         table = f"cas_{table}"
         table_id = f'{project}.{dataset}.{table}'
 
-        if table in tables_with_data and not force_bq_append:
-            print(f"Table '{table_id}' contains data and `--force_bq_append` not specified, skipping load of '{file}'.")
-            continue
-
         stage_file(file)
         staged_files.append(file)
 
@@ -167,17 +151,20 @@ def process(project, dataset, avro_prefix, gcs_prefix, force_bq_append):
         load_job = client.load_table_from_uri(
             uri, table_id, job_config=job_config
         )  # Make an API request.
-        load_job.result()  # Waits for the job to complete.
-        destination_table = client.get_table(table_id)
-        print(f"{destination_table.num_rows} rows loaded into BigQuery table '{table_id}'.")
+        result = load_job.result()  # Waits for the job to complete.
+        print(f"{result.output_rows} rows loaded into BigQuery table '{table_id}'.")
 
     for f in staged_files:
         unstage_file(f)
 
     print("Updating ingest timestamp")
     # noinspection SqlResolve
-    query = f"""UPDATE `{dataset}.cas_ingest_info` SET ingest_timestamp = CURRENT_TIMESTAMP() """ +\
-            f"""WHERE cas_ingest_id = "{ingest_id}" """
+    query = f"""
+
+    UPDATE `{dataset}.cas_ingest_info` SET ingest_timestamp = CURRENT_TIMESTAMP()
+        WHERE cas_ingest_id = "{ingest_id}"
+
+    """
     job = client.query(query)
     job.result()
 
@@ -191,9 +178,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, help='BigQuery Dataset', required=True)
     parser.add_argument('--avro_prefix', type=str, help='Prefix with which Avro files are named', required=True)
     parser.add_argument('--gcs_prefix', type=str, help='GCS prefix to which Avro files should be staged', required=True)
-    parser.add_argument('--force_bq_append', type=bool,
-                        help='Append data to BigQuery tables even if data some data is already loaded', required=False)
 
     args = parser.parse_args()
 
-    process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix, args.force_bq_append)
+    process(args.project, args.dataset, args.avro_prefix, args.gcs_prefix)
