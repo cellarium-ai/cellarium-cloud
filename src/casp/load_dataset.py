@@ -163,15 +163,15 @@ def process(project, dataset, avro_prefix, gcs_path_prefix):
         ingest_id = next(reader)["cas_ingest_id"]
 
     def stage_file(file_to_stage):
-        print(f"Staging '{file}' to '{gcs_path_prefix}/{file}'...")
+        print(f"Staging '{file_to_stage}' to '{gcs_path_prefix}/{file_to_stage}'...")
         blob = bucket.blob(f"{object_prefix}/{file_to_stage}")
         blob.upload_from_filename(file_to_stage)
-        print(f"Staged '{file}'.")
+        print(f"Staged '{file_to_stage}'.")
 
     def unstage_file(file_to_unstage):
         blob = bucket.blob(f"{object_prefix}/{file_to_unstage}")
         blob.delete()
-        print(f"Removed staged file '{gcs_path_prefix}/{file}'.")
+        print(f"Removed staged file '{gcs_path_prefix}/{file_to_unstage}'.")
 
     staged_files = []
     gcs_path_prefix = gcs_path_prefix.rstrip("/")

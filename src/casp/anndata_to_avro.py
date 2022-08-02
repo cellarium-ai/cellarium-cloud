@@ -362,6 +362,7 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_pref
     print("Processing core data...")
     # recode the indexes to be the indexes of obs/var or should obs/var include these indices?
     dump_core_matrix(adata.raw.X, row_index_to_cas_cell_index, col_index_to_cas_feature_index, raw_counts_filename)
+    print("Done.")
 
 
 # TODO: naive dump, compare
