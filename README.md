@@ -5,9 +5,40 @@ This repository is intended to hold the functional prototype for a single cell a
 ### Prerequisites / Installation
 
  - Python 3.7+
+
+### Developer Setup
+
+Create a virtual python environment:
+
+```shell
+    python3 -mvenv casp-venv
+    source casp-venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install -r dev-requirements.txt
+    pip install -e .
+    pip install tox
+```
+
+To lint:
+
+```shell
+    tox -e lint
+```
+
+To run unit tests:
+
+```shell
+    tox -e unit
+```
+
+To automatically fix formatting issues:
+```shell
+    tox -e format
+```
  
 ### Testing Data
-
+    
 For local testing, we are using a small data set from CellXGene.
 
 [Horizontal Cells in Human Retina](https://cellxgene.cziscience.com/collections/af893e86-8e9f-41f1-a474-ef05359b1fb7) - 7,348 cells
