@@ -4,11 +4,17 @@ This repository is intended to hold the functional prototype for a single cell a
 
 ### Prerequisites / Installation
 
- - Python 3.7+
+ - Python 3.7+, Python 3.10 currently not recommended (see below).
 
 ### Developer Setup
 
-Create a virtual python environment:
+Some #protips:
+
+* Python 3.10 can be very slow running the AnnData -> Avro conversion. I suspect a native version of a Python numerical library may have failed to compile and we're falling back on a slow pure Python implementation. YMMV but I've had no such issues with Python 3.9.
+* Ingest will often time out when running from a local machine, which will leave the BigQuery dataset and tables in a weird state. It's probably a good idea to spin up a GCE VM if loading non-toy datasets.
+* Some of the larger AnnData files from cellxgene can require a lot of memory for Avro conversion (e.g. > 64 GiB for the full trisomy 18 dataset); another reason to spin up a GCE VM for non-toy CASP work.
+
+To create a virtual python environment:
 
 ```shell
     python3 -mvenv casp-venv
