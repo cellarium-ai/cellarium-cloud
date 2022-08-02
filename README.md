@@ -57,13 +57,13 @@ dataset / project to figure those out for itself, or these values can be be spec
 To figure out start values from a dataset / project:
 
 ```
-python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --project <google-project> --dataset <dataset-name>
+python src/casp/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --project <google-project> --dataset <dataset-name>
 ```
 
 As specified command line arguments:
 
 ```
-python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --cas_cell_index_start 1000 --cas_feature_index_start 5000
+python src/casp/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --cas_cell_index_start 1000 --cas_feature_index_start 5000
 ```
 
 ### Initialize dataset and ingest Avro files into BigQuery
@@ -71,7 +71,7 @@ python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad
 Continuing this example:
 
 ```
-python src/load_dataset.py --project <google-project> --dataset <dataset-name> --avro_prefix retina --gcs_prefix <gcs-prefix-to-avro-files>
+python src/casp/load_dataset.py --project <google-project> --dataset <dataset-name> --avro_prefix retina --gcs_prefix <gcs-prefix-to-avro-files>
 ```
 
 All of these parameters are required.
@@ -95,7 +95,7 @@ This step:
 This will randomly get a specified number of cells' data from your BigQuery dataset:
 
 ```
-python src/random_bq_to_anndata.py --project <google-project> --dataset <dataset-name> --num_cells <num> --output_file_prefix <output prefix>
+python src/casp/random_bq_to_anndata.py --project <google-project> --dataset <dataset-name> --num_cells <num> --output_file_prefix <output prefix>
 ```
 
 One AnnData file will be written for each ingest (input AnnData file) in which the randomly selected cells were loaded.
