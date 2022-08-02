@@ -66,7 +66,10 @@ def bucket_and_prefix(project, gcs_path_prefix):
     Extract a GCS bucket and object prefix from the specified GCS bucket + prefix.
     """
     client = storage.Client(project=project)
-    (bucket_name, object_prefix) = re.search(r"gs://([^/]+)/(.*)$", gcs_path_prefix).groups()
+    match = re.search(r"gs://([^/]+)/(.*)$", gcs_path_prefix)
+    if not match:
+        raise ValueError(f"Invalid gcs_path_prefix `{gcs_path_prefix}`; should look like `gs://bucket/prefix1/etc`")
+    (bucket_name, object_prefix) = match.groups()
     bucket = client.bucket(bucket_name)
     return bucket, object_prefix.rstrip("/")
 
@@ -144,6 +147,8 @@ def process(project, dataset, avro_prefix, gcs_path_prefix):
     """
     Main method that drives the 5 high level steps of BigQuery data loading.
     """
+    (bucket, object_prefix) = bucket_and_prefix(project, gcs_path_prefix)
+
     client = bigquery.Client(project=project)
     create_bigquery_objects(client, project, dataset)
 
@@ -156,8 +161,6 @@ def process(project, dataset, avro_prefix, gcs_path_prefix):
     with open(ingest_filename, "rb") as file:
         reader = fastavro.reader(file)
         ingest_id = next(reader)["cas_ingest_id"]
-
-    (bucket, object_prefix) = bucket_and_prefix(project, gcs_path_prefix)
 
     def stage_file(file_to_stage):
         print(f"Staging '{file}' to '{gcs_path_prefix}/{file}'...")
