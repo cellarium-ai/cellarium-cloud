@@ -20,19 +20,19 @@ And a larger data set
 ### Convert AnnData to Avro Load Format
 
 First convert from AnnData to the Avro format that will be used to load BigQuery. The `anndata_to_avro.py` script needs
-to know the appropriate values to use for cell and feature indexes. These can either be specified explicitly as command
-line arguments, or the script can be pointed to an existing dataset / project to figure those out itself.
-
-With explicit start values:
-
-```
-python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --cas_cell_index_start 1000 --cas_feature_index_start 5000
-```
+to know the appropriate values to use for cell and feature indexes. The script can either be pointed to an existing 
+dataset / project to figure those out for itself, or these values can be be specified as command line arguments.
 
 To figure out start values from a dataset / project:
 
 ```
 python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --project <google-project> --dataset <dataset-name>
+```
+
+As specified command line arguments:
+
+```
+python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --cas_cell_index_start 1000 --cas_feature_index_start 5000
 ```
 
 ### Initialize dataset and ingest Avro files into BigQuery
