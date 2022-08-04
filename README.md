@@ -5,9 +5,45 @@ This repository is intended to hold the functional prototype for a single cell a
 ### Prerequisites / Installation
 
  - Python 3.7+
+
+### Developer Setup
+
+Some #protips:
+
+* Ingest will often time out when running from a local machine, which will leave the BigQuery dataset and tables in a weird state. It's probably a good idea to spin up a GCE VM if ingesting non-toy datasets.
+* Some of the larger AnnData files from cellxgene can require a lot of memory for Avro conversion (e.g. > 64 GiB for the full trisomy 18 dataset); another reason to spin up a GCE VM for non-toy ingests.
+
+To create a virtual python environment:
+
+```shell
+    python3 -mvenv casp-venv
+    source casp-venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install -r dev-requirements.txt
+    pip install -e .
+    pip install tox
+```
+
+To run unit tests:
+
+```shell
+    tox -e unit
+```
+
+To lint:
+
+```shell
+    tox -e lint
+```
+
+To automatically fix formatting issues:
+```shell
+    tox -e format
+```
  
 ### Testing Data
-
+    
 For local testing, we are using a small data set from CellXGene.
 
 [Horizontal Cells in Human Retina](https://cellxgene.cziscience.com/collections/af893e86-8e9f-41f1-a474-ef05359b1fb7) - 7,348 cells
@@ -26,13 +62,13 @@ dataset / project to figure those out for itself, or these values can be be spec
 To figure out start values from a dataset / project:
 
 ```
-python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --project <google-project> --dataset <dataset-name>
+python src/casp/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --project <google-project> --dataset <dataset-name>
 ```
 
 As specified command line arguments:
 
 ```
-python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --cas_cell_index_start 1000 --cas_feature_index_start 5000
+python src/casp/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad --avro_prefix retina --cas_cell_index_start 1000 --cas_feature_index_start 5000
 ```
 
 ### Initialize dataset and ingest Avro files into BigQuery
@@ -40,7 +76,7 @@ python src/anndata_to_avro.py --input data/horizontal-cells-in-human-retina.h5ad
 Continuing this example:
 
 ```
-python src/load_dataset.py --project <google-project> --dataset <dataset-name> --avro_prefix retina --gcs_prefix <gcs-prefix-to-avro-files>
+python src/casp/load_dataset.py --project <google-project> --dataset <dataset-name> --avro_prefix retina --gcs_path_prefix <gcs-prefix-to-avro-files>
 ```
 
 All of these parameters are required.
@@ -48,7 +84,7 @@ All of these parameters are required.
 * `project` specifies the Google project id that will contain the BigQuery dataset.
 * `dataset` specifies the dataset name that will contain the BigQuery tables.
 * `avro_prefix` specifies the prefix used to name the output Avro from the AnnData conversion in the previous step.
-* `gcs_prefix` specifies the GCS prefix to which the Avro files should be staged for BigQuery ingestion.
+* `gcs_path_prefix` specifies the GCS prefix to which the Avro files should be staged for BigQuery ingestion.
 
 This step:
 
@@ -64,7 +100,7 @@ This step:
 This will randomly get a specified number of cells' data from your BigQuery dataset:
 
 ```
-python src/random_bq_to_anndata.py --project <google-project> --dataset <dataset-name> --num_cells <num> --output_file_prefix <output prefix>
+python src/casp/random_bq_to_anndata.py --project <google-project> --dataset <dataset-name> --num_cells <num> --output_file_prefix <output prefix>
 ```
 
 One AnnData file will be written for each ingest (input AnnData file) in which the randomly selected cells were loaded.

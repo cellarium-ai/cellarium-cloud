@@ -3,5 +3,5 @@ fastavro
 google-api-python-client
 google-cloud-bigquery
 google-cloud-storage
-numpy~=1.23.1
+numpy
 scipy

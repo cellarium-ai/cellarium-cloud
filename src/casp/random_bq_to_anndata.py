@@ -1,14 +1,22 @@
-import anndata as ad
+"""
+Selects a random subset of cells of a specified size from BigQuery and writes the data to output AnnData files.
+"""
 import argparse
-from collections import defaultdict
-from google.cloud import bigquery
 import json
-import numpy as np
+from collections import defaultdict
 from pathlib import Path
+
+import anndata as ad
+import numpy as np
+from google.cloud import bigquery
 from scipy.sparse import coo_matrix
 
 
 class Cell:
+    """
+    Represents a CASP cell.
+    """
+
     def __init__(self, cas_cell_index, original_cell_id, cell_type, obs_metadata, cas_ingest_id):
         self.cas_cell_index = cas_cell_index
         self.original_cell_id = original_cell_id
@@ -18,6 +26,10 @@ class Cell:
 
 
 class Feature:
+    """
+    Represents a CASP feature / gene.
+    """
+
     def __init__(self, cas_feature_index, original_feature_id, feature_name, var_metadata):
         self.cas_feature_index = cas_feature_index
         self.original_feature_id = original_feature_id
@@ -27,6 +39,9 @@ class Feature:
 
 # Returns an array of <num_cells> cells pulled at random from the cas_cell_info table, sorted by `cas_cell_index`.
 def get_random_cells(project, dataset, client, num_cells):
+    """
+    Selects the specified number of cells randomly from the specified dataset.
+    """
     query = f"""
 
         SELECT cas_cell_index, original_cell_id, cell_type, obs_metadata, cas_ingest_id, rand() AS rand_val FROM
@@ -36,11 +51,13 @@ def get_random_cells(project, dataset, client, num_cells):
 
     result = client.query(query)
     cells = [
-        Cell(cas_cell_index=row["cas_cell_index"],
-             original_cell_id=row["original_cell_id"],
-             cell_type=row["cell_type"],
-             obs_metadata=row["obs_metadata"],
-             cas_ingest_id=row["cas_ingest_id"])
+        Cell(
+            cas_cell_index=row["cas_cell_index"],
+            original_cell_id=row["original_cell_id"],
+            cell_type=row["cell_type"],
+            obs_metadata=row["obs_metadata"],
+            cas_ingest_id=row["cas_ingest_id"],
+        )
         for row in result
     ]
     cells.sort(key=lambda c: c.cas_cell_index)
@@ -49,6 +66,9 @@ def get_random_cells(project, dataset, client, num_cells):
 
 # Retrieve a list of all feature objects, ordered by cas_feature_index
 def get_features(project, dataset, client, ingest_id):
+    """
+    Retrieve all features in the dataset for the specified ingest_id.
+    """
     sql = f"""
 
     SELECT cas_feature_index, original_feature_id, feature_name, var_metadata FROM
@@ -59,14 +79,16 @@ def get_features(project, dataset, client, ingest_id):
     query = client.query(sql)
     features = []
     for row in query:
-        features.append(Feature(row["cas_feature_index"],
-                                row["original_feature_id"],
-                                row["feature_name"],
-                                row["var_metadata"]))
+        features.append(
+            Feature(row["cas_feature_index"], row["original_feature_id"], row["feature_name"], row["var_metadata"])
+        )
     return features
 
 
 def get_ingest_info(project, dataset, client, ingest_id):
+    """
+    Retrieve ingest info for the specified ingest ids.
+    """
     sql = f"""
 
     SELECT cas_ingest_id, uns_metadata FROM `{project}.{dataset}.cas_ingest_info` WHERE
@@ -75,10 +97,13 @@ def get_ingest_info(project, dataset, client, ingest_id):
     """
 
     for row in client.query(sql):
-        return row['uns_metadata']
+        return row["uns_metadata"]
 
 
 def get_matrix_data(project, dataset, client, cells):
+    """
+    Retrieve raw matrix data for the specified cell ids.
+    """
     str_cell_ids = map(str, [c.cas_cell_index for c in cells])
     in_clause = f" cas_cell_index IN ({','.join(str_cell_ids)})"
 
@@ -97,8 +122,7 @@ def get_matrix_data(project, dataset, client, cells):
 def assign_obs_var_metadata(dataframe, json_strings):
     """
     :param dataframe: Pandas DataFrame into which metadata should be written back
-    :param json_strings: An iterable of strings stringified JSON to be written back to the DataFrame
-    :return:
+    :param json_strings: An iterable of stringified JSON to be written back to the DataFrame
     """
     jsons = [json.loads(s) for s in json_strings]
 
@@ -109,12 +133,19 @@ def assign_obs_var_metadata(dataframe, json_strings):
 
 
 def assign_uns_metadata(anndata, json_string):
+    """
+    Assign the specified JSON string into the `uns` metadata for this AnnData file.
+    """
     json_dict = json.loads(json_string)
-    for k, v in json_dict.items():
-        anndata.uns[k] = v
+    for key, val in json_dict.items():
+        anndata.uns[key] = val
 
 
 def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
+    """
+    Main function to select a specified number of random cells from the BigQuery dataset and write the associated data
+    to an AnnData file.
+    """
     client = bigquery.Client(project=project)
 
     print(f"Getting {num_cells} random cells' data from {project}.{dataset}...")
@@ -125,8 +156,8 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
         cells_by_ingest_id[cell.cas_ingest_id].append(cell)
 
     for ingest_id, cells in cells_by_ingest_id.items():
-        id_only = ingest_id.split('-')[-1]
-        output_file_name = f'{output_file_prefix}-{id_only}.h5ad'
+        id_only = ingest_id.split("-")[-1]
+        output_file_name = f"{output_file_prefix}-{id_only}.h5ad"
         print(f"Writing {len(cells)} cells' data to '{output_file_name}'...")
 
         original_cell_ids = []
@@ -146,8 +177,9 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
 
         matrix_data = get_matrix_data(project, dataset, client, cells)
 
-        rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(matrix_data, cas_cell_index_to_row_num,
-                                                                             cas_feature_index_to_col_num)
+        rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(
+            matrix_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num
+        )
         # Create the matrix from the sparse data representation generated above.
         counts = coo_matrix((data, (rows, columns)), shape=(len(cells), len(features)), dtype=np.float32)
 
@@ -168,7 +200,12 @@ def random_bq_to_anndata(project, dataset, num_cells, output_file_prefix):
     print("Done.")
 
 
-def convert_matrix_data_to_coo_matrix_input_format(matrix_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num):
+def convert_matrix_data_to_coo_matrix_input_format(
+    matrix_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num
+):
+    """
+    Convert raw matrix data to coordinate format suitable for writing out an AnnData file.
+    """
     rows = []
     columns = []
     data = []
@@ -178,13 +215,17 @@ def convert_matrix_data_to_coo_matrix_input_format(matrix_data, cas_cell_index_t
         cas_feature_index = row["cas_feature_index"]
         try:
             row_num = cas_cell_index_to_row_num[cas_cell_index]
-        except KeyError:
-            raise Exception(f"ERROR: Unable to find entry for cas_cell_index: {cas_cell_index} in lookup table")
+        except KeyError as exc:
+            raise Exception(
+                f"ERROR: Unable to find entry for cas_cell_index: {cas_cell_index} in lookup table"
+            ) from exc
 
         try:
             col_num = cas_feature_index_to_col_num[cas_feature_index]
-        except KeyError:
-            raise Exception(f"ERROR: Unable to find entry for cas_feature_index: {cas_feature_index} in lookup table")
+        except KeyError as exc:
+            raise Exception(
+                f"ERROR: Unable to find entry for cas_feature_index: {cas_feature_index} in lookup table"
+            ) from exc
 
         rows.append(row_num)
         columns.append(col_num)
@@ -193,13 +234,17 @@ def convert_matrix_data_to_coo_matrix_input_format(matrix_data, cas_cell_index_t
     return rows, columns, data
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(allow_abbrev=False, description='Query CASP tables for random cells')
-    parser.add_argument('--project', type=str, help='BigQuery Project', required=True)
-    parser.add_argument('--dataset', type=str, help='BigQuery Dataset', required=True)
-    parser.add_argument('--num_cells', type=int, help='Number of cells to return', required=True)
-    parser.add_argument('--output_file_prefix', type=str,
-                        help='The prefix of the anndata (.h5ad) file that will be created', required=True)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(allow_abbrev=False, description="Query CASP tables for random cells")
+    parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
+    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
+    parser.add_argument("--num_cells", type=int, help="Number of cells to return", required=True)
+    parser.add_argument(
+        "--output_file_prefix",
+        type=str,
+        help="The prefix of the anndata (.h5ad) file that will be created",
+        required=True,
+    )
 
     args = parser.parse_args()
     random_bq_to_anndata(args.project, args.dataset, args.num_cells, args.output_file_prefix)
