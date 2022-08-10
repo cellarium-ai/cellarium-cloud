@@ -108,7 +108,7 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
             {"name": "cas_cell_index", "type": "int"},
             {"name": "original_cell_id", "type": "string"},
             {"name": "cell_type", "type": "string"},
-            {'name': 'obs_metadata', 'type': {'type': 'string', 'sqlType': 'JSON'}},
+            {"name": "obs_metadata", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "cas_ingest_id", "type": "string"},
         ],
     }
@@ -154,7 +154,7 @@ def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
             {"name": "cas_feature_index", "type": "int"},
             {"name": "original_feature_id", "type": "string"},
             {"name": "feature_name", "type": "string"},
-            {'name': 'var_metadata', 'type': {'type': 'string', 'sqlType': 'JSON'}},
+            {"name": "var_metadata", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "cas_ingest_id", "type": "string"},
         ],
     }
@@ -190,7 +190,7 @@ def dump_ingest_info(adata, filename, ingest_id):
         "type": "record",
         "fields": [
             {"name": "cas_ingest_id", "type": "string"},
-            {'name': 'uns_metadata', 'type': {'type': 'string', 'sqlType': 'JSON'}},
+            {"name": "uns_metadata", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "ingest_timestamp", "type": ["null", "long"], "logicalType": ["null", "timestamp-millis"]},
         ],
     }
