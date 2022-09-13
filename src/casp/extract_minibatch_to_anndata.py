@@ -16,6 +16,7 @@ import datetime
 from google.cloud.bigquery_storage import BigQueryReadClient
 from google.cloud.bigquery_storage import types
 
+
 class Cell:
     """
     Represents a CASP cell.
@@ -35,7 +36,6 @@ class Feature:
         self.feature_name = feature_name
 
 
-
 # Retrieve a list of all feature objects, ordered by cas_feature_index
 def get_features(project, dataset, extract_feature_table, client):
     """
@@ -51,10 +51,9 @@ def get_features(project, dataset, extract_feature_table, client):
     query = client.query(sql)
     features = []
     for row in query:
-        features.append(
-            Feature(row["cas_feature_index"], row["feature_name"])
-        )
+        features.append(Feature(row["cas_feature_index"], row["feature_name"]))
     return features
+
 
 # Retrieve a list of all cells in the bin, ordered by cas_cell_index
 def get_cells(project, dataset, extract_cell_table, start_bin, end_bin, client):
@@ -69,27 +68,23 @@ def get_cells(project, dataset, extract_cell_table, start_bin, end_bin, client):
     """
 
     result = client.query(sql)
-    cells = [
-        Cell(
-            cas_cell_index=row["cas_cell_index"]
-        )
-        for row in result
-    ]
+    cells = [Cell(cas_cell_index=row["cas_cell_index"]) for row in result]
     return cells
-        
+
+
 def get_matrix_data(project, dataset, table, start_bin, end_bin, client):
     client = BigQueryReadClient()
     table = f"projects/{project}/datasets/{dataset}/tables/{table}"
-                
+
     requested_session = types.ReadSession()
     requested_session.table = table
     # This API can also deliver data serialized in Apache Arrow format.
     # This example leverages Apache Avro.
     requested_session.data_format = types.DataFormat.AVRO
-    
+
     requested_session.read_options.selected_fields = ["cas_cell_index", "feature_data"]
     requested_session.read_options.row_restriction = f"extract_bin BETWEEN {start_bin} AND {end_bin}"
-    
+
     parent = f"projects/{project}"
     session = client.create_read_session(
         parent=parent,
@@ -99,12 +94,13 @@ def get_matrix_data(project, dataset, table, start_bin, end_bin, client):
         # reader process each individual stream.
         max_stream_count=1,
     )
-    
+
     print(f"Estimated Bytes to scan {session.estimated_total_bytes_scanned}")
     reader = client.read_rows(session.streams[0].name)
-    
+
     rows = reader.rows(session)
     return rows
+
 
 def assign_obs_var_metadata(dataframe, json_strings):
     """
@@ -147,19 +143,20 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
         feature_ids.append(feature.feature_name)
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
-
     print(f"Extracting Cell Info...")
     cells = get_cells(project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client)
 
     original_cell_ids = []
     cas_cell_index_to_row_num = {}
     for row_num, cell in enumerate(cells):
-        original_cell_ids.append(cell.cas_cell_index)        
+        original_cell_ids.append(cell.cas_cell_index)
         cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
-        
+
     print(f"Extracting Matrix Data...")
-    
-    matrix_data = get_matrix_data(project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, client)
+
+    matrix_data = get_matrix_data(
+        project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, client
+    )
 
     print(f"Converting Matrix Data to COO format...")
 
@@ -173,16 +170,16 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
 
     # Convert the COO matrix to CSR for loading into AnnData
     print(f"Creating AnnData Matrix")
-    
+
     adata = ad.AnnData(counts.tocsr(copy=False))
     adata.obs.index = original_cell_ids
     adata.var.index = feature_ids
-    
+
     # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
     # for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
     adata.raw = adata
-    
-    print(f"Writing AnnData Matrix")    
+
+    print(f"Writing AnnData Matrix")
     adata.write(Path(output), compression="gzip")
     print("Done.")
 
@@ -209,10 +206,10 @@ def convert_matrix_data_to_coo_matrix_input_format(
             raise Exception(
                 f"ERROR: Unable to find entry for cas_cell_index: {cas_cell_index} in lookup table"
             ) from exc
-        
+
         for e in cas_feature_data:
-            cas_feature_index = e['feature_index']
-            raw_counts = e['raw_counts']
+            cas_feature_index = e["feature_index"]
+            raw_counts = e["raw_counts"]
 
             try:
                 col_num = cas_feature_index_to_col_num[cas_feature_index]
@@ -220,13 +217,13 @@ def convert_matrix_data_to_coo_matrix_input_format(
                 raise Exception(
                     f"ERROR: Unable to find entry for cas_feature_index: {cas_feature_index} in lookup table"
                 ) from exc
-        
+
             rows.append(row_num)
             columns.append(col_num)
             data.append(raw_counts)
-        
+
             counter = counter + 1
-            if (counter % 1000000 == 0):
+            if counter % 1000000 == 0:
                 end = datetime.datetime.now()
                 elapsed = end - start
                 print(f"Processed {counter} rows in {elapsed.total_seconds() * 1000}ms")
@@ -246,4 +243,6 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, help="Filename of the AnnData file", required=True)
 
     args = parser.parse_args()
-    extract_minibatch_to_anndata(args.project, args.dataset, args.extract_table_prefix, args.start_bin, args.end_bin, args.output)
+    extract_minibatch_to_anndata(
+        args.project, args.dataset, args.extract_table_prefix, args.start_bin, args.end_bin, args.output
+    )

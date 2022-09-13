@@ -5,6 +5,7 @@ import argparse
 import time
 from google.cloud import bigquery
 
+
 def execute_query(client, sql):
     """
     Runs the supplied query
@@ -20,6 +21,7 @@ def execute_query(client, sql):
     print(f"COMPLETED ({time.time() - start} seconds, {gb_billed} GBs scanned)")
 
     return results
+
 
 def prepare_feature_summary(client, project, dataset, extract_table_prefix):
     """
@@ -59,6 +61,7 @@ def prepare_feature_info(client, project, dataset, extract_table_prefix, min_obs
     query = execute_query(client, sql)
     return query
 
+
 def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size):
     """
     Randomize cells into bins of `extract_bin_size`
@@ -76,6 +79,7 @@ def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bi
     print("Creating Cell Info and randomizing into extract bins...")
     query = execute_query(client, sql)
     return query
+
 
 def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
     """
@@ -100,6 +104,7 @@ def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
     query = execute_query(client, sql)
     return query
 
+
 def prepare_extract(project, dataset, extract_table_prefix, min_observed_cells, extract_bin_size):
     client = bigquery.Client(project=project)
 
@@ -108,13 +113,22 @@ def prepare_extract(project, dataset, extract_table_prefix, min_observed_cells, 
     prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size)
     prepare_extract_matrix(client, project, dataset, extract_table_prefix)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(allow_abbrev=False, description="Prepare CASP tables ML Training/Inference Extract")
+    parser = argparse.ArgumentParser(
+        allow_abbrev=False, description="Prepare CASP tables ML Training/Inference Extract"
+    )
     parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
     parser.add_argument("--extract_table_prefix", type=str, help="Prefix for extract tables", required=True)
-    parser.add_argument("--min_observed_cells", type=int, help="minimum observed cells per gene", default=3, required=False)
-    parser.add_argument("--extract_bin_size", type=int, help="desired cells per extract bin", default=10000, required=False)
+    parser.add_argument(
+        "--min_observed_cells", type=int, help="minimum observed cells per gene", default=3, required=False
+    )
+    parser.add_argument(
+        "--extract_bin_size", type=int, help="desired cells per extract bin", default=10000, required=False
+    )
 
     args = parser.parse_args()
-    prepare_extract(args.project, args.dataset, args.extract_table_prefix, args.min_observed_cells, args.extract_bin_size)
+    prepare_extract(
+        args.project, args.dataset, args.extract_table_prefix, args.min_observed_cells, args.extract_bin_size
+    )
