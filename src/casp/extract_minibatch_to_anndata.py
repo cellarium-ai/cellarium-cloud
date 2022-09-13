@@ -15,8 +15,6 @@ import datetime
 
 from google.cloud.bigquery_storage import BigQueryReadClient
 from google.cloud.bigquery_storage import types
-#pip install --upgrade google-cloud-bigquery-storage
-#pip install google-cloud-bigquery-storage[fastavro]
 
 class Cell:
     """
@@ -59,14 +57,14 @@ def get_features(project, dataset, extract_feature_table, client):
     return features
 
 # Retrieve a list of all cells in the bin, ordered by cas_cell_index
-def get_cells(project, dataset, extract_cell_table, bin, client):
+def get_cells(project, dataset, extract_cell_table, start_bin, end_bin, client):
     """
     Retrieve all cells in the dataset for this extract bin
     """
     sql = f"""
 
     SELECT cas_cell_index FROM
-        `{project}.{dataset}.{extract_cell_table}` WHERE extract_bin = {bin} ORDER BY cas_cell_index
+        `{project}.{dataset}.{extract_cell_table}` WHERE extract_bin BETWEEN {start_bin} AND {end_bin} ORDER BY cas_cell_index
 
     """
 
@@ -79,7 +77,7 @@ def get_cells(project, dataset, extract_cell_table, bin, client):
     ]
     return cells
         
-def get_matrix_data(project, dataset, table, bin, client):
+def get_matrix_data(project, dataset, table, start_bin, end_bin, client):
     client = BigQueryReadClient()
     table = f"projects/{project}/datasets/{dataset}/tables/{table}"
                 
@@ -89,9 +87,8 @@ def get_matrix_data(project, dataset, table, bin, client):
     # This example leverages Apache Avro.
     requested_session.data_format = types.DataFormat.AVRO
     
-#    requested_session.read_options.selected_fields = ["cas_cell_index", "cas_feature_index", "raw_counts"]
     requested_session.read_options.selected_fields = ["cas_cell_index", "feature_data"]
-    requested_session.read_options.row_restriction = f"extract_bin = {bin}"
+    requested_session.read_options.row_restriction = f"extract_bin BETWEEN {start_bin} AND {end_bin}"
     
     parent = f"projects/{project}"
     session = client.create_read_session(
@@ -131,19 +128,18 @@ def assign_uns_metadata(anndata, json_string):
         anndata.uns[key] = val
 
 
-def extract_minibatch_to_anndata(project, dataset, prepared_extract_prefix, bin, output_file_prefix):
+def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_bin, end_bin, output):
     """
     Main function to extract a minibatch from a prepared training extract and write the associated data
     to an AnnData file.
     """
     client = bigquery.Client(project=project)
 
-    print(f"Getting extract bin {bin} data from {project}.{dataset}.{prepared_extract_prefix}*...")
-    output_file_name = f"{output_file_prefix}.h5ad"
+    print(f"Getting extract bin {start_bin}-{end_bin} data from {project}.{dataset}.{extract_table_prefix}*...")
 
     # Read the feature information and store for later.
     print(f"Extracting Feature Info...")
-    features = get_features(project, dataset, f"{prepared_extract_prefix}__extract_feature_info", client)
+    features = get_features(project, dataset, f"{extract_table_prefix}__extract_feature_info", client)
 
     feature_ids = []
     cas_feature_index_to_col_num = {}
@@ -153,7 +149,7 @@ def extract_minibatch_to_anndata(project, dataset, prepared_extract_prefix, bin,
 
 
     print(f"Extracting Cell Info...")
-    cells = get_cells(project, dataset, f"{prepared_extract_prefix}__extract_cell_info", bin, client)
+    cells = get_cells(project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client)
 
     original_cell_ids = []
     cas_cell_index_to_row_num = {}
@@ -161,19 +157,9 @@ def extract_minibatch_to_anndata(project, dataset, prepared_extract_prefix, bin,
         original_cell_ids.append(cell.cas_cell_index)        
         cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
         
-#        feature_ids.append(feature.original_feature_id)
-#        cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
-    # original_cell_ids = []
-    # cas_cell_index_to_row_num = {}
-    # for row_num, cell in enumerate(cells):
-    #     original_cell_ids.append(cell.original_cell_id)
-    #     cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
-    #
-    
     print(f"Extracting Matrix Data...")
     
-#    matrix_data = get_matrix_data(project, dataset, f"{prepared_extract_prefix}__extract_raw_count_matrix", bin, client)
-    matrix_data = get_matrix_data(project, dataset, f"kc_array_extract", bin, client)
+    matrix_data = get_matrix_data(project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, client)
 
     print(f"Converting Matrix Data to COO format...")
 
@@ -188,17 +174,16 @@ def extract_minibatch_to_anndata(project, dataset, prepared_extract_prefix, bin,
     # Convert the COO matrix to CSR for loading into AnnData
     print(f"Creating AnnData Matrix")
     
-#    adata = ad.AnnData(counts.tocsr(copy=False))
-#    adata.obs.index = original_cell_ids
-#    adata.var.index = feature_ids
-    #
-    # # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
-    # # for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
-    # adata.raw = adata
+    adata = ad.AnnData(counts.tocsr(copy=False))
+    adata.obs.index = original_cell_ids
+    adata.var.index = feature_ids
     
-    print(f"Writing AnnData Matrix")
+    # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
+    # for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
+    adata.raw = adata
     
-#    adata.write(Path(output_file_name), compression="gzip")
+    print(f"Writing AnnData Matrix")    
+    adata.write(Path(output), compression="gzip")
     print("Done.")
 
 
@@ -215,34 +200,39 @@ def convert_matrix_data_to_coo_matrix_input_format(
     counter = 0
     start = datetime.datetime.now()
     for row in matrix_data:
-        # cas_cell_index = row["cas_cell_index"]
-        # cas_feature_index = row["cas_feature_index"]
-        # try:
-        #     row_num = cas_cell_index_to_row_num[cas_cell_index]
-        # except KeyError as exc:
-        #     raise Exception(
-        #         f"ERROR: Unable to find entry for cas_cell_index: {cas_cell_index} in lookup table"
-        #     ) from exc
-        #
-        # try:
-        #     col_num = cas_feature_index_to_col_num[cas_feature_index]
-        # except KeyError as exc:
-        #     raise Exception(
-        #         f"ERROR: Unable to find entry for cas_feature_index: {cas_feature_index} in lookup table"
-        #     ) from exc
-        #
-        # rows.append(row_num)
-        # columns.append(col_num)
-        # data.append(row["raw_counts"])
+        cas_cell_index = row["cas_cell_index"]
+        cas_feature_data = row["feature_data"]
+
+        try:
+            row_num = cas_cell_index_to_row_num[cas_cell_index]
+        except KeyError as exc:
+            raise Exception(
+                f"ERROR: Unable to find entry for cas_cell_index: {cas_cell_index} in lookup table"
+            ) from exc
         
-        counter = counter + 1
-        if (counter % 1000000 == 0):
-            end = datetime.datetime.now()
-            elapsed = end - start
-            print(f"Processed {counter} rows in {elapsed.total_seconds() * 1000}ms")
-            start = end
+        for e in cas_feature_data:
+            cas_feature_index = e['feature_index']
+            raw_counts = e['raw_counts']
 
+            try:
+                col_num = cas_feature_index_to_col_num[cas_feature_index]
+            except KeyError as exc:
+                raise Exception(
+                    f"ERROR: Unable to find entry for cas_feature_index: {cas_feature_index} in lookup table"
+                ) from exc
+        
+            rows.append(row_num)
+            columns.append(col_num)
+            data.append(raw_counts)
+        
+            counter = counter + 1
+            if (counter % 1000000 == 0):
+                end = datetime.datetime.now()
+                elapsed = end - start
+                print(f"Processed {counter} rows in {elapsed.total_seconds() * 1000}ms")
+                start = end
 
+    # TODO: do this with generators!!!
     return rows, columns, data
 
 
@@ -250,14 +240,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(allow_abbrev=False, description="Query CASP tables for random cells")
     parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
-    parser.add_argument("--prepared_extract_prefix", type=str, help="Prefix of extract", required=True)
-    parser.add_argument("--bin", type=int, help="integer bin to extract", required=True)
-    parser.add_argument(
-        "--output_file_prefix",
-        type=str,
-        help="The prefix of the anndata (.h5ad) file that will be created",
-        required=True,
-    )
+    parser.add_argument("--extract_table_prefix", type=str, help="Prefix of extract tables", required=True)
+    parser.add_argument("--start_bin", type=int, help="starting (inclusive) integer bin to extract", required=True)
+    parser.add_argument("--end_bin", type=int, help="ending (inclusive) integer bin to extract", required=True)
+    parser.add_argument("--output", type=str, help="Filename of the AnnData file", required=True)
 
     args = parser.parse_args()
-    extract_minibatch_to_anndata(args.project, args.dataset, args.prepared_extract_prefix, args.bin, args.output_file_prefix)
+    extract_minibatch_to_anndata(args.project, args.dataset, args.extract_table_prefix, args.start_bin, args.end_bin, args.output)
