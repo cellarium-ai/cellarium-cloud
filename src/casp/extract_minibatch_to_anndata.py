@@ -2,19 +2,15 @@
 Selects a random subset of cells of a specified size from BigQuery and writes the data to output AnnData files.
 """
 import argparse
+import datetime
 import json
-from collections import defaultdict
 from pathlib import Path
 
 import anndata as ad
 import numpy as np
 from google.cloud import bigquery
+from google.cloud.bigquery_storage import BigQueryReadClient, types
 from scipy.sparse import coo_matrix
-
-import datetime
-
-from google.cloud.bigquery_storage import BigQueryReadClient
-from google.cloud.bigquery_storage import types
 
 
 class Cell:
@@ -134,7 +130,7 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
     print(f"Getting extract bin {start_bin}-{end_bin} data from {project}.{dataset}.{extract_table_prefix}*...")
 
     # Read the feature information and store for later.
-    print(f"Extracting Feature Info...")
+    print("Extracting Feature Info...")
     features = get_features(project, dataset, f"{extract_table_prefix}__extract_feature_info", client)
 
     feature_ids = []
@@ -143,7 +139,7 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
         feature_ids.append(feature.feature_name)
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
-    print(f"Extracting Cell Info...")
+    print("Extracting Cell Info...")
     cells = get_cells(project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client)
 
     original_cell_ids = []
@@ -152,24 +148,24 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
         original_cell_ids.append(cell.cas_cell_index)
         cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
 
-    print(f"Extracting Matrix Data...")
+    print("Extracting Matrix Data...")
 
     matrix_data = get_matrix_data(
         project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, client
     )
 
-    print(f"Converting Matrix Data to COO format...")
+    print("Converting Matrix Data to COO format...")
 
     rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(
         matrix_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num
     )
 
     # Create the matrix from the sparse data representation generated above.
-    print(f"Creating COO Matrix...")
+    print("Creating COO Matrix...")
     counts = coo_matrix((data, (rows, columns)), shape=(len(cells), len(features)), dtype=np.float32)
 
     # Convert the COO matrix to CSR for loading into AnnData
-    print(f"Creating AnnData Matrix")
+    print("Creating AnnData Matrix")
 
     adata = ad.AnnData(counts.tocsr(copy=False))
     adata.obs.index = original_cell_ids
@@ -179,7 +175,7 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
     # for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
     adata.raw = adata
 
-    print(f"Writing AnnData Matrix")
+    print("Writing AnnData Matrix")
     adata.write(Path(output), compression="gzip")
     print("Done.")
 

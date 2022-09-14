@@ -3,6 +3,7 @@ Prepare data for extract by randomizing, preprocessing and staging in temporary 
 """
 import argparse
 import time
+
 from google.cloud import bigquery
 
 
@@ -29,8 +30,8 @@ def prepare_feature_summary(client, project, dataset, extract_table_prefix):
     """
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_feature_summary`
-        AS 
-        SELECT  f.feature_name, 
+        AS
+        SELECT  f.feature_name,
                 SUM(m.raw_counts) total_raw_counts,
                 COUNT(distinct CASE WHEN m.raw_counts > 0 THEN m.cas_cell_index ELSE null END) cells_with_counts
         FROM `{project}.{dataset}.cas_raw_count_matrix` m
@@ -49,10 +50,10 @@ def prepare_feature_info(client, project, dataset, extract_table_prefix, min_obs
     """
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_feature_info`
-        AS 
+        AS
         SELECT  DENSE_RANK() OVER (ORDER BY s.feature_name ASC) AS cas_feature_index,
                 s.feature_name as feature_name,
-        FROM	`{project}.{dataset}.{extract_table_prefix}__extract_feature_summary` s 
+        FROM	`{project}.{dataset}.{extract_table_prefix}__extract_feature_summary` s
         WHERE s.cells_with_counts >= {min_observed_cells}
         ORDER BY s.feature_name
     """
@@ -69,7 +70,7 @@ def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bi
     """
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
-        AS 
+        AS
         SELECT  cas_cell_index,
                 CAST(FLOOR(rand() * (select count(1) from `{project}.{dataset}.cas_cell_info`) / {extract_bin_size}) as INT) as extract_bin
         FROM	`{project}.{dataset}.cas_cell_info` c
@@ -89,7 +90,7 @@ def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_raw_count_matrix`
         PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,4000,1))
         CLUSTER BY extract_bin
-        AS 
+        AS
         SELECT  b.extract_bin,
                 m.cas_cell_index,
                 ARRAY_AGG(STRUCT<feature_index int64, raw_counts int64>(ef.cas_feature_index, m.raw_counts)) as feature_data
