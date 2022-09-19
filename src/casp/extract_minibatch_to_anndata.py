@@ -45,7 +45,7 @@ def get_features(project, dataset, extract_feature_table, client):
 
     result = client.query(sql)
     features = [Feature(row["cas_feature_index"], row["original_feature_id"]) for row in result]
-    return features    
+    return features
 
 
 def get_cells_in_bin_range(project, dataset, extract_cell_table, start_bin, end_bin, client):
@@ -136,7 +136,9 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
     print("Extracting Cell Info...")
-    cells = get_cells_in_bin_range(project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client)
+    cells = get_cells_in_bin_range(
+        project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client
+    )
 
     original_cell_ids = []
     cas_cell_index_to_row_num = {}
