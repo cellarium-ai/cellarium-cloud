@@ -32,10 +32,9 @@ class Feature:
         self.feature_name = feature_name
 
 
-# Retrieve a list of all feature objects, ordered by cas_feature_index
 def get_features(project, dataset, extract_feature_table, client):
     """
-    Retrieve all features in the dataset for this extract
+    Retrieve a list of all feature objects from the specified extract feature table, ordered by cas_feature_index.
     """
     sql = f"""
 
@@ -51,10 +50,9 @@ def get_features(project, dataset, extract_feature_table, client):
     return features
 
 
-# Retrieve a list of all cells in the bin, ordered by cas_cell_index
 def get_cells(project, dataset, extract_cell_table, start_bin, end_bin, client):
     """
-    Retrieve all cells in the dataset for this extract bin
+    Retrieve a list of all cells between the specified start and end bins (both inclusive), ordered by cas_cell_index.
     """
     sql = f"""
 
