@@ -31,31 +31,36 @@ def prepare_feature_summary(client, project, dataset, extract_table_prefix):
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_feature_summary`
         AS
-        SELECT  f.feature_name,
+        SELECT  f.original_feature_id,
                 SUM(m.raw_counts) total_raw_counts,
                 COUNT(distinct CASE WHEN m.raw_counts > 0 THEN m.cas_cell_index ELSE null END) cells_with_counts
         FROM `{project}.{dataset}.cas_raw_count_matrix` m
         JOIN `{project}.{dataset}.cas_feature_info` f ON (m.cas_feature_index = f.cas_feature_index)
-        GROUP BY f.feature_name
+        GROUP BY f.original_feature_id
     """
     print("Creating Feature Summary...")
     query = execute_query(client, sql)
     return query
 
 
-def prepare_feature_info(client, project, dataset, extract_table_prefix, min_observed_cells):
+def prepare_feature_info(client, project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids):
     """
-    create subset of features for extract with new local identifiers
-    TODO -- join to static list of ensembl ids
+    create subset of features based on 
+      - a minimum number of observed cells 
+      - original_feature_id being present in the fully qualified single-column table fq_allowed_original_feature_ids
+    and generating with a new feature index value 
     """
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_feature_info`
         AS
-        SELECT  DENSE_RANK() OVER (ORDER BY s.feature_name ASC) AS cas_feature_index,
-                s.feature_name as feature_name,
+        SELECT  DENSE_RANK() OVER (ORDER BY s.original_feature_id ASC) AS cas_feature_index,
+                s.original_feature_id as original_feature_id,
         FROM	`{project}.{dataset}.{extract_table_prefix}__extract_feature_summary` s
         WHERE s.cells_with_counts >= {min_observed_cells}
-        ORDER BY s.feature_name
+        AND s.original_feature_id IN (
+            SELECT * FROM `{fq_allowed_original_feature_ids}`
+        )
+        ORDER BY s.original_feature_id
     """
 
     print("Creating Feature Info...")
@@ -96,7 +101,7 @@ def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
                 ARRAY_AGG(STRUCT<feature_index int64, raw_counts int64>(ef.cas_feature_index, m.raw_counts)) as feature_data
         FROM `{project}.{dataset}.cas_raw_count_matrix` m
         JOIN `{project}.{dataset}.cas_feature_info` fi ON (m.cas_feature_index = fi.cas_feature_index)
-        JOIN `{project}.{dataset}.{extract_table_prefix}__extract_feature_info` ef ON (fi.feature_name = ef.feature_name)
+        JOIN `{project}.{dataset}.{extract_table_prefix}__extract_feature_info` ef ON (fi.original_feature_id = ef.original_feature_id)
         JOIN `{project}.{dataset}.{extract_table_prefix}__extract_cell_info` b ON (m.cas_cell_index = b.cas_cell_index)
         GROUP BY 1,2
     """
@@ -106,11 +111,11 @@ def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
     return query
 
 
-def prepare_extract(project, dataset, extract_table_prefix, min_observed_cells, extract_bin_size):
+def prepare_extract(project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids, extract_bin_size):
     client = bigquery.Client(project=project)
 
     prepare_feature_summary(client, project, dataset, extract_table_prefix)
-    prepare_feature_info(client, project, dataset, extract_table_prefix, min_observed_cells)
+    prepare_feature_info(client, project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids)
     prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size)
     prepare_extract_matrix(client, project, dataset, extract_table_prefix)
 
@@ -128,8 +133,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--extract_bin_size", type=int, help="desired cells per extract bin", default=10000, required=False
     )
+    parser.add_argument(
+        "--fq_allowed_original_feature_ids", type=str, help="fully qualified reference to table of allowed feature names", 
+        default="dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A", required=False
+    )
+    
 
     args = parser.parse_args()
     prepare_extract(
-        args.project, args.dataset, args.extract_table_prefix, args.min_observed_cells, args.extract_bin_size
+        args.project, 
+        args.dataset, 
+        args.extract_table_prefix, 
+        args.min_observed_cells, 
+        args.fq_allowed_original_feature_ids, 
+        args.extract_bin_size
     )

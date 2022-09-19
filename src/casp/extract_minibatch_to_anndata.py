@@ -27,9 +27,9 @@ class Feature:
     Represents a CASP feature / gene.
     """
 
-    def __init__(self, cas_feature_index, feature_name):
+    def __init__(self, cas_feature_index, original_feature_id):
         self.cas_feature_index = cas_feature_index
-        self.feature_name = feature_name
+        self.original_feature_id = original_feature_id
 
 
 def get_features(project, dataset, extract_feature_table, client):
@@ -38,19 +38,17 @@ def get_features(project, dataset, extract_feature_table, client):
     """
     sql = f"""
 
-    SELECT cas_feature_index, feature_name FROM
+    SELECT cas_feature_index, original_feature_id FROM
         `{project}.{dataset}.{extract_feature_table}` ORDER BY cas_feature_index
 
     """
 
-    query = client.query(sql)
-    features = []
-    for row in query:
-        features.append(Feature(row["cas_feature_index"], row["feature_name"]))
-    return features
+    result = client.query(sql)
+    features = [Feature(row["cas_feature_index"], row["original_feature_id"]) for row in result]
+    return features    
 
 
-def get_cells(project, dataset, extract_cell_table, start_bin, end_bin, client):
+def get_cells_in_bin_range(project, dataset, extract_cell_table, start_bin, end_bin, client):
     """
     Retrieve a list of all cells between the specified start and end bins (both inclusive), ordered by cas_cell_index.
     """
@@ -134,11 +132,11 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
     feature_ids = []
     cas_feature_index_to_col_num = {}
     for col_num, feature in enumerate(features):
-        feature_ids.append(feature.feature_name)
+        feature_ids.append(feature.original_feature_id)
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
     print("Extracting Cell Info...")
-    cells = get_cells(project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client)
+    cells = get_cells_in_bin_range(project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client)
 
     original_cell_ids = []
     cas_cell_index_to_row_num = {}
