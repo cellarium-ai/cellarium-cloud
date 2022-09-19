@@ -95,7 +95,56 @@ This step:
 * Cleans up the staged Avro files from GCS
 
 
-### Extract Random Subset
+## Data Extract
+
+Extracting data into minibatchs of N cells is comprised of two steps:
+
+* Prepare - randomizes, preprocesses and shards the entire dataset
+* Extract - extracts one or more shards, can be done in parallel
+
+### Prepare
+
+To prepare a dataset, run:
+
+```
+python src/casp/prepare_for_training.py --project <project> --dataset <dataset> --extract_table_prefix <table_prefix> --extract_bin_size <bin_size>
+```
+
+where
+
+* `project` specifies the Google project id that will contain the BigQuery dataset.
+* `dataset` specifies the dataset name that will contain the BigQuery tables.
+* `table_prefix` specifies the prefix used to name the temporary tables
+* `bin_size` approximate number of cells for each shard/bin (e.g. 10000)
+
+### Extract
+
+```
+python src/casp/extract_minibatch_to_anndata.py --project <project> --dataset <dataset> --extract_table_prefix <table_prefix> --start_bin <start_bin> --end_bin <end_bin> --output <output_file_name>
+```
+
+where
+
+* `project` specifies the Google project id that will contain the BigQuery dataset.
+* `dataset` specifies the dataset name that will contain the BigQuery tables.
+* `table_prefix` specifies the prefix used to name the temporary tables
+* `start_bin` 0-based, inclusive lower bound bin number for this extract
+* `end_bin` 0-based, inclusive upper bound bin number for this extract (can be the same as start for single bin)
+* `output_file_name` output file (e.g.`demo_4m_v2.0000.h5ad`)
+
+
+## Reference Data Preparation
+
+To extract data across multiple datasets, we have adopted an "allow list" of ensemble genes based on 10X Genomics reference data.
+
+```
+wget https://cf.10xgenomics.com/supp/cell-exp/refdata-gex-GRCh38-2020-A.tar.gz
+tar -xzvf refdata-gex-GRCh38-2020-A.tar.gz
+tail -n+2 refdata-gex-GRCh38-2020-A/star/geneInfo.tab > /tmp/gene.tsv
+bq load dsp-cell-annotation-service:cas_reference_data.refdata-gex-GRCh38-2020-A /tmp/gene.tsv feature_name:STRING
+```
+
+### Extract Random Subset without Prepare (deprecated)
 
 This will randomly get a specified number of cells' data from your BigQuery dataset:
 
