@@ -7,3 +7,5 @@ requests
 termcolor
 requests
 pygments
+scikit-learn
+torch

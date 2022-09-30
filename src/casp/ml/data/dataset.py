@@ -7,6 +7,8 @@ import anndata
 import torch
 from torch.utils.data import Dataset
 
+from casp.ml.data import transforms
+
 if t.TYPE_CHECKING:
     from google.cloud import storage
 
@@ -27,6 +29,12 @@ class CASDataset(Dataset):
         except IndexError:
             self._randomize_chunk_names()
             name = self._chunk_names_all.pop()
+            self._epoch += 1
+            if issubclass(self.transform, transforms.Compose):
+                for transform in self.transform:
+                    setattr(transform, "first_epoch", False)
+
+            setattr(self.transform, "first_epoch", False)
 
         self._processed_chunks.append(name)
         return name
@@ -68,7 +76,7 @@ class CASDataset(Dataset):
         use_gpu: bool = False,
         storage_path: str = "",
         chunk_size: int = 10000,
-        transform=None,
+        transform: t.Optional[transforms.CASTransform] = None,
     ) -> None:
         """
         :param storage_client: Google Storage client.
@@ -83,6 +91,7 @@ class CASDataset(Dataset):
         self.storage_client = storage_client
         self.storage_path = storage_path
         self.use_gpu = use_gpu
+        self._epoch = 1
         self._chunk_names_all = [x.name for x in self.bucket.list_blobs(prefix=self.storage_path)]
         random.shuffle(self._chunk_names_all)
         self._processed_chunks = []
