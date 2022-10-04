@@ -185,6 +185,17 @@ for result in response:
         print(f"ID:{match.id} DISTANCE:{match.distance}")
 ```
 
+## Evaluating Performance
+
+Aspects to consider:
+
+1. Throughput (overall matches per second)
+2. Latency (response time per request)
+3. Scalability (with respect to index size)
+4. Accuracy
+5. Cost
+
+TBD
 
 ## Cleaning Up (excluding the network setup)
 
