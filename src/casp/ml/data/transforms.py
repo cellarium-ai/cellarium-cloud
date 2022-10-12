@@ -44,25 +44,31 @@ class ColumnWiseNormalization(CASTransform):
     statistics. This transform is applied only after the first epoch
     """
 
-    def __init__(self, n_columns, n_rows):
+    def __init__(self):
         self.first_epoch = True
-        self.n_columns = n_columns
-        self.n_rows = n_rows
-        self.running_sums = torch.zeros(n_columns)
-        self.running_sum_squares = torch.zeros(n_columns)
+        self.running_sums: t.Optional[torch.Tensor] = None
+        self.running_sums_squared: t.Optional[torch.Tensor] = None
+        self.n_rows = 0
         self.mu: t.Optional[torch.Tensor] = None
         self.variance: t.Optional[torch.Tensor] = None
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         if self.first_epoch:
+            if self.running_sums is None:
+                self.running_sums = torch.zeros(tensor.shape, device=tensor.device)
+                self.running_sums_squared = torch.zeros(tensor.shape, device=tensor.device)
+
             self.running_sums += tensor
-            self.running_sum_squares += torch.square(tensor)
+            self.running_sums_squared += torch.square(tensor)
+            self.n_rows += 1
+            return tensor
         else:
             if self.mu is None and self.variance is None:
                 self.mu = self.running_sums / self.n_rows
-                self.variance = (1 / (self.n_rows - 1)) * (self.running_sum_squares - (self.n_rows * self.mu**2))
+                self.variance = self.running_sums_squared / (self.n_rows - 1) - (
+                    self.n_rows / (self.n_rows - 1)
+                ) * torch.square(self.mu)
                 self.std = torch.sqrt(self.variance)
-
-            return (tensor - self.mu) / self.std
-
-        return tensor
+            res = (tensor - self.mu) / self.std
+            res[torch.isnan(res)] = 0
+            return res

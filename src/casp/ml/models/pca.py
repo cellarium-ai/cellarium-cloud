@@ -11,7 +11,6 @@ def svd_flip(U, VT, U_decision=True):
     as default.
     """
     if U_decision:
-        # max_abs_cols = abs(U).argmax(0)
         max_abs_cols = torch.argmax(torch.abs(U), dim=0)
         signs = torch.sign(U[max_abs_cols, torch.arange(U.shape[1])])
     else:
@@ -38,9 +37,9 @@ class IncrementalPCA:
     def __call__(self, X):
         batch = torch.clone(X)
         if any((self._running_sum is None, self._running_sum_sq is None, self._curr_mean is None)):
-            self._running_sum = torch.zeros(batch.shape[1])
-            self._running_sum_sq = torch.zeros(batch.shape[1])
-            self._curr_mean = torch.zeros(batch.shape[1])
+            self._running_sum = torch.zeros(batch.shape[1], device=batch.device)
+            self._running_sum_sq = torch.zeros(batch.shape[1], device=batch.device)
+            self._curr_mean = torch.zeros(batch.shape[1], device=batch.device)
 
         batch_size = batch.shape[0]
         self._running_sum += torch.sum(batch, dim=0)

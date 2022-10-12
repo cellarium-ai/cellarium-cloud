@@ -56,7 +56,57 @@ class TestIncrementalPCA(unittest.TestCase):
         casp_transformed = casp_incremental_pca.transform(torch_batch_1)
 
         transformation_same = torch.all(
-            torch.isclose(input=torch.Tensor(sk_transformed), other=casp_transformed, atol=1e-03)
+            torch.isclose(input=torch.Tensor(sk_transformed), other=casp_transformed, atol=1e-02)
+        ).item()
+
+        self.assertTrue(singular_values_same, msg="Singular Values are not the same as in scikit-learn")
+        self.assertTrue(components_same, msg="PCA Components are not the same as in scikit-learn")
+        self.assertTrue(transformation_same, msg="Transformation of input batch is not the same as in scikit-learn")
+
+    def test_pca_with_different_batch_sizes(self):
+        batch_1_n = np.random.random((300, 400)) * 10
+        batch_2_n = np.random.random((700, 400)) * 10
+        batch_3_n = np.random.random((1000, 400)) * 10
+        batch_4_n = np.random.random((500, 400)) * 10
+
+        batch_1_t = torch.Tensor(batch_1_n)
+        batch_2_t = torch.Tensor(batch_2_n)
+        batch_3_t = torch.Tensor(batch_3_n)
+        batch_4_t = torch.Tensor(batch_4_n)
+
+        sk_pca = sklearn_pca.IncrementalPCA(n_components=3)
+        c_pca = casp_pca.IncrementalPCA(n_components=3)
+
+        sk_pca.partial_fit(batch_1_n)
+        sk_pca.partial_fit(batch_2_n)
+        sk_pca.partial_fit(batch_3_n)
+        sk_pca.partial_fit(batch_4_n)
+
+        c_pca(batch_1_t)
+        c_pca(batch_2_t)
+        c_pca(batch_3_t)
+        c_pca(batch_4_t)
+
+        singular_values_same = torch.all(
+            torch.isclose(
+                input=torch.Tensor(sk_pca.singular_values_),
+                other=c_pca.singular_values,
+                atol=1e-03,
+            )
+        ).item()
+
+        components_same = torch.all(
+            torch.isclose(
+                input=torch.Tensor(sk_pca.components_),
+                other=c_pca.components,
+                atol=1e-03,
+            )
+        ).item()
+        sk_transformed = sk_pca.transform(batch_1_n)
+        casp_transformed = c_pca.transform(batch_1_t)
+
+        transformation_same = torch.all(
+            torch.isclose(input=torch.Tensor(sk_transformed), other=casp_transformed, atol=1e-02)
         ).item()
 
         self.assertTrue(singular_values_same, msg="Singular Values are not the same as in scikit-learn")

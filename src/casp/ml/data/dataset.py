@@ -2,6 +2,7 @@ import os
 import random
 import typing as t
 from collections import deque
+import warnings
 
 import anndata
 import torch
@@ -30,8 +31,8 @@ class CASDataset(Dataset):
             self._randomize_chunk_names()
             name = self._chunk_names_all.pop()
             self._epoch += 1
-            if issubclass(self.transform, transforms.Compose):
-                for transform in self.transform:
+            if isinstance(self.transform, transforms.Compose):
+                for transform in self.transform.transforms:
                     setattr(transform, "first_epoch", False)
 
             setattr(self.transform, "first_epoch", False)
@@ -52,7 +53,11 @@ class CASDataset(Dataset):
         blob = self.bucket.blob(filename)
         filepath = self._get_local_anndata_path(filename)
         blob.download_to_filename(filepath)
-        adata = anndata.read_h5ad(filepath)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            adata = anndata.read_h5ad(filepath)
+
         os.remove(filepath)
         return adata
 
@@ -66,7 +71,6 @@ class CASDataset(Dataset):
             self.db_ids = self.db_ids.cuda()
 
         self.index = 0
-        self.ids_in = {i for i in range(self.X.shape[0])}
         self.ids_q = deque(i for i in range(self.X.shape[0]))
 
     def __init__(
@@ -102,7 +106,7 @@ class CASDataset(Dataset):
         self._update_data()
 
     def __len__(self) -> int:
-        return len(self._chunk_names_all) * self.chunk_size
+        return (len(self._chunk_names_all) + len(self._processed_chunks)) * self.chunk_size
 
     def __getitem__(self, _: int) -> t.Tuple[torch.Tensor, int]:
         """
