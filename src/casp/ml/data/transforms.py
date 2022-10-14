@@ -1,8 +1,9 @@
 import typing as t
 import torch
+from casp.ml.utils import PickleMixin
 
 
-class CASTransform:
+class CASTransform(PickleMixin):
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 

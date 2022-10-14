@@ -1,6 +1,7 @@
 import typing as t
 import numpy as np
 import torch
+from casp.ml.utils import PickleMixin
 
 
 def svd_flip(U, VT, U_decision=True):
@@ -23,7 +24,7 @@ def svd_flip(U, VT, U_decision=True):
     return U, VT
 
 
-class IncrementalPCA:
+class IncrementalPCA(PickleMixin):
     def __init__(self, n_components):
         self.batch_num = 1
         self.n_components = n_components
@@ -33,6 +34,7 @@ class IncrementalPCA:
         self._curr_mean: t.Optional[torch.Tensor] = None
         self.singular_values: t.Optional[torch.Tensor] = None
         self.components: t.Optional[torch] = None
+        self.transforms = None
 
     def __call__(self, X):
         batch = torch.clone(X)
@@ -79,3 +81,9 @@ class IncrementalPCA:
 
     def transform(self, batch: torch.Tensor) -> torch.Tensor:
         return torch.matmul(batch - self._curr_mean, self.components[: self.n_components].T)
+
+    def save(self, file_name):
+        if self.transforms is None:
+            raise ValueError("You need to save the model along with the transform " "to use it later with the dataset")
+
+        super().save(file_name=file_name)
