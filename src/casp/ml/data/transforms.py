@@ -1,5 +1,8 @@
 import typing as t
+
 import torch
+
+from casp.ml.running_stats import RunningSums
 from casp.ml.utils import PickleMixin
 
 
@@ -32,11 +35,11 @@ class Compose(CASTransform):
 
 
 class RowWiseNormalization(CASTransform):
-    def __init__(self, C: int):
-        self.C = C
+    def __init__(self, sc_rna_normalization_pseudocount: int):
+        self.sc_rna_normalization_pseudocount = sc_rna_normalization_pseudocount
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
-        return torch.log(1 + self.C * (tensor / torch.sum(tensor)))
+        return torch.log(1 + self.sc_rna_normalization_pseudocount * (tensor / torch.sum(tensor)))
 
 
 class ColumnWiseNormalization(CASTransform):
@@ -45,31 +48,19 @@ class ColumnWiseNormalization(CASTransform):
     statistics. This transform is applied only after the first epoch
     """
 
-    def __init__(self):
-        self.first_epoch = True
-        self.running_sums: t.Optional[torch.Tensor] = None
-        self.running_sums_squared: t.Optional[torch.Tensor] = None
-        self.n_rows = 0
+    def __init__(self, running_sums: "RunningSums"):
+        self.running_sums = running_sums
         self.mu: t.Optional[torch.Tensor] = None
         self.variance: t.Optional[torch.Tensor] = None
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
-        if self.first_epoch:
-            if self.running_sums is None:
-                self.running_sums = torch.zeros(tensor.shape, device=tensor.device)
-                self.running_sums_squared = torch.zeros(tensor.shape, device=tensor.device)
+        if self.mu is None or self.variance is None:
+            self.mu = self.running_sums.running_sums / self.running_sums.n
+            self.variance = self.running_sums.running_sums_squared / (self.running_sums.n - 1) - (
+                self.running_sums.n / (self.running_sums.n - 1)
+            ) * torch.square(self.mu)
+            self.std = torch.sqrt(self.variance)
 
-            self.running_sums += tensor
-            self.running_sums_squared += torch.square(tensor)
-            self.n_rows += 1
-            return tensor
-        else:
-            if self.mu is None and self.variance is None:
-                self.mu = self.running_sums / self.n_rows
-                self.variance = self.running_sums_squared / (self.n_rows - 1) - (
-                    self.n_rows / (self.n_rows - 1)
-                ) * torch.square(self.mu)
-                self.std = torch.sqrt(self.variance)
-            res = (tensor - self.mu) / self.std
-            res[torch.isnan(res)] = 0
-            return res
+        res = (tensor - self.mu) / self.std
+        res[torch.isnan(res)] = 0
+        return res

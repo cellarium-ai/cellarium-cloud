@@ -7,8 +7,8 @@ import unittest
 
 import numpy as np
 import torch
-
 from sklearn import decomposition as sklearn_pca
+
 from casp.ml.models import pca as casp_pca
 
 
@@ -36,7 +36,6 @@ class TestIncrementalPCA(unittest.TestCase):
         casp_incremental_pca(torch_batch_1)
         casp_incremental_pca(torch_batch_2)
         casp_incremental_pca(torch_batch_3)
-
         singular_values_same = torch.all(
             torch.isclose(
                 input=torch.Tensor(sk_learn_incremental_pca.singular_values_),

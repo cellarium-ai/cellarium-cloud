@@ -1,13 +1,14 @@
 import os
 import random
 import typing as t
-from collections import deque
 import warnings
+from collections import deque
 
 import anndata
 import torch
 from torch.utils.data import Dataset
 
+from casp.ml import running_stats
 from casp.ml.data import transforms
 
 if t.TYPE_CHECKING:
@@ -80,7 +81,8 @@ class CASDataset(Dataset):
         use_gpu: bool = False,
         storage_path: str = "",
         chunk_size: int = 10000,
-        transform: t.Optional[transforms.CASTransform] = None,
+        transform: t.Optional["transforms.CASTransform"] = None,
+        running_stat: t.Optional["running_stats.RunningStat"] = None,
     ) -> None:
         """
         :param storage_client: Google Storage client.
@@ -92,17 +94,20 @@ class CASDataset(Dataset):
         self.bucket_name = bucket_name
         self.chunk_size = chunk_size
         self.transform = transform
+        self.running_stat = running_stat
         self.storage_client = storage_client
         self.storage_path = storage_path
         self.use_gpu = use_gpu
         self._epoch = 1
         self._chunk_names_all = [x.name for x in self.bucket.list_blobs(prefix=self.storage_path)]
+        self._chunk_names_all = list(filter(lambda x: x != self.storage_path, self._chunk_names_all))
         random.shuffle(self._chunk_names_all)
         self._processed_chunks = []
         self.X = None
         self.db_ids = None
         self.index = None
         self.ids_q = None
+        self.apply_transform = running_stat is None
         self._update_data()
 
     def __len__(self) -> int:
@@ -119,7 +124,19 @@ class CASDataset(Dataset):
             index = self.ids_q.popleft()
 
         x_i, db_index = self.X[index], self.db_ids[index]
-        if self.transform is not None:
+        if self.transform is not None and self.apply_transform:
             x_i = self.transform(x_i)
 
         return x_i, db_index
+
+    def calculate_running_stats(self) -> None:
+        """
+        Calculate running stats. You probably will need to call this method before
+        start training loop
+        """
+        for i in range(len(self)):
+            if self._epoch == 1:
+                x_i, db_index = self[i]
+                self.running_stat(x_i)
+        self.apply_transform = True
+        print("Running Statistics are calculated")
