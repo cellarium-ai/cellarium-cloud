@@ -9,6 +9,9 @@ class RunningStat(PickleMixin):
     def __call__(self, tensor):
         raise NotImplementedError
 
+    def closure(self) -> None:
+        return
+
 
 class RunningSums(RunningStat):
     def __init__(self):
@@ -25,3 +28,18 @@ class RunningSums(RunningStat):
         self.running_sums_squared += torch.square(tensor)
         self.n += 1
         return tensor
+
+
+class OnePassMeanVarStd(RunningSums):
+    def __init__(self):
+        super().__init__()
+        self.mu: t.Optional[torch.Tensor] = None
+        self.var: t.Optional[torch.Tensor] = None
+        self.std: t.Optional[torch.Tensor] = None
+
+    def closure(self) -> None:
+        self.mu = self.running_sums / self.n
+        self.var = self.running_sums_squared / (self.n - 1) - (
+                self.n / (self.n - 1)
+        ) * torch.square(self.mu)
+        self.std = torch.sqrt(self.var)
