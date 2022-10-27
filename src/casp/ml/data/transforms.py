@@ -2,7 +2,7 @@ import typing as t
 
 import torch
 
-from casp.ml.running_stats import RunningSums
+from casp.ml.running_stats import OnePassMeanVarStd
 from casp.ml.utils import PickleMixin
 
 
@@ -48,19 +48,10 @@ class ColumnWiseNormalization(CASTransform):
     statistics. This transform is applied only after the first epoch
     """
 
-    def __init__(self, running_sums: "RunningSums"):
-        self.running_sums = running_sums
-        self.mu: t.Optional[torch.Tensor] = None
-        self.variance: t.Optional[torch.Tensor] = None
+    def __init__(self, one_pass_mean_var_std: "OnePassMeanVarStd"):
+        self.mean_var_std = one_pass_mean_var_std
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
-        if self.mu is None or self.variance is None:
-            self.mu = self.running_sums.running_sums / self.running_sums.n
-            self.variance = self.running_sums.running_sums_squared / (self.running_sums.n - 1) - (
-                self.running_sums.n / (self.running_sums.n - 1)
-            ) * torch.square(self.mu)
-            self.std = torch.sqrt(self.variance)
-
-        res = (tensor - self.mu) / self.std
+        res = (tensor - self.mean_var_std.mu) / self.mean_var_std.std
         res[torch.isnan(res)] = 0
         return res
