@@ -39,7 +39,5 @@ class OnePassMeanVarStd(RunningSums):
 
     def closure(self) -> None:
         self.mu = self.running_sums / self.n
-        self.var = self.running_sums_squared / (self.n - 1) - (
-                self.n / (self.n - 1)
-        ) * torch.square(self.mu)
+        self.var = self.running_sums_squared / (self.n - 1) - (self.n / (self.n - 1)) * torch.square(self.mu)
         self.std = torch.sqrt(self.var)
