@@ -33,8 +33,8 @@ export PROJECT_NUMBER=`gcloud projects describe $PROJECT_ID | grep projectNumber
 export REGION="us-central1"
 
 # Bucket containing CSV/AVRO of vectors to be searched
-export BUCKET_URI="gs://dsp-cell-annotation-service/kcibul/matching/"
-export DIMENSIONS=75
+export BUCKET_URI="gs://dsp-cell-annotation-service/demo_4m_v2/new_embeddings_for_loading/"
+export DIMENSIONS=512
 export APPROX_NEIGHBORS_COUNT=100
 
 # Constants, not necessary to change
@@ -129,7 +129,7 @@ Deploy the index to the endpoint so it can be searched.  Several non-intuitive I
 
 ```
 # This is a indentifier and a display name YOU give for this deployed index (can be the same)
-export DEPLOYED_INDEX_ID="deployed_${INDEX_NAME}"
+export DEPLOYED_INDEX_ID="deployed_4m_${INDEX_NAME}"
 export DISPLAY_NAME=$DEPLOYED_INDEX_ID
 
 # Then we need the endpoint id with a little JQ magic
@@ -143,7 +143,7 @@ gcloud ai index-endpoints deploy-index $ENDPOINT_ID \
   --display-name=$DISPLAY_NAME \
   --index=$INDEX_ID \
   --min-replica-count 2 \
-  --max-replica-count 2 \
+  --max-replica-count 2 
 
 ```
 
