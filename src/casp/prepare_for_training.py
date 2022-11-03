@@ -70,18 +70,24 @@ def prepare_feature_info(
     return query
 
 
-def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size):
+def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size, random_seed_offset=0):
     """
-    Randomize cells into bins of approximately `extract_bin_size` cells.  The last bin may be much
+    Randomize cells using farm_fingerprint with an offset so we can have deterministic randomization.  See
+    https://towardsdatascience.com/advanced-random-sampling-in-bigquery-sql-7d4483b580bb
+
+    Then allocate cells into bins of `extract_bin_size` cells.  The last bin may be much
     smaller than this requested size, as it is the remainder cells
     """
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
         AS
-        SELECT  cas_cell_index,
-                CAST(FLOOR(rand() * (select count(1) from `{project}.{dataset}.cas_cell_info`) / {extract_bin_size}) as INT) as extract_bin
-        FROM	`{project}.{dataset}.cas_cell_info` c
-        ORDER BY cas_cell_index
+        SELECT cas_cell_index,
+        CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
+        FROM (
+            SELECT *
+            FROM `{project}.{dataset}.cas_cell_info` c
+            ORDER BY farm_fingerprint(cast(cas_cell_index + {random_seed_offset} as STRING))
+        ) t
     """
 
     print("Creating Cell Info and randomizing into extract bins...")
@@ -108,7 +114,7 @@ def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
         GROUP BY 1,2
     """
 
-    print("Creating Cell Info and randomizing into extract bins...")
+    print("Creating extract matrix...")
     query = execute_query(client, sql)
     return query
 
