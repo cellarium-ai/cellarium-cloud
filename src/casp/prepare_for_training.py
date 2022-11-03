@@ -70,7 +70,7 @@ def prepare_feature_info(
     return query
 
 
-def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size, random_seed_offset = 0):
+def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size, random_seed_offset=0):
     """
     Randomize cells using farm_fingerprint with an offset so we can have deterministic randomization.  See
     https://towardsdatascience.com/advanced-random-sampling-in-bigquery-sql-7d4483b580bb
