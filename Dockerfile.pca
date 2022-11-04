@@ -1,0 +1,13 @@
+FROM bitnami/pytorch:latest
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY src .
+
+EXPOSE 8080
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
+CMD ["python", "casp/ml/inference/pca/server.py"]
