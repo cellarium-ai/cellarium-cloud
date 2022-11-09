@@ -2,11 +2,12 @@ task train {
     String version = "train_v1.0.0"
     String bucket_name
     String data_storage_path
+    String training_script
 
     command {
         echo $(pwd)
         cd /app
-        python /app/casp/ml/training/pca/train.py \
+        python ${training_script} \
         --bucket_name=${bucket_name} \
         --data_storage_path=${data_storage_path}
     }
@@ -27,6 +28,7 @@ task train {
 workflow CASPModelTrain {
     String bucket_name
     String data_storage_path
+    String training_script
 
     meta {
         description: "Train workflow"
@@ -34,7 +36,8 @@ workflow CASPModelTrain {
 
     call train {
         input:
-            bucket_name = "fedor-test-bucket",
-            data_storage_path = "test_data",
+            bucket_name = bucket_name,
+            data_storage_path = data_storage_path,
+            training_script = training_script,
     }
 }

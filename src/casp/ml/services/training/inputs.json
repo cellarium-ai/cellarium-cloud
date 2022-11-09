@@ -1,0 +1,5 @@
+{
+  "CASPModelTrain.bucket_name": "dsp-cell-annotation-service ",
+  "CASPModelTrain.data_storage_path": "demo_4m_v3",
+  "CASPModelTrain.training_script": "casp/ml/services/training/pca/train.py"
+}

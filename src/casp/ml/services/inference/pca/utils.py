@@ -8,7 +8,7 @@ from google.cloud import storage
 from google.oauth2.service_account import Credentials
 
 from casp.ml.dump_manager import DumpManager
-from casp.ml.inference.pca import constants
+from casp.ml.services.inference.pca import constants
 
 
 def get_google_service_credentials() -> t.Tuple["Credentials", str]:

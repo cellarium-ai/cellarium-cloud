@@ -2,8 +2,9 @@ import typing as t
 
 import pandas as pd
 from fastapi import FastAPI, File
+import uvicorn
 
-from casp.ml.inference.pca import utils
+from casp.ml.services.inference.pca import utils
 
 app = FastAPI()
 
@@ -27,3 +28,7 @@ async def predict(file: bytes = File()) -> t.Dict:
     df["db_ids"] = db_ids.numpy().astype(int)
     df = df[columns]
     return df.to_dict()
+
+
+if __name__ == "__main__":
+    uvicorn.run("server:app", host="0.0.0.0", port=8000)
