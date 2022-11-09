@@ -1,3 +1,5 @@
 {
-    "CASPModelTrain.python_environment": "python3"
+  "CASPModelTrain.python_environment": "python3",
+  "CASPModelTrain.bucket_name": "fedor_test_bucket",
+  "CASPModelTrain.data_storage_path": "test_data"
 }

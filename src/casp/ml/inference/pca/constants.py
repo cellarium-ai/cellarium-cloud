@@ -1,6 +1,7 @@
-import typing as t
-import os
 import json
+import os
+import typing as t
+
 import dotenv
 
 dotenv.load_dotenv(dotenv_path="casp/ml/inference/pca/.env")

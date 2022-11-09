@@ -4,8 +4,8 @@ import typing as t
 
 import anndata
 import torch
-from google.oauth2.service_account import Credentials
 from google.cloud import storage
+from google.oauth2.service_account import Credentials
 
 from casp.ml.dump_manager import DumpManager
 from casp.ml.inference.pca import constants
@@ -32,6 +32,5 @@ def get_dump_manager() -> "DumpManager":
     blob = bucket.blob(constants.BLOB_NAME)
     # TODO: Make PickleMixin capable of downloading directly from buckets
     pickle_in = blob.download_as_string()
-    # blob.download_to_filename("./dm.pickle")
+
     return pickle.loads(pickle_in)
-    # return pickle.load(open("./dm.pickle", "rb"))

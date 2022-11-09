@@ -1,27 +1,23 @@
 task train {
-
-    String hello_input
     String version = "train_v1.0.0"
-    String python_environment
+    String bucket_name
+    String data_storage_path
 
     command {
-        echo ${hello_input}
         echo $(pwd)
         cd /app
-        python /app/casp/ml/training/pca/train.py
-        python -u<<CODE
-        chars = """Hello World!"""
-        print(chars)
-        import sys
-        print(sys.version)
-        CODE
+        python /app/casp/ml/training/pca/train.py \
+        --bucket_name=${bucket_name} \
+        --data_storage_path=${data_storage_path}
     }
 
     runtime {
-        docker: "us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_training:1.0"
+        docker: "us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_training-gpu:1.0"
         bootDiskSizeGb: 100
         memory: "26G"
         cpu: 4
+        gpuCount: 1
+        gpuType:  "nvidia-tesla-t4"
         zones: "us-east1-d us-east1-c"
         maxRetries: 0
         preemptible_tries: 0
@@ -29,7 +25,8 @@ task train {
 }
 
 workflow CASPModelTrain {
-    String python_environment
+    String bucket_name
+    String data_storage_path
 
     meta {
         description: "Train workflow"
@@ -37,7 +34,7 @@ workflow CASPModelTrain {
 
     call train {
         input:
-            hello_input = "Hello World",
-            python_environment = python_environment
+            bucket_name = "fedor-test-bucket",
+            data_storage_path = "test_data",
     }
 }

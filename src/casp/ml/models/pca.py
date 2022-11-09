@@ -39,7 +39,7 @@ class IncrementalPCA(PickleMixin):
         self.transforms = None
 
     def __call__(self, X):
-        batch = torch.clone(X)
+        batch = X
         if any((self._running_sum is None, self._running_sum_sq is None, self._curr_mean is None)):
             self._running_sum = torch.zeros(batch.shape[1], device=batch.device)
             self._running_sum_sq = torch.zeros(batch.shape[1], device=batch.device)

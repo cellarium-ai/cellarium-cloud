@@ -12,3 +12,4 @@ uvicorn
 python-dotenv
 pyarrow
 python-multipart
+hypercorn

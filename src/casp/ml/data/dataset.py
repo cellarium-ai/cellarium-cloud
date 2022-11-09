@@ -3,6 +3,7 @@ import random
 import typing as t
 import warnings
 from collections import deque
+from pathlib import Path
 
 import anndata
 import torch
@@ -53,6 +54,7 @@ class CASDataset(Dataset):
         filename = self._get_random_chunk_name()
         blob = self.bucket.blob(filename)
         filepath = self._get_local_anndata_path(filename)
+        print(filename, self._chunk_names_all, self._processed_chunks, "ASDASDASDASDASDA")
         blob.download_to_filename(filepath)
 
         with warnings.catch_warnings():
@@ -66,10 +68,6 @@ class CASDataset(Dataset):
         adata = self._get_random_minibatch()
         self.X = torch.Tensor(adata.raw.X.todense().astype(int))
         self.db_ids = torch.Tensor(adata.obs_names.values.astype(int))
-
-        if self.use_gpu:
-            self.X = self.X.cuda()
-            self.db_ids = self.db_ids.cuda()
 
         self.index = 0
         self.ids_q = deque(i for i in range(self.X.shape[0]))
@@ -91,6 +89,7 @@ class CASDataset(Dataset):
         :param chunk_size: Approximate size of the chunks
         :param transform: Transform applied to tensor
         """
+        Path("./data").mkdir(parents=True, exist_ok=True)
         self.bucket_name = bucket_name
         self.chunk_size = chunk_size
         self.transform = transform
@@ -100,7 +99,8 @@ class CASDataset(Dataset):
         self.use_gpu = use_gpu
         self._epoch = 1
         self._chunk_names_all = [x.name for x in self.bucket.list_blobs(prefix=self.storage_path)]
-        self._chunk_names_all = list(filter(lambda x: x != self.storage_path, self._chunk_names_all))
+        avoid_names = [self.storage_path, self.storage_path + "/"]
+        self._chunk_names_all = list(filter(lambda x: x not in avoid_names, self._chunk_names_all))
         random.shuffle(self._chunk_names_all)
         self._processed_chunks = []
         self.X = None
@@ -124,6 +124,11 @@ class CASDataset(Dataset):
             index = self.ids_q.popleft()
 
         x_i, db_index = self.X[index], self.db_ids[index]
+
+        if self.use_gpu:
+            x_i = x_i.cuda()
+            db_index = db_index.cuda()
+
         if self.transform is not None and self.apply_transform:
             x_i = self.transform(x_i)
 

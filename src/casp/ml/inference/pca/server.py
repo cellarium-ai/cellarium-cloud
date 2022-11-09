@@ -1,9 +1,8 @@
-import torch
 import typing as t
-# import uvicorn
-import hypercorn
+
 import pandas as pd
 from fastapi import FastAPI, File
+
 from casp.ml.inference.pca import utils
 
 app = FastAPI()
@@ -28,7 +27,3 @@ async def predict(file: bytes = File()) -> t.Dict:
     df["db_ids"] = db_ids.numpy().astype(int)
     df = df[columns]
     return df.to_dict()
-
-
-# if __name__ == "__main__":
-#     hypercorn.run("server:app", host="0.0.0.0", port=8000)
