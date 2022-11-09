@@ -1,14 +1,14 @@
-import typing as t
 import time
-
+import typing as t
 import uuid
+from datetime import datetime, timedelta
+
 import pandas as pd
 import requests
 import uvicorn
 from fastapi import FastAPI, Form, UploadFile
 from google.cloud import aiplatform, bigquery
 from pydantic import BaseSettings
-from datetime import datetime, timedelta
 
 
 # TODO --refactor packages, move into commons settings class, leverage .env file
@@ -20,17 +20,19 @@ class Settings(BaseSettings):
     knn_search_deployed_index_id: str = "deployed_4m_casp_index_v1"
     knn_search_num_matches: int = 100
     bq_cell_info_table_fqn: str = "dsp-cell-annotation-service.cas_4m_dataset.cas_cell_info"
-    bq_temp_table_dataset: str = "dsp-cell-annotation-service.cas_4m_dataset" 
+    bq_temp_table_dataset: str = "dsp-cell-annotation-service.cas_4m_dataset"
     items_per_user: int = 50
 
 
 settings = Settings()
 app = FastAPI()
-    
+
+
 def __log(s):
     dt_string = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
     print(f"{dt_string} - {s}")
-    
+
+
 def __get_embeddings(myfile):
     r = requests.post(settings.model_server_url, files={"file": myfile})
 
@@ -80,21 +82,20 @@ def __get_cell_type_distribution(query_ids, knn_response):
         for match in knn_response[i]:
             rows_to_insert.append(tuple([str(query_id), int(match.id), float(match.distance)]))
 
-    df = pd.DataFrame(rows_to_insert, columns =['query_id', 'match_cas_cell_index', 'match_score'])
+    df = pd.DataFrame(rows_to_insert, columns=["query_id", "match_cas_cell_index", "match_score"])
 
     job_config = bigquery.LoadJobConfig(schema=schema)
-    job = bq_client.load_table_from_dataframe(df, temp_table_fqn, job_config=job_config)  
+    job = bq_client.load_table_from_dataframe(df, temp_table_fqn, job_config=job_config)
     job.result()  # Wait for the job to complete.
 
     __log(f"Querying Match Cell Metadata")
-    query =    f"""
+    query = f"""
                 SELECT t.query_id, ci.cell_type, avg(t.match_score), count(*) cell_count
                 FROM `{temp_table_fqn}` t
                 JOIN `{settings.bq_cell_info_table_fqn}` ci ON t.match_cas_cell_index = ci.cas_cell_index
                 GROUP BY 1,2
                 ORDER BY 1, 3 DESC
                 """
-
 
     query_job = bq_client.query(query)
 
@@ -121,6 +122,11 @@ def __annotate(file):
 
     __log("Finished")
     return d
+
+
+@app.get("/")
+async def root() -> str:
+    return "Hello world"
 
 
 @app.post("/annotate")
