@@ -1,4 +1,3 @@
-import time
 import typing as t
 import uuid
 from datetime import datetime, timedelta
@@ -88,7 +87,7 @@ def __get_cell_type_distribution(query_ids, knn_response):
     job = bq_client.load_table_from_dataframe(df, temp_table_fqn, job_config=job_config)
     job.result()  # Wait for the job to complete.
 
-    __log(f"Querying Match Cell Metadata")
+    __log("Querying Match Cell Metadata")
     query = f"""
                 SELECT t.query_id, ci.cell_type, avg(t.match_score), count(*) cell_count
                 FROM `{temp_table_fqn}` t
