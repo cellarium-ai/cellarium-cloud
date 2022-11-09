@@ -6,3 +6,9 @@ google-cloud-bigquery
 google-cloud-storage
 numpy
 scipy
+torch
+fastapi
+uvicorn
+python-dotenv
+python-multipart
+pyarrow
