@@ -25,6 +25,8 @@ class TestIncrementalPCA(unittest.TestCase):
         torch_batch_1 = torch.Tensor(np_batch_1)
         torch_batch_2 = torch.Tensor(np_batch_2)
         torch_batch_3 = torch.Tensor(np_batch_3)
+        t_batch_to_transform = torch.clone(torch_batch_1)
+        np_batch_to_transform = np.copy(np_batch_1)
 
         sk_learn_incremental_pca = sklearn_pca.IncrementalPCA(n_components=3)
         casp_incremental_pca = casp_pca.IncrementalPCA(n_components=3)
@@ -51,8 +53,8 @@ class TestIncrementalPCA(unittest.TestCase):
                 atol=1e-03,
             )
         ).item()
-        sk_transformed = sk_learn_incremental_pca.transform(np_batch_1)
-        casp_transformed = casp_incremental_pca.transform(torch_batch_1)
+        sk_transformed = sk_learn_incremental_pca.transform(np_batch_to_transform)
+        casp_transformed = casp_incremental_pca.transform(t_batch_to_transform)
 
         transformation_same = torch.all(
             torch.isclose(input=torch.Tensor(sk_transformed), other=casp_transformed, atol=1e-02)
@@ -72,6 +74,9 @@ class TestIncrementalPCA(unittest.TestCase):
         batch_2_t = torch.Tensor(batch_2_n)
         batch_3_t = torch.Tensor(batch_3_n)
         batch_4_t = torch.Tensor(batch_4_n)
+
+        batch_to_transform_n = np.copy(batch_1_n)
+        batch_to_transform_t = torch.clone(batch_1_t)
 
         sk_pca = sklearn_pca.IncrementalPCA(n_components=3)
         c_pca = casp_pca.IncrementalPCA(n_components=3)
@@ -101,8 +106,8 @@ class TestIncrementalPCA(unittest.TestCase):
                 atol=1e-03,
             )
         ).item()
-        sk_transformed = sk_pca.transform(batch_1_n)
-        casp_transformed = c_pca.transform(batch_1_t)
+        sk_transformed = sk_pca.transform(batch_to_transform_n)
+        casp_transformed = c_pca.transform(batch_to_transform_t)
 
         transformation_same = torch.all(
             torch.isclose(input=torch.Tensor(sk_transformed), other=casp_transformed, atol=1e-02)

@@ -9,5 +9,3 @@ COPY src .
 
 EXPOSE 8080
 ENV PYTHONPATH "${PYTHONPATH}:/app"
-
-CMD ["python", "casp/ml/services/inference/pca/server.py"]

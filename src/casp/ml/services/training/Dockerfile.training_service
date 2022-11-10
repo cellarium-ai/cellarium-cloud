@@ -10,6 +10,3 @@ RUN pip install -r requirements.txt
 COPY src .
 
 ENV PYTHONPATH "${PYTHONPATH}:/app"
-
-RUN chown dockuser:dockuser /app
-USER dockuser

@@ -7,13 +7,14 @@ task train {
     command {
         echo $(pwd)
         cd /app
+        echo $training_script
         python ${training_script} \
         --bucket_name=${bucket_name} \
         --data_storage_path=${data_storage_path}
     }
 
     runtime {
-        docker: "us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_training-gpu:1.0"
+        docker: "us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_training-gpu:1.1"
         bootDiskSizeGb: 100
         memory: "26G"
         cpu: 4

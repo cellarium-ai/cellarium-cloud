@@ -1,8 +1,8 @@
 import typing as t
 
 import pandas as pd
-from fastapi import FastAPI, File
 import uvicorn
+from fastapi import FastAPI, File
 
 from casp.ml.services.inference.pca import utils
 

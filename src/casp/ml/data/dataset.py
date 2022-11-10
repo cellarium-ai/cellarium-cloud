@@ -54,7 +54,6 @@ class CASDataset(Dataset):
         filename = self._get_random_chunk_name()
         blob = self.bucket.blob(filename)
         filepath = self._get_local_anndata_path(filename)
-        print(filename, self._chunk_names_all, self._processed_chunks, "ASDASDASDASDASDA")
         blob.download_to_filename(filepath)
 
         with warnings.catch_warnings():
