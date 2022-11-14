@@ -5,17 +5,9 @@ import typing as t
 import anndata
 import torch
 from google.cloud import storage
-from google.oauth2.service_account import Credentials
 
 from casp.ml.dump_manager import DumpManager
-from casp.ml.services.inference.pca import constants
-
-
-def get_google_service_credentials() -> t.Tuple["Credentials", str]:
-    credentials = Credentials.from_service_account_info(
-        info=constants.GOOGLE_ACCOUNT_CREDENTIALS, scopes=None, default_scopes=None
-    )
-    return credentials, constants.GOOGLE_ACCOUNT_CREDENTIALS.get("project_id")
+from casp.ml.services import settings, utils
 
 
 def load_data(file) -> t.Tuple[torch.Tensor, torch.Tensor]:
@@ -26,11 +18,9 @@ def load_data(file) -> t.Tuple[torch.Tensor, torch.Tensor]:
 
 
 def get_dump_manager() -> "DumpManager":
-    credentials, project_id = get_google_service_credentials()
+    credentials, project_id = utils.get_google_service_credentials()
     storage_client = storage.Client(project=project_id, credentials=credentials)
-    bucket = storage_client.bucket(bucket_name=constants.BUCKET_NAME)
-    blob = bucket.blob(constants.BLOB_NAME)
-    # TODO: Make PickleMixin capable of downloading directly from buckets
+    bucket = storage_client.bucket(bucket_name=settings.PCA_MODEL_BUCKET_NAME)
+    blob = bucket.blob(settings.PCA_MODEL_BLOB_NAME)
     pickle_in = blob.download_as_string()
-
     return pickle.loads(pickle_in)

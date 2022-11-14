@@ -14,8 +14,8 @@ task train {
     }
 
     runtime {
-        docker: "us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_training-gpu:1.1"
-        bootDiskSizeGb: 100
+        docker: "us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0-gpu"
+        bootDiskSizeGb: 50
         memory: "26G"
         cpu: 4
         gpuCount: 1

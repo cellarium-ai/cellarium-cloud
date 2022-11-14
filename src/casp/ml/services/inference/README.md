@@ -3,13 +3,13 @@ It is required to have a `src/casp/ml/services/inference/.env` with `GOOGLE_SERV
 
 ## Building Docker Image
 ```
-IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_serving:1.1
-docker build -t $IMAGE_NAME -f ./src/casp/ml/services/inference/Dockerfile.inference_service .
+IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0
+docker build -t $IMAGE_NAME -f ./src/casp/ml/services/deploy/Dockerfile.pytorch .
 docker push $IMAGE_NAME
 ```
 ## Deploying Docker Image via Cloud Run
 ```
-IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_serving:1.1
+IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0
 PROJECT_ID=dsp-cell-annotation-service
 
 gcloud run deploy casp-inference-service \
