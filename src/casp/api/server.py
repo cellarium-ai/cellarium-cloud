@@ -88,13 +88,13 @@ def __get_cell_type_distribution(query_ids, knn_response):
 
     __log("Querying Match Cell Metadata")
     query = f"""
-                SELECT t.query_id, 
-                       ci.cell_type, 
-                       MIN(t.match_score) min_distance, 
-                       MAX(t.match_score) max_distance,   
-                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(25)] as p25_distance,   
-                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(50)] as median_distance,  
-                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(75)] as p75_distance,   
+                SELECT t.query_id,
+                       ci.cell_type,
+                       MIN(t.match_score) min_distance,
+                       MAX(t.match_score) max_distance,
+                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(25)] as p25_distance,
+                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(50)] as median_distance,
+                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(75)] as p75_distance,
                        COUNT(*) cell_count
                 FROM `{temp_table_fqn}` t
                 JOIN `{settings.bq_cell_info_table_fqn}` ci ON t.match_cas_cell_index = ci.cas_cell_index
