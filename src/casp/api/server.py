@@ -1,7 +1,6 @@
 import typing as t
 import uuid
 from datetime import datetime, timedelta
-import json
 
 import pandas as pd
 import requests
