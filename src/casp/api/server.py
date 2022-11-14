@@ -109,19 +109,19 @@ def __get_cell_type_distribution(query_ids, knn_response):
     # TODO: use a StreamingResponse and yield/generator pattern here to avoid building entire response in memory, also compress
     # Stream results back in JSONL format (https://jsonlines.org/)
     results = []
-    
+
     last_query_id = None
-    data = {}    
+    data = {}
     for row in query_job:
         if last_query_id is None or last_query_id != row["query_id"]:
             # emit data and reset state if this isn't the first time through
             if last_query_id is not None:
                 results.append(data)
 
-            data = {}     
-            data['query_cell_id'] = row["query_id"]
-            data['matches'] = []
-            last_query_id = data['query_cell_id']
+            data = {}
+            data["query_cell_id"] = row["query_id"]
+            data["matches"] = []
+            last_query_id = data["query_cell_id"]
 
         x = {}
         x["cell_type"] = row["cell_type"]
@@ -131,12 +131,12 @@ def __get_cell_type_distribution(query_ids, knn_response):
         x["median_distance"] = row["median_distance"]
         x["p75_distance"] = row["p75_distance"]
         x["max_distance"] = row["max_distance"]
-        data['matches'].append(x)
-        
+        data["matches"].append(x)
+
     # handle final output
     results.append(data)
 
-    # and return       
+    # and return
     return results
 
 
