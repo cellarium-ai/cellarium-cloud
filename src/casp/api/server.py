@@ -1,4 +1,3 @@
-import typing as t
 import uuid
 from datetime import datetime, timedelta
 
@@ -89,23 +88,53 @@ def __get_cell_type_distribution(query_ids, knn_response):
 
     __log("Querying Match Cell Metadata")
     query = f"""
-                SELECT t.query_id, ci.cell_type, avg(t.match_score), count(*) cell_count
+                SELECT t.query_id,
+                       ci.cell_type,
+                       MIN(t.match_score) min_distance,
+                       MAX(t.match_score) max_distance,
+                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(25)] as p25_distance,
+                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(50)] as median_distance,
+                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(75)] as p75_distance,
+                       COUNT(*) cell_count
                 FROM `{temp_table_fqn}` t
                 JOIN `{settings.bq_cell_info_table_fqn}` ci ON t.match_cas_cell_index = ci.cas_cell_index
                 GROUP BY 1,2
-                ORDER BY 1, 3 DESC
+                ORDER BY 1, 8 DESC
                 """
 
     query_job = bq_client.query(query)
 
-    results = {}
+    # TODO: use a StreamingResponse and yield/generator pattern here to avoid building entire response in memory, also compress
+    # Stream results back in JSONL format (https://jsonlines.org/)
+    results = []
+
+    last_query_id = None
+    data = {}
     for row in query_job:
-        query_id = row["query_id"]
-        if query_id not in results:
-            results[query_id] = {}
+        if last_query_id is None or last_query_id != row["query_id"]:
+            # emit data and reset state if this isn't the first time through
+            if last_query_id is not None:
+                results.append(data)
 
-        results[query_id][row["cell_type"]] = row["cell_count"]
+            data = {}
+            data["query_cell_id"] = row["query_id"]
+            data["matches"] = []
+            last_query_id = data["query_cell_id"]
 
+        x = {}
+        x["cell_type"] = row["cell_type"]
+        x["cell_count"] = row["cell_count"]
+        x["min_distance"] = row["min_distance"]
+        x["p25_distance"] = row["p25_distance"]
+        x["median_distance"] = row["median_distance"]
+        x["p75_distance"] = row["p75_distance"]
+        x["max_distance"] = row["max_distance"]
+        data["matches"].append(x)
+
+    # handle final output
+    results.append(data)
+
+    # and return
     return results
 
 
@@ -129,7 +158,7 @@ async def root() -> str:
 
 
 @app.post("/annotate")
-async def annotate(myfile: UploadFile, json: str = Form()) -> t.Dict:
+async def annotate(myfile: UploadFile, json: str = Form()):
     return __annotate(myfile.file)
 
 
