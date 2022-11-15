@@ -10,5 +10,6 @@ torch
 fastapi
 uvicorn
 python-dotenv
-python-multipart
 pyarrow
+python-multipart
+hypercorn
