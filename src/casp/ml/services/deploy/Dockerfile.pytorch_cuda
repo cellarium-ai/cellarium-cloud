@@ -1,4 +1,6 @@
-FROM bitnami/pytorch:latest
+FROM anibali/pytorch:1.8.1-cuda11.1
+
+USER root
 
 WORKDIR /app
 
@@ -7,5 +9,4 @@ RUN pip install -r requirements.txt
 
 COPY src .
 
-EXPOSE 8080
 ENV PYTHONPATH "${PYTHONPATH}:/app"

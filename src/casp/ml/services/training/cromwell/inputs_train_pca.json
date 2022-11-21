@@ -1,0 +1,5 @@
+{
+  "CASPModelTrain.bucket_name": "fedor-test-bucket",
+  "CASPModelTrain.data_storage_path": "test_data",
+  "CASPModelTrain.training_script": "casp/ml/services/training/pca/train.py"
+}
