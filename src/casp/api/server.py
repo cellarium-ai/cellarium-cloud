@@ -1,12 +1,15 @@
+import typing as t
 import uuid
 from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
 import uvicorn
-from fastapi import FastAPI, Form, UploadFile
+from fastapi import FastAPI, UploadFile
 from google.cloud import aiplatform, bigquery
 from pydantic import BaseSettings
+
+from casp.api import schemas
 
 
 # TODO --refactor packages, move into commons settings class, leverage .env file
@@ -157,8 +160,8 @@ async def root() -> str:
     return "Hello world"
 
 
-@app.post("/annotate")
-async def annotate(myfile: UploadFile, json: str = Form()):
+@app.post("/annotate", response_model=t.List[schemas.QueryCell])
+async def annotate(myfile: UploadFile):
     return __annotate(myfile.file)
 
 
