@@ -8,8 +8,7 @@ numpy
 scipy
 torch
 fastapi
-uvicorn
+uvicorn[standard]
 python-dotenv
 pyarrow
 python-multipart
-hypercorn
