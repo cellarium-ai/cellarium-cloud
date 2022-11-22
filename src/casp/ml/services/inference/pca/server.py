@@ -1,3 +1,4 @@
+import multiprocessing
 import typing as t
 
 import pandas as pd
@@ -31,4 +32,4 @@ async def predict(file: bytes = File()) -> t.Dict:
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, workers=8)
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, workers=multiprocessing.cpu_count() * 2 + 1)
