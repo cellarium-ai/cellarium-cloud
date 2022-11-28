@@ -179,7 +179,7 @@ def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
     return col_index_to_cas_feature_index
 
 
-def dump_ingest_info(adata, filename, ingest_id):
+def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
     """
     Write ingest (AnnData-file level) data.
     """
@@ -220,17 +220,19 @@ def dump_ingest_info(adata, filename, ingest_id):
         # without a cap.
         metadata_limit = 2**20
         uns = {}
-        for idx, uncapped_val in adata.uns.data.items():
-            uncapped_json = json.dumps(uncapped_val, cls=NumpyEncoder)
-            if len(uncapped_json) > metadata_limit:
-                print(
-                    f"AnnData `uns` contains a key `{idx}` whose JSONified value would have size {len(uncapped_json)} bytes."
-                )
-                print("Values this large can cause extraction to fail so this value is being nulled out.")
-                val = None
-            else:
-                val = uncapped_val
-            uns[idx] = val
+
+        if load_uns_data is True:
+            for idx, uncapped_val in adata.uns.data.items():
+                uncapped_json = json.dumps(uncapped_val, cls=NumpyEncoder)
+                if len(uncapped_json) > metadata_limit: 
+                    print(
+                        f"AnnData `uns` contains a key `{idx}` whose JSONified value would have size {len(uncapped_json)} bytes."
+                    )
+                    print("Values this large can cause extraction to fail so this value is being nulled out.")
+                    val = None
+                else:
+                    val = uncapped_val
+                uns[idx] = val
 
         yield {"uns_metadata": json.dumps(uns, cls=NumpyEncoder), "cas_ingest_id": ingest_id, "ingest_timestamp": None}
 
@@ -295,7 +297,7 @@ def find_max_index(client, project, dataset, table, column):
     return max_id
 
 
-def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix, project, dataset):
+def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_prefix, project, dataset, load_uns_data):
     """
     High level entry point, reads the input AnnData file and generates Avro files
     for ingest, cells, features, and raw / core data.
@@ -328,7 +330,7 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_pref
     adata = ad.read(input_file)
 
     print("Processing ingest metadata...")
-    dump_ingest_info(adata, ingest_filename, ingest_id)
+    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data)
 
     print("Processing cell/observation metadata...")
     row_index_to_cas_cell_index = dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
@@ -367,6 +369,7 @@ if __name__ == "__main__":
     parser.add_argument("--flush_batch_size", type=int, help="max size of Avro batches to flush", required=False)
     parser.add_argument("--project", type=str, help="BigQuery Project", required=False)
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=False)
+    parser.add_argument("--load_uns_data", help="load uns (unstructured) metadata", default="False", action='store_true')    
 
     args = parser.parse_args()
 
@@ -393,4 +396,5 @@ if __name__ == "__main__":
         args.avro_prefix,
         args.project,
         args.dataset,
+        args.load_uns_data
     )
