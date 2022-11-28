@@ -224,7 +224,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
         if load_uns_data is True:
             for idx, uncapped_val in adata.uns.data.items():
                 uncapped_json = json.dumps(uncapped_val, cls=NumpyEncoder)
-                if len(uncapped_json) > metadata_limit:
+                if len(uncapped_json) > metadata_limit: 
                     print(
                         f"AnnData `uns` contains a key `{idx}` whose JSONified value would have size {len(uncapped_json)} bytes."
                     )
@@ -369,9 +369,7 @@ if __name__ == "__main__":
     parser.add_argument("--flush_batch_size", type=int, help="max size of Avro batches to flush", required=False)
     parser.add_argument("--project", type=str, help="BigQuery Project", required=False)
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=False)
-    parser.add_argument(
-        "--load_uns_data", help="load uns (unstructured) metadata", default="False", action="store_true"
-    )
+    parser.add_argument("--load_uns_data", help="load uns (unstructured) metadata", default="False", action='store_true')    
 
     args = parser.parse_args()
 
@@ -398,5 +396,5 @@ if __name__ == "__main__":
         args.avro_prefix,
         args.project,
         args.dataset,
-        args.load_uns_data,
+        args.load_uns_data
     )
