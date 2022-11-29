@@ -10,7 +10,10 @@ version 0.1.
 
 import argparse
 import hashlib
+import itertools
 import json
+import math
+import multiprocessing
 import os
 import time
 
@@ -53,7 +56,7 @@ def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
             writer(out, parsed_schema, records)
 
 
-def dump_core_matrix(raw_x, row_lookup, col_lookup, filename):
+def dump_core_matrix(row_array, col_array, data_array, row_offset, cas_cell_index_start, cas_feature_index_start, filename):
     """
     Write the raw X matrix.
     """
@@ -69,23 +72,42 @@ def dump_core_matrix(raw_x, row_lookup, col_lookup, filename):
         ],
     }
     parsed_schema = parse_schema(schema)
+    start = current_milli_time()
+    #lg=row_lookup_d.get
+    #rows = np.vectorize(lg)(row_array + row_offset)
+    rows = row_array + row_offset + cas_cell_index_start
+    print(f"    {filename} - Vectorize row lookup... in {current_milli_time() - start} ms")    
+    start = current_milli_time()
+    #cols = np.vectorize(col_lookup_d.get)(col_array)
+    #cols = [ col_lookup[i] for i in col_array ]
+    cols = col_array + cas_feature_index_start
+    print(f"    {filename} - Processing {len(data_array)} elements")
+    
+    print(f"    Vectorize col lookup... in {current_milli_time() - start} ms")    
+    start = current_milli_time()
+    i_dat = data_array.astype(int)
+    print(f"    {filename} - Convert types... in {current_milli_time() - start} ms")    
 
-    def raw_counts_generator():
-        coord = raw_x.tocoo(copy=False)
+    # def raw_counts_generator():
+    #     for row, col, dat in zip(rows, cols, i_dat):
+    #         yield {
+    #             "cas_cell_index": row,
+    #             "cas_feature_index": col,
+    #             "raw_counts": dat,
+    #         }
 
-        for row, col, dat in zip(coord.row, coord.col, coord.data):
-            cas_cell_index = row_lookup[row]
-            cas_feature_index = col_lookup[col]
+    # write_avro(raw_counts_generator, parsed_schema, filename, progress_batch_size=1000000)
+    # i =0
+    # for row, col, dat in zip(rows, cols, i_dat):
+    #     i = i + 1
+    start = current_milli_time()
+    with open(filename, "w") as out:
+      for row, col, dat in zip(rows, cols, i_dat):
+        out.write(f"{row},{col},{dat}\n")
+    print(f"    {filename} - Write Chunk... in {current_milli_time() - start} ms")    
 
-            # Todo -- how can we ensure this is safe/right?
-            v_int = int(dat)
-            yield {
-                "cas_cell_index": cas_cell_index.item(),
-                "cas_feature_index": cas_feature_index.item(),
-                "raw_counts": v_int,
-            }
-
-    write_avro(raw_counts_generator, parsed_schema, filename, progress_batch_size=1000000)
+    # with open(filename, "a+b") as out:
+    #      writer(out, parsed_schema, raw_counts_generator(), sync_interval=160000)
 
 
 def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
@@ -95,9 +117,9 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
     adata.obs["original_cell_id"] = adata.obs.index
     adata.obs["cas_cell_index"] = np.arange(cas_cell_index_start, cas_cell_index_start + len(adata.obs))
 
-    row_index_to_cas_cell_index = [None] * len(adata.obs)
-    for row in range(0, len(adata.obs)):
-        row_index_to_cas_cell_index[row] = adata.obs["cas_cell_index"].iloc[[row]][0]
+    # row_index_to_cas_cell_index = [None] * len(adata.obs)
+    # for row in range(0, len(adata.obs)):
+    #     row_index_to_cas_cell_index[row] = adata.obs["cas_cell_index"].iloc[[row]][0]
 
     schema = {
         "doc": "CAS Cell Info",
@@ -131,7 +153,7 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
 
     write_avro(cell_generator, parsed_schema, filename)
 
-    return row_index_to_cas_cell_index
+#    return row_index_to_cas_cell_index
 
 
 def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
@@ -327,22 +349,59 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_pref
     (ingest_filename, cell_filename, feature_filename, raw_counts_filename) = filenames
 
     print(f"Loading input AnnData file '{input_file}'...")
-    adata = ad.read(input_file)
+    adata = ad.read(input_file, backed='r')
 
     print("Processing ingest metadata...")
     dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data)
 
     print("Processing cell/observation metadata...")
-    row_index_to_cas_cell_index = dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
+    dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
 
     print("Processing feature/gene/variable metadata...")
-    col_index_to_cas_feature_index = dump_feature_info(adata, feature_filename, cas_feature_index_start, ingest_id)
+    dump_feature_info(adata, feature_filename, cas_feature_index_start, ingest_id)
 
     print("Processing core data...")
+
     # recode the indexes to be the indexes of obs/var or should obs/var include these indices?
-    dump_core_matrix(adata.raw.X, row_index_to_cas_cell_index, col_index_to_cas_feature_index, raw_counts_filename)
+    # row_lookup_d = dict(enumerate(row_index_to_cas_cell_index))
+    # col_lookup_d = dict(enumerate(col_index_to_cas_feature_index))
+
+    total_cells = adata.raw.X.shape[0]
+    batch_size = 10000
+    num_batches = math.ceil(total_cells / batch_size)
+
+    # ranges are start-inclusive and end-exclusive
+    batches = [ (x, x*batch_size, min(total_cells, x*batch_size + batch_size))  for x in range(num_batches)]
+
+    start = current_milli_time()
+    with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
+        for (index, row_offset, end) in batches:
+            chunk_raw_counts_filename = raw_counts_filename.replace(".avro",f".{index:06}.csv")
+            args = [input_file, row_offset, end, cas_cell_index_start, cas_feature_index_start, chunk_raw_counts_filename]
+            result = pool.apply_async(p_dump_core_matrix, args=(args,), error_callback=custom_error_callback)
+            print(result)
+
+        pool.close()
+        pool.join()
+    
+    print(f"    Processed {total_cells} cells... in {current_milli_time() - start} ms")    
+
     print("Done.")
 
+# handle any errors in the task function
+def custom_error_callback(error):
+    print(f'Got an Error: {error}', flush=True)
+
+def p_dump_core_matrix(args):
+    start = current_milli_time()
+
+    (input_file, row_offset, end, cas_cell_index_start, cas_feature_index_start, raw_counts_filename) = args
+    adata = ad.read(input_file, backed='r')
+    coord = adata.raw.X[row_offset:end, :].tocoo()
+    adata.file.close()
+    print(f"    Read anndata, subset matrix... in {current_milli_time() - start} ms")    
+
+    dump_core_matrix(coord.row, coord.col, coord.data, row_offset, cas_cell_index_start, cas_feature_index_start, raw_counts_filename)
 
 # TODO: naive dump, compare
 #    rows,cols = adata.X.nonzero()
