@@ -39,7 +39,7 @@ class RowWiseNormalization(CASTransform):
         self.sc_rna_normalization_pseudocount = sc_rna_normalization_pseudocount
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
-        return torch.log(1 + self.sc_rna_normalization_pseudocount * (tensor / torch.sum(tensor)))
+        return torch.log(1 + self.sc_rna_normalization_pseudocount * (tensor / tensor.sum(dim=-1).unsqueeze(-1)))
 
 
 class ColumnWiseNormalization(CASTransform):
