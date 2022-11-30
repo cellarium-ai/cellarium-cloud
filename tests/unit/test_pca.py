@@ -21,6 +21,7 @@ class TestIncrementalPCA(unittest.TestCase):
         return np_batch1, np_batch2, np_batch3
 
     def test_casp_inc_pca_vs_sklearn_inc_pca(self):
+        np.random.seed(0)
         np_batch_1, np_batch_2, np_batch_3 = self.create_test_data()
         torch_batch_1 = torch.Tensor(np_batch_1)
         torch_batch_2 = torch.Tensor(np_batch_2)
@@ -65,6 +66,7 @@ class TestIncrementalPCA(unittest.TestCase):
         self.assertTrue(transformation_same, msg="Transformation of input batch is not the same as in scikit-learn")
 
     def test_pca_with_different_batch_sizes(self):
+        np.random.seed(0)
         batch_1_n = np.random.random((300, 400)) * 10
         batch_2_n = np.random.random((700, 400)) * 10
         batch_3_n = np.random.random((1000, 400)) * 10

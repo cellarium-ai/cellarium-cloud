@@ -15,8 +15,9 @@ jobs:
   update-docker-images:
     needs: [unit-tests]
     runs-on: ubuntu-latest
-    # Notice: this job runs only on the main branch tagged commit:
-    if: github.ref == 'refs/heads/main' && startsWith(github.ref, 'refs/tags')
+    # Notice: this job runs only on tagged commit:
+    if: startsWith(github.ref, 'refs/tags')
+
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -38,3 +39,4 @@ jobs:
           image-tag: ${{ env.TAG }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          env-b64: ${{ secrets.CAS_SERVICES_ENV_B64 }}

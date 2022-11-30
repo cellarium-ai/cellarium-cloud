@@ -4,7 +4,7 @@ Note: VM Must be on the network as Vertex Matching Engine (see docs/USING_VERTEX
 
 ```
 pip install -r requirements.txt
-python src/casp/api/server.py
+python src/casp/services/api/server.py
 ```
 
 ## Building Docker Image
@@ -42,7 +42,7 @@ gcloud run deploy cas-api \
 --port 8000 \
 --allow-unauthenticated \
 --vpc-connector cas-ai-matching \
---command python --args "casp/api/server.py"
+--command python --args "casp/services/api/server.py"
 
 
 BASE_URL="https://cas-api-vi7nxpvk7a-uc.a.run.app:8000"
