@@ -3,8 +3,8 @@ import typing as t
 import uuid
 from datetime import datetime, timedelta
 
+import aiohttp
 import pandas as pd
-import requests
 import uvicorn
 from fastapi import FastAPI, UploadFile
 from google.cloud import aiplatform, bigquery
@@ -12,12 +12,15 @@ from pydantic import BaseSettings
 
 from casp.api import schemas
 
+if t.TYPE_CHECKING:
+    import numpy
+
 
 # TODO --refactor packages, move into commons settings class, leverage .env file
 class Settings(BaseSettings):
     server_host: str = "0.0.0.0"
     server_port: int = 8000
-    model_server_url: str = "https://casp-pca-serving-vi7nxpvk7a-uk.a.run.app/predict"
+    model_server_url: str = "https://casp-pca-serving-vi7nxpvk7a-uc.a.run.app/predict"
     knn_search_endpoint_id: str = "projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904"
     knn_search_deployed_index_id: str = "deployed_4m_casp_index_v1"
     knn_search_num_matches: int = 100
@@ -30,22 +33,31 @@ settings = Settings()
 app = FastAPI()
 
 
+class CASAPIAsyncClient:
+    @classmethod
+    async def post(cls, url: str, data: t.Dict):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=data) as resp:
+                return await resp.text()
+
+    @classmethod
+    async def call_model_service(cls, file_to_embed):
+        return await cls.post(url=settings.model_server_url, data={"file": file_to_embed})
+
+
 def __log(s):
     dt_string = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
     print(f"{dt_string} - {s}")
 
 
-def __get_embeddings(myfile):
-    r = requests.post(settings.model_server_url, files={"file": myfile})
-
-    # this is actually a pandas dataframe in json
+async def __get_embeddings(myfile) -> t.Tuple[t.List, "numpy.array"]:
+    r_text = await CASAPIAsyncClient.call_model_service(file_to_embed=myfile.read())
     # TODO: json isn't very efficient for this
-    df = pd.read_json(r.text)
-
+    df = pd.read_json(r_text)
     query_ids = df.db_ids.tolist()
     embeddings = df.iloc[:, 1:].to_numpy(dtype=float)
 
-    return (query_ids, embeddings)
+    return query_ids, embeddings
 
 
 def __get_appx_knn_matches(embeddings):
@@ -142,9 +154,10 @@ def __get_cell_type_distribution(query_ids, knn_response):
     return results
 
 
-def __annotate(file):
+async def __annotate(file):
     __log("Calculating Embeddings")
-    (query_ids, embeddings) = __get_embeddings(file)
+    query_ids, embeddings = await __get_embeddings(file)
+    __log("Done")
 
     __log("Performing kNN lookup")
     knn_response = __get_appx_knn_matches(embeddings)
@@ -163,7 +176,7 @@ async def root() -> str:
 
 @app.post("/annotate", response_model=t.List[schemas.QueryCell])
 async def annotate(myfile: UploadFile):
-    return __annotate(myfile.file)
+    return await __annotate(myfile.file)
 
 
 if __name__ == "__main__":

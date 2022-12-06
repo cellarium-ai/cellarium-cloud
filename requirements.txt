@@ -12,3 +12,4 @@ uvicorn[standard]
 python-dotenv
 pyarrow
 python-multipart
+aiohttp==3.8.3
