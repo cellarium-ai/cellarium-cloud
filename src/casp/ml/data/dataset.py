@@ -143,4 +143,5 @@ class CASDataset(Dataset):
                 x_i, db_index = self[i]
                 self.running_stat(x_i)
         self.apply_transform = True
+        self.running_stat.calculate()
         print("Running Statistics are calculated")
