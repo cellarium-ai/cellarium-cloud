@@ -1,0 +1,40 @@
+name: CAS Repository Update Workflow
+on: [push, workflow_dispatch]
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/unit-tests
+        with:
+          python-version: ${{ matrix.python-version }}
+
+  update-docker-images:
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    # Notice: this job runs only on the main branch tagged commit:
+    if: github.ref == 'refs/heads/main' && startsWith(github.ref, 'refs/tags')
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    env:
+      DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
+      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
+      PYTORCH_CUDA_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda
+    steps:
+      - uses: actions/checkout@v2
+      - id: get-tag
+        name: Get tag
+        run: echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - uses: ./.github/actions/docker-update
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          pytorch-image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          pytorch-cuda-image-name: ${{ env.PYTORCH_CUDA_IMAGE_NAME }}
+          image-tag: ${{ env.TAG }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
