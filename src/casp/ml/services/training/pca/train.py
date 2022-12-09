@@ -43,6 +43,7 @@ def main(bucket_name, storage_path):
         transform=t,
         running_stat=one_pass,
     )
+    dataset.calculate_running_stats()
     dataloader = DataLoader(dataset=dataset, batch_size=5000)
 
     start = time.time()
