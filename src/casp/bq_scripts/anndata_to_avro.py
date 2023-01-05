@@ -16,6 +16,13 @@ import math
 import multiprocessing
 import os
 import time
+import gc
+
+import h5py
+from anndata._io.specs import read_elem, write_elem
+from anndata._io.h5ad import _read_raw
+from anndata._core.anndata import AnnData
+
 
 import anndata as ad
 import numpy as np
@@ -60,18 +67,18 @@ def dump_core_matrix(row_array, col_array, data_array, row_offset, cas_cell_inde
     """
     Write the raw X matrix.
     """
-    schema = {
-        "doc": "Raw data indexed by cell and feature id in the CAS BigQuery schema",
-        "namespace": "cas",
-        "name": "CellFeature",
-        "type": "record",
-        "fields": [
-            {"name": "cas_cell_index", "type": "int"},
-            {"name": "cas_feature_index", "type": "int"},
-            {"name": "raw_counts", "type": "int"},
-        ],
-    }
-    parsed_schema = parse_schema(schema)
+    # schema = {
+    #     "doc": "Raw data indexed by cell and feature id in the CAS BigQuery schema",
+    #     "namespace": "cas",
+    #     "name": "CellFeature",
+    #     "type": "record",
+    #     "fields": [
+    #         {"name": "cas_cell_index", "type": "int"},
+    #         {"name": "cas_feature_index", "type": "int"},
+    #         {"name": "raw_counts", "type": "int"},
+    #     ],
+    # }
+    # parsed_schema = parse_schema(schema)
     start = current_milli_time()
     #lg=row_lookup_d.get
     #rows = np.vectorize(lg)(row_array + row_offset)
@@ -83,7 +90,7 @@ def dump_core_matrix(row_array, col_array, data_array, row_offset, cas_cell_inde
     cols = col_array + cas_feature_index_start
     print(f"    {filename} - Processing {len(data_array)} elements")
     
-    print(f"    Vectorize col lookup... in {current_milli_time() - start} ms")    
+    print(f"    {filename} - Vectorize col lookup... in {current_milli_time() - start} ms")    
     start = current_milli_time()
     i_dat = data_array.astype(int)
     print(f"    {filename} - Convert types... in {current_milli_time() - start} ms")    
@@ -349,7 +356,8 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_pref
     (ingest_filename, cell_filename, feature_filename, raw_counts_filename) = filenames
 
     print(f"Loading input AnnData file '{input_file}'...")
-    adata = ad.read(input_file, backed='r')
+    #adata = ad.read(input_file, backed='r')
+    adata = optimized_read_andata(input_file)
 
     print("Processing ingest metadata...")
     dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data)
@@ -367,22 +375,27 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, avro_pref
     # col_lookup_d = dict(enumerate(col_index_to_cas_feature_index))
 
     total_cells = adata.raw.X.shape[0]
-    batch_size = 10000
+
+    # try closing 
+    adata.file.close()
+    del adata
+    gc.collect()
+
+    batch_size = 5000
     num_batches = math.ceil(total_cells / batch_size)
 
     # ranges are start-inclusive and end-exclusive
     batches = [ (x, x*batch_size, min(total_cells, x*batch_size + batch_size))  for x in range(num_batches)]
-
+  
     start = current_milli_time()
-    with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
+    with multiprocessing.get_context("spawn").Pool() as pool:
+        args = []
         for (index, row_offset, end) in batches:
             chunk_raw_counts_filename = raw_counts_filename.replace(".avro",f".{index:06}.csv")
-            args = [input_file, row_offset, end, cas_cell_index_start, cas_feature_index_start, chunk_raw_counts_filename]
-            result = pool.apply_async(p_dump_core_matrix, args=(args,), error_callback=custom_error_callback)
-            print(result)
+            args.append([input_file, row_offset, end, cas_cell_index_start, cas_feature_index_start, chunk_raw_counts_filename])
 
-        pool.close()
-        pool.join()
+        for result in pool.map(p_dump_core_matrix, args, chunksize=1):
+            print(f'Got result: {result} for {args}', flush=True)
     
     print(f"    Processed {total_cells} cells... in {current_milli_time() - start} ms")    
 
@@ -396,10 +409,13 @@ def p_dump_core_matrix(args):
     start = current_milli_time()
 
     (input_file, row_offset, end, cas_cell_index_start, cas_feature_index_start, raw_counts_filename) = args
-    adata = ad.read(input_file, backed='r')
-    coord = adata.raw.X[row_offset:end, :].tocoo()
-    adata.file.close()
-    print(f"    Read anndata, subset matrix... in {current_milli_time() - start} ms")    
+    coord = optimized_read_raw_X(input_file, row_offset, end)
+#    adata = ad.read(input_file, backed='r')
+#    coord = adata.raw.X[row_offset:end, :].tocoo()
+#    adata.file.close()
+#    del adata
+#    gc.collect()
+    print(f"    {raw_counts_filename} - Read anndata, subset matrix... in {current_milli_time() - start} ms")    
 
     dump_core_matrix(coord.row, coord.col, coord.data, row_offset, cas_cell_index_start, cas_feature_index_start, raw_counts_filename)
 
@@ -410,6 +426,30 @@ def p_dump_core_matrix(args):
 #        cas_feature_index = col_index_to_cas_feature_index[col]
 #        v = adata.X[row,col]
 
+# based on implementation of https://github.com/scverse/anndata/blob/6473f2034aa6e28ebc826ceeab15f413b8d294d8/anndata/_io/h5ad.py#L119
+# optimized for reading of subset of raw.X
+def optimized_read_andata(input_file):
+    f = h5py.File(input_file, 'r')
+
+    attributes = ["obs", "var"]
+    d = dict(filename=input_file, filemode='r')
+    d.update({k: read_elem(f[k]) for k in attributes if k in f})
+
+    d["raw"] = _read_raw(f, attrs={"var", "varm"})
+
+    # Backwards compat to <0.7
+    if isinstance(f["obs"], h5py.Dataset):
+        _clean_uns(d)
+
+    return AnnData(**d)    
+
+def optimized_read_raw_X(input_file, row_offset, end):
+    adata = optimized_read_andata(input_file)
+    coord = adata.raw.X[row_offset:end, :].tocoo()
+    adata.file.close()
+    del adata
+    gc.collect()
+    return coord
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
