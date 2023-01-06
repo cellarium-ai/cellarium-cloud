@@ -15,10 +15,9 @@ def read_h5ad_gcs(
     filename
         File path to the data file in Cloud Storage.
     """
+    # parse bucket and blob names from the filename
     if filename.startswith("gs:"):
         filename = re.sub(r"^gs://?", "", filename)
-
-    # parse bucket and blob names from the filename
     bucket_name, blob_name = filename.split("/", 1)
 
     storage_client = storage.Client()
