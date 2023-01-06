@@ -4,11 +4,11 @@ import anndata
 from google.cloud import storage
 
 
-def read_h5ad_blob(
+def read_h5ad_gcs(
     filename: str,
 ) -> anndata.AnnData:
     """
-    Read `.h5ad`-formatted hdf5 file from the Google Cloud Storage blob.
+    Read `.h5ad`-formatted hdf5 file from the Google Cloud Storage.
 
     Parameters
     ----------
