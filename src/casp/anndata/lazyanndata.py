@@ -39,8 +39,11 @@ class DistributedX(sp_sparse.spmatrix):
     def shape(self):
         return self.dataset.shape
 
+    def __len__(self) -> int:
+        return len(self.dataset)
 
-class DistributedDataFrame:
+
+class DistributedObs:
     """Distributed Layers"""
 
     def __init__(self, parent, df):
@@ -84,7 +87,7 @@ class DistributedAnnData:
             self.last_shard_size = len(self._get_adata(-1))
         self._n_obs = self.shard_size * (len(self.filenames) - 1) + self.last_shard_size
         self._layers = Layers(self)
-        self._obs = DistributedDataFrame(self, self._buffer["adata"].obs)
+        self._obs = DistributedObs(self, self._buffer["adata"].obs)
 
     def __getattr__(self, attr):
         if attr in [
