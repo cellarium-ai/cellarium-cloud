@@ -1,7 +1,7 @@
 from .read import read_h5ad_gcs
-from .lazyanndata import LazyAnnData
+from .lazyanndata import DistributedAnnData
 
 __all__ = [
-    "LazyAnnData",
+    "DistributedAnnData",
     "read_h5ad_gcs",
 ]
