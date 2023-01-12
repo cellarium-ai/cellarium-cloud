@@ -5,6 +5,7 @@ google-cloud-aiplatform
 google-cloud-bigquery
 google-cloud-storage
 numpy
+pytorch-lightning
 scipy
 torch
 fastapi
