@@ -1,171 +1,146 @@
-from typing import Optional, Tuple
+from collections import OrderedDict
+from typing import List, Optional
 
-import numpy as np
-import pandas as pd
 import braceexpand
-import torch
-import scipy.sparse as sp_sparse
+import pandas as pd
 from anndata import AnnData
-from anndata._core.aligned_mapping import Layers
+from anndata._core.index import Index, _normalize_indices
+from anndata.experimental.multi_files._anncollection import (AnnCollection,
+                                                             AnnCollectionView)
 
 from casp.anndata import read_h5ad_gcs
 
 
-class DistributedX(sp_sparse.spmatrix):
-    def __init__(self, parent):
-        self.dataset = parent
+class LazyAnnData:
+    """Lazy AnnData"""
 
-    def __getitem__(self, idx):
-        """Returns a sliced view of the object."""
-        shard_idx, cell_idx = unpack_index(idx, self.dataset.shard_size)
-        adata = self.dataset._get_adata(shard_idx)
-        return adata.X[cell_idx]
+    view_attrs = ["obs", "obsm", "layers", "var_names"]
+
+    def __init__(self, filename, anncollection, idx, adata=None):
+        self.filename = filename
+        self.idx = idx
+        self._anncollection = anncollection
+        self._adata = adata
+        self._n_obs = anncollection.shard_size
+        self._buffer = anncollection._buffer
+        self.buffer_size = anncollection.buffer_size
+        self._obs_names = pd.RangeIndex(self.n_obs * self.idx, self.n_obs * (self.idx + 1))
 
     @property
-    def X(self):
-        return self.dataset._buffer["adata"].X
+    def n_obs(self):
+        return self._n_obs
 
-    def __getattr__(self, attr):
-        if hasattr(self.X, attr):
-            return getattr(self.X, attr)
-        raise AttributeError
-
-    def __repr__(self):
-        descr = f"BufferedArray shard {self.dataset._buffer['filename']}\n"
-        descr += repr(self.X)
-        return descr
+    @property
+    def n_vars(self):
+        return len(self.var_names)
 
     @property
     def shape(self):
-        return self.dataset.shape
+        return self.n_obs, self.n_vars
 
-    def __len__(self) -> int:
-        return len(self.dataset)
+    @property
+    def obs_names(self):
+        return self._obs_names
 
-
-class DistributedObs:
-    """Distributed Layers"""
-
-    def __init__(self, parent, df):
-        self._df = df
-        self._parent = parent
+    def materialize(self):
+        return self._anncollection.materialize(self.idx)[0]
 
     def __getattr__(self, attr):
-        if hasattr(self._df, attr):
-            return getattr(self._df, attr)
+        if attr in self.view_attrs:
+            return getattr(self._anncollection.materialize(0)[0], attr)
+        adata = self.materialize()
+        if hasattr(adata, attr):
+            return getattr(adata, attr)
         raise AttributeError
 
-    def __getitem__(self, key):
-        return self._parent._buffer["adata"].obs[key]
-
-    def __setitem__(self, key, value):
-        raise NotImplementedError
-
-    def __len__(self) -> int:
-        return len(self._parent)
+    def __getitem__(self, idx) -> AnnData:
+        adata = self.materialize()
+        return adata[idx]
 
 
-class DistributedAnnData:
-    """Distributed AnnData"""
+class DistributedAnnData(AnnCollection):
+    """Distributed AnnData Collection with Lazy Attributes"""
 
     def __init__(
         self,
         filenames,
         shard_size: Optional[int] = None,
         last_shard_size: Optional[int] = None,
+        indices_strict: bool = True,
+        buffer_size: int = 2,
     ):
         self.filenames = expand_urls(filenames)
         assert isinstance(self.filenames[0], str)
-        self._buffer = {"adata": None, "filename": None, "idx": None}
+        first_adata = read_h5ad_gcs(self.filenames[0])
         if shard_size is None:
-            shard_size = len(self._get_adata(0))
+            shard_size = len(first_adata)
         self.shard_size = shard_size
         self.last_shard_size = last_shard_size
-        self.is_view = False
-
         if self.last_shard_size is None:
-            self.last_shard_size = len(self._get_adata(-1))
-        self._n_obs = self.shard_size * (len(self.filenames) - 1) + self.last_shard_size
-        self._layers = Layers(self)
-        self._obs = DistributedObs(self, self._buffer["adata"].obs)
+            self.last_shard_size = self.shard_size
+            # self.last_shard_size = len(self._get_adata(-1))
+        self._buffer = OrderedDict()
+        self.buffer_size = buffer_size
+        self.adatas = [
+            LazyAnnData(filename, self, idx, first_adata) if idx == 0 else LazyAnnData(filename, self, idx)
+            for idx, filename in enumerate(self.filenames)
+        ]
+        super().__init__(
+            adatas=self.adatas,
+            join_obs=None,
+            join_obsm=None,
+            join_vars=None,
+            label="dataset",
+            keys=None,
+            index_unique=None,
+            convert=None,
+            harmonize_dtypes=False,
+            indices_strict=True,
+        )
 
-    def __getattr__(self, attr):
-        if attr in [
-            "uns",
-            "n_vars",
-            "var_names",
-            "isbacked",
-            "_gen_repr",
-        ]:
-            return getattr(self._buffer["adata"], attr)
-        raise AttributeError
+    def __getitem__(self, index: Index):
+        oidx, vidx = _normalize_indices(index, self.obs_names, self.var_names)
+        resolved_idx = self._resolve_idx(oidx, vidx)
+        #  adatas_oidx = [i for i, e in enumerate(resolved_idx[0]) if e is not None]
+
+        return AnnCollectionView(self, self.convert, resolved_idx)
 
     def __repr__(self):
-        return self._gen_repr(self.n_obs, self.n_vars)
+        n_obs, n_vars = self.shape
+        descr = f"DistributedAnnCollection object with n_obs × n_vars = {self.n_obs} × {self.n_vars}"
+        descr += f"\n  constructed from {len(self.filenames)} AnnData objects"
+        for attr, keys in self._view_attrs_keys.items():
+            if len(keys) > 0:
+                descr += f"\n    view of {attr}: {str(keys)[1:-1]}"
+        for attr in self._attrs:
+            keys = list(getattr(self, attr).keys())
+            if len(keys) > 0:
+                descr += f"\n    {attr}: {str(keys)[1:-1]}"
+        if "obs" in self._view_attrs_keys:
+            keys = list(self.obs.keys())
+            if len(keys) > 0:
+                descr += f"\n    own obs: {str(keys)[1:-1]}"
 
-    @property
-    def layers(self):
-        return self._layers
+        return descr
 
-    @property
-    def obs(self):
-        return self._obs
+    def materialize(self, indices) -> List[AnnData]:
+        if isinstance(indices, int):
+            indices = (indices,)
+        assert len(indices) <= self.buffer_size
+        adatas = [None] * len(indices)
+        for i, idx in enumerate(indices):
+            if idx in self._buffer:
+                self._buffer.move_to_end(idx)
+                adatas[i] = self._buffer[idx]
 
-    @property
-    def X(self):
-        return DistributedX(self)
-
-    @property
-    def n_obs(self) -> int:
-        """Number of observations."""
-        return self._n_obs
-
-    @property
-    def shape(self) -> Tuple[int, int]:
-        """Shape of data matrix (:attr:`n_obs`, :attr:`n_vars`)."""
-        return self.n_obs, self.n_vars
-
-    def __len__(self) -> int:
-        return self._n_obs
-
-    def __getitem__(self, index) -> AnnData:
-        """Returns a sliced view of the object."""
-        shard_idx, cell_idx = unpack_index(index, self.shard_size)
-        adata = self._get_adata(shard_idx)
-        return adata[cell_idx]
-
-    def _get_adata(self, shard_idx) -> AnnData:
-        assert shard_idx < len(self.filenames)
-        filename = self.filenames[shard_idx]
-
-        if filename != self._buffer["filename"]:
-            self._update_buffer(shard_idx)
-
-        return self._buffer["adata"]
-
-    def _update_buffer(self, shard_idx) -> None:
-        assert shard_idx < len(self.filenames)
-        filename = self.filenames[shard_idx]
-        print(f"DEBUG updating shard to {filename}")
-        adata = read_h5ad_gcs(filename)
-        if filename != self.filenames[-1] and hasattr(self, "shard_size"):
-            assert len(adata) == self.shard_size
-        self._buffer["adata"] = adata
-        self._buffer["filename"] = filename
-        self._buffer["idx"] = shard_idx
-
-
-def unpack_index(index: int, shard_size: int):
-    """If index is list-like then all cells have to be from the same shard."""
-    if isinstance(index, int):
-        return divmod(index, shard_size)
-    # elif isinstance(index, (list, tuple)):
-    else:
-        shard_idx, cell_idx = np.divmod(index, shard_size)
-        assert (shard_idx == shard_idx[0]).all(), "All cells have to be from the same shard"
-        return shard_idx[0], cell_idx
-    #  else:
-    #      raise ValueError
+        for i, idx in enumerate(indices):
+            if idx not in self._buffer:
+                while len(self._buffer) >= self.buffer_size:
+                    _, adata = self._buffer.popitem(last=False)
+                    del adata
+                self._buffer[idx] = read_h5ad_gcs(self.filenames[idx])
+                adatas[i] = self._buffer[idx]
+        return adatas
 
 
 # https://github.com/webdataset/webdataset/blob/ab8911ab3085949dce409646b96077e1c1448549/webdataset/shardlists.py#L25-L33
