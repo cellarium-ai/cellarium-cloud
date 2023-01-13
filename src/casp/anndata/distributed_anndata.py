@@ -16,11 +16,10 @@ class LazyAnnData:
 
     view_attrs = ["obs", "obsm", "layers", "var_names"]
 
-    def __init__(self, filename, anncollection, idx, adata=None):
+    def __init__(self, filename, anncollection, idx):
         self.filename = filename
         self.idx = idx
         self._anncollection = anncollection
-        self._adata = adata
         self._n_obs = anncollection.shard_size
         self._buffer = anncollection._buffer
         self.buffer_size = anncollection.buffer_size
@@ -101,7 +100,8 @@ class DistributedAnnData(AnnCollection):
     def __getitem__(self, index: Index):
         oidx, vidx = _normalize_indices(index, self.obs_names, self.var_names)
         resolved_idx = self._resolve_idx(oidx, vidx)
-        #  adatas_oidx = [i for i, e in enumerate(resolved_idx[0]) if e is not None]
+        adatas_indices = [i for i, e in enumerate(resolved_idx[0]) if e is not None]
+        self.materialize(adatas_indices)
 
         return AnnCollectionView(self, self.convert, resolved_idx)
 
