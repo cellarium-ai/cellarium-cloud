@@ -57,7 +57,7 @@ class LazyAnnData:
         return adata[idx]
 
 
-class DistributedAnnData(AnnCollection):
+class DistributedAnnCollection(AnnCollection):
     """Distributed AnnData Collection with Lazy Attributes"""
 
     def __init__(
