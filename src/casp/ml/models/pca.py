@@ -4,6 +4,8 @@ import numpy as np
 import torch
 
 from casp.ml.utils import PickleMixin
+from webdataset import WebDataset
+from torch.utils.data import IterableDataset
 
 
 def svd_flip(U, VT, U_decision=True):
