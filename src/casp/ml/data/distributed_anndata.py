@@ -26,7 +26,6 @@ class LRUCache:
     def __setitem__(self, key, value):
         while len(self.cache) >= self.maxsize:
             lru_key, lru_value = self.cache.popitem(last=False)
-            print(f"DEBUG removing {lru_key}")
             del lru_value
         self.cache[key] = value
         self.cache.move_to_end(key)
@@ -45,10 +44,8 @@ class LRUCache:
     def maxsize(self, value: int):
         while len(self.cache) > value:
             lru_key, lru_value = self.cache.popitem(last=False)
-            print(f"DEBUG removing {lru_key}")
             del lru_value
         self._maxsize = value
-
 
 
 class LazyAnnData:
@@ -187,7 +184,6 @@ class DistributedAnnCollection(AnnCollection):
             indices_strict=indices_strict,
         )
         self.var = self.adatas[0].var.copy()
-
 
     def __getitem__(self, index: Index):
         oidx, vidx = _normalize_indices(index, self.obs_names, self.var_names)
