@@ -1,14 +1,12 @@
 from collections import OrderedDict
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import braceexpand
 import numpy as np
 import pandas as pd
 from anndata import AnnData
 from anndata._core.index import Index, _normalize_indices
-from anndata.experimental.multi_files._anncollection import (AnnCollection,
-                                                             AnnCollectionView,
-                                                             ConvertType)
+from anndata.experimental.multi_files._anncollection import AnnCollection, AnnCollectionView, ConvertType
 
 from casp.anndata import read_h5ad_gcs
 from scvi.data._utils import get_anndata_attribute
@@ -35,20 +33,27 @@ class LRUCache:
     def __contains__(self, key) -> bool:
         return key in self.cache
 
+    def __len__(self) -> int:
+        return len(self.cache)
+
 
 class LazyAnnData:
     """Lazy AnnData"""
 
     view_attrs = ["obs", "obsm", "layers", "var_names"]
 
-    def __init__(self, filename, anncollection, cache, idx):
+    def __init__(
+        self,
+        filename: str,
+        cache: LRUCache = LRUCache(maxsize=1),
+        n_obs: Optional[int] = None,
+        idx: Optional[int] = None,
+    ):
         self.filename = filename
-        self.idx = idx
-        self._n_obs = anncollection.shard_size
-        self._obs_names = pd.RangeIndex(self.n_obs * self.idx, self.n_obs * (self.idx + 1))
-        # reference anncollection
-        self._anncollection = anncollection
         self.cache = cache
+        self._n_obs = n_obs or self.adata.n_obs
+        self.idx = idx or 0
+        self._obs_names = pd.RangeIndex(self.n_obs * self.idx, self.n_obs * (self.idx + 1))
 
     @property
     def n_obs(self) -> int:
@@ -68,26 +73,29 @@ class LazyAnnData:
 
     @property
     def cached(self) -> bool:
-        return self.idx in self.cache
+        return self.filename in self.cache
 
     @property
     def adata(self) -> AnnData:
         """Return backed AnnData from the filename"""
         if not self.cached:
-            self.cache[self.idx] = read_h5ad_gcs(self.filename)
-        return self.cache[self.idx]
+            self.cache[self.filename] = read_h5ad_gcs(self.filename)
+        return self.cache[self.filename]
 
     def __getattr__(self, attr):
         if attr in self.view_attrs:
-            return getattr(self._anncollection.adatas[0].adata, attr)
+            if len(self.cache):
+                adata = self.cache[next(reversed(self.cache.cache))]
+            else:
+                adata = self.adata
+            return getattr(adata, attr)
         adata = self.adata
         if hasattr(adata, attr):
             return getattr(adata, attr)
         raise AttributeError(f"Backed AnnData object has no attribute '{attr}'")
 
     def __getitem__(self, idx) -> AnnData:
-        adata = self.adata
-        return adata[idx]
+        return self.adata[idx]
 
     def __repr__(self) -> str:
         if self.cached:
@@ -124,35 +132,44 @@ class DistributedAnnCollection(AnnCollection):
         filenames,
         shard_size: Optional[int] = None,
         last_shard_size: Optional[int] = None,
-        indices_strict: bool = True,
         maxsize: int = 2,
+        cachesize_strict: bool = True,
+        label: Optional[str] = None,
+        keys: Optional[Sequence[str]] = None,
+        index_unique: Optional[str] = None,
         convert: Optional[ConvertType] = None,
+        harmonize_dtypes: bool = False,
+        indices_strict: bool = True,
     ):
         self.filenames = expand_urls(filenames)
         assert isinstance(self.filenames[0], str)
-        first_adata = read_h5ad_gcs(self.filenames[0])
+        self.cache = LRUCache(maxsize=maxsize)
+        self.cachesize_strict = cachesize_strict
+        self.maxsize = maxsize
+        if keys is None:
+            keys = self.filenames
+        first_adata = self.cache[self.filenames[0]] = read_h5ad_gcs(self.filenames[0])
         if shard_size is None:
             shard_size = len(first_adata)
         self.shard_size = shard_size
         self.last_shard_size = last_shard_size
         if self.last_shard_size is None:
             self.last_shard_size = self.shard_size
-            # self.last_shard_size = len(self._get_adata(-1))
-        self.cache = LRUCache(maxsize=maxsize)
-        self.maxsize = maxsize
-        self.adatas = [LazyAnnData(filename, self, self.cache, idx) for idx, filename in enumerate(self.filenames)]
+        self.adatas = [
+            LazyAnnData(filename, self.cache, shard_size, idx) for idx, filename in enumerate(self.filenames)
+        ]
         self.uns = OrderedDict()
         super().__init__(
             adatas=self.adatas,
             join_obs=None,
             join_obsm=None,
             join_vars=None,
-            label="dataset",
-            keys=None,
-            index_unique=None,
+            label=label,
+            keys=keys,
+            index_unique=index_unique,
             convert=convert,
-            harmonize_dtypes=False,
-            indices_strict=True,
+            harmonize_dtypes=harmonize_dtypes,
+            indices_strict=indices_strict,
         )
 
     def __getitem__(self, index: Index):
@@ -184,7 +201,8 @@ class DistributedAnnCollection(AnnCollection):
     def materialize(self, indices) -> List[AnnData]:
         if isinstance(indices, int):
             indices = (indices,)
-        assert len(indices) <= self.maxsize
+        if self.cachesize_strict:
+            assert len(indices) <= self.maxsize
         adatas = [None] * len(indices)
         for i, idx in enumerate(indices):
             if self.adatas[idx].cached:
