@@ -2,10 +2,10 @@ import typing as t
 
 import numpy as np
 import torch
+from torch.utils.data import IterableDataset
+from webdataset import WebDataset
 
 from casp.ml.utils import PickleMixin
-from webdataset import WebDataset
-from torch.utils.data import IterableDataset
 
 
 def svd_flip(U, VT, U_decision=True):

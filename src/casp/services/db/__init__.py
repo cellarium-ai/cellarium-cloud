@@ -1,7 +1,8 @@
 import sqlalchemy.orm
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session
-from casp.admin import settings
+from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
+
+from casp import settings
 
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -16,9 +17,6 @@ def save(record) -> None:
 
 
 def init_db() -> sqlalchemy.orm.scoped_session:
-    import casp.db.models
+    import casp.services.db.models
+
     return db_session
-
-
-def create_all():
-    Base.metadata.create_all(bind=engine)

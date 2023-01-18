@@ -2,7 +2,7 @@ import typing as t
 
 import aiohttp
 
-from casp.services import settings
+from casp import settings
 
 
 class CASAPIAsyncClient:

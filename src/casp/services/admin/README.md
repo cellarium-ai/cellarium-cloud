@@ -1,5 +1,6 @@
-# Inference Service Description
-It is required to have a `src/casp/.env` with `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` variable which includes service account json credentials dumped as oneline string
+# Admin Service Description
+## Depends on `db` module
+It is required to have a `src/.env` with `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` variable which includes service account json credentials dumped as oneline string
 
 ## Building Docker Image
 ```
@@ -12,12 +13,13 @@ docker push $IMAGE_NAME
 IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0
 PROJECT_ID=dsp-cell-annotation-service
 
-gcloud run deploy casp-inference-service \
+gcloud run deploy casp-admin-service \
 --project $PROJECT_ID \
 --image $IMAGE_NAME \
 --region us-central1 \
 --platform managed \
 --port 8000 \
 --allow-unauthenticated \
---command python --args "casp/services/inference/pca/server.py"
+--vpc-connector cas-ai-matching \
+--command casp/services/admin/entrypoint.sh
 ```

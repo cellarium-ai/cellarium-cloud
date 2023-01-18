@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from casp.ml.data.dataset import CASDataset
 from casp.ml.dump_manager import DumpManager
-from casp.services.utils import get_google_service_credentials
+from casp.utils import get_google_service_credentials
 
 
 def get_dump_manager(bucket, filepath) -> "DumpManager":

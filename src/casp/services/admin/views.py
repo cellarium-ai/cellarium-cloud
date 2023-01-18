@@ -1,33 +1,38 @@
 import tempfile
-from werkzeug.exceptions import HTTPException
-from flask import request, send_file, Response, redirect
-from flask_admin.contrib.sqla import ModelView
-from flask_admin import Admin, AdminIndexView
-from flask_admin import expose
-from flask_admin.model.template import EndpointLinkRowAction
 
-from casp.db import models, db_session
-from casp import auth
-from casp.admin import flask_app, basic_auth
+from flask import Response, redirect, request, send_file
+from flask_admin import Admin, AdminIndexView, expose
+from flask_admin.contrib.sqla import ModelView
+from flask_admin.model.template import EndpointLinkRowAction
+from werkzeug.exceptions import HTTPException
+
+from casp.services import _auth
+from casp.services.admin import basic_auth, flask_app
+from casp.services.db import db_session, models
 
 
 class AuthException(HTTPException):
     def __init__(self, message):
-        super().__init__(message, Response(
-            "You could not be authenticated. Please refresh the page.", 401,
-            {'WWW-Authenticate': 'Basic realm="Login Required"'}))
+        super().__init__(
+            message,
+            Response(
+                "You could not be authenticated. Please refresh the page.",
+                401,
+                {"WWW-Authenticate": 'Basic realm="Login Required"'},
+            ),
+        )
 
 
 class BasicHTTPAuthMixin:
     @staticmethod
     def is_accessible():
-        auth = basic_auth.get_auth()
-        password = basic_auth.get_auth_password(auth)
+        auth_obj = basic_auth.get_auth()
+        password = basic_auth.get_auth_password(auth_obj)
 
-        if not basic_auth.authenticate(auth, password):
-            raise AuthException('Not authenticated.')
-        else:
-            return True
+        if not basic_auth.authenticate(auth_obj, password):
+            raise AuthException("Not authenticated.")
+
+        return True
 
     @staticmethod
     def inaccessible_callback(name, **kwargs):
@@ -44,9 +49,10 @@ class CASAdminModelView(BasicHTTPAuthMixin, ModelView):
 
 class UserAdminView(CASAdminModelView):
     column_extra_row_actions = [
-        EndpointLinkRowAction("glyphicon glyphicon-copy", ".generate_secret_key"),
+        EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
     ]
-    column_list = ("email", "is_active",)
+    column_list = ("email", "is_active", "cas_request_count")
+    form_widget_args = {"cas_request_count": {"disabled": True}, "cas_scRNA_cells_processed": {"disabled": True}}
 
     _token = None
     _page_refreshed = False
@@ -61,19 +67,15 @@ class UserAdminView(CASAdminModelView):
 
     @expose("/generate-secret-key", methods=("GET",))
     def generate_secret_key(self):
-        token = auth.generate_token_for_user(int(request.args["id"]))
+        token = _auth.generate_jwt_for_user(int(request.args["id"]))
         temp = self._create_token_file(token)
         return send_file(temp, as_attachment=True, download_name=temp.name)
 
 
-class APITokenAdminView(CASAdminModelView):
-    column_formatters = {"key": lambda v, c, m, p: f"{m.key[:3]}***{m.key[-3:]}"}
-
-
 admin = Admin(
     flask_app,
-    name="Cell Annotation Service Admin",
+    name="CAS Admin",
     template_mode="bootstrap3",
-    index_view=CASAdminIndexView(url="/"),
+    index_view=CASAdminIndexView(url="/", template="admin/main_page.html"),
 )
 admin.add_view(UserAdminView(models.User, db_session, name="User"))

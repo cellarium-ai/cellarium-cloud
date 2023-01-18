@@ -7,7 +7,7 @@ import torch
 from google.cloud import storage
 
 from casp.ml.dump_manager import DumpManager
-from casp.services import settings, utils
+from casp import settings, utils
 
 
 def load_data(file) -> t.Tuple[torch.Tensor, torch.Tensor]:

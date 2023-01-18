@@ -5,22 +5,19 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import uvicorn
-from fastapi import FastAPI, UploadFile
+from fastapi import Depends, FastAPI, UploadFile
 from google.cloud import aiplatform, bigquery
-from casp.api.settings import settings
 
-from casp.services import settings
+from casp import settings
 from casp.services.api import async_client, schemas
+from casp.services.api.utils import get_current_user
+from casp.services.db import init_db, models
 
 if t.TYPE_CHECKING:
     import numpy
 
-
-
-
 app = FastAPI()
-
-
+db_session = init_db()
 
 
 def __log(s):
@@ -147,40 +144,9 @@ async def __annotate(file):
     return d
 
 
-@app.get("/")
-async def root() -> str:
-    return "Hello world"
-
-
-from fastapi import HTTPException, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from casp import auth
-
-auth_scheme = HTTPBearer()
-
-from casp.db import init_db
-from casp.db import models
-
-db_session = init_db()
-
-
-async def get_current_user(auth_token_scheme: HTTPAuthorizationCredentials = Depends(auth_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"Authenticate": "Bearer"},
-    )
-    jwt_token = auth_token_scheme.credentials
-    try:
-        user = auth.authenticate_token(jwt_token)
-    except auth.exceptions.TokenInvalid or auth.exceptions.TokenExpired:
-        raise credentials_exception
-    return user
-
-
 @app.post("/annotate", response_model=t.List[schemas.QueryCell])
-async def annotate(myfile: UploadFile, current_user: models.User = Depends(get_current_user)):
-    current_user.cas_request_count += 1
+async def annotate(myfile: UploadFile, request_user: models.User = Depends(get_current_user)):
+    request_user.cas_request_count += 1
     db_session.commit()
     return await __annotate(myfile.file)
 
