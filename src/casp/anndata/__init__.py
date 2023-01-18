@@ -1,7 +1,7 @@
 from .read import read_h5ad_gcs
-from .distributed_anndata import DistributedAnnData
+from .distributed_anndata import DistributedAnnCollection
 
 __all__ = [
-    "DistributedAnnData",
+    "DistributedAnnCollection",
     "read_h5ad_gcs",
 ]
