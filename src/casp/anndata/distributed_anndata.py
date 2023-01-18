@@ -15,7 +15,7 @@ from scvi.data._utils import get_anndata_attribute
 class LRUCache:
     def __init__(self, maxsize: int):
         self.cache = OrderedDict()
-        self.maxsize = maxsize
+        self._maxsize = maxsize
 
     def __getitem__(self, key):
         if key in self.cache:
@@ -25,7 +25,8 @@ class LRUCache:
 
     def __setitem__(self, key, value):
         while len(self.cache) >= self.maxsize:
-            _, lru_value = self.cache.popitem(last=False)
+            lru_key, lru_value = self.cache.popitem(last=False)
+            print(f"DEBUG removing {lru_key}")
             del lru_value
         self.cache[key] = value
         self.cache.move_to_end(key)
@@ -35,6 +36,19 @@ class LRUCache:
 
     def __len__(self) -> int:
         return len(self.cache)
+
+    @property
+    def maxsize(self) -> int:
+        return self._maxsize
+
+    @maxsize.setter
+    def maxsize(self, value: int):
+        while len(self.cache) > value:
+            lru_key, lru_value = self.cache.popitem(last=False)
+            print(f"DEBUG removing {lru_key}")
+            del lru_value
+        self._maxsize = value
+
 
 
 class LazyAnnData:
@@ -79,6 +93,7 @@ class LazyAnnData:
     def adata(self) -> AnnData:
         """Return backed AnnData from the filename"""
         if not self.cached:
+            print(f"DEBUG fetching {self.filename}")
             self.cache[self.filename] = read_h5ad_gcs(self.filename)
         return self.cache[self.filename]
 
@@ -145,9 +160,9 @@ class DistributedAnnCollection(AnnCollection):
         assert isinstance(self.filenames[0], str)
         self.cache = LRUCache(maxsize=maxsize)
         self.cachesize_strict = cachesize_strict
-        self.maxsize = maxsize
         if keys is None:
             keys = self.filenames
+        print(f"DEBUG fetching {self.filenames[0]}")
         first_adata = self.cache[self.filenames[0]] = read_h5ad_gcs(self.filenames[0])
         if shard_size is None:
             shard_size = len(first_adata)
@@ -171,6 +186,8 @@ class DistributedAnnCollection(AnnCollection):
             harmonize_dtypes=harmonize_dtypes,
             indices_strict=indices_strict,
         )
+        self.var = self.adatas[0].var.copy()
+
 
     def __getitem__(self, index: Index):
         oidx, vidx = _normalize_indices(index, self.obs_names, self.var_names)
@@ -202,7 +219,7 @@ class DistributedAnnCollection(AnnCollection):
         if isinstance(indices, int):
             indices = (indices,)
         if self.cachesize_strict:
-            assert len(indices) <= self.maxsize
+            assert len(indices) <= self.cache.maxsize
         adatas = [None] * len(indices)
         for i, idx in enumerate(indices):
             if self.adatas[idx].cached:
@@ -221,6 +238,10 @@ def _(
     attr_key: Optional[str],
     mod_key: Optional[str] = None,
 ) -> Union[np.ndarray, pd.DataFrame]:
+    if attr_name == "var":
+        field = adata.var[attr_key]
+        field = field.to_numpy().reshape(-1, 1)
+        return field
     return adata.lazy_attr(attr_name, attr_key)
 
 
