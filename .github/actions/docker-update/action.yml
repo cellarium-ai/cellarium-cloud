@@ -19,6 +19,9 @@ inputs:
   image-tag:
     required: true
     description: Current workflow tag
+  env-b64:
+    required: true
+    description: CAS services env variable
 
 runs:
   using: "composite"
@@ -26,6 +29,10 @@ runs:
     - id: checkout
       name: Checkout
       uses: actions/checkout@v2
+
+    - name: Add Application Environment Variables to .env
+      run: echo ${{ inputs.env-b64 }} | base64 -d >> src/casp/services/.env
+      shell: bash
 
     - name: Authenticate with Google Cloud
       id: google-login
@@ -49,17 +56,15 @@ runs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        file: ./src/casp/ml/services/deploy/Dockerfile.pytorch
+        file: ./src/casp/services/deploy/Dockerfile.pytorch
         tags: |
           ${{ inputs.pytorch-image-name }}:${{ inputs.image-tag }}
-          ${{ inputs.pytorch-image-name }}:latest
 
     - name: Update CAS Pytorch CUDA image in Google Artifact Registry
       id: docker-push-pytorch-cuda-tagged
       uses: docker/build-push-action@v2
       with:
         push: true
-        file: ./src/casp/ml/services/deploy/Dockerfile.pytorch_cuda
+        file: ./src/casp/services/deploy/Dockerfile.pytorch_cuda
         tags: |
           ${{ inputs.pytorch-cuda-image-name }}:${{ inputs.image-tag }}
-          ${{ inputs.pytorch-cuda-image-name }}:latest

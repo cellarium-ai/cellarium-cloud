@@ -3,46 +3,18 @@ import typing as t
 import uuid
 from datetime import datetime, timedelta
 
-import aiohttp
 import pandas as pd
 import uvicorn
 from fastapi import FastAPI, UploadFile
 from google.cloud import aiplatform, bigquery
-from pydantic import BaseSettings
 
-from casp.api import schemas
+from casp.services import settings
+from casp.services.api import async_client, schemas
 
 if t.TYPE_CHECKING:
     import numpy
 
-
-# TODO --refactor packages, move into commons settings class, leverage .env file
-class Settings(BaseSettings):
-    server_host: str = "0.0.0.0"
-    server_port: int = 8000
-    model_server_url: str = "https://casp-pca-serving-vi7nxpvk7a-uc.a.run.app/predict"
-    knn_search_endpoint_id: str = "projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904"
-    knn_search_deployed_index_id: str = "deployed_4m_casp_index_v1"
-    knn_search_num_matches: int = 100
-    bq_cell_info_table_fqn: str = "dsp-cell-annotation-service.cas_4m_dataset.cas_cell_info"
-    bq_temp_table_dataset: str = "dsp-cell-annotation-service.cas_4m_dataset"
-    items_per_user: int = 50
-
-
-settings = Settings()
 app = FastAPI()
-
-
-class CASAPIAsyncClient:
-    @classmethod
-    async def post(cls, url: str, data: t.Dict):
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, data=data) as resp:
-                return await resp.text()
-
-    @classmethod
-    async def call_model_service(cls, file_to_embed):
-        return await cls.post(url=settings.model_server_url, data={"file": file_to_embed})
 
 
 def __log(s):
@@ -51,7 +23,7 @@ def __log(s):
 
 
 async def __get_embeddings(myfile) -> t.Tuple[t.List, "numpy.array"]:
-    r_text = await CASAPIAsyncClient.call_model_service(file_to_embed=myfile.read())
+    r_text = await async_client.CASAPIAsyncClient.call_model_service(file_to_embed=myfile.read())
     # TODO: json isn't very efficient for this
     df = pd.read_json(r_text)
     query_ids = df.db_ids.tolist()
@@ -61,12 +33,12 @@ async def __get_embeddings(myfile) -> t.Tuple[t.List, "numpy.array"]:
 
 
 def __get_appx_knn_matches(embeddings):
-    index_endpoint = aiplatform.MatchingEngineIndexEndpoint(index_endpoint_name=settings.knn_search_endpoint_id)
+    index_endpoint = aiplatform.MatchingEngineIndexEndpoint(index_endpoint_name=settings.KNN_SEARCH_ENDPOINT_ID)
 
     response = index_endpoint.match(
-        deployed_index_id=settings.knn_search_deployed_index_id,
+        deployed_index_id=settings.KNN_SEARCH_DEPLOYED_INDEX_ID,
         queries=embeddings,
-        num_neighbors=settings.knn_search_num_matches,
+        num_neighbors=settings.KNN_SEARCH_NUM_MATCHES,
     )
     return response
 
@@ -76,7 +48,7 @@ def __get_cell_type_distribution(query_ids, knn_response):
 
     # create temporary table
     my_uuid = str(uuid.uuid4())[:8]
-    temp_table_fqn = f"{settings.bq_temp_table_dataset}.api_request_{my_uuid}"
+    temp_table_fqn = f"{settings.BQ_TEMP_TABLE_DATASET}.api_request_{my_uuid}"
 
     __log(f"Creating Temporary Table {temp_table_fqn}")
     schema = [
@@ -113,7 +85,7 @@ def __get_cell_type_distribution(query_ids, knn_response):
                        APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(75)] as p75_distance,
                        COUNT(*) cell_count
                 FROM `{temp_table_fqn}` t
-                JOIN `{settings.bq_cell_info_table_fqn}` ci ON t.match_cas_cell_index = ci.cas_cell_index
+                JOIN `{settings.BQ_CELL_INFO_TABLE_FQN}` ci ON t.match_cas_cell_index = ci.cas_cell_index
                 GROUP BY 1,2
                 ORDER BY 1, 8 DESC
                 """
@@ -181,5 +153,5 @@ async def annotate(myfile: UploadFile):
 
 if __name__ == "__main__":
     uvicorn.run(
-        "server:app", host=settings.server_host, port=settings.server_port, workers=multiprocessing.cpu_count() * 2 + 1
+        "server:app", host=settings.SERVER_HOST, port=settings.SERVER_PORT, workers=multiprocessing.cpu_count() * 2 + 1
     )

@@ -3,5 +3,5 @@
   "CASPEmbedData.data_storage_path": "test_data",
   "CASPEmbedData.dm_storage_path": "models/dump_manager_final.pickle",
   "CASPEmbedData.output_storage_path": "embeddings_v2",
-  "CASPEmbedData.running_script": "casp/ml/services/embedding/pca/embed.py"
+  "CASPEmbedData.running_script": "casp/services/embedding/pca/embed.py"
 }
