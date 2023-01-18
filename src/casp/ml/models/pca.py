@@ -2,8 +2,6 @@ import typing as t
 
 import numpy as np
 import torch
-from torch.utils.data import IterableDataset
-from webdataset import WebDataset
 
 from casp.ml.utils import PickleMixin
 

@@ -1,7 +1,7 @@
 """Initial Migration: User model
 
 Revision ID: 609b6749b472
-Revises: 
+Revises:
 Create Date: 2023-01-18 15:36:42.358885
 
 """

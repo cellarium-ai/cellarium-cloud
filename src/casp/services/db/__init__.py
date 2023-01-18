@@ -17,6 +17,6 @@ def save(record) -> None:
 
 
 def init_db() -> sqlalchemy.orm.scoped_session:
-    import casp.services.db.models
+    import casp.services.db.models  # noqa
 
     return db_session
