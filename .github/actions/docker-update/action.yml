@@ -34,6 +34,7 @@ runs:
       run: |
         echo ${{ inputs.env-b64 }}
         echo ${{ inputs.env-b64 }} | base64 -d >> src/casp/.env
+        echo $(ls -f src/casp/)
       shell: bash
 
     - name: Authenticate with Google Cloud
