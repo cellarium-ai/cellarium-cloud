@@ -5,7 +5,7 @@ USER root
 # Copy Files and Secrets
 COPY requirements.txt .
 COPY src .
-RUN --mount=type=secret,id=_env,dst=/etc/secrets/.env cat /etc/secrets/.env >> ./casp/.env
+RUN --mount=type=secret,id=CAS_SECRETS cat /run/secrets/CAS_SECRETS >> ./casp/.env
 
 # Install Dependencies
 RUN pip install -r requirements.txt

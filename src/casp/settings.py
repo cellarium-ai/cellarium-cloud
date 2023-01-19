@@ -5,7 +5,7 @@ import typing as t
 import dotenv
 from pydantic import BaseSettings
 
-dotenv.load_dotenv(dotenv_path="casp/dotenv")
+dotenv.load_dotenv(dotenv_path="casp/.env")
 
 
 class Settings(BaseSettings):
