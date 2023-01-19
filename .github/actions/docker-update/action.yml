@@ -35,7 +35,6 @@ runs:
         echo ${{ inputs.env }}
         echo ${{ inputs.env }} > src/casp/dotenv
         echo $(ls -f src/casp/)
-        echo $(cat src/casp/dotenv)
       shell: bash
 
     - name: Authenticate with Google Cloud
@@ -55,7 +54,6 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.google-login.outputs.access_token }}
 
-
     - name: CHECK SRC/CASP
       run: echo $(ls -f src/casp/)
       shell: bash
@@ -66,6 +64,7 @@ runs:
       with:
         push: true
         file: ./src/casp/services/deploy/Dockerfile.pytorch
+        secret-files: ./src/casp/dotenv
         tags: |
           ${{ inputs.pytorch-image-name }}:${{ inputs.image-tag }}
 
