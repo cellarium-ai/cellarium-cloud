@@ -19,8 +19,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags')
 
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: write
+      id-token: write
     env:
       DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
       PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch

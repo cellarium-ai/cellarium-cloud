@@ -23,3 +23,17 @@ gcloud run deploy casp-admin-service \
 --vpc-connector cas-ai-matching \
 --command casp/services/admin/entrypoint.sh
 ```
+
+```
+gcloud run deploy casp-admin-service \
+--project $PROJECT_ID \
+--image $IMAGE_NAME \
+--region us-central1 \
+--platform managed \
+--port 8000 \
+--allow-unauthenticated \
+--network ai-matching \
+--command casp/services/admin/entrypoint.sh
+
+
+```
