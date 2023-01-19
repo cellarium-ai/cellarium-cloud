@@ -60,7 +60,7 @@ runs:
 
     - name: Update CAS Pytorch image in Google Artifact Registry
       id: docker-push-pytorch-tagged
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         push: true
         file: ./src/casp/services/deploy/Dockerfile.pytorch
