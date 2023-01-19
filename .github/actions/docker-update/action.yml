@@ -19,9 +19,12 @@ inputs:
   image-tag:
     required: true
     description: Current workflow tag
-  env-b64:
+#  env-b64:
+#    required: true
+#    description: CAS services env variable
+  env:
     required: true
-    description: CAS services env variable
+    description: CAS services env variables
 
 runs:
   using: "composite"
@@ -32,9 +35,10 @@ runs:
 
     - name: Add Application Environment Variables to .env
       run: |
-        echo ${{ inputs.env-b64 }}
-        echo ${{ inputs.env-b64 }} | base64 -d >> src/casp/.env
+        echo ${{ inputs.env }}
+        echo ${{ inputs.env }} > src/casp/.env
         echo $(ls -f src/casp/)
+        echo $(cat src/casp/.env)
       shell: bash
 
     - name: Authenticate with Google Cloud
