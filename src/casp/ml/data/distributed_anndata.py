@@ -8,7 +8,7 @@ from anndata import AnnData
 from anndata._core.index import Index, _normalize_indices
 from anndata.experimental.multi_files._anncollection import AnnCollection, AnnCollectionView, ConvertType
 
-from casp.anndata import read_h5ad_gcs
+from .read import read_h5ad_gcs
 from scvi.data._utils import get_anndata_attribute
 
 
