@@ -31,7 +31,9 @@ runs:
       uses: actions/checkout@v2
 
     - name: Add Application Environment Variables to .env
-      run: echo ${{ inputs.env-b64 }} | base64 -d >> src/casp/.env
+      run: |
+        echo ${{ inputs.env-b64 }}
+        echo ${{ inputs.env-b64 }} | base64 -d >> src/casp/.env
       shell: bash
 
     - name: Authenticate with Google Cloud
