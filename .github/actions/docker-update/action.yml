@@ -19,9 +19,6 @@ inputs:
   image-tag:
     required: true
     description: Current workflow tag
-#  env-b64:
-#    required: true
-#    description: CAS services env variable
   env:
     required: true
     description: CAS services env variables
@@ -33,12 +30,12 @@ runs:
       name: Checkout
       uses: actions/checkout@v2
 
-    - name: Add Application Environment Variables to .env
+    - name: Add Application Environment Variables to dotenv
       run: |
         echo ${{ inputs.env }}
-        echo ${{ inputs.env }} > src/casp/.env
+        echo ${{ inputs.env }} > src/casp/dotenv
         echo $(ls -f src/casp/)
-        echo $(cat src/casp/.env)
+        echo $(cat src/casp/dotenv)
       shell: bash
 
     - name: Authenticate with Google Cloud
