@@ -1,12 +1,18 @@
 FROM anibali/pytorch:1.8.1-cuda11.1
-
+WORKDIR /app
 USER root
 
-WORKDIR /app
-
+# Copy Files and Secrets
 COPY requirements.txt .
+COPY src .
+RUN --mount=type=secret,id=CAS_SECRETS cat /run/secrets/CAS_SECRETS | base64 -d >> ./casp/.env
+
+# Install Dependencies
 RUN pip install -r requirements.txt
 
-COPY src .
+# Create a dockeruser to own the app
+RUN useradd -r dockeruser
+RUN chown dockeruser: /app
+USER dockeruser
 
 ENV PYTHONPATH "${PYTHONPATH}:/app"

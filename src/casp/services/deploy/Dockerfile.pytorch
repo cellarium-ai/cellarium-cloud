@@ -5,7 +5,7 @@ USER root
 # Copy Files and Secrets
 COPY requirements.txt .
 COPY src .
-RUN --mount=type=secret,id=CAS_SECRETS cat /run/secrets/CAS_SECRETS >> ./casp/.env
+RUN --mount=type=secret,id=CAS_SECRETS cat /run/secrets/CAS_SECRETS | base64 -d >> ./casp/.env
 
 # Install Dependencies
 RUN pip install -r requirements.txt
@@ -15,5 +15,4 @@ RUN useradd -r dockeruser
 RUN chown dockeruser: /app
 USER dockeruser
 
-EXPOSE 8000
 ENV PYTHONPATH "${PYTHONPATH}:/app"
