@@ -13,7 +13,7 @@ python-dotenv
 pyarrow
 python-multipart
 aiohttp==3.8.3
-psycopg2
+psycopg2-binary
 SQLAlchemy==1.4.46
 Flask==2.2.2
 Flask-Admin==1.6.0
