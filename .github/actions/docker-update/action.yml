@@ -54,6 +54,11 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.google-login.outputs.access_token }}
 
+
+    - name: CHECK SRC/CASP
+      run: echo $(ls -f src/casp/)
+      shell: bash
+
     - name: Update CAS Pytorch image in Google Artifact Registry
       id: docker-push-pytorch-tagged
       uses: docker/build-push-action@v2
