@@ -45,7 +45,7 @@ def _get_database_engine() -> sqlalchemy.engine.base.Engine:
     if settings.ENVIRONMENT == "local":
         return _init_regular_connection_engine()
     elif settings.ENVIRONMENT == "development" or settings.ENVIRONMENT == "production":
-        return _init_db_connection_unix()
+        return connect_unix_socket()
     else:
         raise Exception(
             "CAS Database Engine handles one of the following environments: "

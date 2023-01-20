@@ -20,6 +20,8 @@ gcloud run deploy casp-admin-service \
 --platform managed \
 --port 8000 \
 --allow-unauthenticated \
+--add-cloudsql-instances=dsp-cell-annotation-service:us-central1:cas-db-cluster \
+ --set-env-vars INSTANCE_UNIX_SOCKET="/cloudsql/dsp-cell-annotation-service:us-central1:cas-db-cluster" \
 --command casp/services/admin/entrypoint.sh
 ```
 
