@@ -11,6 +11,7 @@ dotenv.load_dotenv(dotenv_path="casp/.env")
 class Settings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
+    ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
     # PCA Model serving
     PCA_MODEL_BUCKET_NAME: str = "fedor-test-bucket"
     PCA_MODEL_BLOB_NAME: str = "models/dump_manager_002.pickle"
@@ -30,16 +31,20 @@ class Settings(BaseSettings):
     # Admin
     SECRET_KEY: str = os.environ.get("FLASK_SECRET_KEY")
     SECURITY_PASSWORD_SALT: str = os.environ.get("FLASK_SECURITY_PASSWORD_SALT")
-    _DB_HOST: str = os.environ.get("DB_HOST")
-    _DB_PORT: str = os.environ.get("DB_PORT")
-    _DB_NAME: str = os.environ.get("DB_NAME")
-    _DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
-    _DB_USER: str = os.environ.get("DB_USER")
-    SQLALCHEMY_DATABASE_URI: str = f"postgresql://{_DB_USER}:{_DB_PASSWORD}@{_DB_HOST}:{_DB_PORT}/{_DB_NAME}"
+    DB_HOST: str = os.environ.get("DB_HOST")
+    DB_PORT: str = os.environ.get("DB_PORT")
+    DB_NAME: str = os.environ.get("DB_NAME")
+    DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
+    DB_USER: str = os.environ.get("DB_USER")
+    DB_CONNECTION_NAME: str = os.environ.get("DB_CONNECTION_NAME")
+    DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP", None)
+    SQLALCHEMY_DATABASE_URI: str = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     FLASK_ADMIN_SWATCH: str = "flatly"
     _FLASK_BASIC_AUTH_USERNAME: str = os.environ.get("FLASK_BASIC_AUTH_USERNAME")
     _FLASK_BASIC_AUTH_PASSWORD: str = os.environ.get("FLASK_BASIC_AUTH_PASSWORD")
-    ADMIN_BASIC_AUTH_USER = {"username": _FLASK_BASIC_AUTH_USERNAME, "password": _FLASK_BASIC_AUTH_PASSWORD}
+    ADMIN_BASIC_AUTH_USER: t.Dict[str, str] = {
+        "username": _FLASK_BASIC_AUTH_USERNAME, "password": _FLASK_BASIC_AUTH_PASSWORD
+    }
     DEBUG: bool = False if os.environ.get("ENVIRONMENT_TYPE") == "production" else True
 
 

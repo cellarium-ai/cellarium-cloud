@@ -20,7 +20,6 @@ gcloud run deploy casp-admin-service \
 --platform managed \
 --port 8000 \
 --allow-unauthenticated \
---vpc-connector cas-ai-matching \
 --command casp/services/admin/entrypoint.sh
 ```
 
