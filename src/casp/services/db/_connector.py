@@ -5,64 +5,35 @@ import sqlalchemy
 from casp import settings
 
 
-# def _connect_with_google_cloud_connector() -> sqlalchemy.engine.base.Engine:
-#     """
-#     Initializes a connection pool for a Cloud SQL instance of Postgres.
-#     Uses the Cloud SQL Python Connector package.
-#
-#     Refer to GC Documentation:
-#     https://cloud.google.com/sql/docs/postgres/connect-run#python_1
-#     """
-#
-#     # initialize Cloud SQL Python Connector object
-#     connector = Connector()
-#
-#     def connection_creator() -> pg8000.dbapi.Connection:
-#         conn: pg8000.dbapi.Connection = connector.connect(
-#             instance_connection_string=settings.DB_CONNECTION_NAME,
-#             driver="pg8000",
-#             user=settings.DB_USER,
-#             password=settings.DB_PASSWORD,
-#             db=settings.DB_NAME,
-#             ip_type=IPTypes.PUBLIC,
-#         )
-#         return conn
-#
-#     # The Cloud SQL Python Connector can be used with SQLAlchemy
-#     # using the 'creator' argument to 'create_engine'
-#     return sqlalchemy.create_engine(
-#         "postgresql+pg8000://",
-#         creator=connection_creator,
-#         pool_size=5,
-#         max_overflow=2,
-#         pool_timeout=30,
-#         pool_recycle=1800
-#     )
+def connect_unix_socket() -> sqlalchemy.engine.base.Engine:
+    """ Initializes a Unix socket connection pool for a Cloud SQL instance of Postgres. """
+    # Note: Saving credentials in environment variables is convenient, but not
+    # secure - consider a more secure solution such as
+    # Cloud Secret Manager (https://cloud.google.com/secret-manager) to help
+    # keep secrets safe.
+    db_user = settings.DB_USER
+    db_pass = settings.DB_PASSWORD
+    db_name = settings.DB_NAME
+    unix_socket_path = settings.DB_INSTANCE_UNIX_SOCKET
 
-
-def _init_db_connection_unix():
-    db_config = {
-        'pool_size': 5,
-        'max_overflow': 2,
-        'pool_timeout': 30,
-        'pool_recycle': 1800,
-    }
-    return _init_unix_connection_engine(db_config)
-
-
-def _init_unix_connection_engine(db_config):
     pool = sqlalchemy.create_engine(
-        sqlalchemy.engine.url.URL(
-            drivername="postgres+pg8000",
-            host=settings.DB_HOST,
-            port=settings.DB_PORT,
-            username=settings.DB_USER,
-            password=settings.DB_PASSWORD,
-            database=settings.DB_NAME,
+        # Equivalent URL:
+        # postgresql+pg8000://<db_user>:<db_pass>@/<db_name>
+        #                         ?unix_sock=<INSTANCE_UNIX_SOCKET>/.s.PGSQL.5432
+        # Note: Some drivers require the `unix_sock` query parameter to use a different key.
+        # For example, 'psycopg2' uses the path set to `host` in order to connect successfully.
+        sqlalchemy.engine.url.URL.create(
+            drivername="postgresql+pg8000",
+            username=db_user,
+            password=db_pass,
+            database=db_name,
+            query={"unix_sock": "{}/.s.PGSQL.5432".format(unix_socket_path)},
         ),
-        **db_config
+        pool_size=5,
+        max_overflow=2,
+        pool_timeout=30,  # 30 seconds
+        pool_recycle=1800,  # 30 minutes
     )
-    pool.dialect.description_encoding = None
     return pool
 
 

@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     DB_USER: str = os.environ.get("DB_USER")
     DB_CONNECTION_NAME: str = os.environ.get("DB_CONNECTION_NAME")
     DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP", None)
+    DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
     SQLALCHEMY_DATABASE_URI: str = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     FLASK_ADMIN_SWATCH: str = "flatly"
     _FLASK_BASIC_AUTH_USERNAME: str = os.environ.get("FLASK_BASIC_AUTH_USERNAME")
