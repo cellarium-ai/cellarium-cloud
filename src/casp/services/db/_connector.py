@@ -34,16 +34,20 @@ def _connect_with_google_cloud_connector() -> sqlalchemy.engine.base.Engine:
     return sqlalchemy.create_engine(
         "postgresql+pg8000://",
         creator=connection_creator,
+        pool_size=5,
+        max_overflow=2,
+        pool_timeout=30,
+        pool_recycle=1800
     )
 
 
-def _get_connection_for_regular_db() -> sqlalchemy.engine.base.Engine:
+def _connect_with_regular_db() -> sqlalchemy.engine.base.Engine:
     return sqlalchemy.create_engine(settings.SQLALCHEMY_DATABASE_URI)
 
 
 def _get_database_engine() -> sqlalchemy.engine.base.Engine:
     if settings.ENVIRONMENT == "local":
-        return _get_connection_for_regular_db()
+        return _connect_with_regular_db()
     elif settings.ENVIRONMENT == "development" or settings.ENVIRONMENT == "production":
         return _connect_with_google_cloud_connector()
     else:
