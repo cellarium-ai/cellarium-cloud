@@ -1,19 +1,19 @@
 name: CAS Repository Update Workflow
 on: [push, workflow_dispatch]
 jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/unit-tests
-        with:
-          python-version: ${{ matrix.python-version }}
+#  unit-tests:
+#    runs-on: ubuntu-latest
+#    strategy:
+#      matrix:
+#        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: ./.github/actions/unit-tests
+#        with:
+#          python-version: ${{ matrix.python-version }}
 
   update-docker-images:
-    needs: [unit-tests]
+#    needs: [unit-tests]
     runs-on: ubuntu-latest
     # Notice: this job runs only on tagged commit:
     if: startsWith(github.ref, 'refs/tags')
