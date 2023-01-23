@@ -17,11 +17,6 @@ def connect_unix_socket() -> sqlalchemy.engine.base.Engine:
     unix_socket_path = settings.DB_INSTANCE_UNIX_SOCKET
 
     pool = sqlalchemy.create_engine(
-        # Equivalent URL:
-        # postgresql+pg8000://<db_user>:<db_pass>@/<db_name>
-        #                         ?unix_sock=<INSTANCE_UNIX_SOCKET>/.s.PGSQL.5432
-        # Note: Some drivers require the `unix_sock` query parameter to use a different key.
-        # For example, 'psycopg2' uses the path set to `host` in order to connect successfully.
         sqlalchemy.engine.url.URL.create(
             drivername="postgresql+pg8000",
             username=db_user,
@@ -42,12 +37,13 @@ def _init_regular_connection_engine() -> sqlalchemy.engine.base.Engine:
 
 
 def _get_database_engine() -> sqlalchemy.engine.base.Engine:
-    if settings.ENVIRONMENT == "local":
-        return _init_regular_connection_engine()
-    elif settings.ENVIRONMENT == "development" or settings.ENVIRONMENT == "production":
-        return connect_unix_socket()
-    else:
-        raise Exception(
-            "CAS Database Engine handles one of the following environments: "
-            "local, development, production"
-        )
+    return connect_unix_socket()
+    # if settings.ENVIRONMENT == "local":
+    #     return _init_regular_connection_engine()
+    # elif settings.ENVIRONMENT == "development" or settings.ENVIRONMENT == "production":
+    #     return connect_unix_socket()
+    # else:
+    #     raise Exception(
+    #         "CAS Database Engine handles one of the following environments: "
+    #         "local, development, production"
+    #     )
