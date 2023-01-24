@@ -10,7 +10,7 @@ from google.cloud import aiplatform, bigquery
 
 from casp import settings
 from casp.services.api import async_client, schemas
-from casp.services.api.utils import get_current_user
+from casp.services.api.auth import authenticate_user
 from casp.services.db import init_db, models, ops
 
 if t.TYPE_CHECKING:

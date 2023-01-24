@@ -36,7 +36,7 @@ PROJECT_ID=dsp-cell-annotation-service
 gcloud run deploy cas-api \
 --project $PROJECT_ID \
 --image $IMAGE_NAME \
---memory 2Gi \
+--memory 4Gi \
 --region us-central1 \
 --platform managed \
 --port 8000 \
