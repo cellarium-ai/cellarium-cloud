@@ -33,7 +33,6 @@ def connect_unix_socket() -> sqlalchemy.engine.base.Engine:
 
 
 def _init_regular_connection_engine() -> sqlalchemy.engine.base.Engine:
-    print("I AM IN INIT REGULAR CONNECTION")
     return sqlalchemy.create_engine(settings.SQLALCHEMY_DATABASE_URI)
 
 

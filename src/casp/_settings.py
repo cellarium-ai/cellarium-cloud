@@ -7,8 +7,10 @@ from pydantic import BaseSettings
 
 dotenv.load_dotenv(dotenv_path="casp/.env")
 
+ENV_TYPE = os.environ.get("ENVIRONMENT")
 
-class Settings(BaseSettings):
+
+class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
@@ -27,29 +29,39 @@ class Settings(BaseSettings):
     ITEMS_PER_USER: int = 50
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
-    JWT_DEFAULT_TOKEN_TTL: int = 60 * 60 * 24 * 60  # 60 days
-    # Admin
-    SECRET_KEY: str = os.environ.get("FLASK_SECRET_KEY")
-    SECURITY_PASSWORD_SALT: str = os.environ.get("FLASK_SECURITY_PASSWORD_SALT")
-    # DB_HOST: str = os.environ.get("DB_HOST")
-    # DB_PORT: str = os.environ.get("DB_PORT")
+    JWT_DEFAULT_TOKEN_TTL: int = 60 * 60 * 24 * 180  # 180 days
+    # Database
     DB_NAME: str = os.environ.get("DB_NAME")
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
-    # DB_CONNECTION_NAME: str = os.environ.get("DB_CONNECTION_NAME")
-    DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP", None)
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
-    # SQLALCHEMY_DATABASE_URI: str = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     SQLALCHEMY_DATABASE_URI: str = (
-        f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_sock={DB_INSTANCE_UNIX_SOCKET}/.s.PGSQL.5432")
-
+        f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_sock={DB_INSTANCE_UNIX_SOCKET}/.s.PGSQL.5432"
+    )
+    # Admin
+    SECRET_KEY: str = os.environ.get("FLASK_SECRET_KEY")
+    SECURITY_PASSWORD_SALT: str = os.environ.get("FLASK_SECURITY_PASSWORD_SALT")
     FLASK_ADMIN_SWATCH: str = "flatly"
     _FLASK_BASIC_AUTH_USERNAME: str = os.environ.get("FLASK_BASIC_AUTH_USERNAME")
     _FLASK_BASIC_AUTH_PASSWORD: str = os.environ.get("FLASK_BASIC_AUTH_PASSWORD")
     ADMIN_BASIC_AUTH_USER: t.Dict[str, str] = {
         "username": _FLASK_BASIC_AUTH_USERNAME, "password": _FLASK_BASIC_AUTH_PASSWORD
     }
-    DEBUG: bool = False if os.environ.get("ENVIRONMENT_TYPE") == "production" else True
+    DEBUG: bool = True
 
 
-settings = Settings()
+class LocalSettings(AllEnvSettings):
+    DB_HOST: str = os.environ.get("DB_HOST")
+    DB_PORT: str = os.environ.get("DB_PORT")
+    DB_NAME: str = os.environ.get("DB_NAME")
+    DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
+    DB_USER: str = os.environ.get("DB_USER")
+    SQLALCHEMY_DATABASE_URI = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+
+class DevSettings(AllEnvSettings):
+    pass
+
+
+class ProductionSettings(AllEnvSettings):
+    debug = False
