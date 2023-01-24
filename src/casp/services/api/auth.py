@@ -13,8 +13,6 @@ auth_scheme = HTTPBearer()
 async def authenticate_user(auth_token_scheme: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> "models.User":
     """
     Look at `Authorization` header and retrieve token by Bearer value.
-
-    Could be used as a request middleware.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

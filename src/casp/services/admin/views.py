@@ -16,9 +16,9 @@ class AuthException(HTTPException):
         super().__init__(
             message,
             Response(
-                "You could not be authenticated. Please refresh the page.",
-                401,
-                {"WWW-Authenticate": 'Basic realm="Login Required"'},
+                response="You could not be authenticated. Please refresh the page.",
+                status=401,
+                headers={"WWW-Authenticate": 'Basic realm="Login Required"'},
             ),
         )
 
@@ -51,7 +51,7 @@ class UserAdminView(CASAdminModelView):
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
     ]
-    column_list = ("email", "is_active", "cas_request_count")
+    column_list = ("email", "is_active", "cas_request_count", "cas_scRNA_cells_processed")
     form_widget_args = {"cas_request_count": {"disabled": True}, "cas_scRNA_cells_processed": {"disabled": True}}
 
     _token = None
