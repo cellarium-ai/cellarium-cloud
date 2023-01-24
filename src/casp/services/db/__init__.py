@@ -4,7 +4,7 @@ from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 from casp import settings
 
 engine = sqlalchemy.create_engine(
-    settings.SQLALCHEMY_DATABASE_URI,
+    url=settings.SQLALCHEMY_DATABASE_URI,
     pool_size=5,
     max_overflow=2,
     pool_timeout=30,  # 30 seconds

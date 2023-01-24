@@ -5,13 +5,13 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import uvicorn
-from fastapi import Depends, FastAPI, UploadFile
+from fastapi import Depends, FastAPI, UploadFile, Form, File
 from google.cloud import aiplatform, bigquery
 
 from casp import settings
 from casp.services.api import async_client, schemas
 from casp.services.api.utils import get_current_user
-from casp.services.db import init_db, models
+from casp.services.db import init_db, models, ops
 
 if t.TYPE_CHECKING:
     import numpy
@@ -145,9 +145,12 @@ async def __annotate(file):
 
 
 @app.post("/annotate", response_model=t.List[schemas.QueryCell])
-async def annotate(myfile: UploadFile, request_user: models.User = Depends(get_current_user)):
-    request_user.cas_request_count += 1
-    db_session.commit()
+async def annotate(
+    myfile: UploadFile = File(),
+    number_of_cells: int = Form(),
+    request_user: models.User = Depends(get_current_user),
+):
+    ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
     return await __annotate(myfile.file)
 
 

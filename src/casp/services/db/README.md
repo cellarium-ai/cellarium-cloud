@@ -2,23 +2,23 @@
 This module requires running database cluster.
 Create db cluster:
 ```
-gcloud sql instances create cas-db \
+gcloud sql instances create cas-db-cluster \
 --database-version=POSTGRES_14 \
---cpu=2 \
---memory=7680MB \
---network=ai-matching \
+--cpu=1 \
+--memory 3.75GB \
+--storage-size 10GB \
 --region=us-central
 ```
 Create a cas-db-user:
 ```
 gcloud sql users create cas-db-user \
---instance=cas-db \
---password={password-goes-here}
+--instance=cas-db-cluster \
+--password={secret-password-goes-here}
 ```
 Create a cas-db:
 ```
 gcloud sql databases create cas-db \
---instance=cas-db \
+--instance=cas-db-cluster \
 
 ```
 ## Code Base Info

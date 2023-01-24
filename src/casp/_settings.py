@@ -46,7 +46,8 @@ class AllEnvSettings(BaseSettings):
     _FLASK_BASIC_AUTH_USERNAME: str = os.environ.get("FLASK_BASIC_AUTH_USERNAME")
     _FLASK_BASIC_AUTH_PASSWORD: str = os.environ.get("FLASK_BASIC_AUTH_PASSWORD")
     ADMIN_BASIC_AUTH_USER: t.Dict[str, str] = {
-        "username": _FLASK_BASIC_AUTH_USERNAME, "password": _FLASK_BASIC_AUTH_PASSWORD
+        "username": _FLASK_BASIC_AUTH_USERNAME,
+        "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
 

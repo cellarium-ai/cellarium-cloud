@@ -1,13 +1,16 @@
+import typing as t
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from casp.services import _auth
-from casp.services.db import models
+
+if t.TYPE_CHECKING:
+    from casp.services.db import models
 
 auth_scheme = HTTPBearer()
 
 
-async def get_current_user(auth_token_scheme: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> models.User:
+async def authenticate_user(auth_token_scheme: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> models.User:
     """
     Look at `Authorization` header and retrieve token by Bearer value.
 
@@ -16,7 +19,7 @@ async def get_current_user(auth_token_scheme: HTTPAuthorizationCredentials = Dep
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"Authenticate": "Bearer"},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     jwt_token = auth_token_scheme.credentials
     try:

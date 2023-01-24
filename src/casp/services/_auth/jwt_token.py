@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 import jwt
 from sqlalchemy.exc import IntegrityError
@@ -18,7 +19,8 @@ def authenticate_user_with_jwt(token: str) -> models.User:
         payload = jwt.decode(
             jwt=token, key=settings.SECURITY_PASSWORD_SALT, algorithms=[settings.JWT_HASHING_ALGORITHM]
         )
-    except jwt.PyJWTError:
+    except jwt.PyJWTError as e:
+        logging.error(e)
         raise exceptions.TokenInvalid
 
     if "user_id" not in payload or "expiration" not in payload:
