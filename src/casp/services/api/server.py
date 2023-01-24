@@ -148,7 +148,7 @@ async def __annotate(file):
 async def annotate(
     myfile: UploadFile = File(),
     number_of_cells: int = Form(),
-    request_user: models.User = Depends(get_current_user),
+    request_user: models.User = Depends(authenticate_user),
 ):
     ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
     return await __annotate(myfile.file)
