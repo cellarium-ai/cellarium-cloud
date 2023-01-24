@@ -35,6 +35,7 @@ class AllEnvSettings(BaseSettings):
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
+    # Stage db connector through unix socket
     SQLALCHEMY_DATABASE_URI: str = (
         f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_sock={DB_INSTANCE_UNIX_SOCKET}/.s.PGSQL.5432"
     )
@@ -47,21 +48,25 @@ class AllEnvSettings(BaseSettings):
     ADMIN_BASIC_AUTH_USER: t.Dict[str, str] = {
         "username": _FLASK_BASIC_AUTH_USERNAME, "password": _FLASK_BASIC_AUTH_PASSWORD
     }
-    DEBUG: bool = True
+    DEBUG: bool = False
+
+
+class DevSettings(AllEnvSettings):
+    # General
+    debug = True
+
+
+class ProductionSettings(AllEnvSettings):
+    pass
 
 
 class LocalSettings(AllEnvSettings):
+    # General
+    debug = True
+    # Database
     DB_HOST: str = os.environ.get("DB_HOST")
     DB_PORT: str = os.environ.get("DB_PORT")
     DB_NAME: str = os.environ.get("DB_NAME")
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
     SQLALCHEMY_DATABASE_URI = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-
-class DevSettings(AllEnvSettings):
-    pass
-
-
-class ProductionSettings(AllEnvSettings):
-    debug = False

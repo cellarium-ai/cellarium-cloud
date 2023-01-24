@@ -1,9 +1,15 @@
 import sqlalchemy.orm
 from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 
-from casp.services.db._connector import _get_database_engine
+from casp import settings
 
-engine = _get_database_engine()
+engine = sqlalchemy.create_engine(
+    settings.SQLALCHEMY_DATABASE_URI,
+    pool_size=5,
+    max_overflow=2,
+    pool_timeout=30,  # 30 seconds
+    pool_recycle=1800,  # 30 minutes
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 db_session = scoped_session(SessionLocal)
 Base = declarative_base()
