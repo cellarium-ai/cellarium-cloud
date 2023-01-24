@@ -10,7 +10,7 @@ if t.TYPE_CHECKING:
 auth_scheme = HTTPBearer()
 
 
-async def authenticate_user(auth_token_scheme: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> models.User:
+async def authenticate_user(auth_token_scheme: HTTPAuthorizationCredentials = Depends(auth_scheme)) -> "models.User":
     """
     Look at `Authorization` header and retrieve token by Bearer value.
 
