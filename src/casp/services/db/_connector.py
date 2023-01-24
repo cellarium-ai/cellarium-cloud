@@ -15,7 +15,7 @@ def connect_unix_socket() -> sqlalchemy.engine.base.Engine:
     db_pass = settings.DB_PASSWORD
     db_name = settings.DB_NAME
     unix_socket_path = settings.DB_INSTANCE_UNIX_SOCKET
-
+    print("I AM IN UNIX SOCKET INIT")
     pool = sqlalchemy.create_engine(
         sqlalchemy.engine.url.URL.create(
             drivername="postgresql+pg8000",
@@ -33,6 +33,7 @@ def connect_unix_socket() -> sqlalchemy.engine.base.Engine:
 
 
 def _init_regular_connection_engine() -> sqlalchemy.engine.base.Engine:
+    print("I AM IN INIT REGULAR CONNECTION")
     return sqlalchemy.create_engine(settings.SQLALCHEMY_DATABASE_URI)
 
 

@@ -31,15 +31,15 @@ class Settings(BaseSettings):
     # Admin
     SECRET_KEY: str = os.environ.get("FLASK_SECRET_KEY")
     SECURITY_PASSWORD_SALT: str = os.environ.get("FLASK_SECURITY_PASSWORD_SALT")
-    DB_HOST: str = os.environ.get("DB_HOST")
-    DB_PORT: str = os.environ.get("DB_PORT")
+    # DB_HOST: str = os.environ.get("DB_HOST")
+    # DB_PORT: str = os.environ.get("DB_PORT")
     DB_NAME: str = os.environ.get("DB_NAME")
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
-    DB_CONNECTION_NAME: str = os.environ.get("DB_CONNECTION_NAME")
+    # DB_CONNECTION_NAME: str = os.environ.get("DB_CONNECTION_NAME")
     DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP", None)
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
-    SQLALCHEMY_DATABASE_URI: str = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    # SQLALCHEMY_DATABASE_URI: str = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     FLASK_ADMIN_SWATCH: str = "flatly"
     _FLASK_BASIC_AUTH_USERNAME: str = os.environ.get("FLASK_BASIC_AUTH_USERNAME")
     _FLASK_BASIC_AUTH_PASSWORD: str = os.environ.get("FLASK_BASIC_AUTH_PASSWORD")
