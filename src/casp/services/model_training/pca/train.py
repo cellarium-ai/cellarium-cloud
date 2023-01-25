@@ -9,7 +9,7 @@ from casp.ml.data.dataset import CASDataset
 from casp.ml.dump_manager import DumpManager
 from casp.ml.models.pca import IncrementalPCA
 from casp.ml.running_stats import OnePassMeanVarStd
-from casp.utils import get_google_service_credentials
+from casp.services.utils import get_google_service_credentials
 
 
 def save_check_point(model, running_stat, t, bucket, postfix):

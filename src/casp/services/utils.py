@@ -2,7 +2,7 @@ import typing as t
 
 from google.oauth2.service_account import Credentials
 
-from casp import settings
+from casp.services import settings
 
 
 def get_google_service_credentials() -> t.Tuple["Credentials", str]:

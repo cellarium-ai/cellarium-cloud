@@ -6,8 +6,7 @@ import anndata
 import torch
 from google.cloud import storage
 
-from casp import utils
-from casp.services import settings
+from casp.services import settings, utils
 from casp.ml.dump_manager import DumpManager
 
 
