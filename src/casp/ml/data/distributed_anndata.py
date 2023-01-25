@@ -84,6 +84,8 @@ class LazyAnnData:
 
     @property
     def cached(self) -> bool:
+        # print(f"filename: {self.filename}")
+        # print(f"cache: {self.cache}")
         return self.filename in self.cache
 
     @property
@@ -155,6 +157,8 @@ class DistributedAnnCollection(AnnCollection):
     ):
         self.filenames = expand_urls(filenames)
         assert isinstance(self.filenames[0], str)
+
+        self.maxsize = maxsize
         self.cache = LRUCache(maxsize=maxsize)
         self.cachesize_strict = cachesize_strict
         if keys is None:
@@ -184,6 +188,19 @@ class DistributedAnnCollection(AnnCollection):
             indices_strict=indices_strict,
         )
         self.var = self.adatas[0].var.copy()
+
+    def __getstate__(self):
+        attributes = self.__dict__.copy()
+        del attributes['cache']
+        del attributes['adatas']        
+        return attributes
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+        self.cache = LRUCache(maxsize=self.maxsize)
+        self.adatas = [
+            LazyAnnData(filename, self.cache, self.shard_size, idx) for idx, filename in enumerate(self.filenames)
+        ]
 
     def __getitem__(self, index: Index):
         oidx, vidx = _normalize_indices(index, self.obs_names, self.var_names)
