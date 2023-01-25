@@ -5,7 +5,7 @@ from torch.optim import Adam
 
 from torch.utils.data import DataLoader
 from casp.ml.data import DistributedAnnCollection, DistributedAnnCollectionSampler, DistributedAnnCollectionDataset
-from lightning.pytorch import Trainer, LightningDataModule
+from lightning.pytorch import Trainer, LightningDataModule, LightningModule
 
 import typing as t
 
@@ -51,7 +51,7 @@ class CustomDataModule(LightningDataModule):
         # using normal distributedsampler
         # train_sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
 
-        train_sampler = DistributedAnnCollectionSampler(dataset=dataset)
+        train_sampler = DistributedAnnCollectionSampler(dataset=dataset, shard_size=10000)
 
         train_loader = utils.data.DataLoader(
                                         dataset, 
