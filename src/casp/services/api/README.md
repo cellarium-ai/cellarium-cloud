@@ -33,10 +33,10 @@ gcloud compute networks vpc-access connectors create cas-ai-matching \
 IMAGE_NAME=us-docker.pkg.dev/dsp-cell-annotation-service/cas/cas-api:0.1
 PROJECT_ID=dsp-cell-annotation-service
 
-gcloud run deploy cas-api-test-2 \
+gcloud run deploy cas-api \
 --project $PROJECT_ID \
 --image $IMAGE_NAME \
---memory 4Gi \
+--memory 2Gi \
 --region us-central1 \
 --platform managed \
 --port 8000 \
