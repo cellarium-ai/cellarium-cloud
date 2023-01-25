@@ -5,7 +5,7 @@ import typing as t
 import dotenv
 from pydantic import BaseSettings
 
-dotenv.load_dotenv(dotenv_path="casp/.env")
+dotenv.load_dotenv(dotenv_path="casp/services/.env")
 
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 
