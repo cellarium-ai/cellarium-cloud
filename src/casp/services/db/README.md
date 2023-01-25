@@ -7,6 +7,7 @@ gcloud sql instances create cas-db-cluster \
 --cpu=1 \
 --memory 3.75GB \
 --storage-size 10GB \
+--require-ssl \
 --region=us-central
 ```
 Create a cas-db-user:
@@ -26,6 +27,7 @@ gcloud sql databases create cas-db \
 Database module `db`consist of:
 - `migrations` Database migration history goes here;
 - `models.py` All database models go here (please, feel free to extend it to module if necessary);
+- `ops.py` Data operations go here (please, feel free to extend it to module if necessary);
 - `alembic.ini` Provides metadata for migration manager;
 
 ## Database Adapter and ORM
