@@ -12,7 +12,7 @@ db_session = db.init_db()
 @basic_auth.verify_password
 def verify_password(username, password):
     if username == settings.ADMIN_BASIC_AUTH_USER.get("username") and password == settings.ADMIN_BASIC_AUTH_USER.get(
-            "password"
+        "password"
     ):
         return username
 

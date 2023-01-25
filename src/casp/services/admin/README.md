@@ -1,6 +1,6 @@
 # Admin Service Description
 ## Depends on `db` module
-It is required to have a `src/.env` with `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` variable which includes service account json credentials dumped as oneline string
+It is required to have a `src/services/.env` with `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` variable which includes service account json credentials dumped as oneline string
 
 ## Building Docker Image
 ```
