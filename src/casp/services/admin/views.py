@@ -54,9 +54,6 @@ class UserAdminView(CASAdminModelView):
     column_list = ("email", "is_active", "cas_request_count", "cas_scRNA_cells_processed")
     form_widget_args = {"cas_request_count": {"disabled": True}, "cas_scRNA_cells_processed": {"disabled": True}}
 
-    _token = None
-    _page_refreshed = False
-
     @staticmethod
     def _create_token_file(token) -> tempfile.NamedTemporaryFile:
         temp = tempfile.NamedTemporaryFile()
