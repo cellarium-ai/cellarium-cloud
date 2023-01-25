@@ -8,7 +8,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, File, Form, UploadFile
 from google.cloud import aiplatform, bigquery
 
-from casp import settings
+from casp.services import settings
 from casp.services.api import async_client, schemas
 from casp.services.api.auth import authenticate_user
 from casp.services.db import init_db, models, ops

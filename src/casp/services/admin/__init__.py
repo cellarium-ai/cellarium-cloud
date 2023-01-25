@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_httpauth import HTTPBasicAuth
 
-from casp import settings
+from casp.services import settings
 from casp.services import db
 
 flask_app = Flask(__name__)

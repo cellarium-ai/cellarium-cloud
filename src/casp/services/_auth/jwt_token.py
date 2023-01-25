@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import jwt
 from sqlalchemy.exc import IntegrityError
 
-from casp import settings
+from casp.services import settings
 from casp.services._auth import exceptions
 from casp.services.db import models
 
