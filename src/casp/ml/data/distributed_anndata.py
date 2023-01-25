@@ -84,8 +84,6 @@ class LazyAnnData:
 
     @property
     def cached(self) -> bool:
-        # print(f"filename: {self.filename}")
-        # print(f"cache: {self.cache}")
         return self.filename in self.cache
 
     @property
