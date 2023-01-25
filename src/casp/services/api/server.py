@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import uvicorn
-from fastapi import Depends, FastAPI, UploadFile, Form, File
+from fastapi import Depends, FastAPI, File, Form, UploadFile
 from google.cloud import aiplatform, bigquery
 
 from casp import settings

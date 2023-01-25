@@ -1,4 +1,5 @@
 import typing as t
+
 from casp.services.db import db_session
 
 if t.TYPE_CHECKING:
