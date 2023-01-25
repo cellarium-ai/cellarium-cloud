@@ -1,6 +1,6 @@
 # CAS Database Service
 This module requires running database cluster.
-Create db cluster:
+Create a db cluster:
 ```
 gcloud sql instances create cas-db-cluster \
 --database-version=POSTGRES_14 \
@@ -19,21 +19,24 @@ gcloud sql users create cas-db-user \
 Create a cas-db:
 ```
 gcloud sql databases create cas-db \
---instance=cas-db-cluster \
-
+--instance=cas-db-cluster
 ```
 ## Code Base Info
 
 Database module `db`consist of:
 - `migrations` Database migration history goes here;
-- `models.py` All database models go here (please, feel free to extend it to module if necessary);
-- `ops.py` Data operations go here (please, feel free to extend it to module if necessary);
+- `models.py` All database models go here;
+- `ops.py` Data operations go here;
 - `alembic.ini` Provides metadata for migration manager;
 
 ## Database Adapter and ORM
 [SQLAlchemy](https://www.sqlalchemy.org/) is used for db object-relational mapping. \
-[Psycopg](https://pypi.org/project/psycopg2/) is used as a default database adapter. \
-`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` are required secret environment variables that are used to configure `SQLALCHEMY_DATABASE_URI` in `casp/settings.py`.
+[pg8000](https://pypi.org/project/pg8000/) is used as a database adapter. 
+## Environment Variables and Connection
+Locally connection is approached through regular postgresql connection (by port). In the cloud it's done through proxy. To connect to proxy it uses a unix socket. \
+`SQLALCHEMY_DATABASE_URI`  is used by [SQLAlchemy](https://www.sqlalchemy.org/) to connect and configured from the following secret environment variables:
+* `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` in local environment.
+* `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_INSTANCE_UNIX_SOCKET` in development and production environments. 
 ## Database Migrations
 [Alembic](https://alembic.sqlalchemy.org/en/latest/) is used for managing database migrations. \
 Each time CAS Database models are updated it is required to:

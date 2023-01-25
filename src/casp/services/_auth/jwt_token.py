@@ -34,5 +34,6 @@ def authenticate_user_with_jwt(token: str) -> models.User:
         raise exceptions.TokenExpired
     try:
         return models.User.query.get(user_id)
-    except IntegrityError:
+    except IntegrityError as e:
+        logging.error(e)
         raise exceptions.TokenInvalid
