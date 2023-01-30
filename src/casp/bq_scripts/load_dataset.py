@@ -149,7 +149,7 @@ def process(project, dataset, avro_prefix, gcs_path_prefix):
 
     input_file_types = ["ingest_info", "cell_info", "feature_info", "raw_counts"]
     input_filenames = [f"{avro_prefix}_{file_type}.avro" for file_type in input_file_types]
-##    confirm_input_files_exist(input_filenames)
+    ##    confirm_input_files_exist(input_filenames)
     ingest_filename, cell_filename, feature_filename, raw_counts_filename = input_filenames
     raw_counts_pattern = f"{avro_prefix}_raw_counts.*.csv"
 
@@ -172,9 +172,9 @@ def process(project, dataset, avro_prefix, gcs_path_prefix):
     staged_files = []
     gcs_path_prefix = gcs_path_prefix.rstrip("/")
     pairs = [
-       ("ingest_info", ingest_filename, bigquery.SourceFormat.AVRO),
-       ("cell_info", cell_filename, bigquery.SourceFormat.AVRO),
-       ("feature_info", feature_filename, bigquery.SourceFormat.AVRO),
+        ("ingest_info", ingest_filename, bigquery.SourceFormat.AVRO),
+        ("cell_info", cell_filename, bigquery.SourceFormat.AVRO),
+        ("feature_info", feature_filename, bigquery.SourceFormat.AVRO),
         ("raw_count_matrix", raw_counts_pattern, bigquery.SourceFormat.CSV),
     ]
     job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.AVRO)
