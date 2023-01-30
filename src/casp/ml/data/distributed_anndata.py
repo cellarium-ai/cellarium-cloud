@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from anndata._core.index import Index, _normalize_indices
-from anndata.experimental.multi_files._anncollection import AnnCollection, AnnCollectionView, ConvertType
+from anndata.experimental.multi_files._anncollection import (AnnCollection,
+                                                             AnnCollectionView,
+                                                             ConvertType)
 from scvi.data._utils import get_anndata_attribute
 
 from .read import read_h5ad_gcs
