@@ -12,8 +12,7 @@ from lightning.pytorch import LightningDataModule, LightningModule, Trainer
 from torch import Tensor, nn, optim, utils
 from torch.distributed import get_rank, get_world_size, init_process_group
 from torch.optim import Adam
-from torch.utils.data import (DataLoader, Dataset, IterableDataset,
-                              get_worker_info)
+from torch.utils.data import DataLoader, Dataset, IterableDataset, get_worker_info
 
 from casp.anndata import LazyAnnData, read_h5ad_gcs
 
