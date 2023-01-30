@@ -7,17 +7,19 @@ import torch.distributed as dist
 from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler
 
-T_co = TypeVar('T_co', covariant=True)
+T_co = TypeVar("T_co", covariant=True)
+
 
 class DistributedAnnCollectionSampler(DistributedSampler):
-
-    def __init__(self, 
-                 dataset: Dataset, 
-                 shard_size: int, 
-                 seed: int = 0, 
-                 shuffle: bool = True, 
-                 num_replicas: Optional[int] = None, 
-                 rank: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        dataset: Dataset,
+        shard_size: int,
+        seed: int = 0,
+        shuffle: bool = True,
+        num_replicas: Optional[int] = None,
+        rank: Optional[int] = None,
+    ) -> None:
         if num_replicas is None:
             if not dist.is_available():
                 raise RuntimeError("Requires distributed package to be available")
@@ -28,21 +30,21 @@ class DistributedAnnCollectionSampler(DistributedSampler):
             rank = dist.get_rank()
         if rank >= num_replicas or rank < 0:
             raise ValueError(
-                "Invalid rank {}, rank should be in the interval"
-                " [0, {}]".format(rank, num_replicas - 1))
-                
+                "Invalid rank {}, rank should be in the interval" " [0, {}]".format(rank, num_replicas - 1)
+            )
+
         self.dataset = dataset
         self.shard_size = shard_size
         self.seed = seed
         self.shuffle = shuffle
         self.num_replicas = num_replicas
-        self.rank = rank        
+        self.rank = rank
 
         # TODO: several ways epoch are set, decide on one and use it
         self.epoch = 0
 
         # Sampling Procedure
-        #   - (1) Use seed and epoch to generate a random order of shards (divisible by world_size) 
+        #   - (1) Use seed and epoch to generate a random order of shards (divisible by world_size)
         #   - (2) Randomly evenly partition the global list by global_rank (a per process list)
         print(f"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
         print(f"DEBUG: using rank {self.rank}")
@@ -57,9 +59,10 @@ class DistributedAnnCollectionSampler(DistributedSampler):
         print(f"All Shards: {all_shards_indexes}")
 
         # (2) partition by process (rank)
-        self.process_shard_indexes = [all_shards_indexes[i] for i in range(len(all_shards_indexes)) if (i % self.num_replicas) == self.rank]
+        self.process_shard_indexes = [
+            all_shards_indexes[i] for i in range(len(all_shards_indexes)) if (i % self.num_replicas) == self.rank
+        ]
         print(f"Rank: {self.rank} Process Chunks: {self.process_shard_indexes}")
-
 
     def __iter__(self) -> Iterator[T_co]:
 
@@ -72,9 +75,8 @@ class DistributedAnnCollectionSampler(DistributedSampler):
             for i in torch.randperm(self.shard_size, generator=self.g).tolist():
                 yield offset + i
 
-
     def __len__(self) -> int:
         return (self.process_shard_indexes) * self.shard_size
 
-    def set_epoch(self, epoch: int) -> None:        
+    def set_epoch(self, epoch: int) -> None:
         self.epoch = epoch

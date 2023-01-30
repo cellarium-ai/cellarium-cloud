@@ -45,6 +45,7 @@ class LitAutoEncoder(LightningModule):
         optimizer = optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
+
 class DataParallelIterableLazyAnnDataDataset(IterableDataset):
     def __init__(self, ladata, world_size: int, global_rank: int, epoch: int = 0, seed: int = 0):
         super(DataParallelIterableLazyAnnDataDataset).__init__()
@@ -62,7 +63,7 @@ class DataParallelIterableLazyAnnDataDataset(IterableDataset):
     def __iter__(self):
         ## i
         # Sampling Procedure
-        #   - (1) Use seed and epoch to generate a random order of shards (divisible by world_size) 
+        #   - (1) Use seed and epoch to generate a random order of shards (divisible by world_size)
         #   - (2) Randomly evenly partition the global list by global_rank (a per process list)
         #   - (3) Randomly evenly partition the process list by worker_id
         #   - (4) Iterate through data
@@ -89,7 +90,9 @@ class DataParallelIterableLazyAnnDataDataset(IterableDataset):
         print(f"All Shards: {all_shards_indexes}")
 
         # (2) partition by process (rank)
-        process_shard_indexes = [all_shards_indexes[i] for i in range(len(all_shards_indexes)) if (i % self.world_size) == self.global_rank]
+        process_shard_indexes = [
+            all_shards_indexes[i] for i in range(len(all_shards_indexes)) if (i % self.world_size) == self.global_rank
+        ]
 
         print(f"Rank: {self.global_rank} Process Chunks: {process_shard_indexes}")
 
@@ -101,7 +104,11 @@ class DataParallelIterableLazyAnnDataDataset(IterableDataset):
         else:  # in a worker process
             print(worker_info)
             # split workload
-            worker_shard_indexes = [process_shard_indexes[i] for i in range(len(process_shard_indexes)) if (i % worker_info.num_workers) == worker_info.id]
+            worker_shard_indexes = [
+                process_shard_indexes[i]
+                for i in range(len(process_shard_indexes))
+                if (i % worker_info.num_workers) == worker_info.id
+            ]
             print(f"Global Rank {self.global_rank} and worker {worker_info.id} got {worker_shard_indexes}")
 
         # (4) iterate through chunks (localize, load, shuffle, yield)
@@ -117,12 +124,13 @@ class DataParallelIterableLazyAnnDataDataset(IterableDataset):
             random.shuffle(temp)
             for d in temp:
                 yield d
-            
+
             # attempt to free memory
             del adata
             del temp
             del data
             del db_ids
+
 
 class CustomDataModule(LightningDataModule):
     def __init__(self, url_pattern: str, batch_size: int = 4):
@@ -137,7 +145,9 @@ class CustomDataModule(LightningDataModule):
 
     def train_dataloader(self):
         train_dataset = DataParallelIterableLazyAnnDataDataset(self.ladata, self.world_size, self.global_rank)
-        return DataLoader(train_dataset, batch_size=self.batch_size, num_workers=2, persistent_workers=True, shuffle=False)
+        return DataLoader(
+            train_dataset, batch_size=self.batch_size, num_workers=2, persistent_workers=True, shuffle=False
+        )
 
 
 def main():
@@ -148,5 +158,6 @@ def main():
     trainer = Trainer(accelerator="gpu", devices=2, replace_sampler_ddp=False)
     trainer.fit(model, dm)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -34,6 +34,7 @@ class LitAutoEncoder(LightningModule):
         optimizer = optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
+
 class CustomDataModule(LightningDataModule):
     def __init__(self, url_pattern: str, batch_size: int = 4):
         super().__init__()
@@ -42,7 +43,6 @@ class CustomDataModule(LightningDataModule):
 
     def train_dataloader(self):
 
-        
         dataset = DistributedAnnCollectionDataset(DistributedAnnCollection(self.url_pattern))
 
         # debugging without a sampler
@@ -54,15 +54,16 @@ class CustomDataModule(LightningDataModule):
         train_sampler = DistributedAnnCollectionSampler(dataset=dataset, shard_size=10000)
 
         train_loader = utils.data.DataLoader(
-                                        dataset, 
-                                        batch_size=self.batch_size,
-                                        num_workers=2,
-                                        persistent_workers=True,
-                                        pin_memory=True,                                        
-                                        sampler=train_sampler
-                                        )
- 
+            dataset,
+            batch_size=self.batch_size,
+            num_workers=2,
+            persistent_workers=True,
+            pin_memory=True,
+            sampler=train_sampler,
+        )
+
         return train_loader
+
 
 def main():
     model = LitAutoEncoder()
@@ -72,12 +73,11 @@ def main():
 
     dm = CustomDataModule(url_pattern, batch_size)
 
-    trainer = Trainer(accelerator="gpu", 
-                      devices=2, 
-                      replace_sampler_ddp=False, 
-                      reload_dataloaders_every_n_epochs=1, 
-                      max_epochs=10)
+    trainer = Trainer(
+        accelerator="gpu", devices=2, replace_sampler_ddp=False, reload_dataloaders_every_n_epochs=1, max_epochs=10
+    )
     trainer.fit(model, dm)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

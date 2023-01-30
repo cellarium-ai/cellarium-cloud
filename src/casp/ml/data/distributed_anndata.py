@@ -189,8 +189,8 @@ class DistributedAnnCollection(AnnCollection):
 
     def __getstate__(self):
         attributes = self.__dict__.copy()
-        del attributes['cache']
-        del attributes['adatas']        
+        del attributes["cache"]
+        del attributes["adatas"]
         return attributes
 
     def __setstate__(self, d):
