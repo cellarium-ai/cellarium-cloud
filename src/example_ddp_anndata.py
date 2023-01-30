@@ -1,25 +1,22 @@
-import anndata
-import random
-import os
-import torch
-from torch import optim, nn, utils, Tensor
-from torch.utils.data import IterableDataset, Dataset, DataLoader
-from casp.anndata import LazyAnnData
-
-from torch.utils.data import get_worker_info
-from torch.distributed import init_process_group, get_rank, get_world_size
-import torch.nn as nn
-from lightning.pytorch import LightningModule, Trainer, LightningDataModule
-from torch.optim import Adam
-import torch.distributed as dist
-
 import argparse
+import os
+import random
 import time
+
+import anndata
+import torch
+import torch.distributed as dist
+import torch.nn as nn
 from google.cloud import storage
+from lightning.pytorch import LightningDataModule, LightningModule, Trainer
+from torch import Tensor, nn, optim, utils
+from torch.distributed import get_rank, get_world_size, init_process_group
+from torch.optim import Adam
+from torch.utils.data import (DataLoader, Dataset, IterableDataset,
+                              get_worker_info)
 
-from torch.utils.data import DataLoader
+from casp.anndata import LazyAnnData, read_h5ad_gcs
 
-from casp.anndata import read_h5ad_gcs
 
 # define the LightningModule
 class LitAutoEncoder(LightningModule):

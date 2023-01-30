@@ -1,7 +1,9 @@
+import typing as t
+
 from torch import Tensor
 from torch.utils.data import Dataset
+
 from . import DistributedAnnCollection
-import typing as t
 
 
 class DistributedAnnCollectionDataset(Dataset):

@@ -1,9 +1,8 @@
 import math
-from typing import TypeVar, Optional, Iterator
+from typing import Iterator, Optional, TypeVar
 
 import torch
 import torch.distributed as dist
-
 from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler
 
