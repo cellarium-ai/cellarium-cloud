@@ -7,9 +7,7 @@ from torch import Tensor, nn, optim, utils
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
-from casp.ml.data import (DistributedAnnCollection,
-                          DistributedAnnCollectionDataset,
-                          DistributedAnnCollectionSampler)
+from casp.ml.data import DistributedAnnCollection, DistributedAnnCollectionDataset, DistributedAnnCollectionSampler
 
 
 # define the LightningModule
