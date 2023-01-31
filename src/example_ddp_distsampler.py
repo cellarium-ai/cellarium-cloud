@@ -1,11 +1,5 @@
-import typing as t
-
-import torch
-import torch.nn as nn
 from lightning.pytorch import LightningDataModule, LightningModule, Trainer
-from torch import Tensor, nn, optim, utils
-from torch.optim import Adam
-from torch.utils.data import DataLoader
+from torch import nn, optim, utils
 
 from casp.ml.data import DistributedAnnCollection, DistributedAnnCollectionDataset, DistributedAnnCollectionSampler
 

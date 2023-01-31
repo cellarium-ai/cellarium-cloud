@@ -1,18 +1,10 @@
-import argparse
-import os
 import random
-import time
 
-import anndata
 import torch
-import torch.distributed as dist
-import torch.nn as nn
-from google.cloud import storage
 from lightning.pytorch import LightningDataModule, LightningModule, Trainer
-from torch import Tensor, nn, optim, utils
-from torch.distributed import get_rank, get_world_size, init_process_group
-from torch.optim import Adam
-from torch.utils.data import DataLoader, Dataset, IterableDataset, get_worker_info
+from torch import nn, optim
+from torch.distributed import get_rank, get_world_size
+from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 
 from casp.anndata import LazyAnnData, read_h5ad_gcs
 
@@ -53,11 +45,11 @@ class DataParallelIterableLazyAnnDataDataset(IterableDataset):
         self.epoch = epoch
 
     # see https://pytorch.org/docs/stable/data.html#torch.utils.data.distributed.DistributedSampler
-    def set_epoch(epoch):
+    def set_epoch(self, epoch):
         self.epoch = epoch
 
     def __iter__(self):
-        ## i
+        #
         # Sampling Procedure
         #   - (1) Use seed and epoch to generate a random order of shards (divisible by world_size)
         #   - (2) Randomly evenly partition the global list by global_rank (a per process list)
@@ -65,9 +57,9 @@ class DataParallelIterableLazyAnnDataDataset(IterableDataset):
         #   - (4) Iterate through data
         #
         # Handles multi-node, multi-process, multi-worker dataloading efficiently without duplicating
-        print(f"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
         print(f"DEBUG: using rank {self.global_rank} and worker_info {get_worker_info()}")
-        print(f"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
 
         # (1) generate fill randomized list of shards evenly divisible by world_size * num_workers
         worker_info = get_worker_info()

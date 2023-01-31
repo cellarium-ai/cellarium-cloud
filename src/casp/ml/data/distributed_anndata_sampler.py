@@ -1,4 +1,3 @@
-import math
 from typing import Iterator, Optional, TypeVar
 
 import torch
@@ -45,9 +44,9 @@ class DistributedAnnCollectionSampler(DistributedSampler):
         # Sampling Procedure
         #   - (1) Use seed and epoch to generate a random order of shards (divisible by world_size)
         #   - (2) Randomly evenly partition the global list by global_rank (a per process list)
-        print(f"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
         print(f"DEBUG: using rank {self.rank}")
-        print(f"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
 
         num_shards = len(self.dataset.dac.filenames)
         capped_shards = (num_shards // (self.num_replicas)) * (self.num_replicas)
