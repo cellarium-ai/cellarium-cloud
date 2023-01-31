@@ -9,23 +9,19 @@ version 0.1.
 """
 
 import argparse
+import gc
 import hashlib
-import itertools
 import json
 import math
 import multiprocessing
 import os
 import time
-import gc
 
 import h5py
-from anndata._io.specs import read_elem, write_elem
-from anndata._io.h5ad import _read_raw
-from anndata._core.anndata import AnnData
-
-
-import anndata as ad
 import numpy as np
+from anndata._core.anndata import AnnData
+from anndata._io.h5ad import _read_raw, _clean_uns
+from anndata._io.specs import read_elem
 from fastavro import parse_schema, writer
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
@@ -362,7 +358,7 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, prefix, p
                 [input_file, row_offset, end, cas_cell_index_start, cas_feature_index_start, chunk_raw_counts_filename]
             )
 
-        for result in pool.map(p_dump_core_matrix, args, chunksize=1):
+        for result in pool.map(process_dump_core_matrix, args, chunksize=1):
             print(f"Got result: {result} for {args}", flush=True)
 
     print(f"    Processed {total_cells} cells... in {current_milli_time() - start} ms")
