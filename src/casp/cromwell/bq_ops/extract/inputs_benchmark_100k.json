@@ -1,0 +1,8 @@
+{
+  "CASExtractBQ.extract.project_id": "dsp-cell-annotation-service",
+  "CASExtractBQ.extract.bq_dataset": "benchmark_from_cloud_vm",
+  "CASExtractBQ.extract.extract_table_prefix": "fg_extract",
+  "CASExtractBQ.bin_borders": [[0, 49], [50, 99], [100, 149], [150, 199]],
+  "CASExtractBQ.extract.output_bucket_name": "dsp-cell-annotation-service",
+  "CASExtractBQ.extract.output_bucket_directory": "cromwell_extract_200k"
+}

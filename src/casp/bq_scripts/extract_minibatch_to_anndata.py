@@ -64,8 +64,12 @@ def get_cells_in_bin_range(project, dataset, extract_cell_table, start_bin, end_
     return cells
 
 
-def get_matrix_data(project, dataset, table, start_bin, end_bin, client):
-    client = BigQueryReadClient()
+def get_matrix_data(project, dataset, table, start_bin, end_bin, credentials=None):
+    if credentials is None:
+        client = BigQueryReadClient()
+    else:
+        client = BigQueryReadClient(credentials=credentials)
+
     table = f"projects/{project}/datasets/{dataset}/tables/{table}"
 
     requested_session = types.ReadSession()
@@ -116,12 +120,15 @@ def assign_uns_metadata(anndata, json_string):
         anndata.uns[key] = val
 
 
-def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_bin, end_bin, output):
+def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_bin, end_bin, output, credentials=None):
     """
     Main function to extract a minibatch from a prepared training extract and write the associated data
     to an AnnData file.
     """
-    client = bigquery.Client(project=project)
+    if credentials is None:
+        client = bigquery.Client(project=project)
+    else:
+        client = bigquery.Client(project=project, credentials=credentials)
 
     print(f"Getting extract bin {start_bin}-{end_bin} data from {project}.{dataset}.{extract_table_prefix}*...")
 
@@ -149,7 +156,7 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
     print("Extracting Matrix Data...")
 
     matrix_data = get_matrix_data(
-        project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, client
+        project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, credentials
     )
 
     print("Converting Matrix Data to COO format...")
