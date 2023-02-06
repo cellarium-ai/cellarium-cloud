@@ -1,6 +1,6 @@
 import tempfile
 
-from flask import Response, redirect, request, send_file
+from flask import Response, request, send_file
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.model.template import EndpointLinkRowAction
@@ -24,8 +24,19 @@ class AuthException(HTTPException):
 
 
 class BasicHTTPAuthMixin:
+    """
+    Basic HTTP Auth Mixin
+    Implements HTTP Basic Auth in 2 methods that are used by `Flask-Admin` views:
+    `is_accessible`, `inaccessible_callback`
+    """
+
     @staticmethod
-    def is_accessible():
+    def is_accessible() -> bool:
+        """
+        Authorize the user request by HTTP Basic Auth rule. Throw an AuthException if the request wasn't
+        authorized
+        :return: True if the request was authorized
+        """
         auth_obj = basic_auth.get_auth()
         password = basic_auth.get_auth_password(auth_obj)
 
@@ -34,28 +45,42 @@ class BasicHTTPAuthMixin:
 
         return True
 
-    @staticmethod
-    def inaccessible_callback(name, **kwargs):
-        return redirect(basic_auth.challenge())
+
+class CellariumCloudAdminIndexView(BasicHTTPAuthMixin, AdminIndexView):
+    """
+    Index Page for the project Admin dashboard.
+    Inherits a Basic HTTP protection rule from `BasicHTTPAuthMixin`
+    """
 
 
-class CASAdminIndexView(BasicHTTPAuthMixin, AdminIndexView):
+class CellariumCloudAdminModelView(BasicHTTPAuthMixin, ModelView):
+    """
+    Model View class for Admin Dashboard.
+    Inherits a Basic HTTP protection rule from `BasicHTTPAuthMixin`
+    """
+
     pass
 
 
-class CASAdminModelView(BasicHTTPAuthMixin, ModelView):
-    pass
+class UserAdminView(CellariumCloudAdminModelView):
+    """
+    User Admin View. Has a custom method `generate-secret-key` which is used to generate a
+    JWT token to let the user call the authorization protected methods.
+    """
 
-
-class UserAdminView(CASAdminModelView):
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
     ]
-    column_list = ("email", "is_active", "cas_request_count", "cas_scRNA_cells_processed")
-    form_widget_args = {"cas_request_count": {"disabled": True}, "cas_scRNA_cells_processed": {"disabled": True}}
+    column_list = ("email", "is_active", "request_num_count", "cells_processed")
+    form_widget_args = {"request_num_count": {"disabled": True}, "cells_processed": {"disabled": True}}
 
     @staticmethod
     def _create_token_file(token) -> tempfile.NamedTemporaryFile:
+        """
+        Generate a temporary file with JWT token
+        :param token: JWT Token
+        :return: Temporary file with a JWT token string
+        """
         temp = tempfile.NamedTemporaryFile()
         temp.name = "api_token.txt"
         temp.write(token.encode())
@@ -63,7 +88,12 @@ class UserAdminView(CASAdminModelView):
         return temp
 
     @expose("/generate-secret-key", methods=("GET",))
-    def generate_secret_key(self):
+    def generate_secret_key(self) -> Response:
+        """
+        Exposes an API for Flask Admin for generating secret key (JWT token) and
+        downloading it as a .txt file
+        :return: A HTTP response that makes a web browser downloading the file
+        """
         token = _auth.generate_jwt_for_user(int(request.args["id"]))
         temp = self._create_token_file(token)
         return send_file(temp, as_attachment=True, download_name=temp.name)
@@ -71,8 +101,8 @@ class UserAdminView(CASAdminModelView):
 
 admin = Admin(
     flask_app,
-    name="CAS Admin",
+    name="Cellarium Cloud Admin",
     template_mode="bootstrap3",
-    index_view=CASAdminIndexView(url="/", template="admin/main_page.html"),
+    index_view=CellariumCloudAdminIndexView(url="/", template="admin/main_page.html"),
 )
 admin.add_view(UserAdminView(models.User, db_session, name="User"))

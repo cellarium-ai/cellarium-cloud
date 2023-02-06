@@ -1,4 +1,8 @@
 class AuthException(Exception):
+    """
+    Base Auth Exception
+    """
+
     pass
 
 

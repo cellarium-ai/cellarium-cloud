@@ -11,15 +11,17 @@ docker push $IMAGE_NAME
 ## Deploying Docker Image via Cloud Run
 ```
 IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0
+ZONE=us-central1
+DB_CONNECTION=dsp-cell-annotation-service:us-central1:cas-db-cluster
 PROJECT_ID=dsp-cell-annotation-service
 
 gcloud run deploy casp-admin-service \
 --project $PROJECT_ID \
 --image $IMAGE_NAME \
---region us-central1 \
+--region $ZONE \
 --platform managed \
 --port 8000 \
 --allow-unauthenticated \
---add-cloudsql-instances=dsp-cell-annotation-service:us-central1:cas-db-cluster \
+--add-cloudsql-instances=$DB_CONNECTION \
 --command casp/services/admin/entrypoint.sh
 ```

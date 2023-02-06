@@ -2,14 +2,15 @@ FROM anibali/pytorch:1.8.1-cuda11.1
 WORKDIR /app
 USER root
 
-# Copy Files and Secrets
-COPY requirements.txt .
-COPY src .
-# Looking for b64 encoded cas secret environment variables
-RUN --mount=type=secret,id=CAS_SECRETS cat /run/secrets/CAS_SECRETS | base64 -d >> ./casp/services/.env
-
 # Install Dependencies
+COPY requirements.txt .
 RUN pip install -r requirements.txt
+
+# Copy Files and Secrets
+COPY src .
+# Looking for b64 encoded secret environment variables
+RUN --mount=type=secret,id=ENV_SECRETS cat /run/secrets/ENV_SECRETS | base64 -d >> ./casp/services/.env
+
 
 # Create a dockeruser to own the app
 RUN useradd -r dockeruser
