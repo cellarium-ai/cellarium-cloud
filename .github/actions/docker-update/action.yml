@@ -53,7 +53,7 @@ runs:
       with:
         push: true
         file: ./src/casp/services/deploy/Dockerfile.pytorch
-        secrets: CAS_SECRETS=${{ inputs.cas-secrets-b64 }}
+        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64 }}
         tags: |
           ${{ inputs.pytorch-image-name }}:${{ inputs.image-tag }}
 
