@@ -71,8 +71,8 @@ class UserAdminView(CellariumCloudAdminModelView):
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
     ]
-    column_list = ("email", "is_active", "request_num_count", "cells_processed")
-    form_widget_args = {"request_num_count": {"disabled": True}, "cells_processed": {"disabled": True}}
+    column_list = ("email", "is_active", "requests_processed", "cells_processed")
+    form_widget_args = {"requests_processed": {"disabled": True}, "cells_processed": {"disabled": True}}
 
     @staticmethod
     def _create_token_file(token) -> tempfile.NamedTemporaryFile:
