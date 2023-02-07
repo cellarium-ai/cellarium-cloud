@@ -53,6 +53,8 @@ class DistributedAnnCollectionSampler(DistributedSampler):
 
         self.g = torch.Generator()
         self.g.manual_seed(self.seed + self.epoch)
+
+        # NOTE: how do we ensure the last shard is complete (same size)
         all_shards_indexes = torch.randperm(num_shards, generator=self.g).tolist()[0:capped_shards]
         print(f"All Shards: {all_shards_indexes}")
 
