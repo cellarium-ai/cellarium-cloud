@@ -78,21 +78,33 @@ def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bi
     Then allocate cells into bins of `extract_bin_size` cells.  The last bin may be much
     smaller than this requested size, as it is the remainder cells
     """
-    sql = f"""
+    sql_random_ordering = f"""
+        CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
+        AS
+        SELECT cas_cell_index
+        FROM `{project}.{dataset}.cas_cell_info` c
+        ORDER BY farm_fingerprint(cast(cas_cell_index + {random_seed_offset} as STRING))
+    """
+    print("Randomizing order of the cells...")
+    execute_query(client, sql_random_ordering)
+
+    sql_prepare_cell_info = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
+        CLUSTER BY extract_bin
         AS
         SELECT cas_cell_index,
         CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
-        FROM (
-            SELECT *
-            FROM `{project}.{dataset}.cas_cell_info` c
-            ORDER BY farm_fingerprint(cast(cas_cell_index + {random_seed_offset} as STRING))
-        ) t
+        FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
     """
+    print("Creating Cell Info into extract bins...")
+    main_query = execute_query(client, sql_prepare_cell_info)
 
-    print("Creating Cell Info and randomizing into extract bins...")
-    query = execute_query(client, sql)
-    return query
+    sql_remove_random_ordering = f"""
+        DROP TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
+    """
+    print("Removing intermediate table used for random ordering...")
+    execute_query(client, sql_remove_random_ordering)
+    return main_query
 
 
 def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
@@ -101,7 +113,7 @@ def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
     """
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_raw_count_matrix`
-        PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,4000,1))
+        PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,40000,10))
         CLUSTER BY extract_bin
         AS
         SELECT  b.extract_bin,
@@ -120,9 +132,18 @@ def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
 
 
 def prepare_extract(
-    project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids, extract_bin_size
+    project,
+    dataset,
+    extract_table_prefix,
+    min_observed_cells,
+    fq_allowed_original_feature_ids,
+    extract_bin_size,
+    credentials=None,
 ):
-    client = bigquery.Client(project=project)
+    if credentials is None:
+        client = bigquery.Client(project=project)
+    else:
+        client = bigquery.Client(project=project, credentials=credentials)
 
     prepare_feature_summary(client, project, dataset, extract_table_prefix)
     prepare_feature_info(
