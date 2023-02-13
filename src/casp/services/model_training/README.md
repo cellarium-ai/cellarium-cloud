@@ -8,6 +8,6 @@ docker push $IMAGE_NAME
 ```
 ## Running Training Task via Cromshell
 ```
-cd src/casp/ml/services/training/pca
+cd src/casp/services/training/pca
 cromshell submit train_command.wdl inputs_train_pca.json options.json
 ```

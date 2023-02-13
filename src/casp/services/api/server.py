@@ -5,16 +5,19 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import uvicorn
-from fastapi import FastAPI, UploadFile
+from fastapi import Depends, FastAPI, File, Form, UploadFile
 from google.cloud import aiplatform, bigquery
 
 from casp.services import settings
 from casp.services.api import async_client, schemas
+from casp.services.api.auth import authenticate_user
+from casp.services.db import init_db, models, ops
 
 if t.TYPE_CHECKING:
     import numpy
 
 app = FastAPI()
+db_session = init_db()
 
 
 def __log(s):
@@ -141,13 +144,13 @@ async def __annotate(file):
     return d
 
 
-@app.get("/")
-async def root() -> str:
-    return "Hello world"
-
-
 @app.post("/annotate", response_model=t.List[schemas.QueryCell])
-async def annotate(myfile: UploadFile):
+async def annotate(
+    myfile: UploadFile = File(),
+    number_of_cells: int = Form(),
+    request_user: models.User = Depends(authenticate_user),
+):
+    ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
     return await __annotate(myfile.file)
 
 
