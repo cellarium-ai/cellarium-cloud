@@ -42,6 +42,7 @@ gcloud run deploy cas-api \
 --port 8000 \
 --allow-unauthenticated \
 --vpc-connector cas-ai-matching \
+--add-cloudsql-instances=dsp-cell-annotation-service:us-central1:cas-db-cluster \
 --command python --args "casp/services/api/server.py"
 
 
