@@ -2,7 +2,8 @@ import argparse
 import math
 import time
 
-from google.api_core.exceptions import Forbidden
+from google.api_core.exceptions import Forbidden, BadRequest
+
 from google.cloud import bigquery
 
 from casp.bq_scripts import create_bigquery_objects, ingest_data_to_bq
@@ -59,6 +60,19 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
                 time.sleep(time_to_wait)
                 if attempt_counter <= 5:
                     print("Retrying another attempt...")
+            except Exception as e:
+                import pandas as pd
+                
+                bad_prefixes_name = "bad_prefixes.csv"
+                try:
+                    df = pd.read_csv(bad_prefixes_name)
+                except FileNotFoundError:
+                    df = pd.DataFrame(columns=("name_prefix", "exception_text"))
+                
+                df = df.append({"name_prefix": avro_prefix, "exception_text": str(e)}, ignore_index=True)
+                df.to_csv(bad_prefixes_name, index=False)
+                need_retry = False
+                                
             else:
                 need_retry = False
 

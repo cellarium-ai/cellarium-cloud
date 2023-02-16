@@ -120,25 +120,67 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
         "fields": [
             {"name": "cas_cell_index", "type": "int"},
             {"name": "original_cell_id", "type": "string"},
+            {"name": "assay_ontology_term_id", "type": "string"},
+            {"name": "cell_type_ontology_term_id", "type": "string"},
+            {"name": "development_stage_ontology_term_id", "type": "string"},
+            {"name": "disease_ontology_term_id", "type": "string"},
+            {"name": "donor_id", "type": "string"},
+            {"name": "is_primary_data", "type": "boolean"},
+            {"name": "organism_ontology_term_id", "type": "string"},
+            {"name": "self_reported_ethnicity_ontology_term_id", "type": "string"},
+            {"name": "sex_ontology_term_id", "type": "string"},
+            {"name": "suspension_type", "type": "string"},
+            {"name": "tissue_ontology_term_id", "type": "string"},
+            {"name": "assay", "type": "string"},
             {"name": "cell_type", "type": "string"},
-            {"name": "obs_metadata", "type": {"type": "string", "sqlType": "JSON"}},
+            {"name": "development_stage", "type": "string"},
+            {"name": "disease", "type": "string"},
+            {"name": "organism", "type": "string"},
+            {"name": "self_reported_ethnicity", "type": "string"},
+            {"name": "sex", "type": "string"},
+            {"name": "tissue", "type": "string"},
+            {"name": "obs_metadata_extra", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "cas_ingest_id", "type": "string"},
         ],
     }
 
     parsed_schema = parse_schema(schema)
-    added_columns = ["cas_cell_index", "original_cell_id"]
+    added_columns = [
+        "cas_cell_index",
+        "original_cell_id",
+        "assay_ontology_term_id",
+        "cell_type_ontology_term_id",
+        "development_stage_ontology_term_id",
+        "disease_ontology_term_id",
+        "donor_id",
+        "is_primary_data",
+        "organism_ontology_term_id",
+        "self_reported_ethnicity_ontology_term_id",
+        "sex_ontology_term_id",
+        "suspension_type",
+        "tissue_ontology_term_id",
+        "assay",
+        "cell_type",
+        "development_stage",
+        "disease",
+        "organism",
+        "self_reported_ethnicity",
+        "sex",
+        "tissue",
+    ]
     # A version of `obs` that does not contain our added entries, suitable for persisting to BigQuery.
     obs_original = adata.obs.drop(columns=added_columns)
-    cells = adata.obs[added_columns + ["cell_type"]]
+    cells = adata.obs[added_columns]
 
     def cell_generator():
         for idx, row in cells.iterrows():
+            obs_data_to_include = {}
+            for column_to_add in added_columns:
+                obs_data_to_include[column_to_add] = row.get(column_to_add)
+
             yield {
-                "cas_cell_index": row["cas_cell_index"],
-                "original_cell_id": row["original_cell_id"],
-                "cell_type": row["cell_type"],
-                "obs_metadata": obs_original.loc[idx].to_json(),
+                **obs_data_to_include,
+                "obs_metadata_extra": obs_original.loc[idx].dropna().to_json(),
                 "cas_ingest_id": ingest_id,
             }
 
@@ -167,24 +209,38 @@ def dump_feature_info(
             {"name": "cas_feature_index", "type": "int"},
             {"name": "original_feature_id", "type": "string"},
             {"name": "feature_name", "type": "string"},
-            {"name": "var_metadata", "type": {"type": "string", "sqlType": "JSON"}},
+            {"name": "feature_biotype", "type": "string"},
+            {"name": "feature_is_filtered", "type": "boolean"},
+            {"name": "feature_reference", "type": "string"},
+            {"name": "var_metadata_extra", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "cas_ingest_id", "type": "string"},
         ],
     }
 
     parsed_schema = parse_schema(schema)
-    added_columns = ["cas_feature_index", "original_feature_id"]
+    added_columns = [
+        "cas_feature_index",
+        "original_feature_id",
+        "feature_name",
+        "feature_biotype",
+        "feature_is_filtered",
+        "feature_reference",
+    ]
     # A version of `var` that does not contain our added entries, suitable for persisting to BigQuery.
     var_original = adata.var.drop(columns=added_columns)
-    features = adata.var[added_columns + ["feature_name"]]
+    features = adata.var[added_columns]
 
     def feature_generator():
         for i, row in features.iterrows():
             yield {
                 "cas_feature_index": row["cas_feature_index"],
                 "original_feature_id": row["original_feature_id"],
-                "feature_name": row["feature_name"],
-                "var_metadata": var_original.loc[i].to_json(),
+                # Try to retrieve these attributes as well, if not presented put None
+                "feature_name": row.get("feature_name"),
+                "feature_biotype": row.get("feature_biotype"),
+                "feature_is_filtered": row.get("feature_is_filtered"),
+                "feature_reference": row.get("feature_reference"),
+                "var_metadata_extra": var_original.loc[i].dropna().to_json(),
                 "cas_ingest_id": ingest_id,
             }
 
@@ -192,7 +248,7 @@ def dump_feature_info(
     # return col_index_to_cas_feature_index
 
 
-def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
+def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, uns_meta_keys=None):
     """
     Write ingest (AnnData-file level) data.
     """
@@ -203,6 +259,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
         "type": "record",
         "fields": [
             {"name": "cas_ingest_id", "type": "string"},
+            {"name": "dataset_filename", "type": "string"},
             {"name": "uns_metadata", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "ingest_timestamp", "type": ["null", "long"], "logicalType": ["null", "timestamp-millis"]},
         ],
@@ -224,7 +281,12 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
                 return float(o)
             if isinstance(o, np.ndarray):
                 return o.tolist()
-            return json.JSONEncoder.default(self, o)
+            else:
+                try:
+                    return json.JSONEncoder.default(self, o)
+                except TypeError:
+                    # In case if the instance is still not serializable just keep track of its type
+                    return o.__class__.__name__
 
     def ingest_generator():
         # Some `uns` metadata has extremely large values that can break extract. Cap the allowed size of values and
@@ -234,20 +296,30 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
         metadata_limit = 2**20
         uns = {}
 
-        if load_uns_data is True:
+        if load_uns_data:
             for idx, uncapped_val in adata.uns.data.items():
+                if uns_meta_keys is not None:
+                    if idx not in uns_meta_keys:
+                        continue
+                        
                 uncapped_json = json.dumps(uncapped_val, cls=NumpyEncoder)
                 if len(uncapped_json) > metadata_limit:
                     print(
                         f"AnnData `uns` contains a key `{idx}` whose JSONified value would have size {len(uncapped_json)} bytes."
                     )
                     print("Values this large can cause extraction to fail so this value is being nulled out.")
-                    val = None
                 else:
-                    val = uncapped_val
+                    pass
+                val = uncapped_val
                 uns[idx] = val
 
-        yield {"uns_metadata": json.dumps(uns, cls=NumpyEncoder), "cas_ingest_id": ingest_id, "ingest_timestamp": None}
+        yield {
+            "uns_metadata": json.dumps(uns, cls=NumpyEncoder),
+            "dataset_filename": filename,
+            "cas_ingest_id": ingest_id,
+            "ingest_timestamp": None,
+            "ingest_prefix_name": prefix
+        }
 
     write_avro(ingest_generator, parsed_schema, filename)
 
@@ -319,6 +391,7 @@ def process(
     dataset,
     load_uns_data,
     original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
+    uns_meta_keys: t.List=None
 ):
     """
     High level entry point, reads the input AnnData file and generates Avro files
@@ -327,6 +400,8 @@ def process(
     :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
     In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
     an index column of var dataframe would be used.
+    
+    :param uns_meta_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
     """
     client = None
     if cas_cell_index_start is None:
@@ -362,7 +437,7 @@ def process(
     adata = optimized_read_andata(input_file)
 
     print("Processing ingest metadata...")
-    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data)
+    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data, prefix, uns_meta_keys)
 
     print("Processing cell/observation metadata...")
     dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
@@ -425,7 +500,7 @@ def process_dump_core_matrix(args):
 def optimized_read_andata(input_file):
     f = h5py.File(input_file, "r")
 
-    attributes = ["obs", "var"]
+    attributes = ["obs", "var", "uns"]
     d = dict(filename=input_file, filemode="r")
     d.update({k: read_elem(f[k]) for k in attributes if k in f})
 
