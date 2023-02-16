@@ -20,7 +20,7 @@ import time
 import h5py
 import numpy as np
 from anndata._core.anndata import AnnData
-from anndata._io.h5ad import _read_raw, _clean_uns
+from anndata._io.h5ad import _clean_uns, _read_raw
 from anndata._io.specs import read_elem
 from fastavro import parse_schema, writer
 from google.api_core.exceptions import NotFound
@@ -32,6 +32,9 @@ def current_milli_time():
     Return current time in millisecond precision.
     """
     return round(time.time() * 1000)
+
+
+FLUSH_BATCH_SIZE = 10000
 
 
 def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
@@ -320,7 +323,7 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, prefix, p
     ingest_filename = f"{prefix}_ingest_info.avro"
     cell_filename = f"{prefix}_cell_info.avro"
     feature_filename = f"{prefix}_feature_info.avro"
-    ingest_filename = f"{prefix}_raw_counts.avro"
+    raw_counts_filename = f"{prefix}_raw_counts.avro"
 
     print(f"Loading input AnnData file '{input_file}'...")
     adata = optimized_read_andata(input_file)
@@ -352,7 +355,7 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, prefix, p
     start = current_milli_time()
     with multiprocessing.get_context("spawn").Pool() as pool:
         args = []
-        for (index, row_offset, end) in batches:
+        for index, row_offset, end in batches:
             chunk_raw_counts_filename = raw_counts_filename.replace(".avro", f".{index:06}.csv")
             args.append(
                 [input_file, row_offset, end, cas_cell_index_start, cas_feature_index_start, chunk_raw_counts_filename]
