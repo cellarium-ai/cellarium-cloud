@@ -65,5 +65,5 @@ if __name__ == "__main__":
         gcs_file_path=args.gcs_file_path,
         cas_cell_index_start=args.cas_cell_index_start,
         cas_feature_index_start=args.cas_feature_index_start,
-        gcs_ingest_path=args.gcs_ingest_path
+        gcs_ingest_path=args.gcs_stage_prefix
     )
