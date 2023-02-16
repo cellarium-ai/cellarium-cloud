@@ -13,6 +13,7 @@ def main(
     cas_feature_index_start: int,
     gcs_stage_dir: str,
     original_feature_id_lookup: str,
+    load_uns_data: bool = False,
 ) -> None:
     """
     Create ingest files that can be read by BigQuery for data ingestion.
@@ -30,6 +31,7 @@ def main(
     :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
     In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
     an index column of var dataframe would be used.
+    :param load_uns_data: Whether to dump uns
     """
     filename = f"{secrets.token_hex()}.h5ad"
     utils.download_file_from_bucket(
@@ -46,7 +48,7 @@ def main(
         cas_feature_index_start=cas_feature_index_start,
         prefix=prefix,
         dataset=None,
-        load_uns_data=False,
+        load_uns_data=load_uns_data,
         original_feature_id_lookup=original_feature_id_lookup,
     )
     ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix)]
@@ -72,6 +74,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--original_feature_id_lookup", type=str, help="Column name in `var` for original feature id", required=False
     )
+    parser.add_argument(
+        "--load_uns_data", type=bool, help="Whether or not to dump uns data", required=False, default=False
+    )
 
     args = parser.parse_args()
 
@@ -82,4 +87,5 @@ if __name__ == "__main__":
         cas_feature_index_start=args.cas_feature_index_start,
         gcs_stage_dir=args.gcs_stage_dir,
         original_feature_id_lookup=args.original_feature_id_lookup,
+        load_uns_data=args.load_uns_data,
     )
