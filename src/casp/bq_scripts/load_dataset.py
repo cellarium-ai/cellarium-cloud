@@ -138,13 +138,17 @@ def create_bigquery_objects(client, project, dataset):
     )
 
 
-def process(project, dataset, avro_prefix, gcs_path_prefix):
+def process(project, dataset, avro_prefix, gcs_path_prefix, credentials):
     """
     Main method that drives the 5 high level steps of BigQuery data loading.
     """
     (bucket, object_prefix) = bucket_and_prefix(project, gcs_path_prefix)
 
-    client = bigquery.Client(project=project)
+    if credentials is None:
+        client = bigquery.Client(project=project)
+    else:
+        client = bigquery.Client(project=project, credentials=credentials)
+
     create_bigquery_objects(client, project, dataset)
 
     input_file_types = ["ingest_info", "cell_info", "feature_info", "raw_counts"]

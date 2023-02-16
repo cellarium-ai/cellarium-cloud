@@ -34,6 +34,9 @@ def current_milli_time():
     return round(time.time() * 1000)
 
 
+FLUSH_BATCH_SIZE = 10000
+
+
 def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
     """
     Avro writing worker function. Calls back to `generator` for each row to be written.
@@ -208,7 +211,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
         # substitute a `None` if values exceed the cap. This particular limit of 1 MiB was chosen somewhat arbitrarily;
         # it's plenty big but allows extracting the Tabula Sapiens endothlelial dataset that could not be extracted
         # without a cap.
-        metadata_limit = 2**20
+        metadata_limit = 2 ** 20
         uns = {}
 
         if load_uns_data is True:
@@ -247,7 +250,7 @@ def md5(filename):
     """
     hash_md5 = hashlib.md5()
     chunks = 0
-    progress_chunks = 2**18
+    progress_chunks = 2 ** 18
     with open(filename, "rb") as file:
         for chunk in iter(lambda: file.read(4096), b""):
             chunks += 1

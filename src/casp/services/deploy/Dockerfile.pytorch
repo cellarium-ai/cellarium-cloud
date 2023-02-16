@@ -5,11 +5,13 @@ USER root
 # Install Dependencies
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+RUN apt-get -y update; apt-get -y install curl
+RUN curl -sSL https://sdk.cloud.google.com | bash
 
 # Copy Files and Secrets
 COPY src .
 # Looking for b64 encoded secret environment variables
-RUN --mount=type=secret,id=ENV_SECRETS cat /run/secrets/ENV_SECRETS | base64 -d >> ./casp/services/.env
+#RUN --mount=type=secret,id=ENV_SECRETS cat /run/secrets/ENV_SECRETS | base64 -d >> ./casp/services/.env
 
 
 # Create a dockeruser to own the app
