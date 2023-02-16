@@ -23,10 +23,10 @@ task load_dataset {
     runtime {
         docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-manual/cas-pytorch:fg-ingest-01"
         bootDiskSizeGb: 50
-        memory: "4G"
-        cpu: 1
+        memory: "16G"
+        cpu: 4
         zones: "us-central1-a"
-        maxRetries: 0
+        maxRetries: 3
         preemptible_tries: 3
     }
 }

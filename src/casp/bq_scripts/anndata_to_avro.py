@@ -323,7 +323,7 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, prefix, p
     ingest_filename = f"{prefix}_ingest_info.avro"
     cell_filename = f"{prefix}_cell_info.avro"
     feature_filename = f"{prefix}_feature_info.avro"
-    ingest_filename = f"{prefix}_raw_counts.avro"
+    raw_counts_filename = f"{prefix}_raw_counts.avro"
 
     print(f"Loading input AnnData file '{input_file}'...")
     adata = optimized_read_andata(input_file)

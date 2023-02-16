@@ -20,7 +20,7 @@ def main(
     )
     credentials, project_id = utils.get_google_service_credentials()
 
-    avro_prefix = secrets.token_hex()
+    prefix = secrets.token_hex()
 
     anndata_to_avro(
         input_file=filename,
@@ -28,14 +28,14 @@ def main(
         dataset=dataset,
         cas_cell_index_start=cas_cell_index_start,
         cas_feature_index_start=cas_feature_index_start,
-        avro_prefix=avro_prefix,
+        prefix=prefix,
         load_uns_data=False
     )
 
     load_dataset(
         project=project_id,
         dataset=args.dataset,
-        avro_prefix=avro_prefix,
+        avro_prefix=prefix,
         gcs_path_prefix=gcs_stage_prefix,
         credentials=credentials
     )
