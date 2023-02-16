@@ -3,7 +3,7 @@ task load_dataset {
     String bq_dataset
     String gcs_input_bucket
     String gcs_file_path
-    String gcs_stage_prefix
+    String gcs_ingest_path
     Int cas_cell_index_start
     Int cas_feature_index_start
 
@@ -15,7 +15,7 @@ task load_dataset {
         --dataset ${bq_dataset} \
         --gcs_input_bucket ${gcs_input_bucket} \
         --gcs_file_path ${gcs_file_path} \
-        --gcs_stage_prefix ${gcs_stage_prefix} \
+        --gcs_ingest_path ${gcs_ingest_path} \
         --cas_cell_index_start ${cas_cell_index_start} \
         --cas_feature_index_start ${cas_feature_index_start}
     }

@@ -1,4 +1,5 @@
 import argparse
+import os
 import secrets
 from casp.bq_scripts import anndata_to_avro, load_dataset
 from casp.services import utils
@@ -10,7 +11,7 @@ def main(
         gcs_file_path: str,
         cas_cell_index_start: int,
         cas_feature_index_start: int,
-        gcs_stage_prefix: str
+        gcs_ingest_path: str,
 ) -> None:
     filename = f"{secrets.token_hex()}.h5ad"
     utils.download_file_from_bucket(
@@ -31,14 +32,14 @@ def main(
         prefix=prefix,
         load_uns_data=False
     )
+    ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix)]
 
-    load_dataset(
-        project=project_id,
-        dataset=args.dataset,
-        avro_prefix=prefix,
-        gcs_path_prefix=gcs_stage_prefix,
-        credentials=credentials
-    )
+    for filename in ingest_files:
+        utils.upload_file_to_bucket(
+            local_file_name=filename,
+            bucket=gcs_bucket_name,
+            blob_name=f"{gcs_ingest_path}/{filename}"
+        )
 
 
 if __name__ == "__main__":
@@ -64,5 +65,5 @@ if __name__ == "__main__":
         gcs_file_path=args.gcs_file_path,
         cas_cell_index_start=args.cas_cell_index_start,
         cas_feature_index_start=args.cas_feature_index_start,
-        gcs_stage_prefix=args.gcs_stage_prefix
+        gcs_ingest_path=args.gcs_ingest_path
     )

@@ -20,3 +20,11 @@ def download_file_from_bucket(bucket_name: str, source_blob_name: str, destinati
 
     blob = bucket.blob(source_blob_name)
     blob.download_to_filename(destination_file_name)
+
+
+def upload_file_to_bucket(local_file_name: str, bucket: str, blob_name: str) -> None:
+    credentials, project_id = get_google_service_credentials()
+    client = storage.Client(credentials=credentials, project=project_id)
+    bucket = client.get_bucket(bucket)
+    blob = bucket.blob(blob_name)
+    blob.upload_from_filename(local_file_name)

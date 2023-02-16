@@ -15,7 +15,9 @@ if __name__ == "__main__":
         for input_obj in old_inputs:
             c_i += 2000000
             f_i += 2000000
-            new_inputs.append([input_obj["df_filename"], c_i, f_i])
+            new_inputs.append(
+                {"df_filename": input_obj["df_filename"], "cas_cell_index": c_i, "cas_feature_index": f_i}
+            )
 
     inputs_json[CONVERT_INPUTS_KEY] = new_inputs
 
