@@ -10,7 +10,7 @@ from casp.services import utils
 def get_avro_prefixes(bucket_name, gcs_stage_dir):
     ingest_file_blobs = utils.list_blobs(bucket_name=bucket_name, prefix=gcs_stage_dir)
     blob_names = [x.name.replace(gcs_stage_dir, "") for x in ingest_file_blobs]
-    return set(x.split("_")[0] for x in blob_names)
+    return set(x.split("_")[0].lstrip("/") for x in blob_names)
 
 
 def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_files: bool = False):
