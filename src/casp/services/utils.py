@@ -25,6 +25,22 @@ def download_file_from_bucket(bucket_name: str, source_blob_name: str, destinati
 def upload_file_to_bucket(local_file_name: str, bucket: str, blob_name: str) -> None:
     credentials, project_id = get_google_service_credentials()
     client = storage.Client(credentials=credentials, project=project_id)
+    client.list_blobs()
     bucket = client.get_bucket(bucket)
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(local_file_name)
+
+
+def list_blobs(bucket_name: str, prefix: t.Optional[str] = None) -> storage.Blob:
+    """Lists all the blobs in the bucket"""
+    credentials, project_id = get_google_service_credentials()
+    storage_client = storage.Client(credentials=credentials, project=project_id)
+    return storage_client.list_blobs(bucket_name, prefix=prefix)
+
+
+def delete_folder_from_bucket(bucket_name: str, folder_name: str) -> None:
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    blobs = list(bucket.list_blobs(prefix=folder_name))
+    bucket.delete_blobs(blobs)
+    print(f"Folder {folder_name} deleted")

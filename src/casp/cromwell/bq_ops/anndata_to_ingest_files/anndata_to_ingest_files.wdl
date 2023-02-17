@@ -12,7 +12,6 @@ task anndata_to_ingest_files {
         cd /app
         echo "START INGESTING"
         python casp/services/bq_ops/anndata_to_ingest_files/main.py \
-        --dataset ${bq_dataset} \
         --gcs_input_bucket ${gcs_input_bucket} \
         --gcs_file_path ${gcs_file_path} \
         --gcs_ingest_path ${gcs_ingest_path} \

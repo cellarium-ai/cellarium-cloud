@@ -1,0 +1,54 @@
+import time
+import math
+from google.cloud import bigquery
+from google.api_core.exceptions import Forbidden
+from casp.bq_scripts import create_bigquery_objects, ingest_data_to_bq
+from casp.services import utils
+
+
+def get_avro_prefixes(bucket_name, gcs_stage_dir):
+    ingest_file_blobs = utils.list_blobs(bucket_name=bucket_name, prefix=gcs_stage_dir)
+    blob_names = [x.name.replace(gcs_stage_dir, "") for x in ingest_file_blobs]
+    return set(x.split("_")[0] for x in blob_names)
+
+
+def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_files: bool = False):
+    credentials, project_id = utils.get_google_service_credentials()
+    bq_client = bigquery.Client(project=project_id, credentials=credentials)
+    create_bigquery_objects(client=bq_client, project=project_id, dataset=dataset)
+    ingest_avro_prefixes = get_avro_prefixes(bucket_name=gcs_bucket_name, gcs_stage_dir=gcs_stage_dir)
+
+    for avro_prefix in ingest_avro_prefixes:
+        need_retry = True
+        attempt_counter = 1
+
+        while need_retry or attempt_counter <= 5:
+            try:
+                ingest_data_to_bq(
+                    project=project_id,
+                    dataset=dataset,
+                    avro_prefix=avro_prefix,
+                    gcs_stage_dir=gcs_stage_dir,
+                    credentials=credentials
+                )
+            except Forbidden:
+                # It can happen when limit of number of table update operations is exceeded
+                # Retrying the operation 5 times with an exponential backoff as suggested in the docs:
+                # https://cloud.google.com/bigquery/quotas#standard_tables
+                print("Was not able to ingest data")
+                time_to_wait = math.exp(attempt_counter)
+                time.sleep(time_to_wait)
+                if attempt_counter <= 5:
+                    print("Retrying another attempt...")
+            else:
+                need_retry = False
+
+            attempt_counter += 1
+
+        if delete_ingest_files:
+            print("Deleting ingest files...")
+            utils.delete_folder_from_bucket(bucket_name=gcs_bucket_name, folder_name=gcs_stage_dir)
+
+
+if __name__ == "__main__":
+    main()

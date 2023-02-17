@@ -1,17 +1,11 @@
 """
 * Creates BigQuery dataset if necessary
 * Creates tables in BiqQuery dataset if necessary
-* Stages input Avro files to GCS
-* Loads BigQuery tables from Avro files
-* Unstages input Avro files
 """
 
-import argparse
-import glob
 import os
 import re
 
-import fastavro
 from google.api_core.exceptions import Conflict
 from google.cloud import bigquery, storage
 
@@ -136,97 +130,3 @@ def create_bigquery_objects(client, project, dataset):
         ],
         ["cas_cell_index"],
     )
-
-
-def process(project, dataset, avro_prefix, gcs_path_prefix, credentials):
-    """
-    Main method that drives the 5 high level steps of BigQuery data loading.
-    """
-    (bucket, object_prefix) = bucket_and_prefix(project, gcs_path_prefix)
-
-    if credentials is None:
-        client = bigquery.Client(project=project)
-    else:
-        client = bigquery.Client(project=project, credentials=credentials)
-
-    create_bigquery_objects(client, project, dataset)
-
-    input_file_types = ["ingest_info", "cell_info", "feature_info", "raw_counts"]
-    input_filenames = [f"{avro_prefix}_{file_type}.avro" for file_type in input_file_types]
-
-    # TODO: reimplement
-    # confirm_input_files_exist(input_filenames)
-    ingest_filename, cell_filename, feature_filename, raw_counts_filename = input_filenames
-    raw_counts_pattern = f"{avro_prefix}_raw_counts.*.csv"
-
-    # Grab the `cas_ingest_id` from the ingest file.
-    with open(ingest_filename, "rb") as file:
-        reader = fastavro.reader(file)
-        ingest_id = next(reader)["cas_ingest_id"]
-
-    def stage_file(file_to_stage):
-        print(f"Staging '{file_to_stage}' to '{gcs_path_prefix}/{file_to_stage}'...")
-        blob = bucket.blob(f"{object_prefix}/{file_to_stage}")
-        blob.upload_from_filename(file_to_stage)
-        print(f"Staged '{file_to_stage}'.")
-
-    def unstage_file(file_to_unstage):
-        blob = bucket.blob(f"{object_prefix}/{file_to_unstage}")
-        blob.delete()
-        print(f"Removed staged file '{gcs_path_prefix}/{file_to_unstage}'.")
-
-    staged_files = []
-    gcs_path_prefix = gcs_path_prefix.rstrip("/")
-    pairs = [
-        ("ingest_info", ingest_filename, bigquery.SourceFormat.AVRO),
-        ("cell_info", cell_filename, bigquery.SourceFormat.AVRO),
-        ("feature_info", feature_filename, bigquery.SourceFormat.AVRO),
-        ("raw_count_matrix", raw_counts_pattern, bigquery.SourceFormat.CSV),
-    ]
-    job_config = bigquery.LoadJobConfig(source_format=bigquery.SourceFormat.AVRO)
-
-    for table, file_pattern, format in pairs:
-        table = f"cas_{table}"
-        table_id = f"{project}.{dataset}.{table}"
-
-        for file in glob.glob(file_pattern):
-            stage_file(file)
-            staged_files.append(file)
-
-        uri = f"{gcs_path_prefix}/{file_pattern}"
-        job_config = bigquery.LoadJobConfig(source_format=format)
-
-        load_job = client.load_table_from_uri(uri, table_id, job_config=job_config)  # Make an API request.
-        result = load_job.result()  # Waits for the job to complete.
-        print(f"{result.output_rows} rows loaded into BigQuery table '{table_id}'.")
-
-    for file in staged_files:
-        unstage_file(file)
-
-    print("Updating ingest timestamp")
-    # noinspection SqlResolve
-    query = f"""
-
-    UPDATE `{dataset}.cas_ingest_info` SET ingest_timestamp = CURRENT_TIMESTAMP()
-        WHERE cas_ingest_id = "{ingest_id}"
-
-    """
-    job = client.query(query)
-    job.result()
-
-    print("Done.")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(allow_abbrev=False, description="Initialize CASP tables")
-
-    parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
-    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
-    parser.add_argument("--avro_prefix", type=str, help="Prefix with which Avro files are named", required=True)
-    parser.add_argument(
-        "--gcs_path_prefix", type=str, help="GCS prefix to which Avro files should be staged", required=True
-    )
-
-    args = parser.parse_args()
-
-    process(args.project, args.dataset, args.avro_prefix, args.gcs_path_prefix)

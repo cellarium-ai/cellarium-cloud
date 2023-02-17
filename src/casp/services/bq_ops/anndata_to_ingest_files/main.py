@@ -6,12 +6,11 @@ from casp.services import utils
 
 
 def main(
-        dataset: str,
         gcs_bucket_name: str,
         gcs_file_path: str,
         cas_cell_index_start: int,
         cas_feature_index_start: int,
-        gcs_ingest_path: str,
+        gcs_stage_prefix: str,
 ) -> None:
     filename = f"{secrets.token_hex()}.h5ad"
     utils.download_file_from_bucket(
@@ -26,10 +25,10 @@ def main(
     anndata_to_avro(
         input_file=filename,
         project=project_id,
-        dataset=dataset,
         cas_cell_index_start=cas_cell_index_start,
         cas_feature_index_start=cas_feature_index_start,
         prefix=prefix,
+        dataset=None,
         load_uns_data=False
     )
     ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix)]
@@ -38,7 +37,7 @@ def main(
         utils.upload_file_to_bucket(
             local_file_name=filename,
             bucket=gcs_bucket_name,
-            blob_name=f"{gcs_ingest_path}/{filename}"
+            blob_name=f"{gcs_stage_prefix}/{filename}"
         )
 
 
@@ -46,8 +45,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         allow_abbrev=False, description="Convert AnnData Single Cell Expression Data into format for loading into BQ"
     )
-
-    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=False)
     parser.add_argument("--gcs_input_bucket", type=str, help="AnnData format input file", required=True)
     parser.add_argument("--gcs_file_path", type=str, help="AnnData format input file", required=True)
     parser.add_argument(
@@ -60,10 +57,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        dataset=args.dataset,
         gcs_bucket_name=args.gcs_input_bucket,
         gcs_file_path=args.gcs_file_path,
         cas_cell_index_start=args.cas_cell_index_start,
         cas_feature_index_start=args.cas_feature_index_start,
-        gcs_ingest_path=args.gcs_stage_prefix
+        gcs_stage_prefix=args.gcs_stage_prefix
     )
