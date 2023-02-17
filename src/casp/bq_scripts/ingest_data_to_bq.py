@@ -1,11 +1,12 @@
 import argparse
 
 import fastavro
-from google.api_core.exceptions import Conflict
+
 from google.cloud import bigquery, storage
+from casp.services import utils
 
 
-def ingest_data_to_bq(project, dataset, avro_prefix, gcs_stage_dir, credentials=None):
+def ingest_data_to_bq(project, dataset, avro_prefix, gcs_bucket_name, gcs_stage_dir, credentials=None):
     """
     Main method that drives the 5 high level steps of BigQuery data loading.
     """
@@ -20,13 +21,18 @@ def ingest_data_to_bq(project, dataset, avro_prefix, gcs_stage_dir, credentials=
     # TODO: reimplement
     ingest_filename, cell_filename, feature_filename, raw_counts_filename = input_filenames
     raw_counts_pattern = f"{avro_prefix}_raw_counts.*.csv"
-
+    z
+    gcs_stage_dir = gcs_stage_dir.rstrip("/")
     # Grab the `cas_ingest_id` from the ingest file.
+    utils.download_file_from_bucket(
+        bucket_name=gcs_bucket_name,
+        source_blob_name=f"{gcs_bucket_name}/{gcs_stage_dir}/{ingest_filename}",
+        destination_file_name=ingest_filename
+    )
     with open(ingest_filename, "rb") as file:
         reader = fastavro.reader(file)
         ingest_id = next(reader)["cas_ingest_id"]
 
-    gcs_stage_dir = gcs_stage_dir.rstrip("/")
     pairs = [
         ("ingest_info", ingest_filename, bigquery.SourceFormat.AVRO),
         ("cell_info", cell_filename, bigquery.SourceFormat.AVRO),
@@ -38,7 +44,7 @@ def ingest_data_to_bq(project, dataset, avro_prefix, gcs_stage_dir, credentials=
         table = f"cas_{table}"
         table_id = f"{project}.{dataset}.{table}"
 
-        uri = f"{gcs_stage_dir}/{file_pattern}"
+        uri = f"gs://{gcs_bucket_name}/{gcs_stage_dir}/{file_pattern}"
         job_config = bigquery.LoadJobConfig(source_format=file_format)
 
         load_job = client.load_table_from_uri(uri, table_id, job_config=job_config)  # Make an API request.
