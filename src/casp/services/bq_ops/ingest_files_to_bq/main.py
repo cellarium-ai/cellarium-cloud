@@ -18,7 +18,7 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
     bq_client = bigquery.Client(project=project_id, credentials=credentials)
     create_bigquery_objects(client=bq_client, project=project_id, dataset=dataset)
     ingest_avro_prefixes = get_avro_prefixes(bucket_name=gcs_bucket_name, gcs_stage_dir=gcs_stage_dir)
-
+    print(ingest_avro_prefixes)
     for avro_prefix in ingest_avro_prefixes:
         need_retry = True
         attempt_counter = 1
