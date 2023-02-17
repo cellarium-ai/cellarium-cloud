@@ -25,7 +25,7 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
 
         while need_retry and attempt_counter <= 5:
             try:
-                print("ASDASDSADASDAS")
+                print(f"Ingesting files with prefix: {avro_prefix}...")
                 ingest_data_to_bq(
                     project=project_id,
                     dataset=dataset,
