@@ -23,7 +23,7 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
         need_retry = True
         attempt_counter = 1
 
-        while need_retry or attempt_counter <= 5:
+        while need_retry and attempt_counter <= 5:
             try:
                 print("ASDASDSADASDAS")
                 ingest_data_to_bq(
