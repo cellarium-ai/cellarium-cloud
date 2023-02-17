@@ -5,7 +5,7 @@ from google.api_core.exceptions import Conflict
 from google.cloud import bigquery, storage
 
 
-def ingest_data_to_bq(project, dataset, avro_prefix, gcs_stage_dir, credentials):
+def ingest_data_to_bq(project, dataset, avro_prefix, gcs_stage_dir, credentials=None):
     """
     Main method that drives the 5 high level steps of BigQuery data loading.
     """
@@ -71,4 +71,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    process(args.project, args.dataset, args.avro_prefix, args.gcs_path_prefix)
+    ingest_data_to_bq(args.project, args.dataset, args.avro_prefix, args.gcs_path_prefix)

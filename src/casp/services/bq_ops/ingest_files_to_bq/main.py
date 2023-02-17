@@ -1,5 +1,6 @@
 import time
 import math
+import argparse
 from google.cloud import bigquery
 from google.api_core.exceptions import Forbidden
 from casp.bq_scripts import create_bigquery_objects, ingest_data_to_bq
@@ -51,4 +52,26 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        allow_abbrev=False, description="Ingest files to BigQuery from a staged bucket having avro and csv files"
+    )
+    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
+    parser.add_argument("--gcs_bucket_name", type=str, help="A name of working GCS bucket", required=True)
+    parser.add_argument(
+        "--gcs_stage_dir", type=str, help="A folder name in GCS bucket where all of the ingest files are stored",
+        required=True
+    )
+    parser.add_argument(
+        "--delete_ingest_files",
+        type=bool,
+        help="Whether or not delete ingest files after",
+        default=False,
+        required=False
+    )
+    args = parser.parse_args()
+    main(
+        dataset=args.dataset,
+        gcs_bucket_name=args.gcs_bucket_name,
+        gcs_stage_dir=args.gcs_stage_dir,
+        delete_ingest_files=args.delete_ingest_files
+    )
