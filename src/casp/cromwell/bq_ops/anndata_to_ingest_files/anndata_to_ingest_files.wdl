@@ -1,4 +1,4 @@
-task load_dataset {
+task anndata_to_ingest_files {
     String version = "ingest_to_bq_v1.0.0"
     String bq_dataset
     String gcs_input_bucket
@@ -11,7 +11,7 @@ task load_dataset {
     command {
         cd /app
         echo "START INGESTING"
-        python casp/services/bq_ops/load_dataset/main.py \
+        python casp/services/bq_ops/anndata_to_ingest_files/main.py \
         --dataset ${bq_dataset} \
         --gcs_input_bucket ${gcs_input_bucket} \
         --gcs_file_path ${gcs_file_path} \
@@ -31,15 +31,15 @@ task load_dataset {
     }
 }
 
-workflow CASIngestData {
+workflow CASAnndataToIngestFiles {
     Array[Object] convert_args
 
     meta {
-        description: "Ingest data to BigQuery"
+        description: "Create avro "
     }
 
     scatter(arg in convert_args) {
-        call load_dataset {
+        call anndata_to_ingest_files {
             input:
                 gcs_file_path = arg.df_filename,
                 cas_cell_index_start = arg.cas_cell_index,

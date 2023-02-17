@@ -1,7 +1,7 @@
 import argparse
 import os
 import secrets
-from casp.bq_scripts import anndata_to_avro, load_dataset
+from casp.bq_scripts import anndata_to_avro
 from casp.services import utils
 
 
