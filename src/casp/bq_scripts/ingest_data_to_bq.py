@@ -72,9 +72,9 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
     parser.add_argument("--avro_prefix", type=str, help="Prefix with which Avro files are named", required=True)
     parser.add_argument(
-        "--gcs_path_prefix", type=str, help="GCS prefix to which Avro files should be staged", required=True
+        "--gcs_stage_dir", type=str, help="GCS folder where ingest files should be taken from", required=True
     )
 
     args = parser.parse_args()
 
-    ingest_data_to_bq(args.project, args.dataset, args.avro_prefix, args.gcs_path_prefix)
+    ingest_data_to_bq(args.project, args.dataset, args.avro_prefix, args.gcs_stage_dir)

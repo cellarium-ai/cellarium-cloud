@@ -28,6 +28,7 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
                 ingest_data_to_bq(
                     project=project_id,
                     dataset=dataset,
+                    gcs_bucket_name=gcs_bucket_name,
                     avro_prefix=avro_prefix,
                     gcs_stage_dir=gcs_stage_dir,
                     credentials=credentials
