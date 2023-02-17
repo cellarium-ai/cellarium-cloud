@@ -21,7 +21,6 @@ def ingest_data_to_bq(project, dataset, avro_prefix, gcs_bucket_name, gcs_stage_
     # TODO: reimplement
     ingest_filename, cell_filename, feature_filename, raw_counts_filename = input_filenames
     raw_counts_pattern = f"{avro_prefix}_raw_counts.*.csv"
-    z
     gcs_stage_dir = gcs_stage_dir.rstrip("/")
     # Grab the `cas_ingest_id` from the ingest file.
     utils.download_file_from_bucket(
