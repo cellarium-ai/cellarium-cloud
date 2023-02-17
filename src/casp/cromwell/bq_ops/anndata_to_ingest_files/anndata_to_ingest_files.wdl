@@ -35,7 +35,7 @@ workflow CASAnndataToIngestFiles {
     Array[Object] convert_args
 
     meta {
-        description: "Create avro "
+        description: "Create ingest files "
     }
 
     scatter(arg in convert_args) {
