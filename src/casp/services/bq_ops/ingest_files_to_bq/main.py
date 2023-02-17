@@ -1,8 +1,10 @@
-import time
-import math
 import argparse
-from google.cloud import bigquery
+import math
+import time
+
 from google.api_core.exceptions import Forbidden
+from google.cloud import bigquery
+
 from casp.bq_scripts import create_bigquery_objects, ingest_data_to_bq
 from casp.services import utils
 
@@ -25,14 +27,14 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
 
         while need_retry and attempt_counter <= 5:
             try:
-                print(f"Ingesting files with prefix: {avro_prefix}...")
+                print(f"Ingesting files with prefix: {avro_prefix}")
                 ingest_data_to_bq(
                     project=project_id,
                     dataset=dataset,
                     gcs_bucket_name=gcs_bucket_name,
                     avro_prefix=avro_prefix,
                     gcs_stage_dir=gcs_stage_dir,
-                    credentials=credentials
+                    credentials=credentials,
                 )
             except Forbidden:
                 # It can happen when limit of number of table update operations is exceeded
@@ -60,20 +62,22 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
     parser.add_argument("--gcs_bucket_name", type=str, help="A name of working GCS bucket", required=True)
     parser.add_argument(
-        "--gcs_stage_dir", type=str, help="A folder name in GCS bucket where all of the ingest files are stored",
-        required=True
+        "--gcs_stage_dir",
+        type=str,
+        help="A folder name in GCS bucket where all of the ingest files are stored",
+        required=True,
     )
     parser.add_argument(
         "--delete_ingest_files",
         type=bool,
         help="Whether or not delete ingest files after",
         default=False,
-        required=False
+        required=False,
     )
     args = parser.parse_args()
     main(
         dataset=args.dataset,
         gcs_bucket_name=args.gcs_bucket_name,
         gcs_stage_dir=args.gcs_stage_dir,
-        delete_ingest_files=args.delete_ingest_files
+        delete_ingest_files=args.delete_ingest_files,
     )
