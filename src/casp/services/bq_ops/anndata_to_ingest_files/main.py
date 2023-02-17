@@ -1,22 +1,21 @@
 import argparse
 import os
 import secrets
+
 from casp.bq_scripts import anndata_to_avro
 from casp.services import utils
 
 
 def main(
-        gcs_bucket_name: str,
-        gcs_file_path: str,
-        cas_cell_index_start: int,
-        cas_feature_index_start: int,
-        gcs_stage_prefix: str,
+    gcs_bucket_name: str,
+    gcs_file_path: str,
+    cas_cell_index_start: int,
+    cas_feature_index_start: int,
+    gcs_stage_prefix: str,
 ) -> None:
     filename = f"{secrets.token_hex()}.h5ad"
     utils.download_file_from_bucket(
-        bucket_name=gcs_bucket_name,
-        source_blob_name=gcs_file_path,
-        destination_file_name=filename
+        bucket_name=gcs_bucket_name, source_blob_name=gcs_file_path, destination_file_name=filename
     )
     credentials, project_id = utils.get_google_service_credentials()
 
@@ -29,15 +28,13 @@ def main(
         cas_feature_index_start=cas_feature_index_start,
         prefix=prefix,
         dataset=None,
-        load_uns_data=False
+        load_uns_data=False,
     )
     ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix)]
 
     for filename in ingest_files:
         utils.upload_file_to_bucket(
-            local_file_name=filename,
-            bucket=gcs_bucket_name,
-            blob_name=f"{gcs_stage_prefix}/{filename}"
+            local_file_name=filename, bucket=gcs_bucket_name, blob_name=f"{gcs_stage_prefix}/{filename}"
         )
 
 
@@ -61,5 +58,5 @@ if __name__ == "__main__":
         gcs_file_path=args.gcs_file_path,
         cas_cell_index_start=args.cas_cell_index_start,
         cas_feature_index_start=args.cas_feature_index_start,
-        gcs_stage_prefix=args.gcs_stage_prefix
+        gcs_stage_prefix=args.gcs_stage_prefix,
     )

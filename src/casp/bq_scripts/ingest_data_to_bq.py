@@ -1,8 +1,8 @@
 import argparse
 
 import fastavro
-
 from google.cloud import bigquery, storage
+
 from casp.services import utils
 
 
@@ -27,7 +27,7 @@ def ingest_data_to_bq(project, dataset, avro_prefix, gcs_bucket_name, gcs_stage_
     utils.download_file_from_bucket(
         bucket_name=gcs_bucket_name,
         source_blob_name=f"{gcs_stage_dir}/{ingest_filename}",
-        destination_file_name=ingest_filename
+        destination_file_name=ingest_filename,
     )
     with open(ingest_filename, "rb") as file:
         reader = fastavro.reader(file)

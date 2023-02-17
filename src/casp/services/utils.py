@@ -1,7 +1,7 @@
 import typing as t
 
-from google.oauth2.service_account import Credentials
 from google.cloud import storage
+from google.oauth2.service_account import Credentials
 
 from casp.services import settings
 

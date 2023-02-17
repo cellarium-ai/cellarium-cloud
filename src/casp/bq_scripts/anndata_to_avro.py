@@ -20,7 +20,7 @@ import time
 import h5py
 import numpy as np
 from anndata._core.anndata import AnnData
-from anndata._io.h5ad import _read_raw, _clean_uns
+from anndata._io.h5ad import _clean_uns, _read_raw
 from anndata._io.specs import read_elem
 from fastavro import parse_schema, writer
 from google.api_core.exceptions import NotFound
@@ -211,7 +211,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
         # substitute a `None` if values exceed the cap. This particular limit of 1 MiB was chosen somewhat arbitrarily;
         # it's plenty big but allows extracting the Tabula Sapiens endothlelial dataset that could not be extracted
         # without a cap.
-        metadata_limit = 2 ** 20
+        metadata_limit = 2**20
         uns = {}
 
         if load_uns_data is True:
@@ -250,7 +250,7 @@ def md5(filename):
     """
     hash_md5 = hashlib.md5()
     chunks = 0
-    progress_chunks = 2 ** 18
+    progress_chunks = 2**18
     with open(filename, "rb") as file:
         for chunk in iter(lambda: file.read(4096), b""):
             chunks += 1
