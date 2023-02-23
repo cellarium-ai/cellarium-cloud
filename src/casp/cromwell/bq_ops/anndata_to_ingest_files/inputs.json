@@ -1,8 +1,7 @@
 {
-  "CASIngestData.load_dataset.bq_dataset": "benchmark_v1_2",
-  "CASIngestData.load_dataset.gcs_stage_prefix": "gs://dsp-cell-annotation-service/cromwell_ingest",
-  "CASIngestData.load_dataset.gcs_input_bucket": "dsp-cell-annotation-service",
-  "CASIngestData.convert_args": [
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_stage_prefix": "cromwell_ingest_2",
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_input_bucket": "dsp-cell-annotation-service",
+  "CASAnndataToIngestFiles.convert_args": [
     {
       "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
       "cas_cell_index": 0,

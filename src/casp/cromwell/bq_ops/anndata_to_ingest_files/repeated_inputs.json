@@ -1,0 +1,4046 @@
+{
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_stage_prefix": "cromwell_ingest_400kM",
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_input_bucket": "dsp-cell-annotation-service",
+  "CASAnndataToIngestFiles.convert_args": [
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 0,
+      "cas_feature_index": 0
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 2000000,
+      "cas_feature_index": 2000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 4000000,
+      "cas_feature_index": 4000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 6000000,
+      "cas_feature_index": 6000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 8000000,
+      "cas_feature_index": 8000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 10000000,
+      "cas_feature_index": 10000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 12000000,
+      "cas_feature_index": 12000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 14000000,
+      "cas_feature_index": 14000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 22000000,
+      "cas_feature_index": 22000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 24000000,
+      "cas_feature_index": 24000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 26000000,
+      "cas_feature_index": 26000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 28000000,
+      "cas_feature_index": 28000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 30000000,
+      "cas_feature_index": 30000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 32000000,
+      "cas_feature_index": 32000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 34000000,
+      "cas_feature_index": 34000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 36000000,
+      "cas_feature_index": 36000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 38000000,
+      "cas_feature_index": 38000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 40000000,
+      "cas_feature_index": 40000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 42000000,
+      "cas_feature_index": 42000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 44000000,
+      "cas_feature_index": 44000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 46000000,
+      "cas_feature_index": 46000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 48000000,
+      "cas_feature_index": 48000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 50000000,
+      "cas_feature_index": 50000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 52000000,
+      "cas_feature_index": 52000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 54000000,
+      "cas_feature_index": 54000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 56000000,
+      "cas_feature_index": 56000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 58000000,
+      "cas_feature_index": 58000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 60000000,
+      "cas_feature_index": 60000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 62000000,
+      "cas_feature_index": 62000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 64000000,
+      "cas_feature_index": 64000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 66000000,
+      "cas_feature_index": 66000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 68000000,
+      "cas_feature_index": 68000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 70000000,
+      "cas_feature_index": 70000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 72000000,
+      "cas_feature_index": 72000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 74000000,
+      "cas_feature_index": 74000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 76000000,
+      "cas_feature_index": 76000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 78000000,
+      "cas_feature_index": 78000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 80000000,
+      "cas_feature_index": 80000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 82000000,
+      "cas_feature_index": 82000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 84000000,
+      "cas_feature_index": 84000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 86000000,
+      "cas_feature_index": 86000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 88000000,
+      "cas_feature_index": 88000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 90000000,
+      "cas_feature_index": 90000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 92000000,
+      "cas_feature_index": 92000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 94000000,
+      "cas_feature_index": 94000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 96000000,
+      "cas_feature_index": 96000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 98000000,
+      "cas_feature_index": 98000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 100000000,
+      "cas_feature_index": 100000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 102000000,
+      "cas_feature_index": 102000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 104000000,
+      "cas_feature_index": 104000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 106000000,
+      "cas_feature_index": 106000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 108000000,
+      "cas_feature_index": 108000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 110000000,
+      "cas_feature_index": 110000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 112000000,
+      "cas_feature_index": 112000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 114000000,
+      "cas_feature_index": 114000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 116000000,
+      "cas_feature_index": 116000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 118000000,
+      "cas_feature_index": 118000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 120000000,
+      "cas_feature_index": 120000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 122000000,
+      "cas_feature_index": 122000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 124000000,
+      "cas_feature_index": 124000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 126000000,
+      "cas_feature_index": 126000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 128000000,
+      "cas_feature_index": 128000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 130000000,
+      "cas_feature_index": 130000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 132000000,
+      "cas_feature_index": 132000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 134000000,
+      "cas_feature_index": 134000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 136000000,
+      "cas_feature_index": 136000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 138000000,
+      "cas_feature_index": 138000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 140000000,
+      "cas_feature_index": 140000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 142000000,
+      "cas_feature_index": 142000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 144000000,
+      "cas_feature_index": 144000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 146000000,
+      "cas_feature_index": 146000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 148000000,
+      "cas_feature_index": 148000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 150000000,
+      "cas_feature_index": 150000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 152000000,
+      "cas_feature_index": 152000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 154000000,
+      "cas_feature_index": 154000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 156000000,
+      "cas_feature_index": 156000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 158000000,
+      "cas_feature_index": 158000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 160000000,
+      "cas_feature_index": 160000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 162000000,
+      "cas_feature_index": 162000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 164000000,
+      "cas_feature_index": 164000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 166000000,
+      "cas_feature_index": 166000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 168000000,
+      "cas_feature_index": 168000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 170000000,
+      "cas_feature_index": 170000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 172000000,
+      "cas_feature_index": 172000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 174000000,
+      "cas_feature_index": 174000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 176000000,
+      "cas_feature_index": 176000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 178000000,
+      "cas_feature_index": 178000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 180000000,
+      "cas_feature_index": 180000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 182000000,
+      "cas_feature_index": 182000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 184000000,
+      "cas_feature_index": 184000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 186000000,
+      "cas_feature_index": 186000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 188000000,
+      "cas_feature_index": 188000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 190000000,
+      "cas_feature_index": 190000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 192000000,
+      "cas_feature_index": 192000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 194000000,
+      "cas_feature_index": 194000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 196000000,
+      "cas_feature_index": 196000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 198000000,
+      "cas_feature_index": 198000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 200000000,
+      "cas_feature_index": 200000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 202000000,
+      "cas_feature_index": 202000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 204000000,
+      "cas_feature_index": 204000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 206000000,
+      "cas_feature_index": 206000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 208000000,
+      "cas_feature_index": 208000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 210000000,
+      "cas_feature_index": 210000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 212000000,
+      "cas_feature_index": 212000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 214000000,
+      "cas_feature_index": 214000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 216000000,
+      "cas_feature_index": 216000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 218000000,
+      "cas_feature_index": 218000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 220000000,
+      "cas_feature_index": 220000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 222000000,
+      "cas_feature_index": 222000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 224000000,
+      "cas_feature_index": 224000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 226000000,
+      "cas_feature_index": 226000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 228000000,
+      "cas_feature_index": 228000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 230000000,
+      "cas_feature_index": 230000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 232000000,
+      "cas_feature_index": 232000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 234000000,
+      "cas_feature_index": 234000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 236000000,
+      "cas_feature_index": 236000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 238000000,
+      "cas_feature_index": 238000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 240000000,
+      "cas_feature_index": 240000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 242000000,
+      "cas_feature_index": 242000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 244000000,
+      "cas_feature_index": 244000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 246000000,
+      "cas_feature_index": 246000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 248000000,
+      "cas_feature_index": 248000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 250000000,
+      "cas_feature_index": 250000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 252000000,
+      "cas_feature_index": 252000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 254000000,
+      "cas_feature_index": 254000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 256000000,
+      "cas_feature_index": 256000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 258000000,
+      "cas_feature_index": 258000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 260000000,
+      "cas_feature_index": 260000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 262000000,
+      "cas_feature_index": 262000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 264000000,
+      "cas_feature_index": 264000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 266000000,
+      "cas_feature_index": 266000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 268000000,
+      "cas_feature_index": 268000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 270000000,
+      "cas_feature_index": 270000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 272000000,
+      "cas_feature_index": 272000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 274000000,
+      "cas_feature_index": 274000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 276000000,
+      "cas_feature_index": 276000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 278000000,
+      "cas_feature_index": 278000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 280000000,
+      "cas_feature_index": 280000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 282000000,
+      "cas_feature_index": 282000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 284000000,
+      "cas_feature_index": 284000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 286000000,
+      "cas_feature_index": 286000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 288000000,
+      "cas_feature_index": 288000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 290000000,
+      "cas_feature_index": 290000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 292000000,
+      "cas_feature_index": 292000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 294000000,
+      "cas_feature_index": 294000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 296000000,
+      "cas_feature_index": 296000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 298000000,
+      "cas_feature_index": 298000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 300000000,
+      "cas_feature_index": 300000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 302000000,
+      "cas_feature_index": 302000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 304000000,
+      "cas_feature_index": 304000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 306000000,
+      "cas_feature_index": 306000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 308000000,
+      "cas_feature_index": 308000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 310000000,
+      "cas_feature_index": 310000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 312000000,
+      "cas_feature_index": 312000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 314000000,
+      "cas_feature_index": 314000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 316000000,
+      "cas_feature_index": 316000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 318000000,
+      "cas_feature_index": 318000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 320000000,
+      "cas_feature_index": 320000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 322000000,
+      "cas_feature_index": 322000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 324000000,
+      "cas_feature_index": 324000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 326000000,
+      "cas_feature_index": 326000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 328000000,
+      "cas_feature_index": 328000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 330000000,
+      "cas_feature_index": 330000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 332000000,
+      "cas_feature_index": 332000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 334000000,
+      "cas_feature_index": 334000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 336000000,
+      "cas_feature_index": 336000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 338000000,
+      "cas_feature_index": 338000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 340000000,
+      "cas_feature_index": 340000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 342000000,
+      "cas_feature_index": 342000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 344000000,
+      "cas_feature_index": 344000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 346000000,
+      "cas_feature_index": 346000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 348000000,
+      "cas_feature_index": 348000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 350000000,
+      "cas_feature_index": 350000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 352000000,
+      "cas_feature_index": 352000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 354000000,
+      "cas_feature_index": 354000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 356000000,
+      "cas_feature_index": 356000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 358000000,
+      "cas_feature_index": 358000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 360000000,
+      "cas_feature_index": 360000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 362000000,
+      "cas_feature_index": 362000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 364000000,
+      "cas_feature_index": 364000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 366000000,
+      "cas_feature_index": 366000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 368000000,
+      "cas_feature_index": 368000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 370000000,
+      "cas_feature_index": 370000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 372000000,
+      "cas_feature_index": 372000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 374000000,
+      "cas_feature_index": 374000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 376000000,
+      "cas_feature_index": 376000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 378000000,
+      "cas_feature_index": 378000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 380000000,
+      "cas_feature_index": 380000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 382000000,
+      "cas_feature_index": 382000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 384000000,
+      "cas_feature_index": 384000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 386000000,
+      "cas_feature_index": 386000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 388000000,
+      "cas_feature_index": 388000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 390000000,
+      "cas_feature_index": 390000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 392000000,
+      "cas_feature_index": 392000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 394000000,
+      "cas_feature_index": 394000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 396000000,
+      "cas_feature_index": 396000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 398000000,
+      "cas_feature_index": 398000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 400000000,
+      "cas_feature_index": 400000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 402000000,
+      "cas_feature_index": 402000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 404000000,
+      "cas_feature_index": 404000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 406000000,
+      "cas_feature_index": 406000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 408000000,
+      "cas_feature_index": 408000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 410000000,
+      "cas_feature_index": 410000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 412000000,
+      "cas_feature_index": 412000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 414000000,
+      "cas_feature_index": 414000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 416000000,
+      "cas_feature_index": 416000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 418000000,
+      "cas_feature_index": 418000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 420000000,
+      "cas_feature_index": 420000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 422000000,
+      "cas_feature_index": 422000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 424000000,
+      "cas_feature_index": 424000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 426000000,
+      "cas_feature_index": 426000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 428000000,
+      "cas_feature_index": 428000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 430000000,
+      "cas_feature_index": 430000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 432000000,
+      "cas_feature_index": 432000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 434000000,
+      "cas_feature_index": 434000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 436000000,
+      "cas_feature_index": 436000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 438000000,
+      "cas_feature_index": 438000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 440000000,
+      "cas_feature_index": 440000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 442000000,
+      "cas_feature_index": 442000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 444000000,
+      "cas_feature_index": 444000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 446000000,
+      "cas_feature_index": 446000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 448000000,
+      "cas_feature_index": 448000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 450000000,
+      "cas_feature_index": 450000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 452000000,
+      "cas_feature_index": 452000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 454000000,
+      "cas_feature_index": 454000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 456000000,
+      "cas_feature_index": 456000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 458000000,
+      "cas_feature_index": 458000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 460000000,
+      "cas_feature_index": 460000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 462000000,
+      "cas_feature_index": 462000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 464000000,
+      "cas_feature_index": 464000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 466000000,
+      "cas_feature_index": 466000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 468000000,
+      "cas_feature_index": 468000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 470000000,
+      "cas_feature_index": 470000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 472000000,
+      "cas_feature_index": 472000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 474000000,
+      "cas_feature_index": 474000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 476000000,
+      "cas_feature_index": 476000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 478000000,
+      "cas_feature_index": 478000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 480000000,
+      "cas_feature_index": 480000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 482000000,
+      "cas_feature_index": 482000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 484000000,
+      "cas_feature_index": 484000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 486000000,
+      "cas_feature_index": 486000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 488000000,
+      "cas_feature_index": 488000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 490000000,
+      "cas_feature_index": 490000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 492000000,
+      "cas_feature_index": 492000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 494000000,
+      "cas_feature_index": 494000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 496000000,
+      "cas_feature_index": 496000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 498000000,
+      "cas_feature_index": 498000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 500000000,
+      "cas_feature_index": 500000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 502000000,
+      "cas_feature_index": 502000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 504000000,
+      "cas_feature_index": 504000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 506000000,
+      "cas_feature_index": 506000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 508000000,
+      "cas_feature_index": 508000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 510000000,
+      "cas_feature_index": 510000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 512000000,
+      "cas_feature_index": 512000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 514000000,
+      "cas_feature_index": 514000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 516000000,
+      "cas_feature_index": 516000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 518000000,
+      "cas_feature_index": 518000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 520000000,
+      "cas_feature_index": 520000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 522000000,
+      "cas_feature_index": 522000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 524000000,
+      "cas_feature_index": 524000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 526000000,
+      "cas_feature_index": 526000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 528000000,
+      "cas_feature_index": 528000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 530000000,
+      "cas_feature_index": 530000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 532000000,
+      "cas_feature_index": 532000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 534000000,
+      "cas_feature_index": 534000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 536000000,
+      "cas_feature_index": 536000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 538000000,
+      "cas_feature_index": 538000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 540000000,
+      "cas_feature_index": 540000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 542000000,
+      "cas_feature_index": 542000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 544000000,
+      "cas_feature_index": 544000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 546000000,
+      "cas_feature_index": 546000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 548000000,
+      "cas_feature_index": 548000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 550000000,
+      "cas_feature_index": 550000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 552000000,
+      "cas_feature_index": 552000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 554000000,
+      "cas_feature_index": 554000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 556000000,
+      "cas_feature_index": 556000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 558000000,
+      "cas_feature_index": 558000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 560000000,
+      "cas_feature_index": 560000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 562000000,
+      "cas_feature_index": 562000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 564000000,
+      "cas_feature_index": 564000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 566000000,
+      "cas_feature_index": 566000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 568000000,
+      "cas_feature_index": 568000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 570000000,
+      "cas_feature_index": 570000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 572000000,
+      "cas_feature_index": 572000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 574000000,
+      "cas_feature_index": 574000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 576000000,
+      "cas_feature_index": 576000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 578000000,
+      "cas_feature_index": 578000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 580000000,
+      "cas_feature_index": 580000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 582000000,
+      "cas_feature_index": 582000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 584000000,
+      "cas_feature_index": 584000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 586000000,
+      "cas_feature_index": 586000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 588000000,
+      "cas_feature_index": 588000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 590000000,
+      "cas_feature_index": 590000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 592000000,
+      "cas_feature_index": 592000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 594000000,
+      "cas_feature_index": 594000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 596000000,
+      "cas_feature_index": 596000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 598000000,
+      "cas_feature_index": 598000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 600000000,
+      "cas_feature_index": 600000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 602000000,
+      "cas_feature_index": 602000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 604000000,
+      "cas_feature_index": 604000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 606000000,
+      "cas_feature_index": 606000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 608000000,
+      "cas_feature_index": 608000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 610000000,
+      "cas_feature_index": 610000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 612000000,
+      "cas_feature_index": 612000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 614000000,
+      "cas_feature_index": 614000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 616000000,
+      "cas_feature_index": 616000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 618000000,
+      "cas_feature_index": 618000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 620000000,
+      "cas_feature_index": 620000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 622000000,
+      "cas_feature_index": 622000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 624000000,
+      "cas_feature_index": 624000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 626000000,
+      "cas_feature_index": 626000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 628000000,
+      "cas_feature_index": 628000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 630000000,
+      "cas_feature_index": 630000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 632000000,
+      "cas_feature_index": 632000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 634000000,
+      "cas_feature_index": 634000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 636000000,
+      "cas_feature_index": 636000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 638000000,
+      "cas_feature_index": 638000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 640000000,
+      "cas_feature_index": 640000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 642000000,
+      "cas_feature_index": 642000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 644000000,
+      "cas_feature_index": 644000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 646000000,
+      "cas_feature_index": 646000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 648000000,
+      "cas_feature_index": 648000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 650000000,
+      "cas_feature_index": 650000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 652000000,
+      "cas_feature_index": 652000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 654000000,
+      "cas_feature_index": 654000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 656000000,
+      "cas_feature_index": 656000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 658000000,
+      "cas_feature_index": 658000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 660000000,
+      "cas_feature_index": 660000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 662000000,
+      "cas_feature_index": 662000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 664000000,
+      "cas_feature_index": 664000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 666000000,
+      "cas_feature_index": 666000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 668000000,
+      "cas_feature_index": 668000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 670000000,
+      "cas_feature_index": 670000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 672000000,
+      "cas_feature_index": 672000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 674000000,
+      "cas_feature_index": 674000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 676000000,
+      "cas_feature_index": 676000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 678000000,
+      "cas_feature_index": 678000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 680000000,
+      "cas_feature_index": 680000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 682000000,
+      "cas_feature_index": 682000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 684000000,
+      "cas_feature_index": 684000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 686000000,
+      "cas_feature_index": 686000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 688000000,
+      "cas_feature_index": 688000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 690000000,
+      "cas_feature_index": 690000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 692000000,
+      "cas_feature_index": 692000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 694000000,
+      "cas_feature_index": 694000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 696000000,
+      "cas_feature_index": 696000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 698000000,
+      "cas_feature_index": 698000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 700000000,
+      "cas_feature_index": 700000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 702000000,
+      "cas_feature_index": 702000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 704000000,
+      "cas_feature_index": 704000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 706000000,
+      "cas_feature_index": 706000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 708000000,
+      "cas_feature_index": 708000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 710000000,
+      "cas_feature_index": 710000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 712000000,
+      "cas_feature_index": 712000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 714000000,
+      "cas_feature_index": 714000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 716000000,
+      "cas_feature_index": 716000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 718000000,
+      "cas_feature_index": 718000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 720000000,
+      "cas_feature_index": 720000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 722000000,
+      "cas_feature_index": 722000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 724000000,
+      "cas_feature_index": 724000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 726000000,
+      "cas_feature_index": 726000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 728000000,
+      "cas_feature_index": 728000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 730000000,
+      "cas_feature_index": 730000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 732000000,
+      "cas_feature_index": 732000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 734000000,
+      "cas_feature_index": 734000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 736000000,
+      "cas_feature_index": 736000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 738000000,
+      "cas_feature_index": 738000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 740000000,
+      "cas_feature_index": 740000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 742000000,
+      "cas_feature_index": 742000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 744000000,
+      "cas_feature_index": 744000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 746000000,
+      "cas_feature_index": 746000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 748000000,
+      "cas_feature_index": 748000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 750000000,
+      "cas_feature_index": 750000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 752000000,
+      "cas_feature_index": 752000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 754000000,
+      "cas_feature_index": 754000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 756000000,
+      "cas_feature_index": 756000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 758000000,
+      "cas_feature_index": 758000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 760000000,
+      "cas_feature_index": 760000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 762000000,
+      "cas_feature_index": 762000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 764000000,
+      "cas_feature_index": 764000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 766000000,
+      "cas_feature_index": 766000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 768000000,
+      "cas_feature_index": 768000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 770000000,
+      "cas_feature_index": 770000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 772000000,
+      "cas_feature_index": 772000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 774000000,
+      "cas_feature_index": 774000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 776000000,
+      "cas_feature_index": 776000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 778000000,
+      "cas_feature_index": 778000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 780000000,
+      "cas_feature_index": 780000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 782000000,
+      "cas_feature_index": 782000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 784000000,
+      "cas_feature_index": 784000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 786000000,
+      "cas_feature_index": 786000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 788000000,
+      "cas_feature_index": 788000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 790000000,
+      "cas_feature_index": 790000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 792000000,
+      "cas_feature_index": 792000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 794000000,
+      "cas_feature_index": 794000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 796000000,
+      "cas_feature_index": 796000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 798000000,
+      "cas_feature_index": 798000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 800000000,
+      "cas_feature_index": 800000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 802000000,
+      "cas_feature_index": 802000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 804000000,
+      "cas_feature_index": 804000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 806000000,
+      "cas_feature_index": 806000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 808000000,
+      "cas_feature_index": 808000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 810000000,
+      "cas_feature_index": 810000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 812000000,
+      "cas_feature_index": 812000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 814000000,
+      "cas_feature_index": 814000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 816000000,
+      "cas_feature_index": 816000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 818000000,
+      "cas_feature_index": 818000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 820000000,
+      "cas_feature_index": 820000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 822000000,
+      "cas_feature_index": 822000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 824000000,
+      "cas_feature_index": 824000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 826000000,
+      "cas_feature_index": 826000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 828000000,
+      "cas_feature_index": 828000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 830000000,
+      "cas_feature_index": 830000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 832000000,
+      "cas_feature_index": 832000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 834000000,
+      "cas_feature_index": 834000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 836000000,
+      "cas_feature_index": 836000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 838000000,
+      "cas_feature_index": 838000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 840000000,
+      "cas_feature_index": 840000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 842000000,
+      "cas_feature_index": 842000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 844000000,
+      "cas_feature_index": 844000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 846000000,
+      "cas_feature_index": 846000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 848000000,
+      "cas_feature_index": 848000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 850000000,
+      "cas_feature_index": 850000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 852000000,
+      "cas_feature_index": 852000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 854000000,
+      "cas_feature_index": 854000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 856000000,
+      "cas_feature_index": 856000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 858000000,
+      "cas_feature_index": 858000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 860000000,
+      "cas_feature_index": 860000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 862000000,
+      "cas_feature_index": 862000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 864000000,
+      "cas_feature_index": 864000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 866000000,
+      "cas_feature_index": 866000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 868000000,
+      "cas_feature_index": 868000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 870000000,
+      "cas_feature_index": 870000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 872000000,
+      "cas_feature_index": 872000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 874000000,
+      "cas_feature_index": 874000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 876000000,
+      "cas_feature_index": 876000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 878000000,
+      "cas_feature_index": 878000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 880000000,
+      "cas_feature_index": 880000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 882000000,
+      "cas_feature_index": 882000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 884000000,
+      "cas_feature_index": 884000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 886000000,
+      "cas_feature_index": 886000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 888000000,
+      "cas_feature_index": 888000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 890000000,
+      "cas_feature_index": 890000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 892000000,
+      "cas_feature_index": 892000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 894000000,
+      "cas_feature_index": 894000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 896000000,
+      "cas_feature_index": 896000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 898000000,
+      "cas_feature_index": 898000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 900000000,
+      "cas_feature_index": 900000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 902000000,
+      "cas_feature_index": 902000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 904000000,
+      "cas_feature_index": 904000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 906000000,
+      "cas_feature_index": 906000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 908000000,
+      "cas_feature_index": 908000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 910000000,
+      "cas_feature_index": 910000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 912000000,
+      "cas_feature_index": 912000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 914000000,
+      "cas_feature_index": 914000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 916000000,
+      "cas_feature_index": 916000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 918000000,
+      "cas_feature_index": 918000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 920000000,
+      "cas_feature_index": 920000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 922000000,
+      "cas_feature_index": 922000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 924000000,
+      "cas_feature_index": 924000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 926000000,
+      "cas_feature_index": 926000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 928000000,
+      "cas_feature_index": 928000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 930000000,
+      "cas_feature_index": 930000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 932000000,
+      "cas_feature_index": 932000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 934000000,
+      "cas_feature_index": 934000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 936000000,
+      "cas_feature_index": 936000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 938000000,
+      "cas_feature_index": 938000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 940000000,
+      "cas_feature_index": 940000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 942000000,
+      "cas_feature_index": 942000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 944000000,
+      "cas_feature_index": 944000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 946000000,
+      "cas_feature_index": 946000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 948000000,
+      "cas_feature_index": 948000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 950000000,
+      "cas_feature_index": 950000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 952000000,
+      "cas_feature_index": 952000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 954000000,
+      "cas_feature_index": 954000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 956000000,
+      "cas_feature_index": 956000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 958000000,
+      "cas_feature_index": 958000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 960000000,
+      "cas_feature_index": 960000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 962000000,
+      "cas_feature_index": 962000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 964000000,
+      "cas_feature_index": 964000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 966000000,
+      "cas_feature_index": 966000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 968000000,
+      "cas_feature_index": 968000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 970000000,
+      "cas_feature_index": 970000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 972000000,
+      "cas_feature_index": 972000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 974000000,
+      "cas_feature_index": 974000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 976000000,
+      "cas_feature_index": 976000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 978000000,
+      "cas_feature_index": 978000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 980000000,
+      "cas_feature_index": 980000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 982000000,
+      "cas_feature_index": 982000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 984000000,
+      "cas_feature_index": 984000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 986000000,
+      "cas_feature_index": 986000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 988000000,
+      "cas_feature_index": 988000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 990000000,
+      "cas_feature_index": 990000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 992000000,
+      "cas_feature_index": 992000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 994000000,
+      "cas_feature_index": 994000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 996000000,
+      "cas_feature_index": 996000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 998000000,
+      "cas_feature_index": 998000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1000000000,
+      "cas_feature_index": 1000000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1002000000,
+      "cas_feature_index": 1002000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1004000000,
+      "cas_feature_index": 1004000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1006000000,
+      "cas_feature_index": 1006000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1008000000,
+      "cas_feature_index": 1008000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1010000000,
+      "cas_feature_index": 1010000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1012000000,
+      "cas_feature_index": 1012000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1014000000,
+      "cas_feature_index": 1014000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1016000000,
+      "cas_feature_index": 1016000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1018000000,
+      "cas_feature_index": 1018000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1020000000,
+      "cas_feature_index": 1020000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1022000000,
+      "cas_feature_index": 1022000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1024000000,
+      "cas_feature_index": 1024000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1026000000,
+      "cas_feature_index": 1026000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1028000000,
+      "cas_feature_index": 1028000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1030000000,
+      "cas_feature_index": 1030000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1032000000,
+      "cas_feature_index": 1032000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1034000000,
+      "cas_feature_index": 1034000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1036000000,
+      "cas_feature_index": 1036000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1038000000,
+      "cas_feature_index": 1038000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1040000000,
+      "cas_feature_index": 1040000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1042000000,
+      "cas_feature_index": 1042000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1044000000,
+      "cas_feature_index": 1044000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1046000000,
+      "cas_feature_index": 1046000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1048000000,
+      "cas_feature_index": 1048000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1050000000,
+      "cas_feature_index": 1050000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1052000000,
+      "cas_feature_index": 1052000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1054000000,
+      "cas_feature_index": 1054000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1056000000,
+      "cas_feature_index": 1056000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1058000000,
+      "cas_feature_index": 1058000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1060000000,
+      "cas_feature_index": 1060000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1062000000,
+      "cas_feature_index": 1062000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1064000000,
+      "cas_feature_index": 1064000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1066000000,
+      "cas_feature_index": 1066000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1068000000,
+      "cas_feature_index": 1068000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1070000000,
+      "cas_feature_index": 1070000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1072000000,
+      "cas_feature_index": 1072000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1074000000,
+      "cas_feature_index": 1074000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1076000000,
+      "cas_feature_index": 1076000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1078000000,
+      "cas_feature_index": 1078000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1080000000,
+      "cas_feature_index": 1080000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1082000000,
+      "cas_feature_index": 1082000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1084000000,
+      "cas_feature_index": 1084000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1086000000,
+      "cas_feature_index": 1086000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1088000000,
+      "cas_feature_index": 1088000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1090000000,
+      "cas_feature_index": 1090000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1092000000,
+      "cas_feature_index": 1092000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1094000000,
+      "cas_feature_index": 1094000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1096000000,
+      "cas_feature_index": 1096000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1098000000,
+      "cas_feature_index": 1098000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1100000000,
+      "cas_feature_index": 1100000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1102000000,
+      "cas_feature_index": 1102000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1104000000,
+      "cas_feature_index": 1104000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1106000000,
+      "cas_feature_index": 1106000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1108000000,
+      "cas_feature_index": 1108000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1110000000,
+      "cas_feature_index": 1110000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1112000000,
+      "cas_feature_index": 1112000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1114000000,
+      "cas_feature_index": 1114000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1116000000,
+      "cas_feature_index": 1116000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1118000000,
+      "cas_feature_index": 1118000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1120000000,
+      "cas_feature_index": 1120000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1122000000,
+      "cas_feature_index": 1122000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1124000000,
+      "cas_feature_index": 1124000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1126000000,
+      "cas_feature_index": 1126000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1128000000,
+      "cas_feature_index": 1128000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1130000000,
+      "cas_feature_index": 1130000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1132000000,
+      "cas_feature_index": 1132000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1134000000,
+      "cas_feature_index": 1134000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1136000000,
+      "cas_feature_index": 1136000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1138000000,
+      "cas_feature_index": 1138000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1140000000,
+      "cas_feature_index": 1140000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1142000000,
+      "cas_feature_index": 1142000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1144000000,
+      "cas_feature_index": 1144000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1146000000,
+      "cas_feature_index": 1146000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1148000000,
+      "cas_feature_index": 1148000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1150000000,
+      "cas_feature_index": 1150000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1152000000,
+      "cas_feature_index": 1152000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1154000000,
+      "cas_feature_index": 1154000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1156000000,
+      "cas_feature_index": 1156000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1158000000,
+      "cas_feature_index": 1158000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1160000000,
+      "cas_feature_index": 1160000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1162000000,
+      "cas_feature_index": 1162000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1164000000,
+      "cas_feature_index": 1164000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1166000000,
+      "cas_feature_index": 1166000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1168000000,
+      "cas_feature_index": 1168000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1170000000,
+      "cas_feature_index": 1170000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1172000000,
+      "cas_feature_index": 1172000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1174000000,
+      "cas_feature_index": 1174000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1176000000,
+      "cas_feature_index": 1176000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1178000000,
+      "cas_feature_index": 1178000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1180000000,
+      "cas_feature_index": 1180000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1182000000,
+      "cas_feature_index": 1182000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1184000000,
+      "cas_feature_index": 1184000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1186000000,
+      "cas_feature_index": 1186000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1188000000,
+      "cas_feature_index": 1188000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1190000000,
+      "cas_feature_index": 1190000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1192000000,
+      "cas_feature_index": 1192000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1194000000,
+      "cas_feature_index": 1194000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1196000000,
+      "cas_feature_index": 1196000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1198000000,
+      "cas_feature_index": 1198000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1200000000,
+      "cas_feature_index": 1200000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1202000000,
+      "cas_feature_index": 1202000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1204000000,
+      "cas_feature_index": 1204000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1206000000,
+      "cas_feature_index": 1206000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1208000000,
+      "cas_feature_index": 1208000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1210000000,
+      "cas_feature_index": 1210000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1212000000,
+      "cas_feature_index": 1212000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1214000000,
+      "cas_feature_index": 1214000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1216000000,
+      "cas_feature_index": 1216000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1218000000,
+      "cas_feature_index": 1218000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1220000000,
+      "cas_feature_index": 1220000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1222000000,
+      "cas_feature_index": 1222000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1224000000,
+      "cas_feature_index": 1224000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1226000000,
+      "cas_feature_index": 1226000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1228000000,
+      "cas_feature_index": 1228000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1230000000,
+      "cas_feature_index": 1230000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1232000000,
+      "cas_feature_index": 1232000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1234000000,
+      "cas_feature_index": 1234000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1236000000,
+      "cas_feature_index": 1236000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1238000000,
+      "cas_feature_index": 1238000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1240000000,
+      "cas_feature_index": 1240000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1242000000,
+      "cas_feature_index": 1242000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1244000000,
+      "cas_feature_index": 1244000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1246000000,
+      "cas_feature_index": 1246000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1248000000,
+      "cas_feature_index": 1248000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1250000000,
+      "cas_feature_index": 1250000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1252000000,
+      "cas_feature_index": 1252000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1254000000,
+      "cas_feature_index": 1254000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1256000000,
+      "cas_feature_index": 1256000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1258000000,
+      "cas_feature_index": 1258000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1260000000,
+      "cas_feature_index": 1260000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1262000000,
+      "cas_feature_index": 1262000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1264000000,
+      "cas_feature_index": 1264000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1266000000,
+      "cas_feature_index": 1266000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1268000000,
+      "cas_feature_index": 1268000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1270000000,
+      "cas_feature_index": 1270000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1272000000,
+      "cas_feature_index": 1272000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1274000000,
+      "cas_feature_index": 1274000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1276000000,
+      "cas_feature_index": 1276000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1278000000,
+      "cas_feature_index": 1278000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1280000000,
+      "cas_feature_index": 1280000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1282000000,
+      "cas_feature_index": 1282000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1284000000,
+      "cas_feature_index": 1284000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1286000000,
+      "cas_feature_index": 1286000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1288000000,
+      "cas_feature_index": 1288000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1290000000,
+      "cas_feature_index": 1290000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1292000000,
+      "cas_feature_index": 1292000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1294000000,
+      "cas_feature_index": 1294000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1296000000,
+      "cas_feature_index": 1296000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1298000000,
+      "cas_feature_index": 1298000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1300000000,
+      "cas_feature_index": 1300000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1302000000,
+      "cas_feature_index": 1302000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1304000000,
+      "cas_feature_index": 1304000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1306000000,
+      "cas_feature_index": 1306000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1308000000,
+      "cas_feature_index": 1308000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1310000000,
+      "cas_feature_index": 1310000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1312000000,
+      "cas_feature_index": 1312000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1314000000,
+      "cas_feature_index": 1314000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1316000000,
+      "cas_feature_index": 1316000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1318000000,
+      "cas_feature_index": 1318000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1320000000,
+      "cas_feature_index": 1320000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1322000000,
+      "cas_feature_index": 1322000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1324000000,
+      "cas_feature_index": 1324000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1326000000,
+      "cas_feature_index": 1326000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1328000000,
+      "cas_feature_index": 1328000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1330000000,
+      "cas_feature_index": 1330000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1332000000,
+      "cas_feature_index": 1332000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1334000000,
+      "cas_feature_index": 1334000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1336000000,
+      "cas_feature_index": 1336000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1338000000,
+      "cas_feature_index": 1338000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1340000000,
+      "cas_feature_index": 1340000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1342000000,
+      "cas_feature_index": 1342000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1344000000,
+      "cas_feature_index": 1344000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1346000000,
+      "cas_feature_index": 1346000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1348000000,
+      "cas_feature_index": 1348000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1350000000,
+      "cas_feature_index": 1350000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1352000000,
+      "cas_feature_index": 1352000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1354000000,
+      "cas_feature_index": 1354000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1356000000,
+      "cas_feature_index": 1356000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1358000000,
+      "cas_feature_index": 1358000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1360000000,
+      "cas_feature_index": 1360000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1362000000,
+      "cas_feature_index": 1362000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1364000000,
+      "cas_feature_index": 1364000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1366000000,
+      "cas_feature_index": 1366000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1368000000,
+      "cas_feature_index": 1368000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1370000000,
+      "cas_feature_index": 1370000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1372000000,
+      "cas_feature_index": 1372000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1374000000,
+      "cas_feature_index": 1374000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1376000000,
+      "cas_feature_index": 1376000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1378000000,
+      "cas_feature_index": 1378000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1380000000,
+      "cas_feature_index": 1380000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1382000000,
+      "cas_feature_index": 1382000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1384000000,
+      "cas_feature_index": 1384000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1386000000,
+      "cas_feature_index": 1386000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1388000000,
+      "cas_feature_index": 1388000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1390000000,
+      "cas_feature_index": 1390000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1392000000,
+      "cas_feature_index": 1392000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1394000000,
+      "cas_feature_index": 1394000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1396000000,
+      "cas_feature_index": 1396000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1398000000,
+      "cas_feature_index": 1398000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1400000000,
+      "cas_feature_index": 1400000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1402000000,
+      "cas_feature_index": 1402000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1404000000,
+      "cas_feature_index": 1404000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1406000000,
+      "cas_feature_index": 1406000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1408000000,
+      "cas_feature_index": 1408000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1410000000,
+      "cas_feature_index": 1410000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1412000000,
+      "cas_feature_index": 1412000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1414000000,
+      "cas_feature_index": 1414000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1416000000,
+      "cas_feature_index": 1416000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1418000000,
+      "cas_feature_index": 1418000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1420000000,
+      "cas_feature_index": 1420000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1422000000,
+      "cas_feature_index": 1422000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1424000000,
+      "cas_feature_index": 1424000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1426000000,
+      "cas_feature_index": 1426000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1428000000,
+      "cas_feature_index": 1428000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1430000000,
+      "cas_feature_index": 1430000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1432000000,
+      "cas_feature_index": 1432000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1434000000,
+      "cas_feature_index": 1434000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1436000000,
+      "cas_feature_index": 1436000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1438000000,
+      "cas_feature_index": 1438000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1440000000,
+      "cas_feature_index": 1440000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1442000000,
+      "cas_feature_index": 1442000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1444000000,
+      "cas_feature_index": 1444000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1446000000,
+      "cas_feature_index": 1446000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1448000000,
+      "cas_feature_index": 1448000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1450000000,
+      "cas_feature_index": 1450000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1452000000,
+      "cas_feature_index": 1452000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1454000000,
+      "cas_feature_index": 1454000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1456000000,
+      "cas_feature_index": 1456000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1458000000,
+      "cas_feature_index": 1458000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1460000000,
+      "cas_feature_index": 1460000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1462000000,
+      "cas_feature_index": 1462000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1464000000,
+      "cas_feature_index": 1464000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1466000000,
+      "cas_feature_index": 1466000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1468000000,
+      "cas_feature_index": 1468000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1470000000,
+      "cas_feature_index": 1470000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1472000000,
+      "cas_feature_index": 1472000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1474000000,
+      "cas_feature_index": 1474000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1476000000,
+      "cas_feature_index": 1476000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1478000000,
+      "cas_feature_index": 1478000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1480000000,
+      "cas_feature_index": 1480000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1482000000,
+      "cas_feature_index": 1482000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1484000000,
+      "cas_feature_index": 1484000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1486000000,
+      "cas_feature_index": 1486000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1488000000,
+      "cas_feature_index": 1488000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1490000000,
+      "cas_feature_index": 1490000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1492000000,
+      "cas_feature_index": 1492000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1494000000,
+      "cas_feature_index": 1494000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1496000000,
+      "cas_feature_index": 1496000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1498000000,
+      "cas_feature_index": 1498000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1500000000,
+      "cas_feature_index": 1500000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1502000000,
+      "cas_feature_index": 1502000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1504000000,
+      "cas_feature_index": 1504000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1506000000,
+      "cas_feature_index": 1506000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1508000000,
+      "cas_feature_index": 1508000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1510000000,
+      "cas_feature_index": 1510000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1512000000,
+      "cas_feature_index": 1512000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1514000000,
+      "cas_feature_index": 1514000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1516000000,
+      "cas_feature_index": 1516000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1518000000,
+      "cas_feature_index": 1518000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1520000000,
+      "cas_feature_index": 1520000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1522000000,
+      "cas_feature_index": 1522000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1524000000,
+      "cas_feature_index": 1524000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1526000000,
+      "cas_feature_index": 1526000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1528000000,
+      "cas_feature_index": 1528000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1530000000,
+      "cas_feature_index": 1530000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1532000000,
+      "cas_feature_index": 1532000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1534000000,
+      "cas_feature_index": 1534000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1536000000,
+      "cas_feature_index": 1536000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1538000000,
+      "cas_feature_index": 1538000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1540000000,
+      "cas_feature_index": 1540000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1542000000,
+      "cas_feature_index": 1542000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1544000000,
+      "cas_feature_index": 1544000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1546000000,
+      "cas_feature_index": 1546000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1548000000,
+      "cas_feature_index": 1548000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1550000000,
+      "cas_feature_index": 1550000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1552000000,
+      "cas_feature_index": 1552000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1554000000,
+      "cas_feature_index": 1554000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1556000000,
+      "cas_feature_index": 1556000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1558000000,
+      "cas_feature_index": 1558000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1560000000,
+      "cas_feature_index": 1560000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1562000000,
+      "cas_feature_index": 1562000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1564000000,
+      "cas_feature_index": 1564000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1566000000,
+      "cas_feature_index": 1566000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1568000000,
+      "cas_feature_index": 1568000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1570000000,
+      "cas_feature_index": 1570000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1572000000,
+      "cas_feature_index": 1572000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1574000000,
+      "cas_feature_index": 1574000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1576000000,
+      "cas_feature_index": 1576000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1578000000,
+      "cas_feature_index": 1578000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1580000000,
+      "cas_feature_index": 1580000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1582000000,
+      "cas_feature_index": 1582000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1584000000,
+      "cas_feature_index": 1584000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1586000000,
+      "cas_feature_index": 1586000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1588000000,
+      "cas_feature_index": 1588000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1590000000,
+      "cas_feature_index": 1590000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1592000000,
+      "cas_feature_index": 1592000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1594000000,
+      "cas_feature_index": 1594000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1596000000,
+      "cas_feature_index": 1596000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1598000000,
+      "cas_feature_index": 1598000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1600000000,
+      "cas_feature_index": 1600000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1602000000,
+      "cas_feature_index": 1602000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1604000000,
+      "cas_feature_index": 1604000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/44531dd9_liver.h5ad",
+      "cas_cell_index": 1606000000,
+      "cas_feature_index": 1606000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/62ef75e4_immune_cross_tissue.h5ad",
+      "cas_cell_index": 1608000000,
+      "cas_feature_index": 1608000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/6f6d381a_lung.h5ad",
+      "cas_cell_index": 1610000000,
+      "cas_feature_index": 1610000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/8f126edf_immune_covid.h5ad",
+      "cas_cell_index": 1612000000,
+      "cas_feature_index": 1612000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/a3ffde6c_gtex.h5ad",
+      "cas_cell_index": 1614000000,
+      "cas_feature_index": 1614000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/af893e86_retina.h5ad",
+      "cas_cell_index": 1616000000,
+      "cas_feature_index": 1616000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/b52eb423_heart.h5ad",
+      "cas_cell_index": 1618000000,
+      "cas_feature_index": 1618000000
+    },
+    {
+      "df_filename": "dec_2022_demo/h5ad/e5f58829_tabula_sapiens.h5ad",
+      "cas_cell_index": 1620000000,
+      "cas_feature_index": 1620000000
+    }
+  ]
+}

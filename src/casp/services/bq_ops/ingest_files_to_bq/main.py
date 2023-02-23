@@ -36,16 +36,17 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
                     gcs_stage_dir=gcs_stage_dir,
                     credentials=credentials,
                 )
-            except Forbidden:
+            except Exception as e:
                 # It can happen when limit of number of table update operations is exceeded
                 # Retrying the operation 5 times with an exponential backoff as suggested in the docs:
                 # https://cloud.google.com/bigquery/quotas#standard_tables
-                print("Was not able to ingest data")
+                print("Was not able to ingest data", e)
                 time_to_wait = math.exp(attempt_counter)
                 time.sleep(time_to_wait)
                 if attempt_counter <= 5:
                     print("Retrying another attempt...")
             else:
+                print("IN ELSE")
                 need_retry = False
 
             attempt_counter += 1
