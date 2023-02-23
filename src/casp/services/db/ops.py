@@ -6,7 +6,7 @@ if t.TYPE_CHECKING:
     from casp.services.db import models
 
 
-def increment_user_cells_processed(user: models.User, number_of_cells: int) -> None:
+def increment_user_cells_processed(user: "models.User", number_of_cells: int) -> None:
     """
     Increment `requests_processed` and `cells_processed user stats`.
     :param user: A SQLAlchemy user model
