@@ -1,7 +1,7 @@
 import argparse
 
 import fastavro
-from google.cloud import bigquery, storage
+from google.cloud import bigquery
 
 from casp.services import utils
 
