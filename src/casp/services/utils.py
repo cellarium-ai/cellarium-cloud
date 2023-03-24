@@ -38,7 +38,8 @@ def list_blobs(bucket_name: str, prefix: t.Optional[str] = None) -> storage.Blob
 
 
 def delete_folder_from_bucket(bucket_name: str, folder_name: str) -> None:
-    storage_client = storage.Client()
+    credentials, project_id = get_google_service_credentials()
+    storage_client = storage.Client(credentials=credentials, project=project_id)
     bucket = storage_client.get_bucket(bucket_name)
     blobs = list(bucket.list_blobs(prefix=folder_name))
     bucket.delete_blobs(blobs)

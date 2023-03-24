@@ -1,0 +1,4 @@
+{
+  "CASPrepareExtractBQ.prepare_extract.bq_dataset": "benchmark_march_test_10k",
+  "CASPrepareExtractBQ.prepare_extract.extract_table_prefix": "fg_extract"
+}

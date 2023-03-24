@@ -11,8 +11,22 @@ def main(
     gcs_file_path: str,
     cas_cell_index_start: int,
     cas_feature_index_start: int,
-    gcs_stage_prefix: str,
+    gcs_stage_dir: str,
 ) -> None:
+    """
+    Create ingest files that can be read by BigQuery for data ingestion.
+    This is a wrapper around `casp.bq_scripts.anndata_to_avro`
+    Features:
+    1. Download anndata file from the specified bucket location (wrapper before logic)
+    2. Activate `casp.bq_scripts.anndata_to_avro` script (wrapped script)
+    3. Upload all outputs from the script to the specified bucket (wrapper after logic)
+
+    :param gcs_bucket_name: Working bucket name
+    :param gcs_file_path: File path that needs to be processed
+    :param cas_cell_index_start:  Starting number for cell index
+    :param cas_feature_index_start:  Starting number for feature index
+    :param gcs_stage_dir: Name of the directory in google bucket
+    """
     filename = f"{secrets.token_hex()}.h5ad"
     utils.download_file_from_bucket(
         bucket_name=gcs_bucket_name, source_blob_name=gcs_file_path, destination_file_name=filename
@@ -34,7 +48,7 @@ def main(
 
     for filename in ingest_files:
         utils.upload_file_to_bucket(
-            local_file_name=filename, bucket=gcs_bucket_name, blob_name=f"{gcs_stage_prefix}/{filename}"
+            local_file_name=filename, bucket=gcs_bucket_name, blob_name=f"{gcs_stage_dir}/{filename}"
         )
 
 
@@ -45,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("--gcs_input_bucket", type=str, help="AnnData format input file", required=True)
     parser.add_argument("--gcs_file_path", type=str, help="AnnData format input file", required=True)
     parser.add_argument(
-        "--gcs_stage_prefix", type=str, help="GCS prefix to which Avro files should be staged", required=True
+        "--gcs_stage_dir", type=str, help="GCS prefix to which Avro files should be staged", required=True
     )
 
     parser.add_argument("--cas_cell_index_start", type=int, help="starting number for cell index", required=False)
@@ -58,5 +72,5 @@ if __name__ == "__main__":
         gcs_file_path=args.gcs_file_path,
         cas_cell_index_start=args.cas_cell_index_start,
         cas_feature_index_start=args.cas_feature_index_start,
-        gcs_stage_prefix=args.gcs_stage_prefix,
+        gcs_stage_dir=args.gcs_stage_dir,
     )

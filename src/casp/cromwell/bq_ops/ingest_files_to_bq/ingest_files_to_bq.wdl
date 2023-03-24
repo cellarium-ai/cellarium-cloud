@@ -14,7 +14,7 @@ task ingest_files_to_bq {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-manual/cas-pytorch:fg-extract-01"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:v0.2"
         bootDiskSizeGb: 25
         memory: "1G"
         cpu: 1

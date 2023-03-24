@@ -1,0 +1,2 @@
+# BQ Ops Services
+These are wrappers around the code in `casp.bq_scripts`. These wrappers try to follow the conventions of the old scripts from `casp.bq_scripts` to avoid massive code base change in one time.   Each of the `bq_ops` service has it's own cromwell workflow in `casp.cromwell.bq_ops`.

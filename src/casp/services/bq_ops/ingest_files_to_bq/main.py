@@ -16,6 +16,20 @@ def get_avro_prefixes(bucket_name, gcs_stage_dir):
 
 
 def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_files: bool = False):
+    """
+    Ingest previously create ingest files to BigQuery.
+    This is a wrapper around `casp.bq_scripts.ingest_data_to_bq`
+    Features:
+    1. Create BQ table if it doesn't exist yet (wrapper before)
+    2. Activate `casp.bq_scripts.ingest_data_to_bq` with up to 5 attempts with delays
+        if unsuccessful (wrapped script)
+    3. Optionally remove ingest file directory from the bucket (wrapper after)
+
+    :param dataset: Working BigQuery dataset
+    :param gcs_bucket_name: Working bucket name
+    :param gcs_stage_dir: Name of the directory in google bucket where the ingest files are stored
+    :param delete_ingest_files: Flag switching the ingest file removal after the script executed
+    """
     credentials, project_id = utils.get_google_service_credentials()
     bq_client = bigquery.Client(project=project_id, credentials=credentials)
     create_bigquery_objects(client=bq_client, project=project_id, dataset=dataset)

@@ -2,7 +2,7 @@ task anndata_to_ingest_files {
     String version = "anndata_to_files_v1.0.0"
     String gcs_input_bucket
     String gcs_file_path
-    String gcs_stage_prefix
+    String gcs_stage_dir
     Int cas_cell_index_start
     Int cas_feature_index_start
 
@@ -13,13 +13,13 @@ task anndata_to_ingest_files {
         python casp/services/bq_ops/anndata_to_ingest_files/main.py \
         --gcs_input_bucket ${gcs_input_bucket} \
         --gcs_file_path ${gcs_file_path} \
-        --gcs_stage_prefix ${gcs_stage_prefix} \
+        --gcs_stage_dir ${gcs_stage_dir} \
         --cas_cell_index_start ${cas_cell_index_start} \
         --cas_feature_index_start ${cas_feature_index_start}
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-manual/cas-pytorch:fg-extract-01"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:v0.2"
         bootDiskSizeGb: 50
         memory: "16G"
         cpu: 8

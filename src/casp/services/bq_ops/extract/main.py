@@ -17,7 +17,7 @@ def extract_task(
     output_bucket_directory: str,
 ) -> None:
     """
-    Wrapper around `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
+    Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
     one bin at a time and saves the output anndata file to a GCS bucket.
 
     :param dataset: BigQuery Dataset
@@ -52,7 +52,11 @@ def main(
     output_bucket_directory: str,
 ) -> None:
     """
-    Run extract tasks concurrently: 1 task per CPU core
+    Extract anndatafiles from bigquery extract tables. Run extract tasks concurrently: 1 task per CPU core
+    This is a wrapper around `casp.bq_scripts.extract_minibatch_to_anndata`
+    Features:
+    1. Concurrently activate `casp.bq_scripts.extract_minibatch_to_anndata` multiple times (wrapped script)
+    2. Upload script output to the bucket (wrapper after)
 
     :param dataset: BigQuery Dataset
     :param extract_table_prefix: Prefix of extract tables

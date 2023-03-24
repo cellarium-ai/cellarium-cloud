@@ -107,13 +107,21 @@ def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bi
     return main_query
 
 
-def prepare_extract_matrix(client, project, dataset, extract_table_prefix):
+def prepare_extract_matrix(
+    client, project, dataset, extract_table_prefix, partition_bin_count=40000, partition_size=10
+):
     """
-    create extract table of count data -- remapping feature identifiers, and including batch identifier
+    Create extract table of count data -- remapping feature identifiers, and including batch identifier
+
+    :param partition_bin_count: Number of partition bins that is used by BigQuery to optimize future queries
+    :param partition_size: A size of each of the partition bins
+
+    For more info on BigQuery partitioning refer to
+    https://cloud.google.com/bigquery/docs/partitioned-tables
     """
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_raw_count_matrix`
-        PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,40000,10))
+        PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
         CLUSTER BY extract_bin
         AS
         SELECT  b.extract_bin,
