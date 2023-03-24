@@ -17,6 +17,8 @@ class AllEnvSettings(BaseSettings):
     # PCA Model serving
     PCA_MODEL_BUCKET_NAME: str = "fedor-test-bucket"
     PCA_MODEL_BLOB_NAME: str = "models/dump_manager_002.pickle"
+    # Model Training
+    NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
