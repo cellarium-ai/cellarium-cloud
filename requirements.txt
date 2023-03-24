@@ -23,6 +23,6 @@ gunicorn==20.1.0
 pg8000==1.29.4
 cloud-sql-python-connector==1.1.0
 neptune-client==0.16.15
-umap-learn==0.5.3
-matplotlib==3.6.2
+umap-learn
+matplotlib
 pandas

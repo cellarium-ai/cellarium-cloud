@@ -1,24 +1,23 @@
 import argparse
 import time
 
-import torch
-from google.cloud import storage
-from google.cloud import bigquery
+import matplotlib.pyplot as plt
 import neptune.new as neptune
-import umap
-from torch.utils.data import DataLoader
-from sklearn.preprocessing import StandardScaler
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import torch
+import umap
+from google.cloud import bigquery, storage
+from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader
 
 from casp.ml.data import transforms
 from casp.ml.data.dataset import CASDataset
 from casp.ml.dump_manager import DumpManager
 from casp.ml.models.pca_lowrank import LowRankIncrementalPCA
 from casp.ml.running_stats import OnePassMeanVarStd
-from casp.services.utils import get_google_service_credentials
 from casp.services import settings
+from casp.services.utils import get_google_service_credentials
 
 
 def save_check_point(model, running_stat, t, bucket, postfix, save_path, use_gpu):
