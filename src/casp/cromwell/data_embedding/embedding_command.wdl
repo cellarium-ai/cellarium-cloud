@@ -9,7 +9,6 @@ task embed {
     command {
         echo $(pwd)
         cd /app
-        echo $running_script
         python ${running_script} \
         --bucket_name=${bucket_name} \
         --data_storage_path=${data_storage_path} \
@@ -18,7 +17,7 @@ task embed {
     }
 
     runtime {
-        docker: "us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0-gpu"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:fg-test-pca-lowrank-21"
         bootDiskSizeGb: 100
         memory: "26G"
         cpu: 4

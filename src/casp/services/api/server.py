@@ -144,11 +144,18 @@ async def __annotate(file):
     return d
 
 
+@app.get("/list-models", response_model=t.List[schemas.CASModel])
+async def list_models(
+    request_user: models.User = Depends(authenticate_user),
+):
+    return ops.get_models_for_user(user=request_user)
+
+
 @app.post("/annotate", response_model=t.List[schemas.QueryCell])
 async def annotate(
-    myfile: UploadFile = File(),
-    number_of_cells: int = Form(),
-    request_user: models.User = Depends(authenticate_user),
+        myfile: UploadFile = File(),
+        number_of_cells: int = Form(),
+        request_user: models.User = Depends(authenticate_user),
 ):
     ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
     return await __annotate(myfile.file)
@@ -156,5 +163,6 @@ async def annotate(
 
 if __name__ == "__main__":
     uvicorn.run(
-        "server:app", host=settings.SERVER_HOST, port=settings.SERVER_PORT, workers=multiprocessing.cpu_count() * 2 + 1
+        "server:app", host=settings.SERVER_HOST, port=settings.SERVER_PORT,
+        # workers=multiprocessing.cpu_count() * 2 + 1
     )
