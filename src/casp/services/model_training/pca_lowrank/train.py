@@ -74,6 +74,8 @@ def get_celltypes(cas_ids):
         else:
             cell_types_simplified.append("other")
 
+    return cell_types_simplified
+
 
 def train(dataloader, model, one_pass, t, bucket, checkpoint_save_path, use_gpu):
     start = time.time()

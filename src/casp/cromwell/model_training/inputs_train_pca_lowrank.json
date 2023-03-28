@@ -1,9 +1,9 @@
 {
-  "CASPModelTrain.bucket_name": "dsp-cell-annotation-service",
-  "CASPModelTrain.data_storage_path": "benchmark_v1",
-  "CASPModelTrain.checkpoint_save_path": "pca_lowrank_b_512_q_5000",
-  "CASPModelTrain.n_components": 512,
-  "CASPModelTrain.q": 5000,
-  "CASPModelTrain.batch_size": 10000,
-  "CASPModelTrain.use_gpu": true
+  "CASTrainPCALowrank.bucket_name": "dsp-cell-annotation-service",
+  "CASTrainPCALowrank.data_storage_path": "benchmark_v1",
+  "CASTrainPCALowrank.checkpoint_save_path": "pca_lowrank_new",
+  "CASTrainPCALowrank.n_components": 512,
+  "CASTrainPCALowrank.q": 5000,
+  "CASTrainPCALowrank.batch_size": 10000,
+  "CASTrainPCALowrank.use_gpu": false
 }
