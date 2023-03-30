@@ -4,9 +4,10 @@ USER root
 
 # Install Dependencies
 COPY requirements.txt .
-python3 -m pip install --upgrade pip
-python3 -m pip install --upgrade openssl
+RUN pip install --upgrade pip
+RUN pip install cryptography==38.0.4
 RUN pip install -r requirements.txt
+
 
 # Copy Files and Secrets
 COPY src .

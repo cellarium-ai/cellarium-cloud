@@ -1,3 +1,8 @@
+import os
+cache_dir = os.path.expanduser('~/.umap')
+if os.path.exists(cache_dir):
+    os.system('rm -r {}'.format(cache_dir))
+
 import argparse
 import time
 
