@@ -1,19 +1,15 @@
-import os
-cache_dir = os.path.expanduser('~/.umap')
-if os.path.exists(cache_dir):
-    os.system('rm -r {}'.format(cache_dir))
-
 import argparse
 import time
 
 import matplotlib.pyplot as plt
-import neptune.new as neptune
+import neptune
 import numpy as np
 import pandas as pd
 import torch
-import umap
+# import umap
 from google.cloud import bigquery, storage
 from sklearn.preprocessing import StandardScaler
+from sklearn.manifold import TSNE
 from torch.utils.data import DataLoader
 
 from casp.ml.data import transforms
@@ -120,8 +116,10 @@ def evaluation(dataloader, model, experiment):
     embeddings = torch.vstack(embeddings).cpu()
     cell_types = np.array(cell_types)
     ct_unique = np.unique(cell_types)
-    reducer = umap.UMAP()
-    scaled_embeddings = StandardScaler().fit_transform(embeddings)
+    # reducer = umap.UMAP()
+    reducer = TSNE()
+    # scaled_embeddings = StandardScaler().fit_transform(embeddings)
+    scaled_embeddings = embeddings
     embedding = reducer.fit_transform(scaled_embeddings)
     figure, ax = plt.subplots(1, 1, figsize=(5, 5))
 
@@ -143,7 +141,8 @@ def evaluation(dataloader, model, experiment):
 
     experiment["embeddings_eval"].upload("embeddings_eval.tsv")
     experiment["embeddings_eval_meta"].upload("embeddings_eval_meta.tsv")
-    experiment["umap-plot"].upload(figure)
+    # experiment["umap-plot"].upload(figure)
+    experiment["tsne-plot"].upload(figure)
 
 
 def main(bucket_name, storage_path, checkpoint_save_path, n_components, q, batch_size, use_gpu=False):

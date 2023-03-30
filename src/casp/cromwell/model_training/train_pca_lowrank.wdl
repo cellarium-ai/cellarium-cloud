@@ -23,7 +23,7 @@ task train {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-test-pca-lowrank-15"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-test-pca-lowrank-20"
         bootDiskSizeGb: 50
         memory: "26G"
         cpu: 4
