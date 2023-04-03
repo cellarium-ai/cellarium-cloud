@@ -5,5 +5,5 @@
   "CASTrainPCALowrank.n_components": 512,
   "CASTrainPCALowrank.q": 5000,
   "CASTrainPCALowrank.batch_size": 10000,
-  "CASTrainPCALowrank.use_gpu": false
+  "CASTrainPCALowrank.use_gpu": true
 }
