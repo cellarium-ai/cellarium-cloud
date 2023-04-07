@@ -1,7 +1,7 @@
 {
   "CASPEmbedData.bucket_name": "dsp-cell-annotation-service",
   "CASPEmbedData.data_storage_path": "benchmark_v1",
-  "CASPEmbedData.dm_storage_path": "dsp-cell-annotation-service/pca_lowrank_new/dump_manager_final.pickle",
+  "CASPEmbedData.dm_storage_path": "pca_lowrank_new/dump_manager_final.pickle",
   "CASPEmbedData.output_storage_path": "embeddings_april_23",
   "CASPEmbedData.running_script": "casp/services/data_embedding/main.py"
 }

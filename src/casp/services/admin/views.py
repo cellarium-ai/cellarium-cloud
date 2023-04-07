@@ -1,12 +1,12 @@
 import tempfile
 
-from flask import Response, request, send_file
+from flask import Response, request, send_file, redirect
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.model.template import EndpointLinkRowAction
 from werkzeug.exceptions import HTTPException
 
-from casp.services import _auth
+from casp.services import _auth, utils
 from casp.services.admin import basic_auth, flask_app
 from casp.services.db import db_session, models
 
@@ -71,7 +71,8 @@ class UserAdminView(CellariumCloudAdminModelView):
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
     ]
-    column_list = ("email", "is_active", "requests_processed", "cells_processed")
+    column_list = ("email", "is_admin", "is_active", "requests_processed", "cells_processed")
+    column_editable_list = ("is_admin",)
     form_widget_args = {"requests_processed": {"disabled": True}, "cells_processed": {"disabled": True}}
 
     @staticmethod
@@ -99,6 +100,39 @@ class UserAdminView(CellariumCloudAdminModelView):
         return send_file(temp, as_attachment=True, download_name=temp.name)
 
 
+class CASModelAdminView(CellariumCloudAdminModelView):
+    column_list = ("system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date")
+    column_descriptions = {
+        "system_name": (
+            "A system name that is used, must be unique, lowercase. "
+            "No spaces, must end with a character or number. \nExample: cas-pca-001."
+        ),
+        "model_file_path": "Filepath in the GCS storage bucket with the dumped model.",
+        "embedding_dimension": "Model embedding output dimension.",
+        "admin_use_only": (
+            "Flag switching the access to this model to all the users. "
+            "If false, only admin users can access the model endpoint. "
+            "Set this to false when model is tested and well benchmarked."
+        ),
+        "created_date": "Datetime when this record has been created. Differs from when model was trained."
+
+    }
+    column_editable_list = ("admin_use_only",)
+    form_columns = ("system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date")
+    form_widget_args = {"created_date": {"disabled": True}}
+
+    column_extra_row_actions = [
+        EndpointLinkRowAction("glyphicon glyphicon-upload", ".deploy_cloud_run"),
+    ]
+
+    @expose("/deploy-cloud-run", methods=("GET",))
+    def deploy_cloud_run(self) -> Response:
+        model_info_id = int(request.args["id"])
+        model_info = models.CASModel.query.get(model_info_id)
+        utils.deploy_cloud_run_model(model_file_path=model_info.model_file_path)
+        return redirect("/casmodel/")
+
+
 admin = Admin(
     flask_app,
     name="Cellarium Cloud Admin",
@@ -106,3 +140,4 @@ admin = Admin(
     index_view=CellariumCloudAdminIndexView(url="/", template="admin/main_page.html"),
 )
 admin.add_view(UserAdminView(models.User, db_session, name="User"))
+admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel"))

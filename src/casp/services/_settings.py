@@ -14,9 +14,7 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
-    # PCA Model serving
-    PCA_MODEL_BUCKET_NAME: str = "fedor-test-bucket"
-    PCA_MODEL_BLOB_NAME: str = "models/dump_manager_002.pickle"
+    PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
@@ -52,6 +50,11 @@ class AllEnvSettings(BaseSettings):
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
+    # Model Serving
+    CLOUD_RUN_IMAGE_NAME: str = (
+        "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch@sha256:0ad0b956098ea68780731f76ae1bb6ac1e72107c494416b5cd8b831c6bd4d02e"
+    )
+    VPC_CONNECTOR_NAME: str = "projects/dsp-cell-annotation-service/locations/us-central1/connectors/cas-ai-matching"
 
 
 class DevSettings(AllEnvSettings):

@@ -1,3 +1,4 @@
+import argparse
 import multiprocessing
 import typing as t
 
@@ -5,13 +6,9 @@ import pandas as pd
 import uvicorn
 from fastapi import FastAPI, File
 
-from casp.services.model_inference.pca import utils
+from casp.services.model_inference import utils
 
 app = FastAPI()
-
-dump_manager = utils.get_dump_manager()
-model = dump_manager.model
-transform = dump_manager.transform
 
 
 @app.get("/")
@@ -32,4 +29,13 @@ async def predict(file: bytes = File()) -> t.Dict:
 
 
 if __name__ == "__main__":
+    # Parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model_file_path", help="A file which has a dump model file in a GCS bucket")
+    args = parser.parse_args()
+    # Get dump files
+    dump_manager = utils.get_dump_manager(args.model_file_path)
+    model = dump_manager.model
+    transform = dump_manager.transform
+    # Run model server
     uvicorn.run("server:app", host="0.0.0.0", port=8000, workers=multiprocessing.cpu_count() * 2 + 1)

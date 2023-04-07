@@ -26,3 +26,4 @@ neptune==1.1.1
 umap-learn
 matplotlib
 pandas
+google-cloud-run==0.7.1
