@@ -8,7 +8,7 @@ from werkzeug.exceptions import HTTPException
 
 from casp.services import _auth, utils
 from casp.services.admin import basic_auth, flask_app
-from casp.services.db import db_session, models
+from casp.services.db import db_session, models, ops
 
 
 class AuthException(HTTPException):
@@ -101,7 +101,9 @@ class UserAdminView(CellariumCloudAdminModelView):
 
 
 class CASModelAdminView(CellariumCloudAdminModelView):
-    column_list = ("system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date")
+    column_list = (
+        "system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date", "model_endpoint_uri"
+    )
     column_descriptions = {
         "system_name": (
             "A system name that is used, must be unique, lowercase. "
@@ -114,7 +116,11 @@ class CASModelAdminView(CellariumCloudAdminModelView):
             "If false, only admin users can access the model endpoint. "
             "Set this to false when model is tested and well benchmarked."
         ),
-        "created_date": "Datetime when this record has been created. Differs from when model was trained."
+        "created_date": "Datetime when this record has been created. Differs from when model was trained.",
+        "model_endpoint_uri": (
+            "URI of the model serving cloud run instance. "
+            "Appears automatically after deployment if deployed from admin interface."
+        )
 
     }
     column_editable_list = ("admin_use_only",)
@@ -129,7 +135,8 @@ class CASModelAdminView(CellariumCloudAdminModelView):
     def deploy_cloud_run(self) -> Response:
         model_info_id = int(request.args["id"])
         model_info = models.CASModel.query.get(model_info_id)
-        utils.deploy_cloud_run_model(model_file_path=model_info.model_file_path)
+        deployed_model_uri = utils.deploy_cloud_run_model(model_file_path=model_info.model_file_path)
+        ops.update_cas_model_endpoint_uri(model=model_info, model_endpoint_uri=deployed_model_uri)
         return redirect("/casmodel/")
 
 

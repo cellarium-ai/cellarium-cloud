@@ -23,7 +23,7 @@ def deploy_cloud_run_model(model_file_path):
             run_v2.Container(
                 image=settings.CLOUD_RUN_IMAGE_NAME,
                 command=["python"],
-                args=["casp/services/model_inference/pca/server.py", "--model_file_path", model_file_path],
+                args=["casp/services/model_inference/server.py", f"--model_file_path={model_file_path}"],
                 ports=[run_v2.ContainerPort(name="http1", container_port=8000)],
                 resources=run_v2.ResourceRequirements(limits={"cpu": "4000m", "memory": "8Gi"})
             )],
@@ -39,7 +39,7 @@ def deploy_cloud_run_model(model_file_path):
     print("Waiting for operation to complete...")
     response = operation.result()
     # Handle the response
-    print(response)
+    return response.uri
 
 # def deploy_cloud_run():
 #     ServicesAsyncClient.create_service()

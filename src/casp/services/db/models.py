@@ -26,6 +26,7 @@ class CASModel(db.Base):
     model_file_path = sa.Column(sa.String(255), unique=True, nullable=False)
     embedding_dimension = sa.Column(sa.Integer, nullable=False)
     admin_use_only = sa.Column(sa.Boolean(), default=True, nullable=False)
+    model_endpoint_uri = sa.Column(sa.String, nullable=True)
     created_date = sa.Column(sa.DateTime, default=datetime.datetime.utcnow)
 
     __tablename__ = "cas_model"

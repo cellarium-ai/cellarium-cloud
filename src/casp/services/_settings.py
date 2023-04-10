@@ -52,7 +52,7 @@ class AllEnvSettings(BaseSettings):
     DEBUG: bool = False
     # Model Serving
     CLOUD_RUN_IMAGE_NAME: str = (
-        "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch@sha256:0ad0b956098ea68780731f76ae1bb6ac1e72107c494416b5cd8b831c6bd4d02e"
+        "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-test-deploy-01"
     )
     VPC_CONNECTOR_NAME: str = "projects/dsp-cell-annotation-service/locations/us-central1/connectors/cas-ai-matching"
 

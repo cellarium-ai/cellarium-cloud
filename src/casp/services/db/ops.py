@@ -15,3 +15,13 @@ def increment_user_cells_processed(user: "models.User", number_of_cells: int) ->
     user.requests_processed += 1
     user.cells_processed += number_of_cells
     db_session.commit()
+
+
+def update_cas_model_endpoint_uri(model: "models.CASModel", model_endpoint_uri: str) -> None:
+    """
+    Update model enpoint URI
+    :param model: SQLAlchemy model info data model
+    :param model_endpoint_uri: URI that needs to be updated
+    """
+    model.model_endpoint_uri = model_endpoint_uri
+    db_session.commit()

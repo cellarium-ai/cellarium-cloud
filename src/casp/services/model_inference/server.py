@@ -18,6 +18,13 @@ async def read_root():
 
 @app.post("/predict")
 async def predict(file: bytes = File()) -> t.Dict:
+    model_file_path = "pca_lowrank_new/dump_manager_final.pickle"
+    # model_file_path = "models/dump_manager_final.pickle"
+    dump_manager = utils.get_dump_manager(model_file_path)
+    model = dump_manager.model
+    transform = dump_manager.transform
+    print(model.__dict__)
+    print(transform.transforms[1].__dict__)
     X, db_ids = utils.load_data(file)
     X = transform(X)
     embeddings = model.transform(X)
@@ -33,9 +40,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_file_path", help="A file which has a dump model file in a GCS bucket")
     args = parser.parse_args()
-    # Get dump files
-    dump_manager = utils.get_dump_manager(args.model_file_path)
-    model = dump_manager.model
-    transform = dump_manager.transform
     # Run model server
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, workers=multiprocessing.cpu_count() * 2 + 1)
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, )#workers=multiprocessing.cpu_count() * 2 + 1)
