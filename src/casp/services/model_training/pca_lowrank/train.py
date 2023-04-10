@@ -170,6 +170,7 @@ def main(bucket_name, storage_path, checkpoint_save_path, n_components, q, batch
         transform=t,
         running_stat=one_pass,
     )
+    dataset.calculate_running_stats()
     dataloader = DataLoader(dataset=dataset, batch_size=batch_size)
     train(dataloader, model, one_pass, t, bucket, checkpoint_save_path, use_gpu)
     save_check_point(
