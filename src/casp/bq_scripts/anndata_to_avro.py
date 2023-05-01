@@ -16,6 +16,7 @@ import math
 import multiprocessing
 import os
 import time
+import typing as t
 
 import h5py
 import numpy as np
@@ -25,6 +26,7 @@ from anndata._io.specs import read_elem
 from fastavro import parse_schema, writer
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
+from scipy import sparse
 
 
 def current_milli_time():
@@ -60,6 +62,17 @@ def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
 
         if len(records) > 0:
             writer(out, parsed_schema, records)
+
+
+def get_x_matrix(adata: AnnData) -> t.Optional[t.Union[np.ndarray, sparse.spmatrix]]:
+    """
+    If there `raw` is not None use `raw.X` otherwise use just X
+    :param adata: Anndata file to use
+    """
+    if adata.raw is not None:
+        return adata.raw.X
+
+    return adata.X
 
 
 def dump_core_matrix(
@@ -339,7 +352,7 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, prefix, p
 
     print("Processing core data...")
 
-    total_cells = adata.raw.X.shape[0]
+    total_cells = get_x_matrix(adata).shape[0]
 
     # close and attempt to free memory
     adata.file.close()
@@ -401,7 +414,7 @@ def optimized_read_andata(input_file):
 
 def optimized_read_raw_X(input_file, row_offset, end):
     adata = optimized_read_andata(input_file)
-    coord = adata.raw.X[row_offset:end, :].tocoo()
+    coord = get_x_matrix(adata)[row_offset:end, :].tocoo()
     adata.file.close()
     del adata
     gc.collect()
