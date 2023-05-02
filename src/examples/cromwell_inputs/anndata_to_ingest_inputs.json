@@ -1,5 +1,17 @@
 {
-  "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_stage_dir": "cromwell_test_10k",
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_stage_dir": "cromwell_50m",
   "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_input_bucket": "dsp-cell-annotation-service",
-  "CASAnndataToIngestFiles.convert_args": [{"df_filename": "dec_2022_demo/h5ad/liver_10k.h5ad", "cas_cell_index": 0, "cas_feature_index": 0}]
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.original_feature_id_lookup": "feature_id",
+  "CASAnndataToIngestFiles.convert_args": [
+    {
+      "df_filename": "census_data/0129dbd9-a7d3-4f6b-96b9-1da155a93748-census-dataset.h5ad",
+      "cas_cell_index": 0,
+      "cas_feature_index": 0
+    },
+    {
+      "df_filename": "census_data/04a23820-ffa8-4be5-9f65-64db15631d1e-census-dataset.h5ad",
+      "cas_cell_index": 1000000,
+      "cas_feature_index": 1000000
+    }
+  ]
 }

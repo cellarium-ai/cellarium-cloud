@@ -12,6 +12,7 @@ def main(
     cas_cell_index_start: int,
     cas_feature_index_start: int,
     gcs_stage_dir: str,
+    original_feature_id_lookup: str,
 ) -> None:
     """
     Create ingest files that can be read by BigQuery for data ingestion.
@@ -26,6 +27,9 @@ def main(
     :param cas_cell_index_start:  Starting number for cell index
     :param cas_feature_index_start:  Starting number for feature index
     :param gcs_stage_dir: Name of the directory in google bucket
+    :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
+    In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
+    an index column of var dataframe would be used.
     """
     filename = f"{secrets.token_hex()}.h5ad"
     utils.download_file_from_bucket(
@@ -43,6 +47,7 @@ def main(
         prefix=prefix,
         dataset=None,
         load_uns_data=False,
+        original_feature_id_lookup=original_feature_id_lookup,
     )
     ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix)]
 
@@ -64,6 +69,9 @@ if __name__ == "__main__":
 
     parser.add_argument("--cas_cell_index_start", type=int, help="starting number for cell index", required=False)
     parser.add_argument("--cas_feature_index_start", type=int, help="starting number for feature index", required=False)
+    parser.add_argument(
+        "--original_feature_id_lookup", type=str, help="Column name in `var` for original feature id", required=False
+    )
 
     args = parser.parse_args()
 
@@ -73,4 +81,5 @@ if __name__ == "__main__":
         cas_cell_index_start=args.cas_cell_index_start,
         cas_feature_index_start=args.cas_feature_index_start,
         gcs_stage_dir=args.gcs_stage_dir,
+        original_feature_id_lookup=args.original_feature_id_lookup,
     )

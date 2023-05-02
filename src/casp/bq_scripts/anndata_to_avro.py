@@ -37,6 +37,7 @@ def current_milli_time():
 
 
 FLUSH_BATCH_SIZE = 10000
+ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT = "index"
 
 
 def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
@@ -144,11 +145,17 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
     write_avro(cell_generator, parsed_schema, filename)
 
 
-def dump_feature_info(adata, filename, cas_feature_index_start, ingest_id):
+def dump_feature_info(
+    adata, filename, cas_feature_index_start, ingest_id, original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT
+):
     """
     Write feature / gene / var data.
     """
-    adata.var["original_feature_id"] = adata.var.index
+    if original_feature_id_lookup == ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT:
+        adata.var["original_feature_id"] = adata.var.index
+    else:
+        adata.var["original_feature_id"] = adata.var[original_feature_id_lookup]
+
     adata.var["cas_feature_index"] = np.arange(cas_feature_index_start, cas_feature_index_start + len(adata.var))
 
     schema = {
@@ -303,10 +310,23 @@ def find_max_index(client, project, dataset, table, column):
     return max_id
 
 
-def process(input_file, cas_cell_index_start, cas_feature_index_start, prefix, project, dataset, load_uns_data):
+def process(
+    input_file,
+    cas_cell_index_start,
+    cas_feature_index_start,
+    prefix,
+    project,
+    dataset,
+    load_uns_data,
+    original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
+):
     """
     High level entry point, reads the input AnnData file and generates Avro files
     for ingest, cells, features, and raw / core data.
+
+    :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
+    In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
+    an index column of var dataframe would be used.
     """
     client = None
     if cas_cell_index_start is None:
@@ -348,7 +368,13 @@ def process(input_file, cas_cell_index_start, cas_feature_index_start, prefix, p
     dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
 
     print("Processing feature/gene/variable metadata...")
-    dump_feature_info(adata, feature_filename, cas_feature_index_start, ingest_id)
+    dump_feature_info(
+        adata,
+        feature_filename,
+        cas_feature_index_start,
+        ingest_id,
+        original_feature_id_lookup=original_feature_id_lookup,
+    )
 
     print("Processing core data...")
 

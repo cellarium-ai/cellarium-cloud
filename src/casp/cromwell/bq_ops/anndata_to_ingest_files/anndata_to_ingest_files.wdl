@@ -5,6 +5,7 @@ task anndata_to_ingest_files {
     String gcs_stage_dir
     Int cas_cell_index_start
     Int cas_feature_index_start
+    String original_feature_id_lookup
 
 
     command {
@@ -15,11 +16,12 @@ task anndata_to_ingest_files {
         --gcs_file_path ${gcs_file_path} \
         --gcs_stage_dir ${gcs_stage_dir} \
         --cas_cell_index_start ${cas_cell_index_start} \
-        --cas_feature_index_start ${cas_feature_index_start}
+        --cas_feature_index_start ${cas_feature_index_start} \
+        --original_feature_id_lookup ${original_feature_id_lookup}
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-2"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-4"
         bootDiskSizeGb: 50
         memory: "16G"
         cpu: 8

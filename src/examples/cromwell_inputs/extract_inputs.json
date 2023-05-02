@@ -1,0 +1,8 @@
+{
+  "CASExtractBQ.extract.project_id": "dsp-cell-annotation-service",
+  "CASExtractBQ.extract.bq_dataset": "cas_50m_dataset_test",
+  "CASExtractBQ.extract.extract_table_prefix": "fg_extract",
+  "CASExtractBQ.bin_borders": [[0, 9], [10, 19], [20, 29], [30, 39], [40, 49], [50, 59]],
+  "CASExtractBQ.extract.output_bucket_name": "dsp-cell-annotation-service",
+  "CASExtractBQ.extract.output_bucket_directory": "benchmark_march_test_50m_10k"
+}
