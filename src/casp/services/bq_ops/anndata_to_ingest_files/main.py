@@ -1,6 +1,5 @@
 import argparse
 import os
-import secrets
 
 from casp.bq_scripts import anndata_to_avro
 from casp.services import utils
@@ -29,17 +28,17 @@ def main(
     :param cas_feature_index_start:  Starting number for feature index
     :param gcs_stage_dir: Name of the directory in google bucket
     :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
-    In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
-    an index column of var dataframe would be used.
+        In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
+        an index column of var dataframe would be used.
     :param load_uns_data: Whether to dump uns
     """
-    filename = f"{secrets.token_hex()}.h5ad"
+    filename = gcs_file_path.split("/")[-1]
     utils.download_file_from_bucket(
         bucket_name=gcs_bucket_name, source_blob_name=gcs_file_path, destination_file_name=filename
     )
     credentials, project_id = utils.get_google_service_credentials()
 
-    prefix = secrets.token_hex()
+    prefix = filename.split(".")[0]
 
     anndata_to_avro(
         input_file=filename,
@@ -51,7 +50,7 @@ def main(
         load_uns_data=load_uns_data,
         original_feature_id_lookup=original_feature_id_lookup,
     )
-    ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix)]
+    ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix) and not x.endswith(".h5ad")]
 
     for filename in ingest_files:
         utils.upload_file_to_bucket(

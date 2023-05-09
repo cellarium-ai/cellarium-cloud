@@ -14,7 +14,7 @@ task ingest_files_to_bq {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-12"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-23"
         bootDiskSizeGb: 25
         memory: "1G"
         cpu: 1

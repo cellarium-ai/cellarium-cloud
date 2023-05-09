@@ -82,6 +82,7 @@ def create_bigquery_objects(client, project, dataset):
         "cas_ingest_info",
         [
             bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("dataset_filename", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("uns_metadata", "JSON", mode="REQUIRED"),
             bigquery.SchemaField("ingest_timestamp", "TIMESTAMP", mode="NULLABLE"),
         ],

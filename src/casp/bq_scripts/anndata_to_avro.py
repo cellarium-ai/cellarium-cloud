@@ -248,7 +248,7 @@ def dump_feature_info(
     # return col_index_to_cas_feature_index
 
 
-def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
+def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix):
     """
     Write ingest (AnnData-file level) data.
     """
@@ -259,6 +259,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
         "type": "record",
         "fields": [
             {"name": "cas_ingest_id", "type": "string"},
+            {"name": "dataset_filename", "type": "string"},
             {"name": "uns_metadata", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "ingest_timestamp", "type": ["null", "long"], "logicalType": ["null", "timestamp-millis"]},
         ],
@@ -280,7 +281,12 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
                 return float(o)
             if isinstance(o, np.ndarray):
                 return o.tolist()
-            return json.JSONEncoder.default(self, o)
+            else:
+                try:
+                    return json.JSONEncoder.default(self, o)
+                except TypeError:
+                    # In case if the instance is still not serializable just keep track of its type
+                    return o.__class__.__name__
 
     def ingest_generator():
         # Some `uns` metadata has extremely large values that can break extract. Cap the allowed size of values and
@@ -290,7 +296,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
         metadata_limit = 2**20
         uns = {}
 
-        if load_uns_data is True:
+        if load_uns_data:
             for idx, uncapped_val in adata.uns.data.items():
                 uncapped_json = json.dumps(uncapped_val, cls=NumpyEncoder)
                 if len(uncapped_json) > metadata_limit:
@@ -298,14 +304,18 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data):
                         f"AnnData `uns` contains a key `{idx}` whose JSONified value would have size {len(uncapped_json)} bytes."
                     )
                     print("Values this large can cause extraction to fail so this value is being nulled out.")
-                    val = None
                 else:
-                    val = uncapped_val
+                    pass
+                val = uncapped_val
                 uns[idx] = val
 
-        yield {"uns_metadata": json.dumps(uns, cls=NumpyEncoder), "cas_ingest_id": ingest_id, "ingest_timestamp": None}
+        yield {
+            "uns_metadata": json.dumps(uns, cls=NumpyEncoder),
+            "cas_ingest_id": ingest_id,
+            "ingest_timestamp": None,
+            "ingest_prefix_name": prefix
+        }
 
-    print("TEST LOAD UNS DATA", load_uns_data)
     write_avro(ingest_generator, parsed_schema, filename)
 
 
@@ -419,7 +429,7 @@ def process(
     adata = optimized_read_andata(input_file)
 
     print("Processing ingest metadata...")
-    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data)
+    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data, prefix)
 
     print("Processing cell/observation metadata...")
     dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
@@ -482,7 +492,7 @@ def process_dump_core_matrix(args):
 def optimized_read_andata(input_file):
     f = h5py.File(input_file, "r")
 
-    attributes = ["obs", "var"]
+    attributes = ["obs", "var", "uns"]
     d = dict(filename=input_file, filemode="r")
     d.update({k: read_elem(f[k]) for k in attributes if k in f})
 

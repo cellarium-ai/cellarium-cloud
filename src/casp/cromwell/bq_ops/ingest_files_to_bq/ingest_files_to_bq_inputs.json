@@ -1,5 +1,5 @@
 {
-  "CASIngestFilesToBQ.ingest_files_to_bq.gcs_stage_dir": "cromwell_50m_2",
+  "CASIngestFilesToBQ.ingest_files_to_bq.gcs_stage_dir": "cellxgene_insert_50m",
   "CASIngestFilesToBQ.ingest_files_to_bq.gcs_bucket_name": "dsp-cell-annotation-service",
-  "CASIngestFilesToBQ.ingest_files_to_bq.dataset": "cas_benchamrk_50m_small_sample"
+  "CASIngestFilesToBQ.ingest_files_to_bq.dataset": "cas_50m_dataset"
 }
