@@ -7,6 +7,7 @@ task anndata_to_ingest_files {
     Int cas_feature_index_start
     String original_feature_id_lookup
     Boolean load_uns_data
+    String uns_meta_keys
 
 
     command {
@@ -19,11 +20,12 @@ task anndata_to_ingest_files {
         --cas_cell_index_start ${cas_cell_index_start} \
         --cas_feature_index_start ${cas_feature_index_start} \
         --original_feature_id_lookup ${original_feature_id_lookup} \
-        --load_uns_data ${load_uns_data}
+        --load_uns_data ${load_uns_data} \
+        --uns_meta_keys ${uns_meta_keys}
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-23"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-28"
         bootDiskSizeGb: 50
         memory: "64G"
         cpu: 32

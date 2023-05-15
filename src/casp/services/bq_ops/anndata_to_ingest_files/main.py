@@ -1,3 +1,4 @@
+import typing as t
 import argparse
 import os
 
@@ -13,6 +14,7 @@ def main(
     gcs_stage_dir: str,
     original_feature_id_lookup: str,
     load_uns_data: bool = False,
+    uns_meta_keys: t.Optional[str] = None
 ) -> None:
     """
     Create ingest files that can be read by BigQuery for data ingestion.
@@ -37,7 +39,11 @@ def main(
         bucket_name=gcs_bucket_name, source_blob_name=gcs_file_path, destination_file_name=filename
     )
     credentials, project_id = utils.get_google_service_credentials()
-
+    if uns_meta_keys is not None:
+        uns_meta_keys_list = set([x.strip() for x in uns_meta_keys.split(",")])
+    else:
+        uns_meta_keys_list = None
+        
     prefix = filename.split(".")[0]
 
     anndata_to_avro(
@@ -49,6 +55,7 @@ def main(
         dataset=None,
         load_uns_data=load_uns_data,
         original_feature_id_lookup=original_feature_id_lookup,
+        uns_meta_keys=uns_meta_keys_list
     )
     ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix) and not x.endswith(".h5ad")]
 
@@ -76,6 +83,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--load_uns_data", type=bool, help="Whether or not to dump uns data", required=False, default=False
     )
+    parser.add_argument(
+        "--uns_meta_keys", type=str, help="Comma separated set of keys to dump in uns metadata", default=None
+    )
 
     args = parser.parse_args()
 
@@ -87,4 +97,5 @@ if __name__ == "__main__":
         gcs_stage_dir=args.gcs_stage_dir,
         original_feature_id_lookup=args.original_feature_id_lookup,
         load_uns_data=args.load_uns_data,
+        uns_meta_keys=args.uns_meta_keys,
     )

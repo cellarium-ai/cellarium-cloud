@@ -240,7 +240,7 @@ def dump_feature_info(
                 "feature_biotype": row.get("feature_biotype"),
                 "feature_is_filtered": row.get("feature_is_filtered"),
                 "feature_reference": row.get("feature_reference"),
-                "var_metadata_extra": var_original.loc[i].to_json(),
+                "var_metadata_extra": var_original.loc[i].dropna().to_json(),
                 "cas_ingest_id": ingest_id,
             }
 
@@ -248,7 +248,7 @@ def dump_feature_info(
     # return col_index_to_cas_feature_index
 
 
-def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix):
+def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, uns_meta_keys=None):
     """
     Write ingest (AnnData-file level) data.
     """
@@ -298,6 +298,10 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix):
 
         if load_uns_data:
             for idx, uncapped_val in adata.uns.data.items():
+                if uns_meta_keys is not None:
+                    if idx not in uns_meta_keys:
+                        continue
+                        
                 uncapped_json = json.dumps(uncapped_val, cls=NumpyEncoder)
                 if len(uncapped_json) > metadata_limit:
                     print(
@@ -311,6 +315,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix):
 
         yield {
             "uns_metadata": json.dumps(uns, cls=NumpyEncoder),
+            "dataset_filename": filename,
             "cas_ingest_id": ingest_id,
             "ingest_timestamp": None,
             "ingest_prefix_name": prefix
@@ -386,6 +391,7 @@ def process(
     dataset,
     load_uns_data,
     original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
+    uns_meta_keys: t.List=None
 ):
     """
     High level entry point, reads the input AnnData file and generates Avro files
@@ -394,6 +400,8 @@ def process(
     :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
     In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
     an index column of var dataframe would be used.
+    
+    :param uns_meta_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
     """
     client = None
     if cas_cell_index_start is None:
@@ -429,7 +437,7 @@ def process(
     adata = optimized_read_andata(input_file)
 
     print("Processing ingest metadata...")
-    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data, prefix)
+    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data, prefix, uns_meta_keys)
 
     print("Processing cell/observation metadata...")
     dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
