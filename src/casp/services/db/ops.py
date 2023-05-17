@@ -1,12 +1,8 @@
 import typing as t
-
-from casp.services.db import db_session
-
-if t.TYPE_CHECKING:
-    from casp.services.db import models
+from casp.services.db import db_session, models
 
 
-def increment_user_cells_processed(user: "models.User", number_of_cells: int) -> None:
+def increment_user_cells_processed(user: models.User, number_of_cells: int) -> None:
     """
     Increment `requests_processed` and `cells_processed user stats`.
     :param user: A SQLAlchemy user model
@@ -17,11 +13,13 @@ def increment_user_cells_processed(user: "models.User", number_of_cells: int) ->
     db_session.commit()
 
 
-def update_cas_model_endpoint_uri(model: "models.CASModel", model_endpoint_uri: str) -> None:
-    """
-    Update model enpoint URI
-    :param model: SQLAlchemy model info data model
-    :param model_endpoint_uri: URI that needs to be updated
-    """
-    model.model_endpoint_uri = model_endpoint_uri
-    db_session.commit()
+def get_models_for_user(user: "models.User") -> t.List[models.CASModel]:
+    if not user.is_admin:
+        # Return only selected models for non-admin users
+        return models.CASModel.query.filter_by(admin_use_only=False).all()
+
+    return models.CASModel.query.all()
+
+
+def get_model_by(system_name: str) -> models.CASModel:
+    return models.CASModel.query.filter_by(system_name=system_name).first()

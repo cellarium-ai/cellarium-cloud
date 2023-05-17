@@ -16,3 +16,10 @@ class MatchInfo(BaseModel):
 class QueryCell(BaseModel):
     query_cell_id: str = Field(example="99543")
     matches: t.List[MatchInfo]
+
+
+class CASModel(BaseModel):
+    system_name: str = Field(example="incremental-pca-001")
+
+    class Config:
+        orm_mode = True

@@ -1,8 +1,8 @@
-"""Create CASModel and CASMatchingEngine db tables
+"""Matching Engine and Model
 
-Revision ID: 3c82590e357f
+Revision ID: ec51111f100f
 Revises: 62cf59b07367
-Create Date: 2023-04-06 16:45:40.050444
+Create Date: 2023-05-11 14:27:19.300971
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3c82590e357f'
+revision = 'ec51111f100f'
 down_revision = '62cf59b07367'
 branch_labels = None
 depends_on = None
@@ -34,15 +34,13 @@ def upgrade() -> None:
     sa.Column('system_name', sa.String(length=255), nullable=False),
     sa.Column('matching_engine_index_name', sa.String(length=255), nullable=False),
     sa.Column('embedding_dimension', sa.Integer(), nullable=False),
-    sa.Column('model_endpoint_url', sa.String(length=255), nullable=True),
     sa.Column('matching_engine_endpoint', sa.String(length=255), nullable=True),
     sa.Column('admin_use_only', sa.Boolean(), nullable=False),
-    sa.Column('cas_model_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['cas_model_id'], ['cas_model.id'], ),
+    sa.Column('model_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['model_id'], ['cas_model.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('matching_engine_endpoint'),
     sa.UniqueConstraint('matching_engine_index_name'),
-    sa.UniqueConstraint('model_endpoint_url'),
     sa.UniqueConstraint('system_name')
     )
     op.add_column('user', sa.Column('is_admin', sa.Boolean(), nullable=False))

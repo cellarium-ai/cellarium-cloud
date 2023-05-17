@@ -117,27 +117,29 @@ class CASModelAdminView(CellariumCloudAdminModelView):
             "Set this to false when model is tested and well benchmarked."
         ),
         "created_date": "Datetime when this record has been created. Differs from when model was trained.",
-        "model_endpoint_uri": (
-            "URI of the model serving cloud run instance. "
-            "Appears automatically after deployment if deployed from admin interface."
-        )
-
     }
     column_editable_list = ("admin_use_only",)
     form_columns = ("system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date")
     form_widget_args = {"created_date": {"disabled": True}}
 
-    column_extra_row_actions = [
-        EndpointLinkRowAction("glyphicon glyphicon-upload", ".deploy_cloud_run"),
-    ]
 
-    @expose("/deploy-cloud-run", methods=("GET",))
-    def deploy_cloud_run(self) -> Response:
-        model_info_id = int(request.args["id"])
-        model_info = models.CASModel.query.get(model_info_id)
-        deployed_model_uri = utils.deploy_cloud_run_model(model_file_path=model_info.model_file_path)
-        ops.update_cas_model_endpoint_uri(model=model_info, model_endpoint_uri=deployed_model_uri)
-        return redirect("/casmodel/")
+class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
+    column_list = (
+        "system_name",
+        "embedding_dimension",
+        "endpoint_id",
+        "deployed_index_id",
+        "admin_use_only",
+        "model"
+    )
+    column_descriptions = {
+        "system_name": (
+            "A system name that is used, must be unique, lowercase. "
+            "No spaces, must end with a character or number. \nExample: cas-pca-001-matching-engine-index."
+        ),
+        "endpoint_id": "Endpoint ID that is used in GCP in Vertex AI",
+        "deployed_index_id": "Deployed Index ID that is used in GCP in Vertex AI",
+    }
 
 
 admin = Admin(
@@ -148,3 +150,4 @@ admin = Admin(
 )
 admin.add_view(UserAdminView(models.User, db_session, name="User"))
 admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel"))
+admin.add_view(CASMatchingEngineAdminView(models.CASMatchingEngineIndex, db_session, name="MatchingEngine"))
