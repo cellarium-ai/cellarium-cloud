@@ -180,7 +180,7 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
 
             yield {
                 **obs_data_to_include,
-                "obs_metadata_extra": obs_original.loc[idx].to_json(),
+                "obs_metadata_extra": obs_original.loc[idx].dropna().to_json(),
                 "cas_ingest_id": ingest_id,
             }
 
