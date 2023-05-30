@@ -25,7 +25,7 @@ task anndata_to_ingest_files {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-29"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-32"
         bootDiskSizeGb: 50
         memory: "64G"
         cpu: 32

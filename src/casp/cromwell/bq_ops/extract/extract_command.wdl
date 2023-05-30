@@ -21,7 +21,7 @@ task extract {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-29"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-32"
         bootDiskSizeGb: 10
         memory: "20G"
         cpu: 10
