@@ -70,7 +70,7 @@ def prepare_feature_info(
     return query
 
 
-def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size, random_seed_offset=0):
+def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bin_size, random_seed_offset=0, partition_bin_count=40000, partition_size=10):
     """
     Randomize cells using farm_fingerprint with an offset so we can have deterministic randomization.  See
     https://towardsdatascience.com/advanced-random-sampling-in-bigquery-sql-7d4483b580bb
@@ -81,7 +81,9 @@ def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bi
     sql_random_ordering = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
         AS
-        SELECT cas_cell_index
+        SELECT  cas_cell_index,
+                cas_ingest_id,
+                cell_type
         FROM `{project}.{dataset}.cas_cell_info` c
         ORDER BY farm_fingerprint(cast(cas_cell_index + {random_seed_offset} as STRING))
     """
@@ -90,10 +92,13 @@ def prepare_cell_info(client, project, dataset, extract_table_prefix, extract_bi
 
     sql_prepare_cell_info = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
+        PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
         CLUSTER BY extract_bin
         AS
-        SELECT cas_cell_index,
-        CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
+        SELECT  cas_cell_index,
+                cas_ingest_id,
+                cell_type,
+                CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
         FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
     """
     print("Creating Cell Info into extract bins...")

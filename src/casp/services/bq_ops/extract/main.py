@@ -28,17 +28,22 @@ def extract_task(
     :param output_bucket_directory: Directory in the bucket to save outputs
     """
     credentials, project_id = utils.get_google_service_credentials()
-    bq_scripts.extract_minibatch_to_anndata(
-        project=project_id,
-        dataset=dataset,
-        extract_table_prefix=extract_table_prefix,
-        start_bin=bin_number,
-        end_bin=bin_number,
-        output=file_name,
-        credentials=credentials,
-    )
-    blob_name = f"{output_bucket_directory}/{file_name}"
-    utils.upload_file_to_bucket(local_file_name=file_name, blob_name=blob_name, bucket=output_bucket_name)
+    try:
+        bq_scripts.extract_minibatch_to_anndata(
+            project=project_id,
+            dataset=dataset,
+            extract_table_prefix=extract_table_prefix,
+            start_bin=bin_number,
+            end_bin=bin_number,
+            output=file_name,
+            credentials=credentials,
+            bucket_name=output_bucket_name
+        )
+        blob_name = f"{output_bucket_directory}/{file_name}"
+        utils.upload_file_to_bucket(local_file_name=file_name, blob_name=blob_name, bucket=output_bucket_name)
+    except Exception as e:
+        print("ERROR!", str(e))
+        
     os.remove(file_name)
     logging.info(msg=f"Processed bin {bin_number}")
 

@@ -1,6 +1,7 @@
 """
 Selects a random subset of cells of a specified size from BigQuery and writes the data to output AnnData files.
 """
+import os
 import argparse
 import datetime
 import json
@@ -8,9 +9,11 @@ from pathlib import Path
 
 import anndata as ad
 import numpy as np
+import pandas as pd
 from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
 from scipy.sparse import coo_matrix
+from casp.services import utils
 
 
 class Cell:
@@ -18,8 +21,10 @@ class Cell:
     Represents a CASP cell.
     """
 
-    def __init__(self, cas_cell_index):
+    def __init__(self, cas_cell_index, cas_ingest_id, cell_type):
         self.cas_cell_index = cas_cell_index
+        self.cas_ingest_id = cas_ingest_id
+        self.cell_type = cell_type
 
 
 class Feature:
@@ -54,13 +59,19 @@ def get_cells_in_bin_range(project, dataset, extract_cell_table, start_bin, end_
     """
     sql = f"""
 
-    SELECT cas_cell_index FROM
+    SELECT cas_cell_index, cas_ingest_id, cell_type FROM
         `{project}.{dataset}.{extract_cell_table}` WHERE extract_bin BETWEEN {start_bin} AND {end_bin} ORDER BY cas_cell_index
 
     """
 
     result = client.query(sql)
-    cells = [Cell(cas_cell_index=row["cas_cell_index"]) for row in result]
+    cells = [
+        Cell(
+            cas_cell_index=row["cas_cell_index"], 
+            cas_ingest_id=row["cas_ingest_id"], 
+            cell_type=row["cell_type"]
+        ) for row in result
+    ]
     return cells
 
 
@@ -119,8 +130,43 @@ def assign_uns_metadata(anndata, json_string):
     for key, val in json_dict.items():
         anndata.uns[key] = val
 
+        
+def add_cell_type_info(dataset: str, extract_table_prefix: str, bucket_name: str, adata: "anndata.AnnData", cell_types: list):
+    filename = "all_cell_types.csv"
+    source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
+    
+    if not os.path.exists(filename):
+        utils.download_file_from_bucket(
+            bucket_name=bucket_name,
+            source_blob_name=source_blob_name,
+            destination_file_name=filename
+        )
+        
+    adata.obs["cell_type"] = cell_types
+    df = pd.read_csv(filename, index_col=False)
+    adata.obs.cell_type = pd.Categorical(adata.obs.cell_type.values, categories=df["cell_type"].values)
+    
 
-def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_bin, end_bin, output, credentials=None):
+def add_expressed_genes_layer_mask(dataset: str, extract_table_prefix: str, bucket_name: str, adata: "anndata.AnnData", cas_ingest_ids: list):
+    filename = "expressed_genes_info.csv"
+    source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
+    
+    if not os.path.exists(filename):
+        utils.download_file_from_bucket(
+            bucket_name=bucket_name,
+            source_blob_name=source_blob_name,
+            destination_file_name=filename
+        )
+        
+    adata.obs["cas_ingest_id"] = cas_ingest_ids
+    df = pd.read_csv(filename, index_col="cas_ingest_id").astype(bool)
+
+    expressed_genes_mask = df.loc[adata.obs["cas_ingest_id"], adata.var.index].to_numpy()
+
+    adata.layers["expressed_genes_mask"] = expressed_genes_mask
+    
+
+def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_bin, end_bin, output, bucket_name, credentials=None):
     """
     Main function to extract a minibatch from a prepared training extract and write the associated data
     to an AnnData file.
@@ -135,7 +181,6 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
     # Read the feature information and store for later.
     print("Extracting Feature Info...")
     features = get_features(project, dataset, f"{extract_table_prefix}__extract_feature_info", client)
-
     feature_ids = []
     cas_feature_index_to_col_num = {}
     for col_num, feature in enumerate(features):
@@ -148,17 +193,20 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
     )
 
     original_cell_ids = []
+    cas_ingest_ids = []
+    cell_types = []
     cas_cell_index_to_row_num = {}
     for row_num, cell in enumerate(cells):
         original_cell_ids.append(cell.cas_cell_index)
+        cas_ingest_ids.append(cell.cas_ingest_id)
+        cell_types.append(cell.cell_type)
         cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
-
-    print("Extracting Matrix Data...")
+    
 
     matrix_data = get_matrix_data(
         project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, credentials
     )
-
+    # print(next(iter(matrix_data)))
     print("Converting Matrix Data to COO format...")
 
     rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(
@@ -175,10 +223,23 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
     adata = ad.AnnData(counts.tocsr(copy=False))
     adata.obs.index = original_cell_ids
     adata.var.index = feature_ids
-
-    # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
-    # for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
-    adata.raw = adata
+    
+    print("Adding Cell Types Categorical Info...")
+    add_cell_type_info(
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix, 
+        bucket_name=bucket_name, 
+        adata=adata, 
+        cell_types=cell_types
+    )
+    print("Adding Expressed Genes Layer Mask...")
+    add_expressed_genes_layer_mask(
+        dataset=dataset, 
+        extract_table_prefix=extract_table_prefix, 
+        bucket_name=bucket_name,
+        adata=adata, 
+        cas_ingest_ids=cas_ingest_ids
+    )
 
     print("Writing AnnData Matrix")
     adata.write(Path(output), compression="gzip")
