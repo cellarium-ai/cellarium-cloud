@@ -60,7 +60,7 @@ def get_cells_in_bin_range(project, dataset, extract_cell_table, start_bin, end_
     sql = f"""
 
     SELECT cas_cell_index, cas_ingest_id, cell_type FROM
-        `{project}.{dataset}.{extract_cell_table}` WHERE extract_bin BETWEEN {start_bin} AND {end_bin} ORDER BY cas_cell_index
+        `{project}.{dataset}.{extract_cell_table}` WHERE extract_bin BETWEEN {start_bin} AND {end_bin}
 
     """
 
