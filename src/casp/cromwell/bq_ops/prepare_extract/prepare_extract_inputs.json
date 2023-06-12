@@ -1,4 +1,0 @@
-{
-  "CASPrepareExtractBQ.prepare_extract.bq_dataset": "cas_50m_dataset_test",
-  "CASPrepareExtractBQ.prepare_extract.extract_table_prefix": "fg_extract"
-}

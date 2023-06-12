@@ -14,18 +14,19 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
+    APP_VERSION: str = "1.0"
+    DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
-    MODEL_SERVER_URL: str = "https://casp-pca-serving-vi7nxpvk7a-uc.a.run.app/predict"
-    KNN_SEARCH_ENDPOINT_ID: str = "projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904"
-    KNN_SEARCH_DEPLOYED_INDEX_ID: str = "deployed_4m_casp_index_v1"
+    MODEL_SERVER_URL: str = "https://cas-model-inference-fg-models-vi7nxpvk7a-uc.a.run.app/predict"
+    DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
+    DEFAULT_MODEL_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_50m_dataset.cas_cell_info"
+    DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_50m_dataset"
     KNN_SEARCH_NUM_MATCHES: int = 100
-    BQ_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_4m_dataset.cas_cell_info"
-    BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_4m_dataset"
     ITEMS_PER_USER: int = 50
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
@@ -50,11 +51,6 @@ class AllEnvSettings(BaseSettings):
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
-    # Model Serving
-    CLOUD_RUN_IMAGE_NAME: str = (
-        "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-test-deploy-01"
-    )
-    VPC_CONNECTOR_NAME: str = "projects/dsp-cell-annotation-service/locations/us-central1/connectors/cas-ai-matching"
 
 
 class DevSettings(AllEnvSettings):
