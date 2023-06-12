@@ -9,7 +9,7 @@ from fastapi import Depends, FastAPI, File, Form, UploadFile
 from google.cloud import aiplatform, bigquery
 
 from casp.services import settings
-from casp.services.api import async_client, schemas
+from casp.services.api import async_client, data_controller, schemas
 from casp.services.api.auth import authenticate_user
 from casp.services.db import init_db, models, ops
 
@@ -152,6 +152,44 @@ async def annotate(
 ):
     ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
     return await __annotate(myfile.file)
+
+
+@app.get("/validate-token")
+async def validate_token(_: models.User = Depends(authenticate_user)):
+    """
+    Validate authorization token from `Bearer` header
+    :return: Success message if token is valid, otherwise
+        return 401 Unauthorized status code if token is invalid or missing
+    """
+    return {"response": "Success"}
+
+
+@app.get("/application-info", response_model=schemas.ApplicationInfo)
+async def application_info(_: models.User = Depends(authenticate_user)):
+    """
+    Get Cellarium CAS application info such as version, default feature schema name.
+    """
+    return data_controller.get_application_info()
+
+
+@app.get("/feature-schemas", response_model=t.List[schemas.FeatureSchemaInfo])
+async def get_feature_schemas(_: models.User = Depends(authenticate_user)):
+    """
+    Get list of all Cellarium CAS feature schemas
+    :param _:
+    :return: List of feature schema info objects
+    """
+    return data_controller.get_feature_schemas()
+
+
+@app.get("/feature-schema/{schema_name}", response_model=t.List[str])
+async def get_feature_schema_by(schema_name: str):
+    """
+    Get a specific feature schema by its unique name
+    :param schema_name: unique feature schema name
+    :return: List of features in a correct order
+    """
+    return data_controller.get_feature_schema_by(schema_name=schema_name)
 
 
 if __name__ == "__main__":
