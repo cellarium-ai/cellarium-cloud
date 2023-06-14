@@ -1,3 +1,4 @@
+import typing as t
 import argparse
 
 from casp.bq_scripts import prepare_extract, prepare_expressed_genes_info, prepare_all_cell_types
@@ -10,7 +11,10 @@ def main(
     min_observed_cells: int,
     fq_allowed_original_feature_ids: str,
     extract_bin_size: int,
-    bucket_name:str,
+    bucket_name: str,
+    filter_by_organism: t.Optional[str] = None,
+    filter_by_datasets: t.Optional[str] = None,
+    filter_by_is_primary_data: t.Optional[bool] = None
 ):
     """
     Prepare extract tables in BigQuery data repository.
@@ -25,6 +29,7 @@ def main(
     :param extract_bin_size: Desired cells per extract bin
     """
     credentials, project_id = utils.get_google_service_credentials()
+    filter_by_datasets_split = None if filter_by_datasets is None else filter_by_datasets.split(",")
     prepare_extract(
         project=project_id,
         dataset=dataset,
@@ -32,7 +37,10 @@ def main(
         min_observed_cells=min_observed_cells,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
         extract_bin_size=extract_bin_size,
-        credentials=credentials
+        credentials=credentials,
+        filter_by_organism=filter_by_organism,
+        filter_by_datasets=filter_by_datasets_split,
+        filter_by_is_primary_data=filter_by_is_primary_data
     )
     expressed_genes_info_df = prepare_expressed_genes_info(
         project=project_id,
@@ -88,6 +96,27 @@ if __name__ == "__main__":
         default="dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A",
         required=False,
     )
+    parser.add_argument(
+        "--filter_by_organism",
+        type=str,
+        help="Organism to filter cells by that we want to use for preparing extract tables",
+        required=False,
+        default=None
+    )
+    parser.add_argument(
+        "--filter_by_datasets",
+        type=str,
+        help="Comma separated dataset_filename(s) to use to filter by for preparing extract tables",
+        required=False,
+        default=None
+    )
+    parser.add_argument(
+        "--filter_by_is_primary_data",
+        type=bool,
+        help="Is primary data boolean flag form bigquery tables",
+        required=False,
+        default=None
+    )
 
     args = parser.parse_args()
     main(
@@ -96,5 +125,7 @@ if __name__ == "__main__":
         min_observed_cells=args.min_observed_cells,
         fq_allowed_original_feature_ids=args.fq_allowed_original_feature_ids,
         extract_bin_size=args.extract_bin_size,
-        bucket_name=args.bucket_name
+        bucket_name=args.bucket_name,
+        filter_by_organism=args.filter_by_organism,
+        filter_by_datasets=args.filter_by_datasets
     )

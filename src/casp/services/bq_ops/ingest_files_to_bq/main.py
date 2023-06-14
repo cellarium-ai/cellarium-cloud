@@ -20,11 +20,8 @@ def get_avro_prefixes(bucket_name, gcs_stage_dir):
         
         if blob_directory != gcs_stage_dir:
             continue
-            
-        if "batch" in blob_name:
-            blob_names_return.append(blob_name[:64])
-        else:
-            blob_names_return.append(blob_name[:51])
+        
+        blob_names_return.append(blob_name.split("_")[0])
     
     return set(blob_names_return)
 
