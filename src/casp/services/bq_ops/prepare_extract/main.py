@@ -127,5 +127,6 @@ if __name__ == "__main__":
         extract_bin_size=args.extract_bin_size,
         bucket_name=args.bucket_name,
         filter_by_organism=args.filter_by_organism,
-        filter_by_datasets=args.filter_by_datasets
+        filter_by_datasets=args.filter_by_datasets,
+        filter_by_is_primary_data=args.filter_by_is_primary_data,
     )

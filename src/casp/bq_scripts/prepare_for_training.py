@@ -101,14 +101,11 @@ def prepare_feature_info(
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_feature_info`
         AS
-        SELECT  DENSE_RANK() OVER (ORDER BY s.original_feature_id ASC) AS cas_feature_index,
-                s.original_feature_id as original_feature_id,
-        FROM	`{project}.{dataset}.{extract_table_prefix}__extract_feature_summary` s
-        WHERE s.cells_with_counts >= {min_observed_cells}
-        AND s.original_feature_id IN (
-            SELECT feature_name FROM `{fq_allowed_original_feature_ids}` ORDER BY index
-        )
-        ORDER BY s.original_feature_id
+        SELECT  DENSE_RANK() OVER (ORDER BY fs.feature_name ASC) AS cas_feature_index,
+                fs.feature_name as original_feature_id,
+                fs.index,
+        FROM	`{fq_allowed_original_feature_ids}` fs
+        ORDER BY fs.index
     """
 
     print("Creating Feature Info...")
@@ -191,7 +188,6 @@ def prepare_cell_info(
         {where_clause}
         ORDER BY farm_fingerprint(cast(cas_cell_index + {random_seed_offset} as STRING))
     """
-        
     print("Randomizing order of the cells...")
     execute_query(client, sql_random_ordering)
 

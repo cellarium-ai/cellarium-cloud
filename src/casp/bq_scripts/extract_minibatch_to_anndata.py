@@ -39,13 +39,12 @@ class Feature:
 
 def get_features(project, dataset, extract_feature_table, client):
     """
-    Retrieve a list of all feature objects from the specified extract feature table, ordered by cas_feature_index.
+    Retrieve a list of all feature objects from the specified extract feature table, ordered by index from schema table.
     """
     sql = f"""
-
     SELECT cas_feature_index, original_feature_id FROM
-        `{project}.{dataset}.{extract_feature_table}` ORDER BY cas_feature_index
-
+        `{project}.{dataset}.{extract_feature_table}` 
+    ORDER BY index
     """
 
     result = client.query(sql)
@@ -165,8 +164,19 @@ def add_expressed_genes_layer_mask(dataset: str, extract_table_prefix: str, buck
 
     adata.layers["expressed_genes_mask"] = expressed_genes_mask
     
-
-def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_bin, end_bin, output, bucket_name, credentials=None):
+    
+    
+def extract_minibatch_to_anndata(
+    project,
+    dataset,
+    extract_table_prefix,
+    start_bin,
+    end_bin,
+    output,
+    bucket_name,
+    credentials=None,
+    fq_allowed_original_feature_ids="dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A"
+):
     """
     Main function to extract a minibatch from a prepared training extract and write the associated data
     to an AnnData file.
@@ -180,7 +190,9 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
 
     # Read the feature information and store for later.
     print("Extracting Feature Info...")
+    
     features = get_features(project, dataset, f"{extract_table_prefix}__extract_feature_info", client)
+    
     feature_ids = []
     cas_feature_index_to_col_num = {}
     for col_num, feature in enumerate(features):
