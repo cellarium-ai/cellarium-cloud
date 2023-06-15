@@ -65,7 +65,7 @@ class CASDataset(Dataset):
 
     def _update_data(self) -> None:
         adata = self._get_random_minibatch()
-        self.X = torch.Tensor(adata.raw.X.todense().astype(int))
+        self.X = torch.Tensor(adata.X.todense().astype(int))
         self.db_ids = torch.Tensor(adata.obs_names.values.astype(int))
 
         self.index = 0

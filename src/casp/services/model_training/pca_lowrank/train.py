@@ -6,7 +6,7 @@ import neptune
 import numpy as np
 import pandas as pd
 import torch
-# import umap
+
 from google.cloud import bigquery, storage
 from sklearn.preprocessing import StandardScaler
 from sklearn.manifold import TSNE
