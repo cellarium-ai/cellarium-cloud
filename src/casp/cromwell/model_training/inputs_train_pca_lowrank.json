@@ -1,9 +1,0 @@
-{
-  "CASTrainPCALowrank.bucket_name": "dsp-cell-annotation-service",
-  "CASTrainPCALowrank.data_storage_path": "benchmark_v1",
-  "CASTrainPCALowrank.checkpoint_save_path": "pca_lowrank_new",
-  "CASTrainPCALowrank.n_components": 512,
-  "CASTrainPCALowrank.q": 5000,
-  "CASTrainPCALowrank.batch_size": 10000,
-  "CASTrainPCALowrank.use_gpu": true
-}

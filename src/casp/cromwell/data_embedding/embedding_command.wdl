@@ -17,7 +17,7 @@ task embed {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:fg-test-pca-lowrank-21"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:fg-pca-05"
         bootDiskSizeGb: 100
         memory: "26G"
         cpu: 4
