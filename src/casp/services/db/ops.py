@@ -1,4 +1,5 @@
 import typing as t
+import sqlalchemy as sa
 from casp.services.db import db_session, models
 
 
@@ -23,3 +24,10 @@ def get_models_for_user(user: "models.User") -> t.List[models.CASModel]:
 
 def get_model_by(system_name: str) -> models.CASModel:
     return models.CASModel.query.filter_by(system_name=system_name).first()
+
+
+def set_default_model_by(model_id: int) -> None:
+    models.CASModel.query.update({models.CASModel.is_default_model: False})
+    db_session.commit()
+    models.CASModel.query.filter_by(id=model_id).update({models.CASModel.is_default_model: True})
+    db_session.commit()

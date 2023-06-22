@@ -101,8 +101,19 @@ class UserAdminView(CellariumCloudAdminModelView):
 
 
 class CASModelAdminView(CellariumCloudAdminModelView):
+    column_extra_row_actions = [
+        EndpointLinkRowAction("glyphicon glyphicon-chevron-up", ".set_default_model"),
+    ]
     column_list = (
-        "system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date", "model_endpoint_uri"
+        "system_name",
+        "model_file_path",
+        "embedding_dimension",
+        "admin_use_only",
+        "schema_name",
+        "is_default_model",
+        "bq_cell_info_table_fqn",
+        "bq_temp_table_dataset",
+        "created_date",
     )
     column_descriptions = {
         "system_name": (
@@ -116,22 +127,47 @@ class CASModelAdminView(CellariumCloudAdminModelView):
             "If false, only admin users can access the model endpoint. "
             "Set this to false when model is tested and well benchmarked."
         ),
+        "schema_name": "Schema name that was used in data to build the model.",
+        "is_default_model": (
+            "Flag showing to CAS client which model schema to use as default. Only one model could be a default model."
+        ),
+        "bq_cell_info_table_fqn": (
+            "Cell info table that was used to create extract the model was trained on. "
+            "This would be used for joining cell info for annotations"
+        ),
+        "bq_temp_table_dataset": (
+            "Dataset where CAS would allocate temporary tables for storing annotation request data."
+        ),
         "created_date": "Datetime when this record has been created. Differs from when model was trained.",
     }
     column_editable_list = ("admin_use_only",)
-    form_columns = ("system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date")
-    form_widget_args = {"created_date": {"disabled": True}}
+    form_columns = (
+        "system_name",
+        "model_file_path",
+        "embedding_dimension",
+        "schema_name",
+        "is_default_model",
+        "admin_use_only",
+        "bq_cell_info_table_fqn",
+        "bq_temp_table_dataset",
+        "created_date",
+    )
+    form_widget_args = {"created_date": {"disabled": True}, "is_default_model": {"disabled": True}}
+
+    @expose("/set-default-model", methods=("GET",))
+    def set_default_model(self) -> Response:
+        """
+        Exposes an API for Flask Admin for generating secret key (JWT token) and
+        downloading it as a .txt file
+        :return: A HTTP response that makes a web browser downloading the file
+        """
+        model_id = int(request.args["id"])
+        ops.set_default_model_by(model_id=model_id)
+        return redirect("/casmodel/")
 
 
 class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
-    column_list = (
-        "system_name",
-        "embedding_dimension",
-        "endpoint_id",
-        "deployed_index_id",
-        "admin_use_only",
-        "model"
-    )
+    column_list = ("system_name", "embedding_dimension", "endpoint_id", "deployed_index_id", "model")
     column_descriptions = {
         "system_name": (
             "A system name that is used, must be unique, lowercase. "
