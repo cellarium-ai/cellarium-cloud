@@ -102,7 +102,14 @@ class UserAdminView(CellariumCloudAdminModelView):
 
 class CASModelAdminView(CellariumCloudAdminModelView):
     column_list = (
-        "system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date", "model_endpoint_uri"
+        "system_name",
+        "model_file_path",
+        "embedding_dimension",
+        "admin_use_only",
+        "schema_name",
+        "bq_cell_info_table_fqn",
+        "bq_temp_table_dataset",
+        "created_date",
     )
     column_descriptions = {
         "system_name": (
@@ -116,22 +123,32 @@ class CASModelAdminView(CellariumCloudAdminModelView):
             "If false, only admin users can access the model endpoint. "
             "Set this to false when model is tested and well benchmarked."
         ),
+        "schema_name": "Schema name that was used in data to build the model.",
+        "bq_cell_info_table_fqn": (
+            "Cell info table that was used to create extract the model was trained on. "
+            "This would be used for joining cell info for annotations"
+        ),
+        "bq_temp_table_dataset": (
+            "Dataset where CAS would allocate temporary tables for storing annotation request data."
+        ),
         "created_date": "Datetime when this record has been created. Differs from when model was trained.",
     }
     column_editable_list = ("admin_use_only",)
-    form_columns = ("system_name", "model_file_path", "embedding_dimension", "admin_use_only", "created_date")
+    form_columns = (
+        "system_name",
+        "model_file_path",
+        "embedding_dimension",
+        "schema_name",
+        "admin_use_only",
+        "bq_cell_info_table_fqn",
+        "bq_temp_table_dataset",
+        "created_date",
+    )
     form_widget_args = {"created_date": {"disabled": True}}
 
 
 class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
-    column_list = (
-        "system_name",
-        "embedding_dimension",
-        "endpoint_id",
-        "deployed_index_id",
-        "admin_use_only",
-        "model"
-    )
+    column_list = ("system_name", "embedding_dimension", "endpoint_id", "deployed_index_id", "model")
     column_descriptions = {
         "system_name": (
             "A system name that is used, must be unique, lowercase. "

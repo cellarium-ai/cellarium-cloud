@@ -13,7 +13,7 @@ from casp.services import settings, utils
 
 def load_data(file) -> t.Tuple[torch.Tensor, torch.Tensor]:
     adata = anndata.read_h5ad(io.BytesIO(file))
-    X = torch.Tensor(adata.raw.X.todense().astype(int))
+    X = torch.Tensor(adata.X.todense().astype(int))
     db_ids = torch.Tensor(adata.obs_names.values.astype(int))
     return X, db_ids
 
