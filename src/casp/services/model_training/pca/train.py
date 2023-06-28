@@ -61,14 +61,27 @@ def main(bucket_name, storage_path, checkpoint_save_path: str, use_gpu: bool, ba
         model(batch)
         if counter % 100 == 0:
             save_check_point(
-                model=model, running_stat=one_pass, t=t, bucket=bucket, postfix=counter, save_path=checkpoint_save_path
+                model=model, 
+                running_stat=one_pass,
+                t=t,
+                bucket=bucket,
+                postfix=counter,
+                save_path=checkpoint_save_path, 
+                use_gpu=use_gpu
             )
             print(f"----- Processed {counter} chunks {time.time() - start}")
             start = time.time()
 
         counter += 1
 
-    save_check_point(model=model, running_stat=one_pass, t=t, bucket=bucket, postfix="final")
+    save_check_point(
+        model=model,
+        running_stat=one_pass,
+        t=t, bucket=bucket,
+        postfix="final",
+        save_path=checkpoint_save_path,
+        use_gpu=use_gpu
+    )
     print("===== FINISH TRAINING =====")
 
 

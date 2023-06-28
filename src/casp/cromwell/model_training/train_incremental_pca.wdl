@@ -21,13 +21,13 @@ task train {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:fg-pca-04"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:june-release-07"
         bootDiskSizeGb: 100
         memory: "26G"
         cpu: 4
         gpuCount: 1
-        gpuType:  "nvidia-tesla-t4"
-        zones: "us-east1-d us-east1-c"
+        gpuType:  "nvidia-tesla-v100"
+        zones: "us-central1-a us-central1-b"
         preemptible_tries: 3
     }
 }
