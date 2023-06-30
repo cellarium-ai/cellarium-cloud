@@ -33,7 +33,6 @@ def __get_filter_by_organism_feature_summary_join(
     if filter_by_organism is None:
         return f"JOIN `{project}.{dataset}.cas_cell_info` c ON (m.cas_cell_index = c.cas_cell_index)"
 
-    
     return f"""
         JOIN `{project}.{dataset}.cas_cell_info` c ON (m.cas_cell_index = c.cas_cell_index)
             AND c.organism = '{filter_by_organism}'
