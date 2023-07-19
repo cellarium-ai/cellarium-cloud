@@ -30,7 +30,7 @@ class TestIncrementalPCA(unittest.TestCase):
         np_batch_to_transform = np.copy(np_batch_1)
 
         sk_learn_incremental_pca = sklearn_pca.IncrementalPCA(n_components=3)
-        casp_incremental_pca = casp_pca.FullRankIncrementalPCA(n_components=3)
+        casp_incremental_pca = casp_pca.IncrementalPCA(n_components=3)
 
         sk_learn_incremental_pca.partial_fit(np_batch_1)
         sk_learn_incremental_pca.partial_fit(np_batch_2)
@@ -81,7 +81,7 @@ class TestIncrementalPCA(unittest.TestCase):
         batch_to_transform_t = torch.clone(batch_1_t)
 
         sk_pca = sklearn_pca.IncrementalPCA(n_components=3)
-        c_pca = casp_pca.FullRankIncrementalPCA(n_components=3)
+        c_pca = casp_pca.IncrementalPCA(n_components=3)
 
         sk_pca.partial_fit(batch_1_n)
         sk_pca.partial_fit(batch_2_n)

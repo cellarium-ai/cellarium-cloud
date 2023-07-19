@@ -5,8 +5,8 @@ import pandas as pd
 import uvicorn
 from fastapi import FastAPI, File, Form
 
-from casp.services.model_inference import utils
 from casp.services.db import ops
+from casp.services.model_inference import utils
 
 app = FastAPI()
 

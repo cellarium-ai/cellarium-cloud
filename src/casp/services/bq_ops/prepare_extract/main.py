@@ -1,7 +1,7 @@
-import typing as t
 import argparse
+import typing as t
 
-from casp.bq_scripts import prepare_extract, prepare_expressed_genes_info, prepare_all_cell_types
+from casp.bq_scripts import prepare_all_cell_types, prepare_expressed_genes_info, prepare_extract
 from casp.services import utils
 
 
@@ -14,7 +14,7 @@ def main(
     bucket_name: str,
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[str] = None,
-    filter_by_is_primary_data: t.Optional[bool] = None
+    filter_by_is_primary_data: t.Optional[bool] = None,
 ):
     """
     Prepare extract tables in BigQuery data repository.
@@ -40,34 +40,30 @@ def main(
         credentials=credentials,
         filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets_split,
-        filter_by_is_primary_data=filter_by_is_primary_data
+        filter_by_is_primary_data=filter_by_is_primary_data,
     )
     expressed_genes_info_df = prepare_expressed_genes_info(
         project=project_id,
         dataset=dataset,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
-        credentials=credentials
+        credentials=credentials,
     )
-    all_cell_types_df = prepare_all_cell_types(
-        project=project_id,
-        dataset=dataset,
-        credentials=credentials
-    )
+    all_cell_types_df = prepare_all_cell_types(project=project_id, dataset=dataset, credentials=credentials)
     expressed_genes_file_name = "expressed_genes_info.csv"
     expressed_genes_info_df.to_csv(expressed_genes_file_name)
-    
+
     all_cell_types_file_name = "all_cell_types.csv"
     all_cell_types_df.to_csv(all_cell_types_file_name, index=False)
-    
+
     utils.upload_file_to_bucket(
-        local_file_name=expressed_genes_file_name, 
+        local_file_name=expressed_genes_file_name,
         bucket=bucket_name,
-        blob_name=f"{dataset}_{extract_table_prefix}_info/{expressed_genes_file_name}"
+        blob_name=f"{dataset}_{extract_table_prefix}_info/{expressed_genes_file_name}",
     )
     utils.upload_file_to_bucket(
-        local_file_name=all_cell_types_file_name, 
+        local_file_name=all_cell_types_file_name,
         bucket=bucket_name,
-        blob_name=f"{dataset}_{extract_table_prefix}_info/{all_cell_types_file_name}"
+        blob_name=f"{dataset}_{extract_table_prefix}_info/{all_cell_types_file_name}",
     )
 
 
@@ -77,12 +73,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
     parser.add_argument("--extract_table_prefix", type=str, help="Prefix for extract tables", required=True)
-    parser.add_argument(
-        "--bucket_name", 
-        type=str,
-        help="Bucket Name where to store dataset info files", 
-        required=True
-    )
+    parser.add_argument("--bucket_name", type=str, help="Bucket Name where to store dataset info files", required=True)
     parser.add_argument(
         "--min_observed_cells", type=int, help="minimum observed cells per gene", default=3, required=False
     )
@@ -101,21 +92,21 @@ if __name__ == "__main__":
         type=str,
         help="Organism to filter cells by that we want to use for preparing extract tables",
         required=False,
-        default=None
+        default=None,
     )
     parser.add_argument(
         "--filter_by_datasets",
         type=str,
         help="Comma separated dataset_filename(s) to use to filter by for preparing extract tables",
         required=False,
-        default=None
+        default=None,
     )
     parser.add_argument(
         "--filter_by_is_primary_data",
         type=bool,
         help="Is primary data boolean flag form bigquery tables",
         required=False,
-        default=None
+        default=None,
     )
 
     args = parser.parse_args()

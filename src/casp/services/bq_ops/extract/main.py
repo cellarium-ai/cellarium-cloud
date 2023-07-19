@@ -37,13 +37,13 @@ def extract_task(
             end_bin=bin_number,
             output=file_name,
             credentials=credentials,
-            bucket_name=output_bucket_name
+            bucket_name=output_bucket_name,
         )
         blob_name = f"{output_bucket_directory}/{file_name}"
         utils.upload_file_to_bucket(local_file_name=file_name, blob_name=blob_name, bucket=output_bucket_name)
     except Exception as e:
         print("ERROR!", str(e))
-        
+
     os.remove(file_name)
     logging.info(msg=f"Processed bin {bin_number}")
 

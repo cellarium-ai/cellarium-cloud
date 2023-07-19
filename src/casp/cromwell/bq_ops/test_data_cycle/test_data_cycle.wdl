@@ -8,7 +8,7 @@ task test_data_cycle {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:june-release-11"
+        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:june-release-14"
         bootDiskSizeGb: 40
         memory: "30G"
         cpu: 18

@@ -7,7 +7,6 @@ import torch
 from google.cloud import storage
 
 from casp.ml.dump_manager import DumpManager
-from casp.ml.data.transforms import Compose
 from casp.services import settings, utils
 
 

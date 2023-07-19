@@ -66,7 +66,6 @@ def compare_extract_with_input_files(
     extract_file_names = [f"extract_{x}.h5ad" for x in range(number_of_extract_bins)]
     adata_source = get_source_file(gcs_bucket_name=gcs_bucket_name, gcs_input_file_paths=gcs_input_file_paths)
     extracts_correspond_to_source = []
-    d = []
 
     for extract_file_name in extract_file_names:
         extract_chunk_name = f"{gcs_extract_directory}/{extract_file_name}"
@@ -293,7 +292,7 @@ def main():
     success_messages = "\n".join([f"\t{x}" for x in successes])
     failure_messages = "\n".join([f"\t{x}" for x in failures])
 
-    print(f"===================================")
+    print("======================================")
 
     print(f"{len(successes)} tests passed: \n {success_messages}")
     if len(failures) > 0:

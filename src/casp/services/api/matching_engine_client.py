@@ -1,10 +1,11 @@
 import typing as t
 
 import grpc
-from casp.services import settings
 from google.cloud import aiplatform
 from google.cloud.aiplatform.matching_engine._protos import match_service_pb2, match_service_pb2_grpc
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
+
+from casp.services import settings
 
 if t.TYPE_CHECKING:
     from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import Namespace
@@ -30,10 +31,10 @@ class IncreasedGRPCSizeMatchingEngine(aiplatform.MatchingEngineIndexEndpoint):
                 Please refer to https://cloud.google.com/vertex-ai/docs/matching-engine/filtering#json for more detail.
         :return:  A list of nearest neighbors for each query.
         """
-        # == overriden fix Make an input argument immutable ==
+        # ==== Overriden fix: make an input argument immutable ====
         if filter is None:
             filter = []
-        # == overriden fix ends ==
+        # ==== overriden fix ends ====
         # Find the deployed index by id
         deployed_indexes = [
             deployed_index for deployed_index in self.deployed_indexes if deployed_index.id == deployed_index_id
@@ -46,7 +47,7 @@ class IncreasedGRPCSizeMatchingEngine(aiplatform.MatchingEngineIndexEndpoint):
         server_ip = deployed_indexes[0].private_endpoints.match_grpc_address
 
         # Set up channel and stub
-        # == Here is overridden part ==
+        # ==== Here is overridden part ====
         channel = grpc.insecure_channel(
             "{}:10000".format(server_ip),
             options=[
@@ -54,7 +55,7 @@ class IncreasedGRPCSizeMatchingEngine(aiplatform.MatchingEngineIndexEndpoint):
                 ("grpc.max_receive_message_length", settings.VERTEX_AI_MATCHING_INDEX_GRPC_MESSAGE_SIZE),
             ],
         )
-        # == overridden part ends ==
+        # ==== overridden part ends ====
         stub = match_service_pb2_grpc.MatchServiceStub(channel)
 
         # Create the batch match request

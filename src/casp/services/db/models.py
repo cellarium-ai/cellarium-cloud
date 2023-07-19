@@ -1,6 +1,7 @@
 import datetime
+
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import backref, relationship
 
 from casp.services import db, settings
 

@@ -301,7 +301,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, uns_meta
                 if uns_meta_keys is not None:
                     if idx not in uns_meta_keys:
                         continue
-                        
+
                 uncapped_json = json.dumps(uncapped_val, cls=NumpyEncoder)
                 if len(uncapped_json) > metadata_limit:
                     print(
@@ -318,7 +318,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, uns_meta
             "dataset_filename": filename,
             "cas_ingest_id": ingest_id,
             "ingest_timestamp": None,
-            "ingest_prefix_name": prefix
+            "ingest_prefix_name": prefix,
         }
 
     write_avro(ingest_generator, parsed_schema, filename)
@@ -391,7 +391,7 @@ def process(
     dataset,
     load_uns_data,
     original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
-    uns_meta_keys: t.List=None
+    uns_meta_keys: t.List = None,
 ):
     """
     High level entry point, reads the input AnnData file and generates Avro files
@@ -400,7 +400,7 @@ def process(
     :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
     In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
     an index column of var dataframe would be used.
-    
+
     :param uns_meta_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
     """
     client = None

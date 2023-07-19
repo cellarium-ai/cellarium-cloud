@@ -2,8 +2,7 @@ import argparse
 import math
 import time
 
-from google.api_core.exceptions import Forbidden, BadRequest
-
+from google.api_core.exceptions import Forbidden
 from google.cloud import bigquery
 
 from casp.bq_scripts import create_bigquery_objects, ingest_data_to_bq
@@ -14,15 +13,15 @@ def get_avro_prefixes(bucket_name, gcs_stage_dir):
     ingest_file_blobs = utils.list_blobs(bucket_name=bucket_name, prefix=gcs_stage_dir)
     blob_names = [x.name for x in ingest_file_blobs]
     blob_names_return = []
-    
+
     for blob_name in blob_names:
         blob_directory, blob_name = blob_name.split("/")
-        
+
         if blob_directory != gcs_stage_dir:
             continue
-        
+
         blob_names_return.append(blob_name.split("_")[0])
-    
+
     return set(blob_names_return)
 
 
@@ -72,17 +71,17 @@ def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_f
                     print("Retrying another attempt...")
             except Exception as e:
                 import pandas as pd
-                
+
                 bad_prefixes_name = "bad_prefixes.csv"
                 try:
                     df = pd.read_csv(bad_prefixes_name)
                 except FileNotFoundError:
                     df = pd.DataFrame(columns=("name_prefix", "exception_text"))
-                
+
                 df = df.append({"name_prefix": avro_prefix, "exception_text": str(e)}, ignore_index=True)
                 df.to_csv(bad_prefixes_name, index=False)
                 need_retry = False
-                                
+
             else:
                 need_retry = False
 

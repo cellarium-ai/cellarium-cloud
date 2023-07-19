@@ -5,12 +5,13 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import uvicorn
+from fastapi import Depends, FastAPI, File, Form, UploadFile
+from google.cloud import bigquery
+
 from casp.services import settings
 from casp.services.api import async_client, data_controller, matching_engine_client, schemas
 from casp.services.api.auth import authenticate_user
 from casp.services.db import init_db, models, ops
-from fastapi import Depends, FastAPI, File, Form, UploadFile
-from google.cloud import aiplatform, bigquery
 
 if t.TYPE_CHECKING:
     import numpy
@@ -39,7 +40,7 @@ async def __get_embeddings(myfile, model_system_name: str) -> t.Tuple[t.List, "n
 def __get_appx_knn_matches(embeddings, model_system_name: str):
     cas_model = ops.get_model_by(system_name=model_system_name)
     cas_matching_engine_index = cas_model.cas_matching_engine
-    # index_endpoint = aiplatform.MatchingEngineIndexEndpoint(index_endpoint_name=cas_matching_engine_index.endpoint_id)
+
     index_endpoint = matching_engine_client.IncreasedGRPCSizeMatchingEngine(
         index_endpoint_name=cas_matching_engine_index.endpoint_id
     )
@@ -207,6 +208,4 @@ async def get_feature_schema_by(schema_name: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "server:app", host=settings.SERVER_HOST, port=settings.SERVER_PORT, workers=multiprocessing.cpu_count()
-    )
+    uvicorn.run("server:app", host=settings.SERVER_HOST, port=settings.SERVER_PORT, workers=multiprocessing.cpu_count())

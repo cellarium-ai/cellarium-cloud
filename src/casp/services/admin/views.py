@@ -1,12 +1,12 @@
 import tempfile
 
-from flask import Response, request, send_file, redirect
+from flask import Response, redirect, request, send_file
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.model.template import EndpointLinkRowAction
 from werkzeug.exceptions import HTTPException
 
-from casp.services import _auth, utils
+from casp.services import _auth
 from casp.services.admin import basic_auth, flask_app
 from casp.services.db import db_session, models, ops
 

@@ -1,4 +1,4 @@
-# CASP Services
+# CAS Services
 It is required to have a `src/casp/services/.env` with `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` variable which includes service account json credentials dumped as oneline string to use any services.
 There are 2 CAS service types:
 * Deployable solution: could be used in Cloud Run or deployed anywhere else

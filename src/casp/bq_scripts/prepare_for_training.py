@@ -1,9 +1,9 @@
 """
 Prepare data for extract by randomizing, preprocessing and staging in temporary tables
 """
-import typing as t
 import argparse
 import time
+import typing as t
 
 from google.cloud import bigquery
 
@@ -26,9 +26,7 @@ def execute_query(client, sql):
 
 
 def __get_filter_by_organism_feature_summary_join(
-    project: str,
-    dataset: str,
-    filter_by_organism: t.Optional[str]
+    project: str, dataset: str, filter_by_organism: t.Optional[str]
 ) -> str:
     if filter_by_organism is None:
         return f"JOIN `{project}.{dataset}.cas_cell_info` c ON (m.cas_cell_index = c.cas_cell_index)"
@@ -38,15 +36,13 @@ def __get_filter_by_organism_feature_summary_join(
             AND c.organism = '{filter_by_organism}'
     """
 
-   
+
 def __get_filter_by_dataset_feature_summary_join(
-    project: str,
-    dataset: str,
-    filter_by_datasets: t.Optional[t.List[str]]
+    project: str, dataset: str, filter_by_datasets: t.Optional[t.List[str]]
 ) -> str:
     if filter_by_datasets is None:
         return ""
-    
+
     filter_by_datasets_str = ", ".join([f"'{x}'" for x in filter_by_datasets])
     return f"""
         JOIN `{project}.{dataset}.cas_ingest_info` i ON (c.cas_ingest_id = i.cas_ingest_id)
@@ -60,7 +56,7 @@ def prepare_feature_summary(
     dataset,
     extract_table_prefix,
     filter_by_organism: t.Optional[str],
-    filter_by_datasets: t.Optional[t.List[str]]
+    filter_by_datasets: t.Optional[t.List[str]],
 ):
     """
     create feature/gene level summary -- scan of full dataset
@@ -71,7 +67,7 @@ def prepare_feature_summary(
     filter_by_datasets_join = __get_filter_by_dataset_feature_summary_join(
         project=project, dataset=dataset, filter_by_datasets=filter_by_datasets
     )
-    
+
     sql = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_feature_summary`
         AS
@@ -112,42 +108,39 @@ def prepare_feature_info(
     return query
 
 
-def __get_prepare_cell_info_join(project:str, dataset:str, filter_by_datasets: t.Optional[t.List[str]]):
+def __get_prepare_cell_info_join(project: str, dataset: str, filter_by_datasets: t.Optional[t.List[str]]):
     if filter_by_datasets is None:
         return ""
-    
+
     return f"JOIN `{project}.{dataset}.cas_ingest_info` i ON (i.cas_ingest_id = c.cas_ingest_id)"
 
 
 def __get_prepare_cell_info_filter(
     project: str,
     dataset: str,
-    datasets: t.Optional[t.List[str]], 
-    organism: t.Optional[str], 
-    is_primary_data:t.Optional[bool]
+    datasets: t.Optional[t.List[str]],
+    organism: t.Optional[str],
+    is_primary_data: t.Optional[bool],
 ) -> str:
     if datasets is None and organism is None and is_primary_data is None:
         return ""
-    
+
     datasets = ", ".join(f"'{s}'" for s in datasets) if datasets is not None else None
     filter_by_datasets = f"i.dataset_filename IN ({datasets})" if datasets is not None else None
     filter_by_organism = f"c.organism = '{organism}'" if organism is not None else None
     filter_by_is_primary_data = (
-        f"c.is_primary_data = {str(is_primary_data).upper()}" 
-        if is_primary_data is not None 
-        else None
+        f"c.is_primary_data = {str(is_primary_data).upper()}" if is_primary_data is not None else None
     )
     filters = [filter_by_organism, filter_by_datasets, filter_by_is_primary_data]
     filters = [x for x in filters if x is not None]
-    
+
     where_body = "\nAND ".join(filters)
 
     return f"WHERE {where_body}" if where_body != "" else ""
 
-    
-    
+
 def prepare_cell_info(
-    client, 
+    client,
     project,
     dataset,
     extract_table_prefix,
@@ -166,22 +159,22 @@ def prepare_cell_info(
     Then allocate cells into bins of `extract_bin_size` cells.  The last bin may be much
     smaller than this requested size, as it is the remainder cells
     """
-    
+
     join_clause = __get_prepare_cell_info_join(project=project, dataset=dataset, filter_by_datasets=filter_by_datasets)
     where_clause = __get_prepare_cell_info_filter(
-        project=project, 
-        dataset=dataset, 
-        organism=filter_by_organism, 
+        project=project,
+        dataset=dataset,
+        organism=filter_by_organism,
         datasets=filter_by_datasets,
-        is_primary_data=filter_by_is_primary_data
+        is_primary_data=filter_by_is_primary_data,
     )
 
     sql_random_ordering = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
         AS
         SELECT  cas_cell_index,
-                c.cas_ingest_id, 
-                cell_type 
+                c.cas_ingest_id,
+                cell_type
         FROM `{project}.{dataset}.cas_cell_info` c
         {join_clause}
         {where_clause}
@@ -254,7 +247,7 @@ def prepare_extract(
     credentials=None,
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[t.List[str]] = None,
-    filter_by_is_primary_data: t.Optional[bool] = None
+    filter_by_is_primary_data: t.Optional[bool] = None,
 ):
     if credentials is None:
         client = bigquery.Client(project=project)
@@ -267,20 +260,20 @@ def prepare_extract(
         dataset,
         extract_table_prefix,
         filter_by_organism=filter_by_organism,
-        filter_by_datasets=filter_by_datasets
+        filter_by_datasets=filter_by_datasets,
     )
     prepare_feature_info(
         client, project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids
     )
     prepare_cell_info(
-        client, 
-        project, 
-        dataset, 
+        client,
+        project,
+        dataset,
         extract_table_prefix,
-        extract_bin_size, 
-        filter_by_organism=filter_by_organism, 
+        extract_bin_size,
+        filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets,
-        filter_by_is_primary_data=filter_by_is_primary_data
+        filter_by_is_primary_data=filter_by_is_primary_data,
     )
     prepare_extract_matrix(client, project, dataset, extract_table_prefix)
 

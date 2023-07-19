@@ -5,12 +5,12 @@ import neptune
 from google.cloud import storage
 from torch.utils.data import DataLoader
 
-from casp.services import settings
 from casp.ml.data import transforms
 from casp.ml.data.dataset import CASDataset
 from casp.ml.dump_manager import DumpManager
 from casp.ml.models.pca import IncrementalPCA
 from casp.ml.running_stats import OnePassMeanVarStd
+from casp.services import settings
 from casp.services.utils import get_google_service_credentials
 
 
@@ -27,7 +27,7 @@ def save_check_point(model, running_stat, t, bucket, postfix, save_path, use_gpu
 
 def main(bucket_name, storage_path, checkpoint_save_path: str, use_gpu: bool, batch_size: int, n_components: int):
     credentials, project_id = get_google_service_credentials()
-    experiment = neptune.init_run(
+    _ = neptune.init_run(
         project="fedorgrab/cas",
         name="Incremental PCA 4m cells",
         api_token=settings.NEPTUNE_API_KEY,
@@ -61,13 +61,13 @@ def main(bucket_name, storage_path, checkpoint_save_path: str, use_gpu: bool, ba
         model(batch)
         if counter % 100 == 0:
             save_check_point(
-                model=model, 
+                model=model,
                 running_stat=one_pass,
                 t=t,
                 bucket=bucket,
                 postfix=counter,
-                save_path=checkpoint_save_path, 
-                use_gpu=use_gpu
+                save_path=checkpoint_save_path,
+                use_gpu=use_gpu,
             )
             print(f"----- Processed {counter} chunks {time.time() - start}")
             start = time.time()
@@ -77,10 +77,11 @@ def main(bucket_name, storage_path, checkpoint_save_path: str, use_gpu: bool, ba
     save_check_point(
         model=model,
         running_stat=one_pass,
-        t=t, bucket=bucket,
+        t=t,
+        bucket=bucket,
         postfix="final",
         save_path=checkpoint_save_path,
-        use_gpu=use_gpu
+        use_gpu=use_gpu,
     )
     print("===== FINISH TRAINING =====")
 

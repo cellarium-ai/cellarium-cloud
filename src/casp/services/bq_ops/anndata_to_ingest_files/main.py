@@ -1,6 +1,6 @@
-import typing as t
 import argparse
 import os
+import typing as t
 
 from casp.bq_scripts import anndata_to_avro
 from casp.services import utils
@@ -14,7 +14,7 @@ def main(
     gcs_stage_dir: str,
     original_feature_id_lookup: str,
     load_uns_data: bool = False,
-    uns_meta_keys: t.Optional[str] = None
+    uns_meta_keys: t.Optional[str] = None,
 ) -> None:
     """
     Create ingest files that can be read by BigQuery for data ingestion.
@@ -43,7 +43,7 @@ def main(
         uns_meta_keys_list = set([x.strip() for x in uns_meta_keys.split(",")])
     else:
         uns_meta_keys_list = None
-        
+
     prefix = filename.split(".")[0]
 
     anndata_to_avro(
@@ -55,7 +55,7 @@ def main(
         dataset=None,
         load_uns_data=load_uns_data,
         original_feature_id_lookup=original_feature_id_lookup,
-        uns_meta_keys=uns_meta_keys_list
+        uns_meta_keys=uns_meta_keys_list,
     )
     ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix) and not x.endswith(".h5ad")]
 

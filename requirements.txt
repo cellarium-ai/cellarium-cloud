@@ -2,8 +2,8 @@ anndata~=0.8.0
 fastavro
 google-api-python-client
 google-cloud-aiplatform
-google-cloud-bigquery==3.11.0
-google-cloud-bigquery-storage==2.20.0
+google-cloud-bigquery==3.9.0
+google-cloud-bigquery-storage==2.19.1
 google-cloud-storage
 numpy
 scipy
@@ -25,8 +25,7 @@ pg8000==1.29.4
 cloud-sql-python-connector==1.1.0
 neptune==1.1.1
 matplotlib
-pandas==2.0.2
-db-dtypes==1.1.1
+pandas
 google-cloud-run==0.7.1
 scikit-learn
 scvi-distributed @ git+https://github.com/cellarium-ai/scvi-distributed.git
