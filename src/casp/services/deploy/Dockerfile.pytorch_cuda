@@ -3,6 +3,10 @@ FROM anibali/pytorch:2.0.0-cuda11.8
 WORKDIR /app
 USER root
 
+# Install Git to be able to install some Dependencies (such as scvid module)
+RUN apt-get update
+RUN yes | apt-get install git
+
 # Install Dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip
@@ -12,7 +16,6 @@ RUN pip install -r requirements.txt
 COPY src .
 # Looking for b64 encoded secret environment variables
 RUN --mount=type=secret,id=ENV_SECRETS cat /run/secrets/ENV_SECRETS | base64 -d >> ./casp/services/.env
-
 
 # Create a dockeruser to own the app
 RUN useradd -r dockeruser

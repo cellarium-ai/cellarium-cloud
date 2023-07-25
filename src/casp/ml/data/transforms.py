@@ -57,3 +57,8 @@ class ColumnWiseNormalization(CASTransform):
         res = (tensor - self.mean_var_std.mu) / self.mean_var_std.std
         res[torch.isnan(res)] = 0
         return res
+
+
+class DummyTransform(CASTransform):
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        return tensor
