@@ -29,4 +29,4 @@ pandas==2.0.2
 db-dtypes==1.1.1
 google-cloud-run==0.7.1
 scikit-learn
-scvi-distributed @ git+https://github.com/cellarium-ai/scvi-distributed.git@predict
+scvi-distributed @ git+https://github.com/cellarium-ai/scvi-distributed.git

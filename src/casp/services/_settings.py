@@ -27,8 +27,7 @@ class AllEnvSettings(BaseSettings):
     DEFAULT_MODEL_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_50m_dataset.cas_cell_info"
     DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_50m_dataset"
     KNN_SEARCH_NUM_MATCHES: int = 100
-    # BQ_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_50m_dataset.cas_cell_info"
-    # BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_50m_dataset"
+    VERTEX_AI_MATCHING_INDEX_GRPC_MESSAGE_SIZE: int = 50000000  # 5 mb
     ITEMS_PER_USER: int = 50
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
