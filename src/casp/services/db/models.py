@@ -46,7 +46,7 @@ class CASMatchingEngineIndex(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     system_name = sa.Column(sa.String(255), unique=True, nullable=False)
     embedding_dimension = sa.Column(sa.Integer, nullable=False)
-    endpoint_id = sa.Column(sa.String(255), unique=True, nullable=False)
+    endpoint_id = sa.Column(sa.String(255), unique=False, nullable=False)
     deployed_index_id = sa.Column(sa.String(255), unique=True, nullable=False)
     model_id = sa.Column(sa.Integer, sa.ForeignKey(f"{CASModel.__tablename__}.id"), nullable=False)
     model = relationship("CASModel", backref=backref("cas_matching_engine", uselist=False))
