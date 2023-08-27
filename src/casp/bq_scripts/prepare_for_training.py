@@ -116,22 +116,25 @@ def __get_prepare_cell_info_join(project: str, dataset: str, filter_by_datasets:
 
 
 def __get_prepare_cell_info_filter(
-    project: str,
-    dataset: str,
     datasets: t.Optional[t.List[str]],
     organism: t.Optional[str],
     is_primary_data: t.Optional[bool],
+    diseases: t.Optional[t.List[str]],
 ) -> str:
     if datasets is None and organism is None and is_primary_data is None:
         return ""
 
+    # Parse lists to SQL friendly string
     datasets = ", ".join(f"'{s}'" for s in datasets) if datasets is not None else None
+    diseases = ", ".join(f"'{s}'" for s in diseases) if diseases is not None else None
+    # Create filters
     filter_by_datasets = f"i.dataset_filename IN ({datasets})" if datasets is not None else None
     filter_by_organism = f"c.organism = '{organism}'" if organism is not None else None
+    filter_by_diseases = f"c.disease IN ({diseases})" if diseases is not None else None
     filter_by_is_primary_data = (
         f"c.is_primary_data = {str(is_primary_data).upper()}" if is_primary_data is not None else None
     )
-    filters = [filter_by_organism, filter_by_datasets, filter_by_is_primary_data]
+    filters = [filter_by_organism, filter_by_datasets, filter_by_is_primary_data, filter_by_diseases]
     filters = [x for x in filters if x is not None]
 
     where_body = "\nAND ".join(filters)
@@ -151,6 +154,7 @@ def prepare_cell_info(
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[t.List[str]] = None,
     filter_by_is_primary_data: t.Optional[bool] = None,
+    filter_by_diseases: t.Optional[t.List[str]] = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
@@ -174,17 +178,17 @@ def prepare_cell_info(
     :param filter_by_organism: Optional filter to specify an organism. If not provided, no filtering occurs.
     :param filter_by_datasets: Optional filter to specify datasets by their names. If not provided, no filtering occurs.
     :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
+    :param filter_by_diseases: Optional filter to specify diseases. If not provided not filtering occurs.
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``. If not
         provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
     """
 
     join_clause = __get_prepare_cell_info_join(project=project, dataset=dataset, filter_by_datasets=filter_by_datasets)
     where_clause = __get_prepare_cell_info_filter(
-        project=project,
-        dataset=dataset,
         organism=filter_by_organism,
         datasets=filter_by_datasets,
         is_primary_data=filter_by_is_primary_data,
+        diseases=filter_by_diseases,
     )
     cas_cell_info_columns = ", ".join([*constants.CAS_CELL_INFO_REQUIRED_COLUMNS, *obs_columns_to_include])
     sql_random_ordering = f"""
@@ -264,6 +268,7 @@ def prepare_extract(
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[t.List[str]] = None,
     filter_by_is_primary_data: t.Optional[bool] = None,
+    filter_by_diseases: t.Optional[t.List[str]] = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
@@ -287,6 +292,8 @@ def prepare_extract(
     :param filter_by_datasets: Optional filter to specify datasets by their names. If ``None``, no filtering occurs.
         `Default:` ``None``
     :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
+        `Default:` ``None``
+    :param filter_by_diseases: Optional filter to specify diseases. If not provided not filtering occurs.
         `Default:` ``None``
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``. If not
         ``None``, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
@@ -318,6 +325,7 @@ def prepare_extract(
         filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets,
         filter_by_is_primary_data=filter_by_is_primary_data,
+        filter_by_diseases=filter_by_diseases,
         obs_columns_to_include=obs_columns_to_include,
     )
     prepare_extract_matrix(client, project, dataset, extract_table_prefix)

@@ -14,6 +14,7 @@ def main(
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[str] = None,
     filter_by_is_primary_data: t.Optional[bool] = None,
+    filter_by_diseases: t.Optional[str] = None,
     obs_columns_to_include: t.Optional[str] = None,
 ):
     """
@@ -35,9 +36,13 @@ def main(
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``. If
         not ``None``, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
         `Default:` ``None``
+    :param filter_by_diseases: Diseases to filter by in `cas_cell_info` BQ table. Should be comma separated
+        values, no spaces allowed
+        ``Default:`` ``None``
     """
     credentials, project_id = utils.get_google_service_credentials()
     filter_by_datasets_split = None if filter_by_datasets is None else filter_by_datasets.split(",")
+    filter_by_diseases_split = None if filter_by_diseases is None else filter_by_diseases.split(",")
     obs_columns_to_include_split = None if obs_columns_to_include is None else obs_columns_to_include.split(",")
     prepare_extract(
         project=project_id,
@@ -49,6 +54,7 @@ def main(
         filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets_split,
         filter_by_is_primary_data=filter_by_is_primary_data,
+        filter_by_diseases=filter_by_diseases_split,
         obs_columns_to_include=obs_columns_to_include_split,
     )
     measured_genes_info_df = prepare_measured_genes_info(
@@ -115,6 +121,13 @@ if __name__ == "__main__":
         default=None,
     )
     parser.add_argument(
+        "--filter_by_diseases",
+        help="Diseases to filter by in `cas_cell_info` BQ table",
+        type=str,
+        required=False,
+        default=None,
+    )
+    parser.add_argument(
         "--obs_columns_to_include",
         type=str,
         required=False,
@@ -131,5 +144,6 @@ if __name__ == "__main__":
         filter_by_organism=args.filter_by_organism,
         filter_by_datasets=args.filter_by_datasets,
         filter_by_is_primary_data=args.filter_by_is_primary_data,
+        filter_by_diseases=args.filter_by_diseases,
         obs_columns_to_include=args.obs_columns_to_include,
     )

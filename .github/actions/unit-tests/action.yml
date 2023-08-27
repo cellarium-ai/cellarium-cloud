@@ -12,10 +12,10 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Install Dev Requirements
+    - name: Install Cython
       run: |
         python -m pip install --upgrade pip
-        pip install -r dev-requirements.txt
+        pip install Cython numpy wheel
       shell: bash
 
     - name: Install Tox

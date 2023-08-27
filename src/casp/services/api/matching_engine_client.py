@@ -5,8 +5,6 @@ from google.cloud import aiplatform
 from google.cloud.aiplatform.matching_engine._protos import match_service_pb2, match_service_pb2_grpc
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 
-from casp.services import settings
-
 if t.TYPE_CHECKING:
     from google.auth import credentials as auth_credentials
     from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import Namespace
