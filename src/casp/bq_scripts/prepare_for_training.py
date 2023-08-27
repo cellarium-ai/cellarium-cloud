@@ -7,7 +7,8 @@ import typing as t
 
 from google.cloud import bigquery
 
-from casp.bq_scripts import helpers
+from casp.bq_scripts import constants
+from casp.cell_data_manager import sql
 
 
 def execute_query(client, sql):
@@ -27,62 +28,22 @@ def execute_query(client, sql):
     return results
 
 
-def __get_filter_by_organism_feature_summary_join(
-    project: str, dataset: str, filter_by_organism: t.Optional[str]
-) -> str:
-    if filter_by_organism is None:
-        return f"JOIN `{project}.{dataset}.cas_cell_info` c ON (m.cas_cell_index = c.cas_cell_index)"
-
-    return f"""
-        JOIN `{project}.{dataset}.cas_cell_info` c ON (m.cas_cell_index = c.cas_cell_index)
-            AND c.organism = '{filter_by_organism}'
-    """
-
-
-def __get_filter_by_dataset_feature_summary_join(
-    project: str, dataset: str, filter_by_datasets: t.Optional[t.List[str]]
-) -> str:
-    if filter_by_datasets is None:
-        return ""
-
-    filter_by_datasets_str = ", ".join([f"'{x}'" for x in filter_by_datasets])
-    return f"""
-        JOIN `{project}.{dataset}.cas_ingest_info` i ON (c.cas_ingest_id = i.cas_ingest_id)
-             AND i.dataset_filename IN ({filter_by_datasets_str})
-    """
-
-
 def prepare_feature_summary(
-    client,
-    project,
-    dataset,
-    extract_table_prefix,
-    filter_by_organism: t.Optional[str],
-    filter_by_datasets: t.Optional[t.List[str]],
+    client: "bigquery.Client",
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    filters: t.Optional[t.Dict[str, t.Any]],
 ):
     """
     create feature/gene level summary -- scan of full dataset
     """
-    filter_by_organism_join = __get_filter_by_organism_feature_summary_join(
-        project=project, dataset=dataset, filter_by_organism=filter_by_organism
+    template_data = sql.TemplateData(
+        project=project, dataset=dataset, filters=filters, extract_table_prefix=extract_table_prefix
     )
-    filter_by_datasets_join = __get_filter_by_dataset_feature_summary_join(
-        project=project, dataset=dataset, filter_by_datasets=filter_by_datasets
-    )
-
-    sql = f"""
-        CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_feature_summary`
-        AS
-        SELECT  f.original_feature_id,
-                SUM(m.raw_counts) total_raw_counts,
-                COUNT(distinct CASE WHEN m.raw_counts > 0 THEN m.cas_cell_index ELSE null END) cells_with_counts
-        FROM `{project}.{dataset}.cas_raw_count_matrix` m
-        JOIN `{project}.{dataset}.cas_feature_info` f ON (m.cas_feature_index = f.cas_feature_index)
-        {filter_by_organism_join}{filter_by_datasets_join}
-        GROUP BY f.original_feature_id
-    """
+    sql_query = sql.render(template_path=constants.PREPARE_FEATURE_SUMMARY_TEMPLATE_DIR, template_data=template_data)
     print("Creating Feature Summary...")
-    query = execute_query(client, sql)
+    query = execute_query(client, sql_query)
     return query
 
 
@@ -93,7 +54,7 @@ def prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allo
       - original_feature_id being present in the fully qualified single-column table fq_allowed_original_feature_ids
     and generating with a new feature index value
     """
-    sql = f"""
+    sql_query = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_feature_info`
         AS
         SELECT  DENSE_RANK() OVER (ORDER BY fs.feature_name ASC) AS cas_feature_index,
@@ -104,67 +65,8 @@ def prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allo
     """
 
     print("Creating Feature Info...")
-    query = execute_query(client, sql)
+    query = execute_query(client, sql_query)
     return query
-
-
-def __get_prepare_cell_info_join(
-    project: str, dataset: str, filter_by_datasets: t.Optional[t.List[str]], obs_columns: t.List[str]
-) -> str:
-    """
-    Constructs a JOIN clause to retrieve information from the cas_ingest_info table in a specific project and dataset.
-
-    This function generates a SQL JOIN operation as a string. It's specifically designed for joining the
-    'cas_ingest_info' table from a specified Google BigQuery dataset and project. The JOIN clause is created based on
-    specific conditions: it either requires the 'filter_by_datasets' list to be not None, or there must be at least
-    one element in 'obs_columns' that starts with 'i.'.
-
-    :param project: The Google Cloud project ID where the dataset is hosted.
-    :param dataset: The dataset within the Google Cloud project.
-    :param filter_by_datasets: An optional list of dataset IDs to filter by. If this is None and no 'obs_columns'
-        start with 'i.', an empty string is returned.
-    :param obs_columns: A list of observational columns. If at least one of these columns starts with 'i.',
-        the function constructs the JOIN clause, otherwise, it checks 'filter_by_datasets'.
-
-    :returns: A string containing the JOIN clause for the 'cas_ingest_info' table. If the conditions based on
-        'filter_by_datasets' and 'obs_columns' are not met, it returns an empty string.
-
-    :Example:
-
-    >>> __get_prepare_cell_info_join(
-    >>>     project="my_project", dataset="my_dataset", filter_by_datasets=None, obs_columns=["col1", "i.col2"]
-    >>> )
-    'JOIN `my_project.my_dataset.cas_ingest_info` i ON (i.cas_ingest_id = c.cas_ingest_id)'
-    """
-    ingest_info_columns = list(filter(lambda x: x.startswith("i."), obs_columns))
-    ingest_info_columns_present = len(ingest_info_columns) > 0
-
-    if filter_by_datasets is None and not ingest_info_columns_present:
-        return ""
-
-    return f"JOIN `{project}.{dataset}.cas_ingest_info` i ON (i.cas_ingest_id = c.cas_ingest_id)"
-
-
-def __get_prepare_cell_info_filter(
-    datasets: t.Optional[t.List[str]],
-    organism: t.Optional[str],
-    is_primary_data: t.Optional[bool],
-) -> str:
-    if datasets is None and organism is None and is_primary_data is None:
-        return ""
-
-    datasets = ", ".join(f"'{s}'" for s in datasets) if datasets is not None else None
-    filter_by_datasets = f"i.dataset_filename IN ({datasets})" if datasets is not None else None
-    filter_by_organism = f"c.organism = '{organism}'" if organism is not None else None
-    filter_by_is_primary_data = (
-        f"c.is_primary_data = {str(is_primary_data).upper()}" if is_primary_data is not None else None
-    )
-    filters = [filter_by_organism, filter_by_datasets, filter_by_is_primary_data]
-    filters = [x for x in filters if x is not None]
-
-    where_body = "\nAND ".join(filters)
-
-    return f"WHERE {where_body}" if where_body != "" else ""
 
 
 def prepare_cell_info(
@@ -176,9 +78,7 @@ def prepare_cell_info(
     random_seed_offset: int = 0,
     partition_bin_count: int = 40000,
     partition_size: int = 10,
-    filter_by_organism: t.Optional[str] = None,
-    filter_by_datasets: t.Optional[t.List[str]] = None,
-    filter_by_is_primary_data: t.Optional[bool] = None,
+    filters: t.Optional[t.Dict[str, str]] = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
@@ -199,57 +99,49 @@ def prepare_cell_info(
         `Default:` ``40000``
     :param partition_size: The size for the partitions.
         `Default:` ``10``
-    :param filter_by_organism: Optional filter to specify an organism. If not provided, no filtering occurs.
-    :param filter_by_datasets: Optional filter to specify datasets by their names. If not provided, no filtering occurs.
-    :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
+    :param filters: Filters that have to be included in a SQL query. Filter format should follow convention described in
+        :func:`casp.bq_manager.sql.mako_helpers.parse_where_body`
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
         If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
         Note: It is required to provide the column names along with the aliases for the tables to which they belong.
         However, the output extract table would contain only the column names, without any aliases.
         Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
-    join_clause = __get_prepare_cell_info_join(
-        project=project, dataset=dataset, filter_by_datasets=filter_by_datasets, obs_columns=obs_columns_to_include
+    template_data_rand_ordering = sql.TemplateData(
+        project=project,
+        dataset=dataset,
+        select=obs_columns_to_include,
+        filters=filters,
+        random_seed_offset=random_seed_offset,
+        extract_table_prefix=extract_table_prefix,
     )
-    where_clause = __get_prepare_cell_info_filter(
-        organism=filter_by_organism,
-        datasets=filter_by_datasets,
-        is_primary_data=filter_by_is_primary_data,
+    sql_random_ordering = sql.render(
+        template_path=constants.PREPARE_CELL_INFO_RAND_TEMPLATE_DIR,
+        template_data=template_data_rand_ordering,
     )
-    cas_cell_info_columns = helpers.prepare_column_names_for_extract_sql(column_names=obs_columns_to_include)
-    sql_random_ordering = f"""
-        CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
-        AS
-        SELECT  {cas_cell_info_columns}
-        FROM `{project}.{dataset}.cas_cell_info` c
-        {join_clause}
-        {where_clause}
-        ORDER BY farm_fingerprint(cast(cas_cell_index + {random_seed_offset} as STRING))
-    """
     print("Randomizing order of the cells...")
     execute_query(client, sql_random_ordering)
 
-    cas_cell_info_columns_no_alias = helpers.remove_leading_alias_names_extract_columns(
-        column_names=obs_columns_to_include
+    template_data_prepare_cell_info = sql.TemplateData(
+        project=project,
+        dataset=dataset,
+        select=obs_columns_to_include,
+        filters=filters,
+        partition_bin_count=partition_bin_count,
+        partition_size=partition_size,
+        extract_bin_size=extract_bin_size,
+        extract_table_prefix=extract_table_prefix,
     )
-    cas_cell_info_columns_no_alias_str = helpers.prepare_column_names_for_extract_sql(
-        column_names=cas_cell_info_columns_no_alias
+    sql_prepare_cell_info = sql.render(
+        template_path=constants.PREPARE_CELL_INFO_TEMPLATE_DIR,
+        template_data=template_data_prepare_cell_info,
     )
-    sql_prepare_cell_info = f"""
-        CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
-        PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
-        CLUSTER BY extract_bin
-        AS
-        SELECT  {cas_cell_info_columns_no_alias_str},
-                CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
-        FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized` c
-    """
     print("Creating Cell Info into extract bins...")
     main_query = execute_query(client, sql_prepare_cell_info)
-
-    sql_remove_random_ordering = f"""
-        DROP TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
-    """
+    template_data_drop = sql.TemplateData(project=project, dataset=dataset, extract_table_prefix=extract_table_prefix)
+    sql_remove_random_ordering = sql.render(
+        template_path=constants.DROP_PREPARE_CI_RAND_TEMPLATE_DIR, template_data=template_data_drop
+    )
     print("Removing intermediate table used for random ordering...")
     execute_query(client, sql_remove_random_ordering)
     return main_query
@@ -267,7 +159,7 @@ def prepare_extract_matrix(
     For more info on BigQuery partitioning refer to
     https://cloud.google.com/bigquery/docs/partitioned-tables
     """
-    sql = f"""
+    sql_query = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_raw_count_matrix`
         PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
         CLUSTER BY extract_bin
@@ -283,7 +175,7 @@ def prepare_extract_matrix(
     """
 
     print("Creating extract matrix...")
-    query = execute_query(client, sql)
+    query = execute_query(client, sql_query)
     return query
 
 
@@ -297,9 +189,7 @@ def prepare_extract(
     ci_partition_bin_count: int = 40000,
     ci_partition_size: int = 10,
     credentials=None,
-    filter_by_organism: t.Optional[str] = None,
-    filter_by_datasets: t.Optional[t.List[str]] = None,
-    filter_by_is_primary_data: t.Optional[bool] = None,
+    filters: t.Optional[t.Dict[str, t.Any]] = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
@@ -318,29 +208,20 @@ def prepare_extract(
         `Default:` ``40000``
     :param ci_partition_size: The size for the partitions in cas_cell_info table.
         `Default:` ``10``
-    :param filter_by_organism: Optional filter to specify an organism. If not provided, no filtering occurs.
-        `Default:` ``None``
-    :param filter_by_datasets: Optional filter to specify datasets by their names. If ``None``, no filtering occurs.
-        `Default:` ``None``
-    :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
-        `Default:` ``None``
-    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``. If not
-        ``None``, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
-        `Default:` ``None``
+    :param filters: Filters that have to be included in a SQL query. Filter format should follow convention described in
+        :func:`casp.bq_manager.sql.mako_helpers.parse_where_body`
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
     if credentials is None:
         client = bigquery.Client(project=project)
     else:
         client = bigquery.Client(project=project, credentials=credentials)
 
-    prepare_feature_summary(
-        client,
-        project,
-        dataset,
-        extract_table_prefix,
-        filter_by_organism=filter_by_organism,
-        filter_by_datasets=filter_by_datasets,
-    )
+    prepare_feature_summary(client, project, dataset, extract_table_prefix, filters=filters)
     prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allowed_original_feature_ids)
     prepare_cell_info(
         client,
@@ -351,9 +232,7 @@ def prepare_extract(
         random_seed_offset=ci_random_seed_offset,
         partition_bin_count=ci_partition_bin_count,
         partition_size=ci_partition_size,
-        filter_by_organism=filter_by_organism,
-        filter_by_datasets=filter_by_datasets,
-        filter_by_is_primary_data=filter_by_is_primary_data,
+        filters=filters,
         obs_columns_to_include=obs_columns_to_include,
     )
     prepare_extract_matrix(client, project, dataset, extract_table_prefix)

@@ -15,7 +15,8 @@ from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
 from scipy.sparse import coo_matrix
 
-from casp.bq_scripts import helpers
+from casp.bq_scripts import constants
+from casp.cell_data_manager import sql
 from casp.services import utils
 
 if t.TYPE_CHECKING:
@@ -59,14 +60,16 @@ def get_cells_in_bin_range(
     """
     Retrieve a list of all cells between the specified start and end bins (both inclusive), ordered by cas_cell_index.
     """
-    select_ci_columns = helpers.prepare_column_names_for_extract_sql(column_names=obs_columns_to_include)
-    sql = f"""
-    SELECT {select_ci_columns}
-    FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info` c
-    WHERE extract_bin BETWEEN {start_bin} AND {end_bin}
-    """
-
-    return [x for x in client.query(sql)]
+    template_data = sql.TemplateData(
+        project=project,
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix,
+        select=obs_columns_to_include,
+        start_bin=start_bin,
+        end_bin=end_bin,
+    )
+    rendered_sql = sql.render(template_path=constants.GET_CELLS_IN_BIN_RANGE_SQL_DIR, template_data=template_data)
+    return [x for x in client.query(rendered_sql)]
 
 
 def get_matrix_data(project, dataset, table, start_bin, end_bin, credentials=None):
@@ -207,9 +210,6 @@ def extract_minibatch_to_anndata(
         feature_ids.append(feature.original_feature_id)
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
-    # Getting rid of table aliases in `obs_columns_to_include`
-    _obs_columns_to_include = helpers.remove_leading_alias_names_extract_columns(column_names=obs_columns_to_include)
-
     print("Extracting Cell Info...")
     cells = get_cells_in_bin_range(
         project=project,
@@ -218,9 +218,11 @@ def extract_minibatch_to_anndata(
         start_bin=start_bin,
         end_bin=end_bin,
         client=client,
-        obs_columns_to_include=_obs_columns_to_include,
+        obs_columns_to_include=obs_columns_to_include,
     )
 
+    # Getting rid of table aliases in `obs_columns_to_include`
+    _obs_columns_to_include = sql.mako_helpers.remove_leading_alias(column_names=obs_columns_to_include)
     original_cell_ids = []
     cas_ingest_ids = []
     obs_columns_values = {k: [] for k in _obs_columns_to_include}
