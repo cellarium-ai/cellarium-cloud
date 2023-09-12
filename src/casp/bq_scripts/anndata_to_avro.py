@@ -36,11 +36,17 @@ def current_milli_time():
     return round(time.time() * 1000)
 
 
-FLUSH_BATCH_SIZE = 10000
+# Default value for maximum batch size of avro files when they are being created by avro writer
+FLUSH_BATCH_SIZE_DEFAULT = 10000
+# Default value for count matrix multiprocessing batch size
+COUNT_MATRIX_MULTIPROCESSING_BATCH_SIZE_DEFAULT = 5000
+# Default value for feature id lookup.
 ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT = "index"
 
 
-def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
+def write_avro(
+    generator, parsed_schema, filename, progress_batch_size=10000, flush_batch_size: int = FLUSH_BATCH_SIZE_DEFAULT
+):
     """
     Avro writing worker function. Calls back to `generator` for each row to be written.
     """
@@ -52,7 +58,7 @@ def write_avro(generator, parsed_schema, filename, progress_batch_size=10000):
             counter = counter + 1
             records.append(record)
 
-            if counter % FLUSH_BATCH_SIZE == 0:
+            if counter % flush_batch_size == 0:
                 writer(out, parsed_schema, records)
                 records = []
 
@@ -141,6 +147,7 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
             {"name": "tissue", "type": "string"},
             {"name": "obs_metadata_extra", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "cas_ingest_id", "type": "string"},
+            {"name": "total_mrna_umis", "type": ["null", "int"], "default": None},
         ],
     }
 
@@ -248,7 +255,7 @@ def dump_feature_info(
     # return col_index_to_cas_feature_index
 
 
-def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, uns_meta_keys=None):
+def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included_adata_uns_keys=None):
     """
     Write ingest (AnnData-file level) data.
     """
@@ -298,8 +305,8 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, uns_meta
 
         if load_uns_data:
             for idx, uncapped_val in adata.uns.data.items():
-                if uns_meta_keys is not None:
-                    if idx not in uns_meta_keys:
+                if included_adata_uns_keys is not None:
+                    if idx not in included_adata_uns_keys:
                         continue
 
                 uncapped_json = json.dumps(uncapped_val, cls=NumpyEncoder)
@@ -391,7 +398,8 @@ def process(
     dataset,
     load_uns_data,
     original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
-    uns_meta_keys: t.List = None,
+    included_adata_uns_keys: t.List = None,
+    count_matrix_multiprocessing_batch_size: int = COUNT_MATRIX_MULTIPROCESSING_BATCH_SIZE_DEFAULT,
 ):
     """
     High level entry point, reads the input AnnData file and generates Avro files
@@ -401,7 +409,8 @@ def process(
     In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
     an index column of var dataframe would be used.
 
-    :param uns_meta_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
+    :param included_adata_uns_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
+    :param count_matrix_multiprocessing_batch_size: Size of count matrix csv files batches that are used in ingest
     """
     client = None
     if cas_cell_index_start is None:
@@ -437,7 +446,7 @@ def process(
     adata = optimized_read_andata(input_file)
 
     print("Processing ingest metadata...")
-    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data, prefix, uns_meta_keys)
+    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data, prefix, included_adata_uns_keys)
 
     print("Processing cell/observation metadata...")
     dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
@@ -460,11 +469,17 @@ def process(
     del adata
     gc.collect()
 
-    batch_size = 5000
-    num_batches = math.ceil(total_cells / batch_size)
+    num_batches = math.ceil(total_cells / count_matrix_multiprocessing_batch_size)
 
     # ranges are start-inclusive and end-exclusive
-    batches = [(x, x * batch_size, min(total_cells, x * batch_size + batch_size)) for x in range(num_batches)]
+    batches = [
+        (
+            x,
+            x * count_matrix_multiprocessing_batch_size,
+            min(total_cells, x * count_matrix_multiprocessing_batch_size + count_matrix_multiprocessing_batch_size),
+        )
+        for x in range(num_batches)
+    ]
 
     start = current_milli_time()
     with multiprocessing.get_context("spawn").Pool() as pool:
@@ -559,7 +574,7 @@ if __name__ == "__main__":
     if errors:
         raise ValueError("\n\n".join(errors))
 
-    FLUSH_BATCH_SIZE = 10000 if not args.flush_batch_size else args.flush_batch_size
+    FLUSH_BATCH_SIZE = FLUSH_BATCH_SIZE_DEFAULT if not args.flush_batch_size else args.flush_batch_size
 
     process(
         args.input,

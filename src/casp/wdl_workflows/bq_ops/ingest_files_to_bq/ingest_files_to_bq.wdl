@@ -1,5 +1,6 @@
 task ingest_files_to_bq {
     String version = "ingest_files_to_bq_v1.0.0"
+    String docker_image
     String dataset
     String gcs_bucket_name
     String gcs_stage_dir
@@ -14,7 +15,7 @@ task ingest_files_to_bq {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-35"
+        docker: docker_image
         bootDiskSizeGb: 25
         memory: "1G"
         cpu: 1

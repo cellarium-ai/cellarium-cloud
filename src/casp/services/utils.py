@@ -22,6 +22,22 @@ def download_file_from_bucket(bucket_name: str, source_blob_name: str, destinati
     blob.download_to_filename(destination_file_name)
 
 
+def write_to_file_from_bucket(bucket_name: str, source_blob_name: str, file: t.BinaryIO) -> None:
+    """
+    Download the content of a file in GCS and write it to a file-like object
+
+    :param bucket_name: Bucket name in Google Cloud Storage
+    :param source_blob_name: Name of the source blob in Google Cloud Storage Bucket
+    :param file: File to write from the blob
+    """
+    credentials, project_id = get_google_service_credentials()
+    storage_client = storage.Client(project=project_id, credentials=credentials)
+    bucket = storage_client.bucket(bucket_name)
+
+    blob = bucket.blob(blob_name=source_blob_name)
+    blob.download_to_file(file)
+
+
 def upload_file_to_bucket(local_file_name: str, bucket: str, blob_name: str) -> None:
     credentials, project_id = get_google_service_credentials()
     client = storage.Client(credentials=credentials, project=project_id)

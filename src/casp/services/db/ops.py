@@ -28,13 +28,13 @@ def get_models_for_user(user: "models.User") -> t.List[models.CASModel]:
     return models.CASModel.query.all()
 
 
-def get_model_by(system_name: str) -> models.CASModel:
+def get_model_by(model_name: str) -> models.CASModel:
     """
     Retrieve CAS model by its system name
-    :param system_name: Model system name
+    :param model_name: Model system name
     :return: CAS model
     """
-    return models.CASModel.query.filter_by(system_name=system_name).first()
+    return models.CASModel.query.filter_by(model_name=model_name).first()
 
 
 def set_default_model_by(model_id: int) -> None:

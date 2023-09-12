@@ -1,8 +1,0 @@
-{
-  "CASTrainIncrementalPCA.bucket_name": "dsp-cell-annotation-service",
-  "CASTrainIncrementalPCA.data_storage_path": "cas_50m_homo_sapiens_extract_4m",
-  "CASTrainIncrementalPCA.checkpoint_save_path": "pca_incremental_4m_june",
-  "CASTrainIncrementalPCA.n_components": 512,
-  "CASTrainIncrementalPCA.batch_size": 10000,
-  "CASTrainIncrementalPCA.use_gpu": true
-}

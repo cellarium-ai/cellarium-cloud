@@ -18,7 +18,6 @@ SQL_GET_SCHEMA_BY_NAME = """
 
 def get_application_info() -> schemas.ApplicationInfo:
     """
-
     :return: Object with CAS application information
     """
     return schemas.ApplicationInfo(

@@ -120,6 +120,8 @@ def create_bigquery_objects(client, project, dataset):
             #
             bigquery.SchemaField("obs_metadata_extra", "JSON", mode="REQUIRED"),
             bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
+            # Fields to be calculated after ingestion
+            bigquery.SchemaField("total_mrna_umis", "INTEGER", mode="NULLABLE"),
         ],
         [],
     )

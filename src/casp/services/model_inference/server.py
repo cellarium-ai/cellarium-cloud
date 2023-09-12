@@ -12,9 +12,9 @@ app = FastAPI()
 
 
 @app.post("/predict")
-async def predict(file: bytes = File(), model_system_name: str = Form()) -> t.Dict:
+async def predict(file: bytes = File(), model_name: str = Form()) -> t.Dict:
     # Get Model dump file
-    model_info = ops.get_model_by(system_name=model_system_name)
+    model_info = ops.get_model_by(model_name=model_name)
     dump_manager = utils.get_dump_manager(model_info.model_file_path)
     model = dump_manager.model
     transform = dump_manager.transform

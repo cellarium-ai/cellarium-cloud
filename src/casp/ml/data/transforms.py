@@ -59,6 +59,6 @@ class ColumnWiseNormalization(CASTransform):
         return res
 
 
-class DummyTransform(CASTransform):
+class IdentityTransform(CASTransform):
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         return tensor

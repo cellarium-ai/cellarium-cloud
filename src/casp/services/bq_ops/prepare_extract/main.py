@@ -1,7 +1,7 @@
 import argparse
 import typing as t
 
-from casp.bq_scripts import prepare_all_cell_types, prepare_expressed_genes_info, prepare_extract
+from casp.bq_scripts import prepare_all_cell_types, prepare_extract, prepare_measured_genes_info
 from casp.services import utils
 
 
@@ -42,23 +42,23 @@ def main(
         filter_by_datasets=filter_by_datasets_split,
         filter_by_is_primary_data=filter_by_is_primary_data,
     )
-    expressed_genes_info_df = prepare_expressed_genes_info(
+    measured_genes_info_df = prepare_measured_genes_info(
         project=project_id,
         dataset=dataset,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
         credentials=credentials,
     )
     all_cell_types_df = prepare_all_cell_types(project=project_id, dataset=dataset, credentials=credentials)
-    expressed_genes_file_name = "expressed_genes_info.csv"
-    expressed_genes_info_df.to_csv(expressed_genes_file_name)
+    measured_genes_file_name = "measured_genes_info.csv"
+    measured_genes_info_df.to_csv(measured_genes_file_name)
 
     all_cell_types_file_name = "all_cell_types.csv"
     all_cell_types_df.to_csv(all_cell_types_file_name, index=False)
 
     utils.upload_file_to_bucket(
-        local_file_name=expressed_genes_file_name,
+        local_file_name=measured_genes_file_name,
         bucket=bucket_name,
-        blob_name=f"{dataset}_{extract_table_prefix}_info/{expressed_genes_file_name}",
+        blob_name=f"{dataset}_{extract_table_prefix}_info/{measured_genes_file_name}",
     )
     utils.upload_file_to_bucket(
         local_file_name=all_cell_types_file_name,

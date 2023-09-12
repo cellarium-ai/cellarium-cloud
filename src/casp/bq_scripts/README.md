@@ -93,3 +93,6 @@ written. Files will have names like `<output prefix>-<ingest id>.h5ad`. Each fil
 associated with that particular ingest, and only the sub-subset of cells from that ingest within the random subset.
 Features and cells will be assigned `var` and `obs` metadata respectively, and the overall AnnData file will have its
 original `uns` metadata.
+
+### Precalculate Fields
+Calculate fields in BigQuery. Use it for statistics that can be derived after data ingestion, based on raw count matrices or other data from the data repository. The logic for calculating each individual field is distinct.

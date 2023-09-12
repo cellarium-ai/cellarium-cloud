@@ -5,7 +5,9 @@ import typing as t
 import dotenv
 from pydantic import BaseSettings
 
-dotenv.load_dotenv(dotenv_path="casp/services/.env")
+SERVICE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+dotenv.load_dotenv(dotenv_path=f"{SERVICE_DIR}/.env")
 
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 
@@ -27,7 +29,6 @@ class AllEnvSettings(BaseSettings):
     DEFAULT_MODEL_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_50m_dataset.cas_cell_info"
     DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_50m_dataset"
     KNN_SEARCH_NUM_MATCHES: int = 100
-    VERTEX_AI_MATCHING_INDEX_GRPC_MESSAGE_SIZE: int = 50000000  # 5 mb
     ITEMS_PER_USER: int = 50
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"

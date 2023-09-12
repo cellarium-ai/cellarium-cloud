@@ -5,6 +5,7 @@ import argparse
 import datetime
 import json
 import os
+import typing as t
 from pathlib import Path
 
 import anndata as ad
@@ -16,16 +17,8 @@ from scipy.sparse import coo_matrix
 
 from casp.services import utils
 
-
-class Cell:
-    """
-    Represents a CASP cell.
-    """
-
-    def __init__(self, cas_cell_index, cas_ingest_id, cell_type):
-        self.cas_cell_index = cas_cell_index
-        self.cas_ingest_id = cas_ingest_id
-        self.cell_type = cell_type
+if t.TYPE_CHECKING:
+    from google.oauth2.service_account import Credentials
 
 
 class Feature:
@@ -53,23 +46,22 @@ def get_features(project, dataset, extract_feature_table, client):
     return features
 
 
-def get_cells_in_bin_range(project, dataset, extract_cell_table, start_bin, end_bin, client):
+def get_cells_in_bin_range(
+    project: str, dataset: str, extract_table_prefix: str, start_bin: int, end_bin: int, client: "bigquery.Client"
+) -> t.Iterable[t.Dict[str, t.Any]]:
     """
     Retrieve a list of all cells between the specified start and end bins (both inclusive), ordered by cas_cell_index.
     """
     sql = f"""
-
-    SELECT cas_cell_index, cas_ingest_id, cell_type FROM
-        `{project}.{dataset}.{extract_cell_table}` WHERE extract_bin BETWEEN {start_bin} AND {end_bin}
-
+    SELECT cas_cell_index,
+           cas_ingest_id,
+           cell_type,
+           total_mrna_umis
+    FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
+    WHERE extract_bin BETWEEN {start_bin} AND {end_bin}
     """
 
-    result = client.query(sql)
-    cells = [
-        Cell(cas_cell_index=row["cas_cell_index"], cas_ingest_id=row["cas_ingest_id"], cell_type=row["cell_type"])
-        for row in result
-    ]
-    return cells
+    return [x for x in client.query(sql)]
 
 
 def get_matrix_data(project, dataset, table, start_bin, end_bin, credentials=None):
@@ -144,10 +136,10 @@ def add_cell_type_info(
     adata.obs.cell_type = pd.Categorical(adata.obs.cell_type.values, categories=df["cell_type"].values)
 
 
-def add_expressed_genes_layer_mask(
+def add_measured_genes_layer_mask(
     dataset: str, extract_table_prefix: str, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list
 ):
-    filename = "expressed_genes_info.csv"
+    filename = "measured_genes_info.csv"
     source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
 
     if not os.path.exists(filename):
@@ -158,9 +150,9 @@ def add_expressed_genes_layer_mask(
     adata.obs["cas_ingest_id"] = cas_ingest_ids
     df = pd.read_csv(filename, index_col="cas_ingest_id").astype(bool)
 
-    expressed_genes_mask = df.loc[adata.obs["cas_ingest_id"], adata.var.index].to_numpy()
+    measured_genes_mask = df.loc[adata.obs["cas_ingest_id"], adata.var.index].to_numpy()
 
-    adata.layers["expressed_genes_mask"] = expressed_genes_mask
+    adata.layers["measured_genes_mask"] = measured_genes_mask
 
 
 def extract_minibatch_to_anndata(
@@ -171,12 +163,23 @@ def extract_minibatch_to_anndata(
     end_bin,
     output,
     bucket_name,
-    credentials=None,
-    fq_allowed_original_feature_ids="dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A",
+    credentials: "Credentials" = None,
+    obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
     Main function to extract a minibatch from a prepared training extract and write the associated data
     to an AnnData file.
+
+    :param project: BigQuery Project
+    :param dataset: BigQuery Dataset
+    :param extract_table_prefix: Prefix of extract tables
+    :param start_bin: Starting (inclusive) integer bin to extract
+    :param end_bin: Ending (inclusive) integer bin to extract
+    :param output: Filename of the AnnData file
+    :param bucket_name: Bucket name where to save extracted minibatch
+    :param credentials: Google Cloud Credentials with the access to BigQuery
+    :param obs_columns_to_include: Columns to include in `obs` data frame in extracted `anndata.AnnData` file
+        Mapped from extract query output
     """
     if credentials is None:
         client = bigquery.Client(project=project)
@@ -197,19 +200,19 @@ def extract_minibatch_to_anndata(
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
     print("Extracting Cell Info...")
-    cells = get_cells_in_bin_range(
-        project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client
-    )
+    cells = get_cells_in_bin_range(project, dataset, extract_table_prefix, start_bin, end_bin, client)
 
     original_cell_ids = []
     cas_ingest_ids = []
-    cell_types = []
+    obs_columns_values = {k: [] for k in obs_columns_to_include}
     cas_cell_index_to_row_num = {}
     for row_num, cell in enumerate(cells):
-        original_cell_ids.append(cell.cas_cell_index)
-        cas_ingest_ids.append(cell.cas_ingest_id)
-        cell_types.append(cell.cell_type)
-        cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
+        original_cell_ids.append(cell["cas_cell_index"])
+        cas_ingest_ids.append(cell["cas_ingest_id"])
+        cas_cell_index_to_row_num[cell["cas_cell_index"]] = row_num
+        # Mapping additional obs columns
+        for obs_column in obs_columns_to_include:
+            obs_columns_values[obs_column].append(cell[obs_column])
 
     matrix_data = get_matrix_data(
         project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, credentials
@@ -233,21 +236,28 @@ def extract_minibatch_to_anndata(
     adata.var.index = feature_ids
 
     print("Adding Cell Types Categorical Info...")
-    add_cell_type_info(
-        dataset=dataset,
-        extract_table_prefix=extract_table_prefix,
-        bucket_name=bucket_name,
-        adata=adata,
-        cell_types=cell_types,
-    )
-    print("Adding Expressed Genes Layer Mask...")
-    add_expressed_genes_layer_mask(
+    if "cell_type" in obs_columns_values:
+        # To avoid adding and overwriting cell types, pop them from dictionary:
+        cell_types = obs_columns_values.pop("cell_type")
+        add_cell_type_info(
+            dataset=dataset,
+            extract_table_prefix=extract_table_prefix,
+            bucket_name=bucket_name,
+            adata=adata,
+            cell_types=cell_types,
+        )
+
+    print("Adding Measured Genes Layer Mask...")
+    add_measured_genes_layer_mask(
         dataset=dataset,
         extract_table_prefix=extract_table_prefix,
         bucket_name=bucket_name,
         adata=adata,
         cas_ingest_ids=cas_ingest_ids,
     )
+    print("Adding Other Obs Columns...")
+    for obs_column in obs_columns_values:
+        adata.obs[obs_column] = obs_columns_values[obs_column]
 
     print("Writing AnnData Matrix")
     adata.write(Path(output), compression="gzip")

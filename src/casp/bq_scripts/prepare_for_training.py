@@ -174,7 +174,8 @@ def prepare_cell_info(
         AS
         SELECT  cas_cell_index,
                 c.cas_ingest_id,
-                cell_type
+                cell_type,
+                c.total_mrna_umis
         FROM `{project}.{dataset}.cas_cell_info` c
         {join_clause}
         {where_clause}
@@ -191,6 +192,7 @@ def prepare_cell_info(
         SELECT  cas_cell_index,
                 cas_ingest_id,
                 cell_type,
+                total_mrna_umis,
                 CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
         FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
     """

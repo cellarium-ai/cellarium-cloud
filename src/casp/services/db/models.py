@@ -23,7 +23,7 @@ class User(db.Base):
 
 class CASModel(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
-    system_name = sa.Column(sa.String(255), unique=True, nullable=False)
+    model_name = sa.Column(sa.String(255), unique=True, nullable=False)
     model_file_path = sa.Column(sa.String(255), unique=True, nullable=False)
     embedding_dimension = sa.Column(sa.Integer, nullable=False)
     admin_use_only = sa.Column(sa.Boolean(), default=True, nullable=False)
@@ -40,12 +40,12 @@ class CASModel(db.Base):
     __tablename__ = "cas_model"
 
     def __str__(self):
-        return self.system_name
+        return self.model_name
 
 
 class CASMatchingEngineIndex(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
-    system_name = sa.Column(sa.String(255), unique=True, nullable=False)
+    index_name = sa.Column(sa.String(255), unique=True, nullable=False)
     embedding_dimension = sa.Column(sa.Integer, nullable=False)
     endpoint_id = sa.Column(sa.String(255), unique=False, nullable=False)
     deployed_index_id = sa.Column(sa.String(255), unique=True, nullable=False)
@@ -53,6 +53,6 @@ class CASMatchingEngineIndex(db.Base):
     model = relationship("CASModel", backref=backref("cas_matching_engine", uselist=False))
 
     def __str__(self):
-        return self.system_name
+        return self.index_name
 
     __tablename__ = "cas_matching_engine_index"

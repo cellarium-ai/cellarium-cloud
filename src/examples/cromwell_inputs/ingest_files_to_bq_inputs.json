@@ -1,5 +1,0 @@
-{
-  "CASIngestFilesToBQ.ingest_files_to_bq.gcs_stage_dir": "cromwell_test_10k",
-  "CASIngestFilesToBQ.ingest_files_to_bq.gcs_bucket_name": "dsp-cell-annotation-service",
-  "CASIngestFilesToBQ.ingest_files_to_bq.dataset": "benchmark_march_test_10k"
-}

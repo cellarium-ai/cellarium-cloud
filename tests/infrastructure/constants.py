@@ -9,6 +9,7 @@ GCS_INPUT_FILE_PATHS_ALL = [
     *GCS_INPUT_PATHS_HOMO_SAPIENS,
     *GCS_INPUT_PATHS_MUS_MUS,
 ]
+GCS_EXTRACT_FILE_NAME_PREFIX = "extract_{chunk_id}.h5ad"
 DATASET_NAME = "cas_test_dataset"
 HOMO_SAPIENS_GENE_SCHEMA = "dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A"
 MUS_MUS_GENE_SCHEMA = "dsp-cell-annotation-service.cas_reference_data.refdata-gex-mm10-2020-A"
@@ -19,3 +20,5 @@ FILTER_BY_DATASET_EXTRACT_TABLE_PREFIX = "test_extract_filter_by_datasets"
 MUS_MUS_EXTRACT_TABLE_PREFIX = "test_extract_mus_mus"
 GCS_BUCKET_NAME = "dsp-cell-annotation-service"
 GCS_STAGE_DIR = "test_tmp_dir"
+PRECALCULATE_FIELDS = "total_mrna_umis"
+OBS_COLUMNS_TO_INCLUDE = "cell_type,total_mrna_umis"

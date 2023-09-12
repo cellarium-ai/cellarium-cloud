@@ -3,6 +3,7 @@ import concurrent.futures as concurrency
 import logging
 import multiprocessing
 import os
+import typing as t
 
 from casp import bq_scripts
 from casp.services import utils
@@ -15,6 +16,7 @@ def extract_task(
     file_name: str,
     output_bucket_name: str,
     output_bucket_directory: str,
+    obs_columns_to_include: t.List[str],
 ) -> None:
     """
     Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
@@ -26,6 +28,8 @@ def extract_task(
     :param file_name: Name for a local file (.h5ad anndata) to save the output
     :param output_bucket_name: Name of GCS bucket
     :param output_bucket_directory: Directory in the bucket to save outputs
+    :param obs_columns_to_include:  Columns to include in `obs` data frame in extracted `anndata.AnnData` file
+        Mapped from extract query output
     """
     credentials, project_id = utils.get_google_service_credentials()
     try:
@@ -38,6 +42,7 @@ def extract_task(
             output=file_name,
             credentials=credentials,
             bucket_name=output_bucket_name,
+            obs_columns_to_include=obs_columns_to_include,
         )
         blob_name = f"{output_bucket_directory}/{file_name}"
         utils.upload_file_to_bucket(local_file_name=file_name, blob_name=blob_name, bucket=output_bucket_name)
@@ -55,6 +60,7 @@ def main(
     end_bin: int,
     output_bucket_name: str,
     output_bucket_directory: str,
+    obs_columns_to_include_str: str,
 ) -> None:
     """
     Extract anndatafiles from bigquery extract tables. Run extract tasks concurrently: 1 task per CPU core
@@ -69,7 +75,10 @@ def main(
     :param end_bin: Ending (inclusive) integer bin to extract
     :param output_bucket_name: Name of GCS bucket
     :param output_bucket_directory: Directory in the bucket to save outputs
+    :param obs_columns_to_include_str:  Columns to include in `obs` data frame in extracted `anndata.AnnData` file
+        Mapped from extract query output. Comma separated string
     """
+    obs_columns_to_include_list = obs_columns_to_include_str.split(",")
     num_of_workers = multiprocessing.cpu_count()
     with concurrency.ProcessPoolExecutor(max_workers=num_of_workers) as executor:
         futures = []
@@ -82,6 +91,7 @@ def main(
                 "file_name": file_name,
                 "output_bucket_name": output_bucket_name,
                 "output_bucket_directory": output_bucket_directory,
+                "obs_columns_to_include": obs_columns_to_include_list,
             }
 
             future = executor.submit(extract_task, **extract_task_kwargs)
@@ -103,6 +113,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output_bucket_directory", type=str, help="A specific location in a bucket for the results", required=True
     )
+    parser.add_argument(
+        "--obs_columns_to_include_str", type=str, help="Obs columns to include in extract adata file", required=True
+    )
     args = parser.parse_args()
     main(
         dataset=args.dataset,
@@ -111,4 +124,5 @@ if __name__ == "__main__":
         end_bin=args.end_bin,
         output_bucket_name=args.output_bucket_name,
         output_bucket_directory=args.output_bucket_directory,
+        obs_columns_to_include_str=args.obs_columns_to_include_str,
     )

@@ -1,5 +1,6 @@
 task extract {
     String version = "extract_v1.1.0"
+    String docker_image
     String project_id
     String bq_dataset
     String extract_table_prefix
@@ -7,6 +8,7 @@ task extract {
     Int end_bin
     String output_bucket_name
     String output_bucket_directory
+    String obs_columns_to_include_str
 
     command {
         cd /app
@@ -17,14 +19,15 @@ task extract {
         --start_bin ${start_bin} \
         --end_bin ${end_bin} \
         --output_bucket_name ${output_bucket_name} \
-        --output_bucket_directory ${output_bucket_directory}
+        --output_bucket_directory ${output_bucket_directory} \
+        --obs_columns_to_include_str ${obs_columns_to_include_str}
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-35"
-        bootDiskSizeGb: 10
-        memory: "20G"
-        cpu: 10
+        docker: docker_image
+        bootDiskSizeGb: 30
+        memory: "4G"
+        cpu: 1
         zones: "us-central1-a"
         preemptible: 3
     }

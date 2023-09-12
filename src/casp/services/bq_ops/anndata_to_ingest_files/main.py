@@ -55,7 +55,7 @@ def main(
         dataset=None,
         load_uns_data=load_uns_data,
         original_feature_id_lookup=original_feature_id_lookup,
-        uns_meta_keys=uns_meta_keys_list,
+        included_adata_uns_keys=uns_meta_keys_list,
     )
     ingest_files = [x for x in os.listdir(os.curdir) if x.startswith(prefix) and not x.endswith(".h5ad")]
 

@@ -5,7 +5,6 @@ google-cloud-aiplatform
 google-cloud-bigquery==3.9.0
 google-cloud-bigquery-storage==2.19.1
 google-cloud-storage
-numpy
 scipy
 torch
 fastapi==0.96.0
@@ -28,4 +27,5 @@ matplotlib
 pandas
 google-cloud-run==0.7.1
 scikit-learn
-scvi-distributed @ git+https://github.com/cellarium-ai/scvi-distributed.git
+scvi-distributed @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.1
+db-dtypes==1.1.1

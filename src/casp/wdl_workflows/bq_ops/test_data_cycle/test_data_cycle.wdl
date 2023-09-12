@@ -1,14 +1,15 @@
 task test_data_cycle {
     String version = "test_data_cycle.1.0"
+    String docker_image
 
     command {
         cd /app
         echo "START DATA CYCLE TEST"
-        python casp/services/bq_ops/test_data_cycle/main.py
+        /home/user/micromamba/bin/pytest tests/infrastructure --log-cli-level=INFO
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:june-release-14"
+        docker: docker_image
         bootDiskSizeGb: 40
         memory: "30G"
         cpu: 18

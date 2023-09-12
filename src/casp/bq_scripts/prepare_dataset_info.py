@@ -3,16 +3,16 @@ import pandas as pd
 from google.cloud import bigquery
 
 
-def prepare_expressed_genes_info(
+def prepare_measured_genes_info(
     project: str, dataset: str, fq_allowed_original_feature_ids: str, credentials=None
 ) -> pd.DataFrame:
     if credentials is not None:
         client = bigquery.Client(project=project, credentials=credentials)
     else:
         client = bigquery.Client(project=project)
-    sql_expressed_genes = f"""
+    sql_measured_genes = f"""
         SELECT  cas_ingest_id,
-                ARRAY_AGG(original_feature_id) as expressed_genes
+                ARRAY_AGG(original_feature_id) as measured_genes
         FROM `{project}.{dataset}.cas_feature_info`
         GROUP BY 1
     """
@@ -22,7 +22,7 @@ def prepare_expressed_genes_info(
     sql_get_number_of_ingests = f"""
         SELECT COUNT(*) AS number_of_ingests FROM `{project}.{dataset}.cas_ingest_info`
     """
-    expressed_genes_result = client.query(sql_expressed_genes)
+    measured_genes_result = client.query(sql_measured_genes)
     all_features_result = client.query(sql_get_all_features)
     number_of_ingests_result = client.query(sql_get_number_of_ingests)
 
@@ -32,10 +32,10 @@ def prepare_expressed_genes_info(
     gene_expression_existance_mask = np.zeros((number_of_ingests, len(all_features)))
     cas_ingest_ids = []
 
-    for i, row in enumerate(expressed_genes_result):
-        genes_expressed_in_ingest = row["expressed_genes"]
+    for i, row in enumerate(measured_genes_result):
+        genes_measured_in_ingest = row["measured_genes"]
         cas_ingest_ids.append(row["cas_ingest_id"])
-        gene_expression_existance_mask[i, :] = np.isin(all_features, genes_expressed_in_ingest)
+        gene_expression_existance_mask[i, :] = np.isin(all_features, genes_measured_in_ingest)
 
     return pd.DataFrame(
         data=gene_expression_existance_mask, index=pd.Index(cas_ingest_ids, name="cas_ingest_id"), columns=all_features

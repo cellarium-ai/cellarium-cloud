@@ -105,7 +105,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         EndpointLinkRowAction("glyphicon glyphicon-chevron-up", ".set_default_model"),
     ]
     column_list = (
-        "system_name",
+        "model_name",
         "model_file_path",
         "embedding_dimension",
         "admin_use_only",
@@ -116,8 +116,8 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "created_date",
     )
     column_descriptions = {
-        "system_name": (
-            "A system name that is used, must be unique, lowercase. "
+        "model_name": (
+            "A name that is used, must be unique, lowercase. "
             "No spaces, must end with a character or number. \nExample: cas-pca-001."
         ),
         "model_file_path": "Filepath in the GCS storage bucket with the dumped model.",
@@ -142,7 +142,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
     }
     column_editable_list = ("admin_use_only",)
     form_columns = (
-        "system_name",
+        "model_name",
         "model_file_path",
         "embedding_dimension",
         "schema_name",
@@ -167,10 +167,10 @@ class CASModelAdminView(CellariumCloudAdminModelView):
 
 
 class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
-    column_list = ("system_name", "embedding_dimension", "endpoint_id", "deployed_index_id", "model")
+    column_list = ("index_name", "embedding_dimension", "endpoint_id", "deployed_index_id", "model")
     column_descriptions = {
-        "system_name": (
-            "A system name that is used, must be unique, lowercase. "
+        "index_name": (
+            "A name that is used to identify the index, must be unique, lowercase. "
             "No spaces, must end with a character or number. \nExample: cas-pca-001-matching-engine-index."
         ),
         "endpoint_id": "Endpoint ID that is used in GCP in Vertex AI",

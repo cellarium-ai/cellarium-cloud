@@ -5,15 +5,19 @@ USER root
 
 # Install Git to be able to install some Dependencies (such as scvid module)
 RUN apt-get update
-RUN yes | apt-get install git
+RUN yes | apt-get install git gcc
 
 # Install Dependencies
 COPY requirements.txt .
+COPY test-requirements.txt .
+RUN pip install Cython numpy
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+RUN pip install -r test-requirements.txt
 
 # Copy Files and Secrets
 COPY src .
+COPY tests ./tests
 # Looking for b64 encoded secret environment variables
 RUN --mount=type=secret,id=ENV_SECRETS cat /run/secrets/ENV_SECRETS | base64 -d >> ./casp/services/.env
 

@@ -2,7 +2,7 @@ import typing as t
 
 if t.TYPE_CHECKING:
     import torch
-    from scvid.module.incremental_pca import IncrementalPCA
+    from cellarium.ml.module.incremental_pca import IncrementalPCA
 
 
 class SCVIDIncrementalPCAWrapper:

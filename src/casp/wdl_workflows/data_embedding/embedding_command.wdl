@@ -1,5 +1,6 @@
 task embed {
     String version = "train_v1.0.0"
+    String docker_image
     String bucket_name
     String data_storage_path
     String dm_storage_path
@@ -17,7 +18,7 @@ task embed {
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:fg-pca-05"
+        docker: docker_image
         bootDiskSizeGb: 100
         memory: "26G"
         cpu: 4

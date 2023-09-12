@@ -1,4 +1,4 @@
-# CAS Cromwell Directory
+# CAS WDL Workflows Directory
 This module contains all the instructions for automated execution of cas services.
 ## Module Structure
  - bq_ops
@@ -17,6 +17,7 @@ More detailed description of what these inputs are, please look at the `casp.ser
 bq_ops.anndata_to_ingest_files:
 ```JSON
 {
+   "CASAnndataToIngestFiles.anndata_to_ingest_files.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1",
    "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_stage_dir": "cromwell_50m",
    "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_input_bucket": "dsp-cell-annotation-service",
    "CASAnndataToIngestFiles.anndata_to_ingest_files.original_feature_id_lookup": "index",
@@ -37,6 +38,7 @@ bq_ops.anndata_to_ingest_files:
 bq_ops.ingest_file_to_bq:
 ```JSON
 {
+  "CASIngestFilesToBQ.ingest_files_to_bq.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1",
   "CASIngestFilesToBQ.ingest_files_to_bq.gcs_stage_dir": "cromwell_test_10k",
   "CASIngestFilesToBQ.ingest_files_to_bq.gcs_bucket_name": "dsp-cell-annotation-service",
   "CASIngestFilesToBQ.ingest_files_to_bq.dataset": "cas_test_dataset"
@@ -45,28 +47,47 @@ bq_ops.ingest_file_to_bq:
 bq_ops.prepare_extract:
 ```JSON
 {
+  "CASPrepareExtractBQ.prepare_extract.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1",
   "CASPrepareExtractBQ.prepare_extract.bq_dataset": "cas_test_dataset",
-  "CASPrepareExtractBQ.prepare_extract.extract_table_prefix": "fg_extract"
+  "CASPrepareExtractBQ.prepare_extract.extract_table_prefix": "fg_extract",
+  "CASPrepareExtractBQ.prepare_extract.extract_bin_size": 10000,
+  "CASPrepareExtractBQ.prepare_extract.bucket_name": "dsp-cell-annotation-service",
+  "CASPrepareExtractBQ.prepare_extract.filter_by_organism": "Homo sapiens",
+  "CASPrepareExtractBQ.prepare_extract.filter_by_is_primary_data": true, 
+  "CASPrepareExtractBQ.prepare_extract.filter_by_diseases": "age related macular degeneration 7,influenza,basal laminar drusen,Barrett esophagus"
 }
 ```
 bq_ops.extract:
 ```JSON
 {
+  "CASExtractBQ.extract.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1",
   "CASExtractBQ.extract.project_id": "dsp-cell-annotation-service",
   "CASExtractBQ.extract.bq_dataset": "cas_test_dataset",
   "CASExtractBQ.extract.extract_table_prefix": "fg_extract",
   "CASExtractBQ.bin_borders": [[0, 9], [10, 19], [20, 29], [30, 39], [40, 49], [50, 59]],
   "CASExtractBQ.extract.output_bucket_name": "dsp-cell-annotation-service",
-  "CASExtractBQ.extract.output_bucket_directory": "cas_test_dataset_extract"
+  "CASExtractBQ.extract.output_bucket_directory": "cas_test_dataset_extract", 
+  "CASExtractBQ.extract.obs_columns_to_include_str": "cell_type,total_mrna_umis"
 }
 ```
-bq_ops.test_data_cycle (doesn't require any input, just use an empty `input.json` before execution):
+bq_ops.test_data_cycle (requires only docker image):
 ```JSON
-{}
+{
+   "CASTestDataCycle.test_data_cycle.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1"
+}
+```
+bq_ops.precalculate_fields 
+```JSON
+{
+   "CASPrecalculateFields.precalculate_fields.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1",
+   "CASPrecalculateFields.precalculate_fields.dataset": "cas_test4m_dataset",
+   "CASPrecalculateFields.precalculate_fields.fields": "total_mrna_umis"
+}
 ```
 model_training.train_incremental_pca:
 ```JSON
 {
+  "CASTrainIncrementalPCA.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1",
   "CASTrainIncrementalPCA.bucket_name": "dsp-cell-annotation-service",
   "CASTrainIncrementalPCA.data_storage_path": "cas_50m_homo_sapiens_extract_4m",
   "CASTrainIncrementalPCA.checkpoint_save_path": "pca_incremental_4m_june",
@@ -78,6 +99,7 @@ model_training.train_incremental_pca:
 data_embedding:
 ```JSON
 {
+  "CASPEmbedData.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1",
   "CASPEmbedData.bucket_name": "dsp-cell-annotation-service",
   "CASPEmbedData.data_storage_path": "cas_50m_homo_sapiens_extract_4m",
   "CASPEmbedData.dm_storage_path": "models/incremental_pca_003.pickle",

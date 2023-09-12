@@ -25,10 +25,8 @@ def __log(s):
     print(f"{dt_string} - {s}")
 
 
-async def __get_embeddings(myfile, model_system_name: str) -> t.Tuple[t.List, "numpy.array"]:
-    r_text = await async_client.CASAPIAsyncClient.call_model_service(
-        file_to_embed=myfile.read(), model_system_name=model_system_name
-    )
+async def __get_embeddings(myfile, model_name: str) -> t.Tuple[t.List, "numpy.array"]:
+    r_text = await async_client.CASAPIAsyncClient.call_model_service(file_to_embed=myfile.read(), model_name=model_name)
     # TODO: json isn't very efficient for this
     df = pd.read_json(r_text)
     query_ids = df.db_ids.tolist()
@@ -37,11 +35,11 @@ async def __get_embeddings(myfile, model_system_name: str) -> t.Tuple[t.List, "n
     return query_ids, embeddings
 
 
-def __get_appx_knn_matches(embeddings, model_system_name: str):
-    cas_model = ops.get_model_by(system_name=model_system_name)
+def __get_appx_knn_matches(embeddings, model_name: str):
+    cas_model = ops.get_model_by(model_name=model_name)
     cas_matching_engine_index = cas_model.cas_matching_engine
 
-    index_endpoint = matching_engine_client.IncreasedGRPCSizeMatchingEngine(
+    index_endpoint = matching_engine_client.MatchingEngineIndexEndpointGRPCOptionsExposed(
         index_endpoint_name=cas_matching_engine_index.endpoint_id
     )
 
@@ -53,9 +51,9 @@ def __get_appx_knn_matches(embeddings, model_system_name: str):
     return response
 
 
-def __get_cell_type_distribution(query_ids, knn_response, model_system_name: str):
+def __get_cell_type_distribution(query_ids, knn_response, model_name: str):
     bq_client = bigquery.Client()
-    cas_model = ops.get_model_by(system_name=model_system_name)
+    cas_model = ops.get_model_by(model_name=model_name)
     # create temporary table
     my_uuid = str(uuid.uuid4())[:8]
     temp_table_fqn = f"{cas_model.bq_temp_table_dataset}.api_request_{my_uuid}"
@@ -136,16 +134,16 @@ def __get_cell_type_distribution(query_ids, knn_response, model_system_name: str
     return results
 
 
-async def __annotate(file, model_system_name: str):
+async def __annotate(file, model_name: str):
     __log("Calculating Embeddings")
-    query_ids, embeddings = await __get_embeddings(file, model_system_name=model_system_name)
+    query_ids, embeddings = await __get_embeddings(file, model_name=model_name)
     __log("Done")
 
     __log("Performing kNN lookup")
-    knn_response = __get_appx_knn_matches(embeddings, model_system_name=model_system_name)
+    knn_response = __get_appx_knn_matches(embeddings, model_name=model_name)
 
     __log("Getting Cell Type Distributions")
-    d = __get_cell_type_distribution(query_ids, knn_response, model_system_name=model_system_name)
+    d = __get_cell_type_distribution(query_ids, knn_response, model_name=model_name)
 
     __log("Finished")
     return d
@@ -162,11 +160,11 @@ async def list_models(
 async def annotate(
     myfile: UploadFile = File(),
     number_of_cells: int = Form(),
-    model_system_name: str = Form(),
+    model_name: str = Form(),
     request_user: models.User = Depends(authenticate_user),
 ):
     ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
-    return await __annotate(myfile.file, model_system_name=model_system_name)
+    return await __annotate(myfile.file, model_name=model_name)
 
 
 @app.get("/validate-token")
