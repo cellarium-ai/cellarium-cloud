@@ -8,13 +8,13 @@ from casp.services import utils
 def main(
     dataset: str,
     extract_table_prefix: str,
-    min_observed_cells: int,
     fq_allowed_original_feature_ids: str,
     extract_bin_size: int,
     bucket_name: str,
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[str] = None,
     filter_by_is_primary_data: t.Optional[bool] = None,
+    obs_columns_to_include: t.Optional[str] = None,
 ):
     """
     Prepare extract tables in BigQuery data repository.
@@ -24,23 +24,32 @@ def main(
     :param dataset: Working BigQuery Dataset
     :param extract_table_prefix: Prefix for extract tables
     :param bucket_name: Bucket where to store dataset info
-    :param min_observed_cells: Minimum observed cells per gene
     :param fq_allowed_original_feature_ids: Fully qualified reference to table of allowed feature names
     :param extract_bin_size: Desired cells per extract bin
+    :param filter_by_organism: Optional filter to specify an organism. If not provided, no filtering occurs.
+        `Default:` ``None``
+    :param filter_by_datasets: Optional filter to specify datasets by their names. If ``None``, no filtering occurs.
+        `Default:` ``None``
+    :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
+        `Default:` ``None``
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``. If
+        not ``None``, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        `Default:` ``None``
     """
     credentials, project_id = utils.get_google_service_credentials()
     filter_by_datasets_split = None if filter_by_datasets is None else filter_by_datasets.split(",")
+    obs_columns_to_include_split = None if obs_columns_to_include is None else obs_columns_to_include.split(",")
     prepare_extract(
         project=project_id,
         dataset=dataset,
         extract_table_prefix=extract_table_prefix,
-        min_observed_cells=min_observed_cells,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
         extract_bin_size=extract_bin_size,
         credentials=credentials,
         filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets_split,
         filter_by_is_primary_data=filter_by_is_primary_data,
+        obs_columns_to_include=obs_columns_to_include_split,
     )
     measured_genes_info_df = prepare_measured_genes_info(
         project=project_id,
@@ -75,9 +84,6 @@ if __name__ == "__main__":
     parser.add_argument("--extract_table_prefix", type=str, help="Prefix for extract tables", required=True)
     parser.add_argument("--bucket_name", type=str, help="Bucket Name where to store dataset info files", required=True)
     parser.add_argument(
-        "--min_observed_cells", type=int, help="minimum observed cells per gene", default=3, required=False
-    )
-    parser.add_argument(
         "--extract_bin_size", type=int, help="desired cells per extract bin", default=10000, required=False
     )
     parser.add_argument(
@@ -108,16 +114,22 @@ if __name__ == "__main__":
         required=False,
         default=None,
     )
+    parser.add_argument(
+        "--obs_columns_to_include",
+        type=str,
+        required=False,
+        default=None,
+    )
 
     args = parser.parse_args()
     main(
         dataset=args.dataset,
         extract_table_prefix=args.extract_table_prefix,
-        min_observed_cells=args.min_observed_cells,
         fq_allowed_original_feature_ids=args.fq_allowed_original_feature_ids,
         extract_bin_size=args.extract_bin_size,
         bucket_name=args.bucket_name,
         filter_by_organism=args.filter_by_organism,
         filter_by_datasets=args.filter_by_datasets,
         filter_by_is_primary_data=args.filter_by_is_primary_data,
+        obs_columns_to_include=args.obs_columns_to_include,
     )

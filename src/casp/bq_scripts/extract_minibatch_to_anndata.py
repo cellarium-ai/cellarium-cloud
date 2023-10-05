@@ -15,6 +15,7 @@ from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
 from scipy.sparse import coo_matrix
 
+from casp.bq_scripts import constants
 from casp.services import utils
 
 if t.TYPE_CHECKING:
@@ -47,17 +48,21 @@ def get_features(project, dataset, extract_feature_table, client):
 
 
 def get_cells_in_bin_range(
-    project: str, dataset: str, extract_table_prefix: str, start_bin: int, end_bin: int, client: "bigquery.Client"
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    start_bin: int,
+    end_bin: int,
+    client: "bigquery.Client",
+    obs_columns_to_include: t.Optional[t.List[str]] = None,
 ) -> t.Iterable[t.Dict[str, t.Any]]:
     """
     Retrieve a list of all cells between the specified start and end bins (both inclusive), ordered by cas_cell_index.
     """
+    select_ci_columns = ", ".join([*constants.CAS_CELL_INFO_REQUIRED_COLUMNS, *obs_columns_to_include])
     sql = f"""
-    SELECT cas_cell_index,
-           cas_ingest_id,
-           cell_type,
-           total_mrna_umis
-    FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
+    SELECT {select_ci_columns}
+    FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info` c
     WHERE extract_bin BETWEEN {start_bin} AND {end_bin}
     """
 
@@ -156,13 +161,13 @@ def add_measured_genes_layer_mask(
 
 
 def extract_minibatch_to_anndata(
-    project,
-    dataset,
-    extract_table_prefix,
-    start_bin,
-    end_bin,
-    output,
-    bucket_name,
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    start_bin: int,
+    end_bin: int,
+    output: str,
+    bucket_name: str,
     credentials: "Credentials" = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
@@ -178,8 +183,11 @@ def extract_minibatch_to_anndata(
     :param output: Filename of the AnnData file
     :param bucket_name: Bucket name where to save extracted minibatch
     :param credentials: Google Cloud Credentials with the access to BigQuery
-    :param obs_columns_to_include: Columns to include in `obs` data frame in extracted `anndata.AnnData` file
-        Mapped from extract query output
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
     if credentials is None:
         client = bigquery.Client(project=project)
@@ -199,25 +207,36 @@ def extract_minibatch_to_anndata(
         feature_ids.append(feature.original_feature_id)
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
+    # Getting rid of table aliases in `obs_columns_to_include`
+    _obs_columns_to_include = list(map(lambda x: x.split(".")[-1], obs_columns_to_include))
+
     print("Extracting Cell Info...")
-    cells = get_cells_in_bin_range(project, dataset, extract_table_prefix, start_bin, end_bin, client)
+    cells = get_cells_in_bin_range(
+        project=project,
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix,
+        start_bin=start_bin,
+        end_bin=end_bin,
+        client=client,
+        obs_columns_to_include=_obs_columns_to_include,
+    )
 
     original_cell_ids = []
     cas_ingest_ids = []
-    obs_columns_values = {k: [] for k in obs_columns_to_include}
+    obs_columns_values = {k: [] for k in _obs_columns_to_include}
     cas_cell_index_to_row_num = {}
     for row_num, cell in enumerate(cells):
         original_cell_ids.append(cell["cas_cell_index"])
         cas_ingest_ids.append(cell["cas_ingest_id"])
         cas_cell_index_to_row_num[cell["cas_cell_index"]] = row_num
         # Mapping additional obs columns
-        for obs_column in obs_columns_to_include:
+        for obs_column in _obs_columns_to_include:
             obs_columns_values[obs_column].append(cell[obs_column])
 
     matrix_data = get_matrix_data(
         project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, credentials
     )
-    # print(next(iter(matrix_data)))
+
     print("Converting Matrix Data to COO format...")
 
     rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(

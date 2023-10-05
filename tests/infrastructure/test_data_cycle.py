@@ -156,6 +156,37 @@ def verify_chunk_count_matrix(
     ).sum() == 0, "Count matrix does not correspond to values from source files"
 
 
+def verify_chunk_obs_columns(
+    adata_extract_chunk: "anndata.AnnData", dataset_name: str, obs_columns: t.List[str]
+) -> None:
+    """
+    Verify that the provided chunk of data (adata_extract_chunk) contains the specified columns in its `obs` attribute
+    and that their values match the ones from the `cas_cell_info` table in BigQuery.
+
+    If any mismatches or missing columns are found, an AssertionError is raised.
+
+    :param adata_extract_chunk: Extracted chunk of data for verification.
+    :param dataset_name: Name of the dataset, used to retrieve and compare original cell IDs from BigQuery.
+    :param obs_columns: List of column names in ``adata.obs`` that need to be verified against the `cas_cell_info`
+        table.
+    :raises AssertionError: If the chunk's ``adata.obs`` columns don't contain all the necessary columns or if the
+        values in those columns don't match the ones from the `cas_cell_info` table.
+    """
+    cas_cell_ids = adata_extract_chunk.obs.index.values.tolist()
+
+    expected_obs_df = data_controller.get_cas_cell_info_columns_df(
+        dataset_name=dataset_name, cas_cell_ids=cas_cell_ids, columns_to_select=obs_columns
+    )
+    obs_columns_no_alias = list(map(lambda x: x.split(".")[-1], obs_columns))
+    obs_has_all_necessary_columns = set(obs_columns_no_alias).issubset(
+        set(adata_extract_chunk.obs.columns.values.tolist())
+    )
+    obs_correspond_to_expected = (adata_extract_chunk.obs[obs_columns_no_alias] == expected_obs_df).all().all()
+
+    assert obs_has_all_necessary_columns, "`adata.obs` does not have all the necessary columns that had to be extracted"
+    assert obs_correspond_to_expected, "`adata.obs` does not match the values from `cas_cell_info` table"
+
+
 def verify_chunk_total_mrna_umis(adata_extract_chunk: "anndata.AnnData", dataset_name: str) -> None:
     """
     Verify the ``total_mrna_umis`` of an extracted chunk against counts from BigQuery.
@@ -187,6 +218,7 @@ def verify_extracted_chunks(
     gcs_input_file_paths: t.List[str],
     gcs_extract_file_paths: t.List[str],
     dataset_name: str,
+    obs_columns: t.List[str],
 ):
     """
     Verifies extracted chunks of data from the Google Cloud Storage (GCS) against the source data.
@@ -195,6 +227,8 @@ def verify_extracted_chunks(
     :param gcs_input_file_paths: List of input file paths within the GCS bucket to verify against.
     :param gcs_extract_file_paths: List of extract file paths within the GCS bucket to verify with.
     :param dataset_name: Name of the BigQuery dataset.
+    :param obs_columns: What columns are expected in `adata.obs`
+
     :raises AssertionError: If not all the chunks are verified
     """
     adata_source = concatenate_source_files(gcs_bucket_name=gcs_bucket_name, gcs_input_file_paths=gcs_input_file_paths)
@@ -217,6 +251,9 @@ def verify_extracted_chunks(
             verify_chunk_count_matrix(
                 adata_extract_chunk=adata_extract_chunk, adata_source=adata_source, dataset_name=dataset_name
             )
+            verify_chunk_obs_columns(
+                adata_extract_chunk=adata_extract_chunk, dataset_name=dataset_name, obs_columns=obs_columns
+            )
             verify_chunk_total_mrna_umis(adata_extract_chunk=adata_extract_chunk, dataset_name=dataset_name)
 
 
@@ -229,15 +266,16 @@ def test_extract_filtered_by_homo_sapiens():
     """
     test_extract_data_dir = f"{constants.HOMO_SAPIENS_EXTRACT_TABLE_PREFIX}__data"
     num_extract_chunks_to_check = 9
+
     logger.info("Preparing extract tables...")
     prepare_extract(
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.HOMO_SAPIENS_EXTRACT_TABLE_PREFIX,
-        min_observed_cells=0,
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
         filter_by_organism="Homo sapiens",
+        obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
     extract(
@@ -247,7 +285,7 @@ def test_extract_filtered_by_homo_sapiens():
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
         output_bucket_directory=test_extract_data_dir,
-        obs_columns_to_include_str=constants.OBS_COLUMNS_TO_INCLUDE,
+        obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
     gcs_extract_file_paths = [
@@ -259,6 +297,7 @@ def test_extract_filtered_by_homo_sapiens():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
+        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -280,11 +319,11 @@ def test_extract_filtered_by_mus_mus():
     prepare_extract(
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.MUS_MUS_EXTRACT_TABLE_PREFIX,
-        min_observed_cells=0,
         fq_allowed_original_feature_ids=constants.MUS_MUS_GENE_SCHEMA,
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
         filter_by_organism="Mus musculus",
+        obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
     extract(
@@ -306,6 +345,7 @@ def test_extract_filtered_by_mus_mus():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_MUS_MUS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
+        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -328,11 +368,11 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
     prepare_extract(
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.HOMO_SAPIENS_5k_EXTRACT_TABLE_PREFIX,
-        min_observed_cells=0,
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=5000,
         bucket_name=constants.GCS_BUCKET_NAME,
         filter_by_organism="Homo sapiens",
+        obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
     extract(
@@ -342,7 +382,7 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
         output_bucket_directory=test_extract_data_dir,
-        obs_columns_to_include_str=constants.OBS_COLUMNS_TO_INCLUDE,
+        obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
     gcs_extract_file_paths = [
@@ -354,6 +394,7 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
+        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -376,11 +417,11 @@ def test_extract_filtered_by_datasets():
     prepare_extract(
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.FILTER_BY_DATASET_EXTRACT_TABLE_PREFIX,
-        min_observed_cells=0,
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
         filter_by_datasets="tg66rtgh7y-test-source-file-1_ingest_info.avro,yt55tgy4o-test-source-file-3_ingest_info.avro",
+        obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
     extract(
@@ -390,7 +431,7 @@ def test_extract_filtered_by_datasets():
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
         output_bucket_directory=test_extract_data_dir,
-        obs_columns_to_include_str=constants.OBS_COLUMNS_TO_INCLUDE,
+        obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
     gcs_extract_file_paths = [
@@ -402,4 +443,5 @@ def test_extract_filtered_by_datasets():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
+        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
