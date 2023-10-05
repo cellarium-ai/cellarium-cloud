@@ -20,7 +20,7 @@ task extract {
         --end_bin ${end_bin} \
         --output_bucket_name ${output_bucket_name} \
         --output_bucket_directory ${output_bucket_directory} \
-        --obs_columns_to_include_str ${obs_columns_to_include_str}
+        --obs_columns_to_include ${obs_columns_to_include_str}
     }
 
     runtime {

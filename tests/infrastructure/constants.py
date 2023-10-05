@@ -21,4 +21,5 @@ MUS_MUS_EXTRACT_TABLE_PREFIX = "test_extract_mus_mus"
 GCS_BUCKET_NAME = "dsp-cell-annotation-service"
 GCS_STAGE_DIR = "test_tmp_dir"
 PRECALCULATE_FIELDS = "total_mrna_umis"
-OBS_COLUMNS_TO_INCLUDE = "cell_type,total_mrna_umis"
+OBS_COLUMNS_TO_INCLUDE = "cell_type,total_mrna_umis,donor_id,assay,development_stage,disease,organism,sex,tissue"
+OBS_COLUMNS_TO_INCLUDE_LIST = OBS_COLUMNS_TO_INCLUDE.split(",")

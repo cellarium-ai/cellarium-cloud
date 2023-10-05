@@ -15,6 +15,7 @@ from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
 from scipy.sparse import coo_matrix
 
+from casp.bq_scripts import constants
 from casp.services import utils
 
 if t.TYPE_CHECKING:
@@ -47,17 +48,21 @@ def get_features(project, dataset, extract_feature_table, client):
 
 
 def get_cells_in_bin_range(
-    project: str, dataset: str, extract_table_prefix: str, start_bin: int, end_bin: int, client: "bigquery.Client"
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    start_bin: int,
+    end_bin: int,
+    client: "bigquery.Client",
+    obs_columns_to_include: t.Optional[t.List[str]] = None,
 ) -> t.Iterable[t.Dict[str, t.Any]]:
     """
     Retrieve a list of all cells between the specified start and end bins (both inclusive), ordered by cas_cell_index.
     """
+    select_ci_columns = ", ".join([*constants.CAS_CELL_INFO_REQUIRED_COLUMNS, *obs_columns_to_include])
     sql = f"""
-    SELECT cas_cell_index,
-           cas_ingest_id,
-           cell_type,
-           total_mrna_umis
-    FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
+    SELECT {select_ci_columns}
+    FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info` c
     WHERE extract_bin BETWEEN {start_bin} AND {end_bin}
     """
 
@@ -156,13 +161,13 @@ def add_measured_genes_layer_mask(
 
 
 def extract_minibatch_to_anndata(
-    project,
-    dataset,
-    extract_table_prefix,
-    start_bin,
-    end_bin,
-    output,
-    bucket_name,
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    start_bin: int,
+    end_bin: int,
+    output: str,
+    bucket_name: str,
     credentials: "Credentials" = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
@@ -200,7 +205,15 @@ def extract_minibatch_to_anndata(
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
     print("Extracting Cell Info...")
-    cells = get_cells_in_bin_range(project, dataset, extract_table_prefix, start_bin, end_bin, client)
+    cells = get_cells_in_bin_range(
+        project=project,
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix,
+        start_bin=start_bin,
+        end_bin=end_bin,
+        client=client,
+        obs_columns_to_include=obs_columns_to_include,
+    )
 
     original_cell_ids = []
     cas_ingest_ids = []
@@ -217,7 +230,7 @@ def extract_minibatch_to_anndata(
     matrix_data = get_matrix_data(
         project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, credentials
     )
-    # print(next(iter(matrix_data)))
+
     print("Converting Matrix Data to COO format...")
 
     rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(

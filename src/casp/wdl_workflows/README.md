@@ -54,7 +54,8 @@ bq_ops.prepare_extract:
   "CASPrepareExtractBQ.prepare_extract.bucket_name": "dsp-cell-annotation-service",
   "CASPrepareExtractBQ.prepare_extract.filter_by_organism": "Homo sapiens",
   "CASPrepareExtractBQ.prepare_extract.filter_by_is_primary_data": true, 
-  "CASPrepareExtractBQ.prepare_extract.filter_by_diseases": "age related macular degeneration 7,influenza,basal laminar drusen,Barrett esophagus"
+  "CASPrepareExtractBQ.prepare_extract.filter_by_diseases": "age related macular degeneration 7,influenza,basal laminar drusen,Barrett esophagus", 
+  "CASPrepareExtractBQ.prepare_extract.obs_columns_to_include_str": "cell_type,total_mrna_umis,donor_id,assay,development_stage,disease,organism,sex,tissue"
 }
 ```
 bq_ops.extract:
@@ -67,7 +68,7 @@ bq_ops.extract:
   "CASExtractBQ.bin_borders": [[0, 9], [10, 19], [20, 29], [30, 39], [40, 49], [50, 59]],
   "CASExtractBQ.extract.output_bucket_name": "dsp-cell-annotation-service",
   "CASExtractBQ.extract.output_bucket_directory": "cas_test_dataset_extract", 
-  "CASExtractBQ.extract.obs_columns_to_include_str": "cell_type,total_mrna_umis"
+  "CASExtractBQ.extract.obs_columns_to_include_str": "cell_type,total_mrna_umis,donor_id,assay,development_stage,disease,organism,sex,tissue"
 }
 ```
 bq_ops.test_data_cycle (requires only docker image):

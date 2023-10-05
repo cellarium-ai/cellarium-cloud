@@ -7,6 +7,8 @@ import typing as t
 
 from google.cloud import bigquery
 
+from casp.bq_scripts import constants
+
 
 def execute_query(client, sql):
     """
@@ -84,9 +86,7 @@ def prepare_feature_summary(
     return query
 
 
-def prepare_feature_info(
-    client, project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids
-):
+def prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allowed_original_feature_ids):
     """
     create subset of features based on
       - a minimum number of observed cells
@@ -140,17 +140,18 @@ def __get_prepare_cell_info_filter(
 
 
 def prepare_cell_info(
-    client,
-    project,
-    dataset,
-    extract_table_prefix,
-    extract_bin_size,
+    client: "bigquery.Client",
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    extract_bin_size: int,
     random_seed_offset: int = 0,
     partition_bin_count: int = 40000,
     partition_size: int = 10,
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[t.List[str]] = None,
     filter_by_is_primary_data: t.Optional[bool] = None,
+    obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
     Randomize cells using farm_fingerprint with an offset so we can have deterministic randomization.  See
@@ -158,6 +159,23 @@ def prepare_cell_info(
 
     Then allocate cells into bins of `extract_bin_size` cells.  The last bin may be much
     smaller than this requested size, as it is the remainder cells
+
+    :param client: An instance of BigQuery's client object used to interact with the BigQuery service.
+    :param project: The ID of the Google Cloud project where the BigQuery dataset is hosted.
+    :param dataset: The ID of the dataset in BigQuery where the data is hosted.
+    :param extract_table_prefix: A prefix string for naming tables or for similar purposes.
+    :param extract_bin_size: The size for the bins where cells are allocated.
+    :param random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization.
+        `Defaults:` ``0``
+    :param partition_bin_count: The count of bins for partitioning.
+        `Default:` ``40000``
+    :param partition_size: The size for the partitions.
+        `Default:` ``10``
+    :param filter_by_organism: Optional filter to specify an organism. If not provided, no filtering occurs.
+    :param filter_by_datasets: Optional filter to specify datasets by their names. If not provided, no filtering occurs.
+    :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``. If not
+        provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
     """
 
     join_clause = __get_prepare_cell_info_join(project=project, dataset=dataset, filter_by_datasets=filter_by_datasets)
@@ -168,14 +186,11 @@ def prepare_cell_info(
         datasets=filter_by_datasets,
         is_primary_data=filter_by_is_primary_data,
     )
-
+    cas_cell_info_columns = ", ".join([*constants.CAS_CELL_INFO_REQUIRED_COLUMNS, *obs_columns_to_include])
     sql_random_ordering = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
         AS
-        SELECT  cas_cell_index,
-                c.cas_ingest_id,
-                cell_type,
-                c.total_mrna_umis
+        SELECT  {cas_cell_info_columns}
         FROM `{project}.{dataset}.cas_cell_info` c
         {join_clause}
         {where_clause}
@@ -189,12 +204,9 @@ def prepare_cell_info(
         PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
         CLUSTER BY extract_bin
         AS
-        SELECT  cas_cell_index,
-                cas_ingest_id,
-                cell_type,
-                total_mrna_umis,
+        SELECT  {cas_cell_info_columns},
                 CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
-        FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
+        FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized` c
     """
     print("Creating Cell Info into extract bins...")
     main_query = execute_query(client, sql_prepare_cell_info)
@@ -240,17 +252,46 @@ def prepare_extract_matrix(
 
 
 def prepare_extract(
-    project,
-    dataset,
-    extract_table_prefix,
-    min_observed_cells,
-    fq_allowed_original_feature_ids,
-    extract_bin_size,
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    fq_allowed_original_feature_ids: str,
+    extract_bin_size: int,
+    ci_random_seed_offset: int = 0,
+    ci_partition_bin_count: int = 40000,
+    ci_partition_size: int = 10,
     credentials=None,
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[t.List[str]] = None,
     filter_by_is_primary_data: t.Optional[bool] = None,
+    obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
+    """
+    Prepare CAS BigQuery tables used for data extraction.
+
+    :param project: The ID of the Google Cloud project where the BigQuery dataset is hosted.
+    :param dataset: The ID of the dataset in BigQuery where the data is hosted.
+    :param extract_table_prefix: A prefix string for naming tables or for similar purposes.
+    :param fq_allowed_original_feature_ids: BigQuery table with feature schema needed for the extract
+    :param extract_bin_size: The size for the bins where cells are allocated.
+    :param credentials: Google Cloud Service account credentials
+    :param ci_random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization
+        Used in cas_cell_info table.
+        `Defaults:` ``0``
+    :param ci_partition_bin_count: The count of bins for partitioning cas_cell_info table.
+        `Default:` ``40000``
+    :param ci_partition_size: The size for the partitions in cas_cell_info table.
+        `Default:` ``10``
+    :param filter_by_organism: Optional filter to specify an organism. If not provided, no filtering occurs.
+        `Default:` ``None``
+    :param filter_by_datasets: Optional filter to specify datasets by their names. If ``None``, no filtering occurs.
+        `Default:` ``None``
+    :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
+        `Default:` ``None``
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``. If not
+        ``None``, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        `Default:` ``None``
+    """
     if credentials is None:
         client = bigquery.Client(project=project)
     else:
@@ -264,18 +305,20 @@ def prepare_extract(
         filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets,
     )
-    prepare_feature_info(
-        client, project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids
-    )
+    prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allowed_original_feature_ids)
     prepare_cell_info(
         client,
         project,
         dataset,
         extract_table_prefix,
         extract_bin_size,
+        random_seed_offset=ci_random_seed_offset,
+        partition_bin_count=ci_partition_bin_count,
+        partition_size=ci_partition_size,
         filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets,
         filter_by_is_primary_data=filter_by_is_primary_data,
+        obs_columns_to_include=obs_columns_to_include,
     )
     prepare_extract_matrix(client, project, dataset, extract_table_prefix)
 
