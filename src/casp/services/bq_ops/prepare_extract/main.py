@@ -14,6 +14,7 @@ def main(
     fq_allowed_original_feature_ids: str,
     extract_bin_size: int,
     bucket_name: str,
+    extract_bucket_path: str,
     filters_json_path: t.Optional[str] = None,
     obs_columns_to_include: t.Optional[str] = None,
 ):
@@ -27,6 +28,9 @@ def main(
     :param fq_allowed_original_feature_ids: Fully qualified reference to table of allowed feature names
     :param extract_bin_size: Desired cells per extract bin
     :param bucket_name: Bucket where to store dataset info
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
     :param filters_json_path: file path to the JSON containing filter criteria, structured as
         {column_name__filter_type: value}. |br|
         Supported filter_types: |br|
@@ -74,12 +78,12 @@ def main(
     utils.upload_file_to_bucket(
         local_file_name=measured_genes_file_name,
         bucket=bucket_name,
-        blob_name=f"{dataset}_{extract_table_prefix}_info/{measured_genes_file_name}",
+        blob_name=f"{extract_bucket_path}/shared_meta/{measured_genes_file_name}",
     )
     utils.upload_file_to_bucket(
         local_file_name=all_cell_types_file_name,
         bucket=bucket_name,
-        blob_name=f"{dataset}_{extract_table_prefix}_info/{all_cell_types_file_name}",
+        blob_name=f"{extract_bucket_path}/shared_meta/{all_cell_types_file_name}",
     )
 
 
@@ -116,6 +120,7 @@ if __name__ == "__main__":
         fq_allowed_original_feature_ids=args.fq_allowed_original_feature_ids,
         extract_bin_size=args.extract_bin_size,
         bucket_name=args.bucket_name,
+        extract_bucket_path=args.extract_bucket_path,
         filters_json_path=args.filters_json_path,
         obs_columns_to_include=args.obs_columns_to_include,
     )
