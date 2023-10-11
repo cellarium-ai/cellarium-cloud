@@ -7,9 +7,7 @@ task prepare_extract {
     Int extract_bin_size
     String bucket_name
     String extract_bucket_path
-    String filter_by_organism
-    Boolean filter_by_is_primary_data
-    String? filter_by_diseases
+    String filters_json_path
     String? obs_columns_to_include
 
     command {
@@ -22,9 +20,7 @@ task prepare_extract {
         --extract_bin_size ${extract_bin_size} \
         --bucket_name ${bucket_name} \
         --extract_bucket_path ${extract_bucket_path} \
-        --filter_by_organism "${filter_by_organism}" \
-        --filter_by_is_primary_data ${filter_by_is_primary_data} \
-        --filter_by_diseases "${filter_by_diseases}" \
+        --filters_json_path ${filters_json_path} \
         --obs_columns_to_include "${obs_columns_to_include}"
     }
 
