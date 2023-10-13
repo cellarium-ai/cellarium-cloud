@@ -13,5 +13,6 @@ class CASAPIAsyncClient:
                 return await resp.text()
 
     @classmethod
-    async def call_model_service(cls, file_to_embed):
-        return await cls.post(url=settings.MODEL_SERVER_URL, data={"file": file_to_embed})
+    async def call_model_service(cls, file_to_embed, model_name: str):
+        request_data = {"file": file_to_embed, "model_name": model_name}
+        return await cls.post(url=settings.MODEL_SERVER_URL, data=request_data)

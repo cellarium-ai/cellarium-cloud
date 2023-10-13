@@ -5,7 +5,9 @@ import typing as t
 import dotenv
 from pydantic import BaseSettings
 
-dotenv.load_dotenv(dotenv_path="casp/services/.env")
+SERVICE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+dotenv.load_dotenv(dotenv_path=f"{SERVICE_DIR}/.env")
 
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 
@@ -14,18 +16,19 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
-    # PCA Model serving
-    PCA_MODEL_BUCKET_NAME: str = "fedor-test-bucket"
-    PCA_MODEL_BLOB_NAME: str = "models/dump_manager_002.pickle"
+    APP_VERSION: str = "1.0"
+    DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
+    PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
+    # Model Training
+    NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
-    MODEL_SERVER_URL: str = "https://casp-pca-serving-vi7nxpvk7a-uc.a.run.app/predict"
-    KNN_SEARCH_ENDPOINT_ID: str = "projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904"
-    KNN_SEARCH_DEPLOYED_INDEX_ID: str = "deployed_4m_casp_index_v1"
+    MODEL_SERVER_URL: str = "https://cas-model-inference-june-release-vi7nxpvk7a-uc.a.run.app/predict"
+    DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
+    DEFAULT_MODEL_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_50m_dataset.cas_cell_info"
+    DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_50m_dataset"
     KNN_SEARCH_NUM_MATCHES: int = 100
-    BQ_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_4m_dataset.cas_cell_info"
-    BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_4m_dataset"
     ITEMS_PER_USER: int = 50
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
@@ -71,3 +74,7 @@ class LocalSettings(AllEnvSettings):
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
     SQLALCHEMY_DATABASE_URI = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+
+class TestSettings(BaseSettings):
+    SECRET_KEY = "test"

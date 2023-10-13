@@ -52,6 +52,13 @@ class ColumnWiseNormalization(CASTransform):
         self.mean_var_std = one_pass_mean_var_std
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        if self.mean_var_std.mu is None:
+            self.mean_var_std.calculate()
         res = (tensor - self.mean_var_std.mu) / self.mean_var_std.std
         res[torch.isnan(res)] = 0
         return res
+
+
+class IdentityTransform(CASTransform):
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        return tensor

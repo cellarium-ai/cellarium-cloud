@@ -2,12 +2,12 @@ anndata~=0.8.0
 fastavro
 google-api-python-client
 google-cloud-aiplatform
-google-cloud-bigquery
+google-cloud-bigquery==3.9.0
+google-cloud-bigquery-storage==2.19.1
 google-cloud-storage
-numpy
 scipy
 torch
-fastapi
+fastapi==0.96.0
 uvicorn[standard]
 python-dotenv
 pyarrow
@@ -22,3 +22,10 @@ alembic==1.9.2
 gunicorn==20.1.0
 pg8000==1.29.4
 cloud-sql-python-connector==1.1.0
+neptune==1.1.1
+matplotlib
+pandas
+google-cloud-run==0.7.1
+scikit-learn
+scvi-distributed @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.1
+db-dtypes==1.1.1

@@ -6,10 +6,10 @@ from datetime import datetime, timedelta
 import pandas as pd
 import uvicorn
 from fastapi import Depends, FastAPI, File, Form, UploadFile
-from google.cloud import aiplatform, bigquery
+from google.cloud import bigquery
 
 from casp.services import settings
-from casp.services.api import async_client, schemas
+from casp.services.api import async_client, data_controller, matching_engine_client, schemas
 from casp.services.api.auth import authenticate_user
 from casp.services.db import init_db, models, ops
 
@@ -25,8 +25,8 @@ def __log(s):
     print(f"{dt_string} - {s}")
 
 
-async def __get_embeddings(myfile) -> t.Tuple[t.List, "numpy.array"]:
-    r_text = await async_client.CASAPIAsyncClient.call_model_service(file_to_embed=myfile.read())
+async def __get_embeddings(myfile, model_name: str) -> t.Tuple[t.List, "numpy.array"]:
+    r_text = await async_client.CASAPIAsyncClient.call_model_service(file_to_embed=myfile.read(), model_name=model_name)
     # TODO: json isn't very efficient for this
     df = pd.read_json(r_text)
     query_ids = df.db_ids.tolist()
@@ -35,23 +35,28 @@ async def __get_embeddings(myfile) -> t.Tuple[t.List, "numpy.array"]:
     return query_ids, embeddings
 
 
-def __get_appx_knn_matches(embeddings):
-    index_endpoint = aiplatform.MatchingEngineIndexEndpoint(index_endpoint_name=settings.KNN_SEARCH_ENDPOINT_ID)
+def __get_appx_knn_matches(embeddings, model_name: str):
+    cas_model = ops.get_model_by(model_name=model_name)
+    cas_matching_engine_index = cas_model.cas_matching_engine
+
+    index_endpoint = matching_engine_client.MatchingEngineIndexEndpointGRPCOptionsExposed(
+        index_endpoint_name=cas_matching_engine_index.endpoint_id
+    )
 
     response = index_endpoint.match(
-        deployed_index_id=settings.KNN_SEARCH_DEPLOYED_INDEX_ID,
+        deployed_index_id=cas_matching_engine_index.deployed_index_id,
         queries=embeddings,
         num_neighbors=settings.KNN_SEARCH_NUM_MATCHES,
     )
     return response
 
 
-def __get_cell_type_distribution(query_ids, knn_response):
+def __get_cell_type_distribution(query_ids, knn_response, model_name: str):
     bq_client = bigquery.Client()
-
+    cas_model = ops.get_model_by(model_name=model_name)
     # create temporary table
     my_uuid = str(uuid.uuid4())[:8]
-    temp_table_fqn = f"{settings.BQ_TEMP_TABLE_DATASET}.api_request_{my_uuid}"
+    temp_table_fqn = f"{cas_model.bq_temp_table_dataset}.api_request_{my_uuid}"
 
     __log(f"Creating Temporary Table {temp_table_fqn}")
     schema = [
@@ -88,7 +93,7 @@ def __get_cell_type_distribution(query_ids, knn_response):
                        APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(75)] as p75_distance,
                        COUNT(*) cell_count
                 FROM `{temp_table_fqn}` t
-                JOIN `{settings.BQ_CELL_INFO_TABLE_FQN}` ci ON t.match_cas_cell_index = ci.cas_cell_index
+                JOIN `{cas_model.bq_cell_info_table_fqn}` ci ON t.match_cas_cell_index = ci.cas_cell_index
                 GROUP BY 1,2
                 ORDER BY 1, 8 DESC
                 """
@@ -129,32 +134,76 @@ def __get_cell_type_distribution(query_ids, knn_response):
     return results
 
 
-async def __annotate(file):
+async def __annotate(file, model_name: str):
     __log("Calculating Embeddings")
-    query_ids, embeddings = await __get_embeddings(file)
+    query_ids, embeddings = await __get_embeddings(file, model_name=model_name)
     __log("Done")
 
     __log("Performing kNN lookup")
-    knn_response = __get_appx_knn_matches(embeddings)
+    knn_response = __get_appx_knn_matches(embeddings, model_name=model_name)
 
     __log("Getting Cell Type Distributions")
-    d = __get_cell_type_distribution(query_ids, knn_response)
+    d = __get_cell_type_distribution(query_ids, knn_response, model_name=model_name)
 
     __log("Finished")
     return d
+
+
+@app.get("/list-models", response_model=t.List[schemas.CASModel])
+async def list_models(
+    request_user: models.User = Depends(authenticate_user),
+):
+    return ops.get_models_for_user(user=request_user)
 
 
 @app.post("/annotate", response_model=t.List[schemas.QueryCell])
 async def annotate(
     myfile: UploadFile = File(),
     number_of_cells: int = Form(),
+    model_name: str = Form(),
     request_user: models.User = Depends(authenticate_user),
 ):
     ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
-    return await __annotate(myfile.file)
+    return await __annotate(myfile.file, model_name=model_name)
+
+
+@app.get("/validate-token")
+async def validate_token(_: models.User = Depends(authenticate_user)):
+    """
+    Validate authorization token from `Bearer` header
+    :return: Success message if token is valid, otherwise
+        return 401 Unauthorized status code if token is invalid or missing
+    """
+    return {"response": "Success"}
+
+
+@app.get("/application-info", response_model=schemas.ApplicationInfo)
+async def application_info(_: models.User = Depends(authenticate_user)):
+    """
+    Get Cellarium CAS application info such as version, default feature schema name.
+    """
+    return data_controller.get_application_info()
+
+
+@app.get("/feature-schemas", response_model=t.List[schemas.FeatureSchemaInfo])
+async def get_feature_schemas(_: models.User = Depends(authenticate_user)):
+    """
+    Get list of all Cellarium CAS feature schemas
+    :param _:
+    :return: List of feature schema info objects
+    """
+    return data_controller.get_feature_schemas()
+
+
+@app.get("/feature-schema/{schema_name}", response_model=t.List[str])
+async def get_feature_schema_by(schema_name: str):
+    """
+    Get a specific feature schema by its unique name
+    :param schema_name: unique feature schema name
+    :return: List of features in a correct order
+    """
+    return data_controller.get_feature_schema_by(schema_name=schema_name)
 
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "server:app", host=settings.SERVER_HOST, port=settings.SERVER_PORT, workers=multiprocessing.cpu_count() * 2 + 1
-    )
+    uvicorn.run("server:app", host=settings.SERVER_HOST, port=settings.SERVER_PORT, workers=multiprocessing.cpu_count())

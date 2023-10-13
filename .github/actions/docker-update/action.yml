@@ -37,7 +37,7 @@ runs:
         token_format: access_token
         workload_identity_provider: ${{ inputs.gcp-provider-id }}
         service_account: ${{ inputs.gcp-service-account-email }}
-        access_token_lifetime: 900s
+        access_token_lifetime: 1500s
 
     - name: Login to Artifact Registry
       id: docker-google-login

@@ -4,22 +4,21 @@ Selects a random subset of cells of a specified size from BigQuery and writes th
 import argparse
 import datetime
 import json
+import os
+import typing as t
 from pathlib import Path
 
 import anndata as ad
 import numpy as np
+import pandas as pd
 from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
 from scipy.sparse import coo_matrix
 
+from casp.services import utils
 
-class Cell:
-    """
-    Represents a CASP cell.
-    """
-
-    def __init__(self, cas_cell_index):
-        self.cas_cell_index = cas_cell_index
+if t.TYPE_CHECKING:
+    from google.oauth2.service_account import Credentials
 
 
 class Feature:
@@ -34,13 +33,12 @@ class Feature:
 
 def get_features(project, dataset, extract_feature_table, client):
     """
-    Retrieve a list of all feature objects from the specified extract feature table, ordered by cas_feature_index.
+    Retrieve a list of all feature objects from the specified extract feature table, ordered by index from schema table.
     """
     sql = f"""
-
     SELECT cas_feature_index, original_feature_id FROM
-        `{project}.{dataset}.{extract_feature_table}` ORDER BY cas_feature_index
-
+        `{project}.{dataset}.{extract_feature_table}`
+    ORDER BY index
     """
 
     result = client.query(sql)
@@ -48,24 +46,30 @@ def get_features(project, dataset, extract_feature_table, client):
     return features
 
 
-def get_cells_in_bin_range(project, dataset, extract_cell_table, start_bin, end_bin, client):
+def get_cells_in_bin_range(
+    project: str, dataset: str, extract_table_prefix: str, start_bin: int, end_bin: int, client: "bigquery.Client"
+) -> t.Iterable[t.Dict[str, t.Any]]:
     """
     Retrieve a list of all cells between the specified start and end bins (both inclusive), ordered by cas_cell_index.
     """
     sql = f"""
-
-    SELECT cas_cell_index FROM
-        `{project}.{dataset}.{extract_cell_table}` WHERE extract_bin BETWEEN {start_bin} AND {end_bin} ORDER BY cas_cell_index
-
+    SELECT cas_cell_index,
+           cas_ingest_id,
+           cell_type,
+           total_mrna_umis
+    FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
+    WHERE extract_bin BETWEEN {start_bin} AND {end_bin}
     """
 
-    result = client.query(sql)
-    cells = [Cell(cas_cell_index=row["cas_cell_index"]) for row in result]
-    return cells
+    return [x for x in client.query(sql)]
 
 
-def get_matrix_data(project, dataset, table, start_bin, end_bin, client):
-    client = BigQueryReadClient()
+def get_matrix_data(project, dataset, table, start_bin, end_bin, credentials=None):
+    if credentials is None:
+        client = BigQueryReadClient()
+    else:
+        client = BigQueryReadClient(credentials=credentials)
+
     table = f"projects/{project}/datasets/{dataset}/tables/{table}"
 
     requested_session = types.ReadSession()
@@ -116,17 +120,77 @@ def assign_uns_metadata(anndata, json_string):
         anndata.uns[key] = val
 
 
-def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_bin, end_bin, output):
+def add_cell_type_info(
+    dataset: str, extract_table_prefix: str, bucket_name: str, adata: "ad.AnnData", cell_types: list
+):
+    filename = "all_cell_types.csv"
+    source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
+
+    if not os.path.exists(filename):
+        utils.download_file_from_bucket(
+            bucket_name=bucket_name, source_blob_name=source_blob_name, destination_file_name=filename
+        )
+
+    adata.obs["cell_type"] = cell_types
+    df = pd.read_csv(filename, index_col=False)
+    adata.obs.cell_type = pd.Categorical(adata.obs.cell_type.values, categories=df["cell_type"].values)
+
+
+def add_measured_genes_layer_mask(
+    dataset: str, extract_table_prefix: str, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list
+):
+    filename = "measured_genes_info.csv"
+    source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
+
+    if not os.path.exists(filename):
+        utils.download_file_from_bucket(
+            bucket_name=bucket_name, source_blob_name=source_blob_name, destination_file_name=filename
+        )
+
+    adata.obs["cas_ingest_id"] = cas_ingest_ids
+    df = pd.read_csv(filename, index_col="cas_ingest_id").astype(bool)
+
+    measured_genes_mask = df.loc[adata.obs["cas_ingest_id"], adata.var.index].to_numpy()
+
+    adata.layers["measured_genes_mask"] = measured_genes_mask
+
+
+def extract_minibatch_to_anndata(
+    project,
+    dataset,
+    extract_table_prefix,
+    start_bin,
+    end_bin,
+    output,
+    bucket_name,
+    credentials: "Credentials" = None,
+    obs_columns_to_include: t.Optional[t.List[str]] = None,
+):
     """
     Main function to extract a minibatch from a prepared training extract and write the associated data
     to an AnnData file.
+
+    :param project: BigQuery Project
+    :param dataset: BigQuery Dataset
+    :param extract_table_prefix: Prefix of extract tables
+    :param start_bin: Starting (inclusive) integer bin to extract
+    :param end_bin: Ending (inclusive) integer bin to extract
+    :param output: Filename of the AnnData file
+    :param bucket_name: Bucket name where to save extracted minibatch
+    :param credentials: Google Cloud Credentials with the access to BigQuery
+    :param obs_columns_to_include: Columns to include in `obs` data frame in extracted `anndata.AnnData` file
+        Mapped from extract query output
     """
-    client = bigquery.Client(project=project)
+    if credentials is None:
+        client = bigquery.Client(project=project)
+    else:
+        client = bigquery.Client(project=project, credentials=credentials)
 
     print(f"Getting extract bin {start_bin}-{end_bin} data from {project}.{dataset}.{extract_table_prefix}*...")
 
     # Read the feature information and store for later.
     print("Extracting Feature Info...")
+
     features = get_features(project, dataset, f"{extract_table_prefix}__extract_feature_info", client)
 
     feature_ids = []
@@ -136,22 +200,24 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
     print("Extracting Cell Info...")
-    cells = get_cells_in_bin_range(
-        project, dataset, f"{extract_table_prefix}__extract_cell_info", start_bin, end_bin, client
-    )
+    cells = get_cells_in_bin_range(project, dataset, extract_table_prefix, start_bin, end_bin, client)
 
     original_cell_ids = []
+    cas_ingest_ids = []
+    obs_columns_values = {k: [] for k in obs_columns_to_include}
     cas_cell_index_to_row_num = {}
     for row_num, cell in enumerate(cells):
-        original_cell_ids.append(cell.cas_cell_index)
-        cas_cell_index_to_row_num[cell.cas_cell_index] = row_num
-
-    print("Extracting Matrix Data...")
+        original_cell_ids.append(cell["cas_cell_index"])
+        cas_ingest_ids.append(cell["cas_ingest_id"])
+        cas_cell_index_to_row_num[cell["cas_cell_index"]] = row_num
+        # Mapping additional obs columns
+        for obs_column in obs_columns_to_include:
+            obs_columns_values[obs_column].append(cell[obs_column])
 
     matrix_data = get_matrix_data(
-        project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, client
+        project, dataset, f"{extract_table_prefix}__extract_raw_count_matrix", start_bin, end_bin, credentials
     )
-
+    # print(next(iter(matrix_data)))
     print("Converting Matrix Data to COO format...")
 
     rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(
@@ -169,9 +235,29 @@ def extract_minibatch_to_anndata(project, dataset, extract_table_prefix, start_b
     adata.obs.index = original_cell_ids
     adata.var.index = feature_ids
 
-    # See https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.raw.html?highlight=raw#anndata.AnnData.raw
-    # for why we set 'raw' thusly: "The raw attribute is initialized with the current content of an object by setting:"
-    adata.raw = adata
+    print("Adding Cell Types Categorical Info...")
+    if "cell_type" in obs_columns_values:
+        # To avoid adding and overwriting cell types, pop them from dictionary:
+        cell_types = obs_columns_values.pop("cell_type")
+        add_cell_type_info(
+            dataset=dataset,
+            extract_table_prefix=extract_table_prefix,
+            bucket_name=bucket_name,
+            adata=adata,
+            cell_types=cell_types,
+        )
+
+    print("Adding Measured Genes Layer Mask...")
+    add_measured_genes_layer_mask(
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix,
+        bucket_name=bucket_name,
+        adata=adata,
+        cas_ingest_ids=cas_ingest_ids,
+    )
+    print("Adding Other Obs Columns...")
+    for obs_column in obs_columns_values:
+        adata.obs[obs_column] = obs_columns_values[obs_column]
 
     print("Writing AnnData Matrix")
     adata.write(Path(output), compression="gzip")

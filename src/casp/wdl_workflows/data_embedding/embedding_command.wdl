@@ -1,5 +1,6 @@
 task embed {
     String version = "train_v1.0.0"
+    String docker_image
     String bucket_name
     String data_storage_path
     String dm_storage_path
@@ -9,7 +10,6 @@ task embed {
     command {
         echo $(pwd)
         cd /app
-        echo $running_script
         python ${running_script} \
         --bucket_name=${bucket_name} \
         --data_storage_path=${data_storage_path} \
@@ -18,7 +18,7 @@ task embed {
     }
 
     runtime {
-        docker: "us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0-gpu"
+        docker: docker_image
         bootDiskSizeGb: 100
         memory: "26G"
         cpu: 4
