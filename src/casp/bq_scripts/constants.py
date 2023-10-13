@@ -1,0 +1,1 @@
+MRNA_FEATURE_BIOTYPE_NAME = "gene"
