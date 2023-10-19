@@ -15,7 +15,7 @@ from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
 from scipy.sparse import coo_matrix
 
-from casp.bq_scripts import constants
+from casp.bq_scripts import helpers
 from casp.services import utils
 
 if t.TYPE_CHECKING:
@@ -59,7 +59,7 @@ def get_cells_in_bin_range(
     """
     Retrieve a list of all cells between the specified start and end bins (both inclusive), ordered by cas_cell_index.
     """
-    select_ci_columns = ", ".join([*constants.CAS_CELL_INFO_REQUIRED_COLUMNS, *obs_columns_to_include])
+    select_ci_columns = helpers.prepare_column_names_for_extract_sql(column_names=obs_columns_to_include)
     sql = f"""
     SELECT {select_ci_columns}
     FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info` c
@@ -208,7 +208,7 @@ def extract_minibatch_to_anndata(
         cas_feature_index_to_col_num[feature.cas_feature_index] = col_num
 
     # Getting rid of table aliases in `obs_columns_to_include`
-    _obs_columns_to_include = list(map(lambda x: x.split(".")[-1], obs_columns_to_include))
+    _obs_columns_to_include = helpers.remove_leading_alias_names_extract_columns(column_names=obs_columns_to_include)
 
     print("Extracting Cell Info...")
     cells = get_cells_in_bin_range(

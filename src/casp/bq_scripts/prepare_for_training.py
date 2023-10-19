@@ -7,7 +7,7 @@ import typing as t
 
 from google.cloud import bigquery
 
-from casp.bq_scripts import constants
+from casp.bq_scripts import helpers
 
 
 def execute_query(client, sql):
@@ -216,7 +216,7 @@ def prepare_cell_info(
         datasets=filter_by_datasets,
         is_primary_data=filter_by_is_primary_data,
     )
-    cas_cell_info_columns = ", ".join([*constants.CAS_CELL_INFO_REQUIRED_COLUMNS, *obs_columns_to_include])
+    cas_cell_info_columns = helpers.prepare_column_names_for_extract_sql(column_names=obs_columns_to_include)
     sql_random_ordering = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
         AS
@@ -229,15 +229,12 @@ def prepare_cell_info(
     print("Randomizing order of the cells...")
     execute_query(client, sql_random_ordering)
 
-    # Getting rid of aliases, because we don't need them in a result extract table
-    obs_columns_no_alias = list(map(lambda x: x.split(".")[-1], obs_columns_to_include))
-    cas_cell_info_extract_columns = ", ".join([*constants.CAS_CELL_INFO_REQUIRED_COLUMNS, *obs_columns_no_alias])
     sql_prepare_cell_info = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
         PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
         CLUSTER BY extract_bin
         AS
-        SELECT  {cas_cell_info_extract_columns},
+        SELECT  {cas_cell_info_columns},
                 CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
         FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized` c
     """
