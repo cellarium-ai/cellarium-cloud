@@ -67,7 +67,7 @@ def prepare_column_names_for_extract_sql(column_names: t.Optional[t.List[str]]) 
     Example:
     --------
     >>> prepare_column_names_for_extract_sql(column_names=["c.CELL_TYPE", "i.DATASET_ID"])
-    ["c.cas_cell_index", "c.cas_ingest_id", "c.cell_type", "i.dataset_id"]
+    "c.cas_cell_index, c.cas_ingest_id, c.cell_type, i.dataset_id"
     """
     if column_names is None or not column_names:
         return ", ".join(constants.CAS_CELL_INFO_REQUIRED_COLUMNS)
