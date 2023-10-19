@@ -229,12 +229,18 @@ def prepare_cell_info(
     print("Randomizing order of the cells...")
     execute_query(client, sql_random_ordering)
 
+    cas_cell_info_columns_no_alias = helpers.remove_leading_alias_names_extract_columns(
+        column_names=obs_columns_to_include
+    )
+    cas_cell_info_columns_no_alias_str = helpers.prepare_column_names_for_extract_sql(
+        column_names=cas_cell_info_columns_no_alias
+    )
     sql_prepare_cell_info = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
         PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
         CLUSTER BY extract_bin
         AS
-        SELECT  {cas_cell_info_columns},
+        SELECT  {cas_cell_info_columns_no_alias_str},
                 CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
         FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized` c
     """
