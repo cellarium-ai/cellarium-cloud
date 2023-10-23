@@ -7,6 +7,8 @@ import typing as t
 
 from google.cloud import bigquery
 
+from casp.bq_scripts import helpers
+
 
 def execute_query(client, sql):
     """
@@ -84,9 +86,7 @@ def prepare_feature_summary(
     return query
 
 
-def prepare_feature_info(
-    client, project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids
-):
+def prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allowed_original_feature_ids):
     """
     create subset of features based on
       - a minimum number of observed cells
@@ -108,16 +108,44 @@ def prepare_feature_info(
     return query
 
 
-def __get_prepare_cell_info_join(project: str, dataset: str, filter_by_datasets: t.Optional[t.List[str]]):
-    if filter_by_datasets is None:
+def __get_prepare_cell_info_join(
+    project: str, dataset: str, filter_by_datasets: t.Optional[t.List[str]], obs_columns: t.List[str]
+) -> str:
+    """
+    Constructs a JOIN clause to retrieve information from the cas_ingest_info table in a specific project and dataset.
+
+    This function generates a SQL JOIN operation as a string. It's specifically designed for joining the
+    'cas_ingest_info' table from a specified Google BigQuery dataset and project. The JOIN clause is created based on
+    specific conditions: it either requires the 'filter_by_datasets' list to be not None, or there must be at least
+    one element in 'obs_columns' that starts with 'i.'.
+
+    :param project: The Google Cloud project ID where the dataset is hosted.
+    :param dataset: The dataset within the Google Cloud project.
+    :param filter_by_datasets: An optional list of dataset IDs to filter by. If this is None and no 'obs_columns'
+        start with 'i.', an empty string is returned.
+    :param obs_columns: A list of observational columns. If at least one of these columns starts with 'i.',
+        the function constructs the JOIN clause, otherwise, it checks 'filter_by_datasets'.
+
+    :returns: A string containing the JOIN clause for the 'cas_ingest_info' table. If the conditions based on
+        'filter_by_datasets' and 'obs_columns' are not met, it returns an empty string.
+
+    :Example:
+
+    >>> __get_prepare_cell_info_join(
+    >>>     project="my_project", dataset="my_dataset", filter_by_datasets=None, obs_columns=["col1", "i.col2"]
+    >>> )
+    'JOIN `my_project.my_dataset.cas_ingest_info` i ON (i.cas_ingest_id = c.cas_ingest_id)'
+    """
+    ingest_info_columns = list(filter(lambda x: x.startswith("i."), obs_columns))
+    ingest_info_columns_present = len(ingest_info_columns) > 0
+
+    if filter_by_datasets is None and not ingest_info_columns_present:
         return ""
 
     return f"JOIN `{project}.{dataset}.cas_ingest_info` i ON (i.cas_ingest_id = c.cas_ingest_id)"
 
 
 def __get_prepare_cell_info_filter(
-    project: str,
-    dataset: str,
     datasets: t.Optional[t.List[str]],
     organism: t.Optional[str],
     is_primary_data: t.Optional[bool],
@@ -140,17 +168,18 @@ def __get_prepare_cell_info_filter(
 
 
 def prepare_cell_info(
-    client,
-    project,
-    dataset,
-    extract_table_prefix,
-    extract_bin_size,
+    client: "bigquery.Client",
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    extract_bin_size: int,
     random_seed_offset: int = 0,
     partition_bin_count: int = 40000,
     partition_size: int = 10,
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[t.List[str]] = None,
     filter_by_is_primary_data: t.Optional[bool] = None,
+    obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
     Randomize cells using farm_fingerprint with an offset so we can have deterministic randomization.  See
@@ -158,24 +187,40 @@ def prepare_cell_info(
 
     Then allocate cells into bins of `extract_bin_size` cells.  The last bin may be much
     smaller than this requested size, as it is the remainder cells
-    """
 
-    join_clause = __get_prepare_cell_info_join(project=project, dataset=dataset, filter_by_datasets=filter_by_datasets)
+    :param client: An instance of BigQuery's client object used to interact with the BigQuery service.
+    :param project: The ID of the Google Cloud project where the BigQuery dataset is hosted.
+    :param dataset: The ID of the dataset in BigQuery where the data is hosted.
+    :param extract_table_prefix: A prefix string for naming tables or for similar purposes.
+    :param extract_bin_size: The size for the bins where cells are allocated.
+    :param random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization.
+        `Defaults:` ``0``
+    :param partition_bin_count: The count of bins for partitioning.
+        `Default:` ``40000``
+    :param partition_size: The size for the partitions.
+        `Default:` ``10``
+    :param filter_by_organism: Optional filter to specify an organism. If not provided, no filtering occurs.
+    :param filter_by_datasets: Optional filter to specify datasets by their names. If not provided, no filtering occurs.
+    :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
+    """
+    join_clause = __get_prepare_cell_info_join(
+        project=project, dataset=dataset, filter_by_datasets=filter_by_datasets, obs_columns=obs_columns_to_include
+    )
     where_clause = __get_prepare_cell_info_filter(
-        project=project,
-        dataset=dataset,
         organism=filter_by_organism,
         datasets=filter_by_datasets,
         is_primary_data=filter_by_is_primary_data,
     )
-
+    cas_cell_info_columns = helpers.prepare_column_names_for_extract_sql(column_names=obs_columns_to_include)
     sql_random_ordering = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
         AS
-        SELECT  cas_cell_index,
-                c.cas_ingest_id,
-                cell_type,
-                c.total_mrna_umis
+        SELECT  {cas_cell_info_columns}
         FROM `{project}.{dataset}.cas_cell_info` c
         {join_clause}
         {where_clause}
@@ -184,17 +229,20 @@ def prepare_cell_info(
     print("Randomizing order of the cells...")
     execute_query(client, sql_random_ordering)
 
+    cas_cell_info_columns_no_alias = helpers.remove_leading_alias_names_extract_columns(
+        column_names=obs_columns_to_include
+    )
+    cas_cell_info_columns_no_alias_str = helpers.prepare_column_names_for_extract_sql(
+        column_names=cas_cell_info_columns_no_alias
+    )
     sql_prepare_cell_info = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
         PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
         CLUSTER BY extract_bin
         AS
-        SELECT  cas_cell_index,
-                cas_ingest_id,
-                cell_type,
-                total_mrna_umis,
+        SELECT  {cas_cell_info_columns_no_alias_str},
                 CAST(FLOOR((ROW_NUMBER() OVER () - 1) / {extract_bin_size}) as INT) as extract_bin
-        FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized`
+        FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info_randomized` c
     """
     print("Creating Cell Info into extract bins...")
     main_query = execute_query(client, sql_prepare_cell_info)
@@ -240,17 +288,46 @@ def prepare_extract_matrix(
 
 
 def prepare_extract(
-    project,
-    dataset,
-    extract_table_prefix,
-    min_observed_cells,
-    fq_allowed_original_feature_ids,
-    extract_bin_size,
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    fq_allowed_original_feature_ids: str,
+    extract_bin_size: int,
+    ci_random_seed_offset: int = 0,
+    ci_partition_bin_count: int = 40000,
+    ci_partition_size: int = 10,
     credentials=None,
     filter_by_organism: t.Optional[str] = None,
     filter_by_datasets: t.Optional[t.List[str]] = None,
     filter_by_is_primary_data: t.Optional[bool] = None,
+    obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
+    """
+    Prepare CAS BigQuery tables used for data extraction.
+
+    :param project: The ID of the Google Cloud project where the BigQuery dataset is hosted.
+    :param dataset: The ID of the dataset in BigQuery where the data is hosted.
+    :param extract_table_prefix: A prefix string for naming tables or for similar purposes.
+    :param fq_allowed_original_feature_ids: BigQuery table with feature schema needed for the extract
+    :param extract_bin_size: The size for the bins where cells are allocated.
+    :param credentials: Google Cloud Service account credentials
+    :param ci_random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization
+        Used in cas_cell_info table.
+        `Defaults:` ``0``
+    :param ci_partition_bin_count: The count of bins for partitioning cas_cell_info table.
+        `Default:` ``40000``
+    :param ci_partition_size: The size for the partitions in cas_cell_info table.
+        `Default:` ``10``
+    :param filter_by_organism: Optional filter to specify an organism. If not provided, no filtering occurs.
+        `Default:` ``None``
+    :param filter_by_datasets: Optional filter to specify datasets by their names. If ``None``, no filtering occurs.
+        `Default:` ``None``
+    :param filter_by_is_primary_data: Optional filter to determine if data is primary or not.
+        `Default:` ``None``
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``. If not
+        ``None``, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        `Default:` ``None``
+    """
     if credentials is None:
         client = bigquery.Client(project=project)
     else:
@@ -264,18 +341,20 @@ def prepare_extract(
         filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets,
     )
-    prepare_feature_info(
-        client, project, dataset, extract_table_prefix, min_observed_cells, fq_allowed_original_feature_ids
-    )
+    prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allowed_original_feature_ids)
     prepare_cell_info(
         client,
         project,
         dataset,
         extract_table_prefix,
         extract_bin_size,
+        random_seed_offset=ci_random_seed_offset,
+        partition_bin_count=ci_partition_bin_count,
+        partition_size=ci_partition_size,
         filter_by_organism=filter_by_organism,
         filter_by_datasets=filter_by_datasets,
         filter_by_is_primary_data=filter_by_is_primary_data,
+        obs_columns_to_include=obs_columns_to_include,
     )
     prepare_extract_matrix(client, project, dataset, extract_table_prefix)
 

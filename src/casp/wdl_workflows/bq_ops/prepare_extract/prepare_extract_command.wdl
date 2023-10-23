@@ -9,6 +9,7 @@ task prepare_extract {
     String filter_by_organism
     Boolean filter_by_is_primary_data
     String filter_by_diseases
+    String? obs_columns_to_include
 
     command {
         cd /app
@@ -21,7 +22,8 @@ task prepare_extract {
         --bucket_name ${bucket_name} \
         --filter_by_organism "${filter_by_organism}" \
         --filter_by_is_primary_data ${filter_by_is_primary_data} \
-        --filter_by_diseases "${filter_by_diseases}"
+        --filter_by_diseases "${filter_by_diseases}" \
+        --obs_columns_to_include "${obs_columns_to_include}"
     }
 
     runtime {

@@ -28,8 +28,11 @@ def extract_task(
     :param file_name: Name for a local file (.h5ad anndata) to save the output
     :param output_bucket_name: Name of GCS bucket
     :param output_bucket_directory: Directory in the bucket to save outputs
-    :param obs_columns_to_include:  Columns to include in `obs` data frame in extracted `anndata.AnnData` file
-        Mapped from extract query output
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
     credentials, project_id = utils.get_google_service_credentials()
     try:
@@ -60,7 +63,7 @@ def main(
     end_bin: int,
     output_bucket_name: str,
     output_bucket_directory: str,
-    obs_columns_to_include_str: str,
+    obs_columns_to_include: str,
 ) -> None:
     """
     Extract anndatafiles from bigquery extract tables. Run extract tasks concurrently: 1 task per CPU core
@@ -75,10 +78,10 @@ def main(
     :param end_bin: Ending (inclusive) integer bin to extract
     :param output_bucket_name: Name of GCS bucket
     :param output_bucket_directory: Directory in the bucket to save outputs
-    :param obs_columns_to_include_str:  Columns to include in `obs` data frame in extracted `anndata.AnnData` file
+    :param obs_columns_to_include:  Columns to include in `obs` data frame in extracted `anndata.AnnData` file
         Mapped from extract query output. Comma separated string
     """
-    obs_columns_to_include_list = obs_columns_to_include_str.split(",")
+    obs_columns_to_include_list = obs_columns_to_include.split(",")
     num_of_workers = multiprocessing.cpu_count()
     with concurrency.ProcessPoolExecutor(max_workers=num_of_workers) as executor:
         futures = []
@@ -114,7 +117,7 @@ if __name__ == "__main__":
         "--output_bucket_directory", type=str, help="A specific location in a bucket for the results", required=True
     )
     parser.add_argument(
-        "--obs_columns_to_include_str", type=str, help="Obs columns to include in extract adata file", required=True
+        "--obs_columns_to_include", type=str, help="Obs columns to include in extract adata file", required=True
     )
     args = parser.parse_args()
     main(
@@ -124,5 +127,5 @@ if __name__ == "__main__":
         end_bin=args.end_bin,
         output_bucket_name=args.output_bucket_name,
         output_bucket_directory=args.output_bucket_directory,
-        obs_columns_to_include_str=args.obs_columns_to_include_str,
+        obs_columns_to_include=args.obs_columns_to_include,
     )
