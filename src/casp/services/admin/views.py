@@ -167,7 +167,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
 
 
 class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
-    column_list = ("index_name", "embedding_dimension", "endpoint_id", "deployed_index_id", "model")
+    column_list = ("index_name", "embedding_dimension", "endpoint_id", "deployed_index_id", "num_neighbors", "model")
     column_descriptions = {
         "index_name": (
             "A name that is used to identify the index, must be unique, lowercase. "
@@ -175,6 +175,7 @@ class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
         ),
         "endpoint_id": "Endpoint ID that is used in GCP in Vertex AI",
         "deployed_index_id": "Deployed Index ID that is used in GCP in Vertex AI",
+        "num_neighbors": "Number of neighbors that is used for an approximate neighbors search",
     }
 
 

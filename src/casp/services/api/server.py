@@ -46,7 +46,7 @@ def __get_appx_knn_matches(embeddings, model_name: str):
     response = index_endpoint.match(
         deployed_index_id=cas_matching_engine_index.deployed_index_id,
         queries=embeddings,
-        num_neighbors=settings.KNN_SEARCH_NUM_MATCHES,
+        num_neighbors=cas_matching_engine_index.num_neighbors,
     )
     return response
 
@@ -70,6 +70,8 @@ def __get_cell_type_distribution(query_ids, knn_response, model_name: str):
     bq_client.create_table(table)  # Make an API request.
 
     __log(f"Loading Data Into {temp_table_fqn}")
+    __log(f"kNN response length {len(knn_response)}")
+
     rows_to_insert = []
     for i in range(0, len(knn_response)):
         query_id = query_ids[i]
