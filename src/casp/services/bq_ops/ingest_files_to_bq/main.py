@@ -14,8 +14,9 @@ def get_avro_prefixes(bucket_name, gcs_stage_dir):
     blob_names = [x.name for x in ingest_file_blobs]
     blob_names_return = []
 
-    for blob_name in blob_names:
-        blob_directory, blob_name = blob_name.split("/")
+    for blob_filepath in blob_names:
+        blob_name = blob_filepath.split("/")[-1]
+        blob_directory = blob_filepath.replace(f"/{blob_name}", "")
 
         if blob_directory != gcs_stage_dir:
             continue

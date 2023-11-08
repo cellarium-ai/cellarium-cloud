@@ -46,7 +46,7 @@ def upload_file_to_bucket(local_file_name: str, bucket: str, blob_name: str) -> 
     blob.upload_from_filename(local_file_name)
 
 
-def list_blobs(bucket_name: str, prefix: t.Optional[str] = None) -> storage.Blob:
+def list_blobs(bucket_name: str, prefix: t.Optional[str] = None) -> t.List[storage.Blob]:
     """Lists all the blobs in the bucket"""
     credentials, project_id = get_google_service_credentials()
     storage_client = storage.Client(credentials=credentials, project=project_id)

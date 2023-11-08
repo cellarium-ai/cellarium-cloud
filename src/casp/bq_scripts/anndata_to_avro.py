@@ -126,25 +126,25 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
         "fields": [
             {"name": "cas_cell_index", "type": "int"},
             {"name": "original_cell_id", "type": "string"},
-            {"name": "assay_ontology_term_id", "type": "string"},
-            {"name": "cell_type_ontology_term_id", "type": "string"},
-            {"name": "development_stage_ontology_term_id", "type": "string"},
-            {"name": "disease_ontology_term_id", "type": "string"},
-            {"name": "donor_id", "type": "string"},
-            {"name": "is_primary_data", "type": "boolean"},
-            {"name": "organism_ontology_term_id", "type": "string"},
-            {"name": "self_reported_ethnicity_ontology_term_id", "type": "string"},
-            {"name": "sex_ontology_term_id", "type": "string"},
-            {"name": "suspension_type", "type": "string"},
-            {"name": "tissue_ontology_term_id", "type": "string"},
-            {"name": "assay", "type": "string"},
+            {"name": "assay_ontology_term_id", "type": ["null", "string"]},
+            {"name": "cell_type_ontology_term_id", "type": ["null", "string"]},
+            {"name": "development_stage_ontology_term_id", "type": ["null", "string"]},
+            {"name": "disease_ontology_term_id", "type": ["null", "string"]},
+            {"name": "donor_id", "type": ["null", "string"]},
+            {"name": "is_primary_data", "type": ["null", "boolean"]},
+            {"name": "organism_ontology_term_id", "type": ["null", "string"]},
+            {"name": "self_reported_ethnicity_ontology_term_id", "type": ["null", "string"]},
+            {"name": "sex_ontology_term_id", "type": ["null", "string"]},
+            {"name": "suspension_type", "type": ["null", "string"]},
+            {"name": "tissue_ontology_term_id", "type": ["null", "string"]},
+            {"name": "assay", "type": ["null", "string"]},
             {"name": "cell_type", "type": "string"},
-            {"name": "development_stage", "type": "string"},
-            {"name": "disease", "type": "string"},
-            {"name": "organism", "type": "string"},
-            {"name": "self_reported_ethnicity", "type": "string"},
-            {"name": "sex", "type": "string"},
-            {"name": "tissue", "type": "string"},
+            {"name": "development_stage", "type": ["null", "string"]},
+            {"name": "disease", "type": ["null", "string"]},
+            {"name": "organism", "type": ["null", "string"]},
+            {"name": "self_reported_ethnicity", "type": ["null", "string"]},
+            {"name": "sex", "type": ["null", "string"]},
+            {"name": "tissue", "type": ["null", "string"]},
             {"name": "obs_metadata_extra", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "cas_ingest_id", "type": "string"},
             {"name": "total_mrna_umis", "type": ["null", "int"], "default": None},
@@ -176,6 +176,11 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
         "tissue",
     ]
     # A version of `obs` that does not contain our added entries, suitable for persisting to BigQuery.
+    missing_columns = set(added_columns) - set(adata.obs.columns.tolist())
+
+    for missing_column in missing_columns:
+        adata.obs[missing_column] = None
+
     obs_original = adata.obs.drop(columns=added_columns)
     cells = adata.obs[added_columns]
 
@@ -266,7 +271,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included
         "type": "record",
         "fields": [
             {"name": "cas_ingest_id", "type": "string"},
-            {"name": "dataset_filename", "type": "string"},
+            {"name": "dataset_id", "type": "string"},
             {"name": "uns_metadata", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "ingest_timestamp", "type": ["null", "long"], "logicalType": ["null", "timestamp-millis"]},
         ],
@@ -322,7 +327,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included
 
         yield {
             "uns_metadata": json.dumps(uns, cls=NumpyEncoder),
-            "dataset_filename": filename,
+            "dataset_id": filename.replace("_ingest_info.avro", ""),
             "cas_ingest_id": ingest_id,
             "ingest_timestamp": None,
             "ingest_prefix_name": prefix,
@@ -530,7 +535,12 @@ def optimized_read_andata(input_file):
 
 def optimized_read_raw_X(input_file, row_offset, end):
     adata = optimized_read_andata(input_file)
-    coord = get_x_matrix(adata)[row_offset:end, :].tocoo()
+    matrix = get_x_matrix(adata)
+
+    if isinstance(matrix, (np.ndarray, np.matrix)):
+        matrix = sparse.csr_matrix(matrix)
+
+    coord = sparse.csr_matrix(matrix)[row_offset:end, :].tocoo()
     adata.file.close()
     del adata
     gc.collect()

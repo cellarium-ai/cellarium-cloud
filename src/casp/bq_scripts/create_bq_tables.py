@@ -82,7 +82,7 @@ def create_bigquery_objects(client, project, dataset):
         "cas_ingest_info",
         [
             bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("dataset_filename", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("dataset_id", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("uns_metadata", "JSON", mode="REQUIRED"),
             bigquery.SchemaField("ingest_timestamp", "TIMESTAMP", mode="NULLABLE"),
         ],
@@ -97,7 +97,7 @@ def create_bigquery_objects(client, project, dataset):
         [
             bigquery.SchemaField("cas_cell_index", "INTEGER", mode="REQUIRED"),
             bigquery.SchemaField("original_cell_id", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("cell_type", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("cell_type", "STRING", mode="NULLABLE"),
             # Data parsed from cellxgene
             bigquery.SchemaField("assay_ontology_term_id", "STRING", mode="NULLABLE"),
             bigquery.SchemaField("cell_type_ontology_term_id", "STRING", mode="NULLABLE"),
