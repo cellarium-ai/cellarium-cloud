@@ -540,7 +540,7 @@ def optimized_read_raw_X(input_file, row_offset, end):
     if isinstance(matrix, (np.ndarray, np.matrix)):
         matrix = sparse.csr_matrix(matrix)
 
-    coord = sparse.csr_matrix(matrix)[row_offset:end, :].tocoo()
+    coord = matrix[row_offset:end, :].tocoo()
     adata.file.close()
     del adata
     gc.collect()

@@ -1,0 +1,14 @@
+{
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-brice-data-02",
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_input_bucket": "dsp-cell-annotation-service",
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.gcs_stage_dir": "brice/bq_insert_stage_dir",
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.original_feature_id_lookup": "index",
+  "CASAnndataToIngestFiles.anndata_to_ingest_files.load_uns_data": false,
+  "CASAnndataToIngestFiles.convert_args": [
+    {
+      "df_filename": "brice/input-files/lung-atlas-public.h5ad",
+      "cas_cell_index": 0,
+      "cas_feature_index": 0
+    }
+  ]
+}

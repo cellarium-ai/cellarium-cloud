@@ -1,5 +1,6 @@
 task anndata_to_ingest_files {
     String version = "anndata_to_files_v1.0.0"
+    String docker_image
     String gcs_input_bucket
     String gcs_file_path
     String gcs_stage_dir
@@ -7,7 +8,6 @@ task anndata_to_ingest_files {
     Int cas_feature_index_start
     String original_feature_id_lookup
     Boolean load_uns_data
-    String uns_meta_keys
 
 
     command {
@@ -20,17 +20,15 @@ task anndata_to_ingest_files {
         --cas_cell_index_start ${cas_cell_index_start} \
         --cas_feature_index_start ${cas_feature_index_start} \
         --original_feature_id_lookup ${original_feature_id_lookup} \
-        --load_uns_data ${load_uns_data} \
-        --uns_meta_keys ${uns_meta_keys}
+        --load_uns_data ${load_uns_data}
     }
 
     runtime {
-        docker: "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-50m-35"
+        docker: docker_image
         bootDiskSizeGb: 50
         memory: "64G"
         cpu: 32
         zones: "us-central1-a"
-        maxRetries: 3
         preemptible_tries: 3
     }
 }

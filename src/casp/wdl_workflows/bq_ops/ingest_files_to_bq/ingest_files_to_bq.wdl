@@ -20,7 +20,6 @@ task ingest_files_to_bq {
         memory: "1G"
         cpu: 1
         zones: "us-central1-a"
-        maxRetries: 3
         preemptible_tries: 3
     }
 }
