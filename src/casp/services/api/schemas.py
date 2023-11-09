@@ -14,7 +14,7 @@ class MatchInfo(BaseModel):
 
 
 class QueryCell(BaseModel):
-    query_cell_id: str = Field(example="99543")
+    query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
     matches: t.List[MatchInfo]
 
 

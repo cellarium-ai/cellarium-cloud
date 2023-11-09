@@ -3,6 +3,7 @@ import pickle
 import typing as t
 
 import anndata
+import numpy as np
 import torch
 from google.cloud import storage
 
@@ -10,11 +11,11 @@ from casp.ml.dump_manager import DumpManager
 from casp.services import settings, utils
 
 
-def load_data(file) -> t.Tuple[torch.Tensor, torch.Tensor]:
+def load_data(file) -> t.Tuple[torch.Tensor, np.ndarray]:
     adata = anndata.read_h5ad(io.BytesIO(file))
     X = torch.Tensor(adata.X.todense().astype(int))
-    db_ids = torch.Tensor(adata.obs_names.values.astype(int))
-    return X, db_ids
+    obs_ids = adata.obs.index.values.astype(str)
+    return X, obs_ids
 
 
 def get_dump_manager(dump_manager_location: str) -> "DumpManager":

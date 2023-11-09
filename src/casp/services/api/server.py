@@ -29,7 +29,7 @@ async def __get_embeddings(myfile, model_name: str) -> t.Tuple[t.List, "numpy.ar
     r_text = await async_client.CASAPIAsyncClient.call_model_service(file_to_embed=myfile.read(), model_name=model_name)
     # TODO: json isn't very efficient for this
     df = pd.read_json(r_text)
-    query_ids = df.db_ids.tolist()
+    query_ids = df.obs_ids.tolist()
     embeddings = df.iloc[:, 1:].to_numpy(dtype=float)
 
     return query_ids, embeddings
@@ -51,7 +51,7 @@ def __get_appx_knn_matches(embeddings, model_name: str):
     return response
 
 
-def __get_cell_type_distribution(query_ids, knn_response, model_name: str):
+def __get_cell_type_distribution(query_ids: t.List, knn_response: t.List, model_name: str):
     bq_client = bigquery.Client()
     cas_model = ops.get_model_by(model_name=model_name)
     # create temporary table

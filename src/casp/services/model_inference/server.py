@@ -19,13 +19,13 @@ async def predict(file: bytes = File(), model_name: str = Form()) -> t.Dict:
     model = dump_manager.model
     transform = dump_manager.transform
     # Get data and transform it
-    X, db_ids = utils.load_data(file)
+    X, obs_ids = utils.load_data(file)
     X = transform(X)
     # Embed data
     embeddings = model.transform(X)
     df = pd.DataFrame(embeddings.numpy())
-    columns = ["db_ids", *list(df.columns.values)]
-    df["db_ids"] = db_ids.numpy().astype(int)
+    columns = ["obs_ids", *list(df.columns.values)]
+    df["obs_ids"] = obs_ids
     df = df[columns]
     return df.to_dict()
 
