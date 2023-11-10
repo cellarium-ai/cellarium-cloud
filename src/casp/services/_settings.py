@@ -28,7 +28,7 @@ class AllEnvSettings(BaseSettings):
     DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
     DEFAULT_MODEL_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_50m_dataset.cas_cell_info"
     DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_50m_dataset"
-    KNN_SEARCH_NUM_MATCHES: int = 100
+    KNN_SEARCH_NUM_MATCHES_DEFAULT: int = 100
     ITEMS_PER_USER: int = 50
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"

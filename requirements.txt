@@ -29,3 +29,4 @@ google-cloud-run==0.7.1
 scikit-learn
 scvi-distributed @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.1
 db-dtypes==1.1.1
+Werkzeug==2.2.2
