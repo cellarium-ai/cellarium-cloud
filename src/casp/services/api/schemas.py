@@ -13,9 +13,27 @@ class MatchInfo(BaseModel):
     max_distance: float = Field(example=1840.047119140625)
 
 
+class DevDetailObject(BaseModel):
+    dataset_id: str = Field(example="a7a92fb49-50741b00a-244955d47")
+    count_per_dataset: int = Field(example=10)
+    min_distance: float = Field(example=1589.847900390625)
+    max_distance: float = Field(example=1840.047119140625)
+    median_distance: float = Field(example=1791.372802734375)
+    mean_distance: float = Field(example=1791.372802734375)
+
+
+class MatchInfoDevDetails(MatchInfo):
+    dataset_ids_with_counts: t.List[DevDetailObject]
+
+
 class QueryCell(BaseModel):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
     matches: t.List[MatchInfo]
+
+
+class QueryCellDevDetails(BaseModel):
+    query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
+    matches: t.List[MatchInfoDevDetails]
 
 
 class CASModel(BaseModel):

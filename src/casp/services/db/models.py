@@ -42,6 +42,10 @@ class CASModel(db.Base):
     def __str__(self):
         return self.model_name
 
+    @property
+    def bq_dataset_name(self):
+        return self.bq_cell_info_table_fqn.split(".")[-2]
+
 
 class CASMatchingEngineIndex(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)

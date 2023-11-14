@@ -51,7 +51,9 @@ def __get_appx_knn_matches(embeddings, model_name: str):
     return response
 
 
-def __get_cell_type_distribution(query_ids: t.List, knn_response: t.List, model_name: str):
+def __get_cell_type_distribution(
+    query_ids: t.List, knn_response: t.List, model_name: str, include_dev_metadata: bool
+) -> t.List[t.Dict[str, t.Any]]:
     bq_client = bigquery.Client()
     cas_model = ops.get_model_by(model_name=model_name)
     # create temporary table
@@ -85,58 +87,17 @@ def __get_cell_type_distribution(query_ids: t.List, knn_response: t.List, model_
     job.result()  # Wait for the job to complete.
 
     __log("Querying Match Cell Metadata")
-    query = f"""
-                SELECT t.query_id,
-                       ci.cell_type,
-                       MIN(t.match_score) min_distance,
-                       MAX(t.match_score) max_distance,
-                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(25)] as p25_distance,
-                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(50)] as median_distance,
-                       APPROX_QUANTILES(t.match_score, 100)[SAFE_ORDINAL(75)] as p75_distance,
-                       COUNT(*) cell_count
-                FROM `{temp_table_fqn}` t
-                JOIN `{cas_model.bq_cell_info_table_fqn}` ci ON t.match_cas_cell_index = ci.cas_cell_index
-                GROUP BY 1,2
-                ORDER BY 1, 8 DESC
-                """
+    if include_dev_metadata:
+        results = data_controller.get_match_query_metadata_dev_details(
+            cas_model=cas_model, match_temp_table_fqn=temp_table_fqn
+        )
+    else:
+        results = data_controller.get_match_query_metadata(cas_model=cas_model, match_temp_table_fqn=temp_table_fqn)
 
-    query_job = bq_client.query(query)
-
-    # TODO: use a StreamingResponse and yield/generator pattern here to avoid building entire response in memory, also compress
-    # Stream results back in JSONL format (https://jsonlines.org/)
-    results = []
-
-    last_query_id = None
-    data = {}
-    for row in query_job:
-        if last_query_id is None or last_query_id != row["query_id"]:
-            # emit data and reset state if this isn't the first time through
-            if last_query_id is not None:
-                results.append(data)
-
-            data = {}
-            data["query_cell_id"] = row["query_id"]
-            data["matches"] = []
-            last_query_id = data["query_cell_id"]
-
-        x = {}
-        x["cell_type"] = row["cell_type"]
-        x["cell_count"] = row["cell_count"]
-        x["min_distance"] = row["min_distance"]
-        x["p25_distance"] = row["p25_distance"]
-        x["median_distance"] = row["median_distance"]
-        x["p75_distance"] = row["p75_distance"]
-        x["max_distance"] = row["max_distance"]
-        data["matches"].append(x)
-
-    # handle final output
-    results.append(data)
-
-    # and return
     return results
 
 
-async def __annotate(file, model_name: str):
+async def __annotate(file, model_name: str, include_dev_metadata: bool = False) -> t.List[t.Dict[str, t.Any]]:
     __log("Calculating Embeddings")
     query_ids, embeddings = await __get_embeddings(file, model_name=model_name)
     __log("Done")
@@ -145,7 +106,9 @@ async def __annotate(file, model_name: str):
     knn_response = __get_appx_knn_matches(embeddings, model_name=model_name)
 
     __log("Getting Cell Type Distributions")
-    d = __get_cell_type_distribution(query_ids, knn_response, model_name=model_name)
+    d = __get_cell_type_distribution(
+        query_ids, knn_response, model_name=model_name, include_dev_metadata=include_dev_metadata
+    )
 
     __log("Finished")
     return d
@@ -158,15 +121,27 @@ async def list_models(
     return ops.get_models_for_user(user=request_user)
 
 
-@app.post("/annotate", response_model=t.List[schemas.QueryCell])
+@app.post("/annotate", response_model=t.Union[t.List[schemas.QueryCellDevDetails], t.List[schemas.QueryCell]])
 async def annotate(
     myfile: UploadFile = File(),
     number_of_cells: int = Form(),
     model_name: str = Form(),
+    include_dev_metadata: bool = Form(),
     request_user: models.User = Depends(authenticate_user),
 ):
+    """
+    Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
+    model schema.
+
+    :param myfile: Byte object of :class:`anndata.AnnData` file to annotate.
+    :param number_of_cells: Number of cells in the input file.
+    :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
+    :param include_dev_metadata: Boolean flag indicating whether to include dev metadata in the response.
+    :param request_user: Authorized user object obtained  by token from `Bearer` header.
+    :return: JSON response with annotations.
+    """
     ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
-    return await __annotate(myfile.file, model_name=model_name)
+    return await __annotate(myfile.file, model_name=model_name, include_dev_metadata=include_dev_metadata)
 
 
 @app.get("/validate-token")
@@ -191,7 +166,7 @@ async def application_info(_: models.User = Depends(authenticate_user)):
 async def get_feature_schemas(_: models.User = Depends(authenticate_user)):
     """
     Get list of all Cellarium CAS feature schemas
-    :param _:
+
     :return: List of feature schema info objects
     """
     return data_controller.get_feature_schemas()
