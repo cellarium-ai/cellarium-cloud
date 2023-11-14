@@ -1,5 +1,5 @@
 {
-  "CASIngestFilesToBQ.ingest_files_to_bq.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-brice-data-02",
+  "CASIngestFilesToBQ.ingest_files_to_bq.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-brice-data-03",
   "CASIngestFilesToBQ.ingest_files_to_bq.gcs_stage_dir": "brice/bq_insert_stage_dir",
   "CASIngestFilesToBQ.ingest_files_to_bq.gcs_bucket_name": "dsp-cell-annotation-service",
   "CASIngestFilesToBQ.ingest_files_to_bq.dataset": "brice_dataset"

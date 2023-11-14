@@ -7,19 +7,18 @@ task precalculate_fields {
     command {
         cd /app
         echo "START INGESTING"
-        python casp/services/bq_ops/ingest_files_to_bq/main.py \
+        python casp/services/bq_ops/precalculate_fields/main.py \
         --dataset ${dataset} \
-        --fields ${fields}
+        --fields_str ${fields}
     }
 
     runtime {
         docker: docker_image
         bootDiskSizeGb: 25
-        memory: "1G"
+        memory: "4G"
         cpu: 1
         zones: "us-central1-a"
         maxRetries: 3
-        preemptible_tries: 3
     }
 }
 
