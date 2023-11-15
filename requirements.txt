@@ -36,3 +36,8 @@ Werkzeug==2.2.2
 sentry-sdk==1.39.2
 gcsfs==2023.9.2
 tenacity==8.2.3
+google-cloud-pipeline-components==2.8.0
+kfp==2.4.0
+typer==0.9.0
+gcsfs==2023.9.2
+PyYAML==6.0.1

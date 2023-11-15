@@ -23,6 +23,7 @@ class AllEnvSettings(BaseSettings):
     SERVICES_DIR = SERVICES_DIR
     DEFAULT_SERVICE_HOST: str = "0.0.0.0"
     DEFAULT_SERVICE_PORT: int = 8000
+    CAS_DIR = CAS_DIR
     # Sentry
     SENTRY_DSN: str = os.environ.get("SENTRY_DSN")
     SENTRY_ENABLE_TRACING: bool = True
