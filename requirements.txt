@@ -27,9 +27,14 @@ matplotlib
 pandas
 google-cloud-run==0.7.1
 scikit-learn
-scvi-distributed @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.1
+cellarium-ml @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.3
 db-dtypes==1.1.1
+Werkzeug==2.2.2
 Mako==1.2.4
 smart-open==6.4.0
 sqlparse==0.4.4
-Werkzeug==2.2.2
+google-cloud-pipeline-components==2.8.0
+kfp==2.4.0
+typer==0.9.0
+gcsfs==2023.9.2
+PyYAML==6.0.1

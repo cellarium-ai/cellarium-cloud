@@ -21,6 +21,7 @@ class AllEnvSettings(BaseSettings):
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR = SERVICES_DIR
+    CAS_DIR = CAS_DIR
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
