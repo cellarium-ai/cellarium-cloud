@@ -11,7 +11,7 @@ SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
 CAS_DIR = os.path.dirname(SERVICES_DIR)
 # Directory that contains the CAS package and its settings
 ROOT_DIR = os.path.dirname(CAS_DIR)
-
+CAS_DIR = os.path.dirname(SERVICES_DIR)
 
 dotenv.load_dotenv(dotenv_path=f"{ROOT_DIR}/settings/.env")
 
@@ -29,6 +29,7 @@ class AllEnvSettings(BaseSettings):
     SERVICES_DIR = SERVICES_DIR
     DEFAULT_SERVICE_HOST: str = "0.0.0.0"
     DEFAULT_SERVICE_PORT: int = 8000
+    CAS_DIR = CAS_DIR
     API_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
     MODEL_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
     LOG_LEVEL: str = "info"
