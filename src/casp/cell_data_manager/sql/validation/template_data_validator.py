@@ -82,3 +82,23 @@ def validate_filters(filters: t.Dict[str, str]) -> None:
     """
     for filter_name, filter_value in filters.items():
         validate_sql_filter(filter_name=filter_name, filter_value=filter_value)
+
+
+def validate_column_name(column_name: str) -> None:
+    """
+    Validate column name. Check for number of periods in column name as well as for an empty string
+
+    :param column_name: The column name to validate.
+
+    :raises ValueError: If the column name contains more than one period or is an empty string.
+    """
+    column_split = column_name.split(".")
+
+    if len(column_split) > 2:
+        raise ValueError(
+            f"Column {column_name} has more than one period in its name. It can contain only one period, "
+            f"which separates the alias table name from the column name itself."
+        )
+
+    if not column_name:
+        raise ValueError("Empty strings are not allowed for column names")

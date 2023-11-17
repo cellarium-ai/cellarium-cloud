@@ -13,7 +13,7 @@ import pytest
 from casp.cell_data_manager.sql import mako_helpers
 
 
-def test_string_value_processor():
+def test_string_value_processor() -> None:
     """
     Test the _string_value_processor function.
 
@@ -28,7 +28,7 @@ def test_string_value_processor():
     assert mako_helpers._string_value_processor("") == "''"
 
 
-def test_bool_value_processor():
+def test_bool_value_processor() -> None:
     """
     Test the _bool_value_processor function.
 
@@ -43,7 +43,7 @@ def test_bool_value_processor():
 
 
 # Test cases for select_clause
-def test_select_clause():
+def test_select_clause() -> None:
     """
     Test the select_clause function.
 
@@ -53,12 +53,12 @@ def test_select_clause():
     - When an empty list is provided, it should select all columns ('select *').
     - When a list of columns is provided, it should construct the SELECT clause correctly.
     """
-    assert mako_helpers.parse_column_names([]) == "*"
-    assert mako_helpers.parse_column_names(["column1", "column2"]) == "column1, column2"
-    assert mako_helpers.parse_column_names(["column"]) == "column"
+    assert mako_helpers.select([]) == "*"
+    assert mako_helpers.select(["column1", "column2"]) == "select column1, column2"
+    assert mako_helpers.select(["column"]) == "select column"
 
 
-def test_where_clause():
+def test_where_clause() -> None:
     """
     Test the where_clause function.
 
@@ -71,21 +71,18 @@ def test_where_clause():
     - When string and boolean values are used in 'equals' filter, it should construct the WHERE clause correctly.
     """
     # Test with no filters
-    assert mako_helpers.parse_where_body({}) == ""
+    assert mako_helpers.where({}) == ""
 
     # Test 'equals' filter
-    assert mako_helpers.parse_where_body({"organism__eq": "Homo sapiens"}) == "\n    organism = 'Homo sapiens'"
+    assert mako_helpers.where({"organism__eq": "Homo sapiens"}) == "where\n    organism = 'Homo sapiens'"
 
     # Test 'in' filter
-    assert (
-        mako_helpers.parse_where_body({"cell_type__in": ["T cell", "neuron"]})
-        == "\n    cell_type in ('T cell', 'neuron')"
-    )
+    assert mako_helpers.where({"cell_type__in": ["T cell", "neuron"]}) == "where\n    cell_type in ('T cell', 'neuron')"
 
     # Test unsupported filter type
     with pytest.raises(ValueError):
-        mako_helpers.parse_where_body({"column__unsupported": "value"})
+        mako_helpers.where({"column__unsupported": "value"})
 
     # Test string and boolean values in 'equals' filter
-    assert mako_helpers.parse_where_body({"name__eq": "John"}) == "\n    name = 'John'"
-    assert mako_helpers.parse_where_body({"is_active__eq": True}) == "\n    is_active = TRUE"
+    assert mako_helpers.where({"name__eq": "John"}) == "where\n    name = 'John'"
+    assert mako_helpers.where({"is_active__eq": True}) == "where\n    is_active = TRUE"

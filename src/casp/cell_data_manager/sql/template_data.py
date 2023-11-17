@@ -44,7 +44,7 @@ class TemplateData:
         select: t.Optional[t.List[str]] = None,
         filters: t.Optional[t.Dict[str, t.Any]] = None,
         **other_kwargs: t.Union[str, bool, int, float],
-    ):
+    ) -> None:
         template_data_validator.validate_not_empty(value=project)
         template_data_validator.validate_not_empty(value=dataset)
 

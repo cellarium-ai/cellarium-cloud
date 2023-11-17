@@ -1,6 +1,7 @@
 import typing as t
 
 from casp.cell_data_manager.sql.constants import CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, ComparisonOperators
+from casp.cell_data_manager.sql.validation.template_data_validator import validate_column_name
 
 
 def _string_value_processor(v: str) -> str:
@@ -20,26 +21,6 @@ def _bool_value_processor(v: bool) -> str:
     :param v: The boolean value to be processed.
     :return: The processed boolean in string format and uppercase."""
     return str(v).upper()
-
-
-def _validate_column_name(column_name: str) -> None:
-    """
-    Validate column name. Check for number of periods in column name as well as for an empty string
-
-    :param column_name: The column name to validate.
-
-    :raises ValueError: If the column name contains more than one period or is an empty string.
-    """
-    column_split = column_name.split(".")
-
-    if len(column_split) > 2:
-        raise ValueError(
-            f"Column {column_name} has more than one period in its name. It can contain only one period, "
-            f"which separates the alias table name from the column name itself."
-        )
-
-    if not column_name:
-        raise ValueError("Empty strings are not allowed for column names")
 
 
 def _normalize_column_names(column_names: t.List[str]) -> t.List[str]:
@@ -83,12 +64,12 @@ def _process_column_names(column_names: t.List[str]) -> t.List[str]:
     column_names_normalized_unique = _remove_duplicates(column_names_normalized)
 
     for column_name in column_names_normalized_unique:
-        _validate_column_name(column_name=column_name)
+        validate_column_name(column_name=column_name)
 
     return column_names_normalized_unique
 
 
-def parse_column_names(column_names: t.List[str]) -> str:
+def select(column_names: t.List[str]) -> str:
     """
     Construct a SQL SELECT body from the provided list of columns.
 
@@ -104,7 +85,7 @@ def parse_column_names(column_names: t.List[str]) -> str:
         <%!
             from casp.cell_data_manager.sql import mako_helpers
         %>
-        select ${mako_helpers.parse_column_names(["c.CELL_TYPE", "i.DATASET_ID", "c.CELL_TYPE"])}
+        ${mako_helpers.select(["c.CELL_TYPE", "i.DATASET_ID", "c.CELL_TYPE"])}
         from `${project}.${dataset}.table_name`
         ...
 
@@ -114,10 +95,10 @@ def parse_column_names(column_names: t.List[str]) -> str:
         ...
     """
     processed_columns = _process_column_names(column_names=column_names)
-    return ", ".join(processed_columns) if processed_columns else "*"
+    return f"select {', '.join(processed_columns)}" if processed_columns else "*"
 
 
-def parse_where_body(filters: t.Dict[str, t.Any]):
+def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
     """
     Construct a SQL WHERE clause from the provided filters.
 
@@ -137,7 +118,7 @@ def parse_where_body(filters: t.Dict[str, t.Any]):
             from casp.cell_data_manager.sql import mako_helpers
         %>
         ...
-        where ${mako_helpers.parse_where_body({"id__in": [1, 3, 5, 10], "organism__eq": "Homo sapiens"})}
+        ${mako_helpers.where({"id__in": [1, 3, 5, 10], "organism__eq": "Homo sapiens"})}
         ...
 
     Results in::
@@ -147,7 +128,7 @@ def parse_where_body(filters: t.Dict[str, t.Any]):
             and organism = 'Homo sapiens'
         ...
     """
-    if not filters:
+    if not filters or filters is None:
         return ""
 
     where_conditions = []
@@ -177,7 +158,7 @@ def parse_where_body(filters: t.Dict[str, t.Any]):
 
     where_clause_body = "\n    and ".join(where_conditions)
 
-    return f"\n    {where_clause_body}" if where_clause_body else ""
+    return f"where\n    {where_clause_body}" if where_clause_body else ""
 
 
 def add_cell_info_required_columns(column_names: t.List[str]) -> t.List[str]:
@@ -185,7 +166,7 @@ def add_cell_info_required_columns(column_names: t.List[str]) -> t.List[str]:
     Add required columns to the provided list of columns. Recommended to use before :func:`_process_column_names` to
     make sure all the columns are valid and unique
 
-    :param column_names:
+    :param column_names: List of columns to process
     :return: New list of column names
     """
     return [*CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, *column_names]

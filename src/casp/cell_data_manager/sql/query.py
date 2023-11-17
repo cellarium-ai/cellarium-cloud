@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def render(
     template_path: str,
-    template_data: "TemplateData",
+    template_data: TemplateData,
     sql_query_validator_class: "SQLSyntaxValidator" = BigQuerySQLSyntaxValidator,
     sql_query_validator_on: bool = False,
 ) -> str:
