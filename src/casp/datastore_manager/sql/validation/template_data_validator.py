@@ -1,7 +1,7 @@
 import typing as t
 
-from casp.cell_data_manager.sql.constants import ComparisonOperators
-from casp.cell_data_manager.sql.validation import exceptions
+from casp.datastore_manager.sql.constants import ComparisonOperators
+from casp.datastore_manager.sql.validation import exceptions
 
 
 def validate_not_empty(value: t.Union[str, t.List, t.Dict]) -> None:

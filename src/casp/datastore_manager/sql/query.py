@@ -4,11 +4,11 @@ import typing as t
 import sqlparse
 from mako.template import Template
 
-from casp.cell_data_manager.sql.template_data import TemplateData
-from casp.cell_data_manager.sql.validation.query_validators import BigQuerySQLSyntaxValidator
+from casp.datastore_manager.sql.template_data import TemplateData
+from casp.datastore_manager.sql.validation.query_validators import BigQuerySQLSyntaxValidator
 
 if t.TYPE_CHECKING:
-    from casp.cell_data_manager.sql.validation.query_validators.base_query_validator import SQLSyntaxValidator
+    from casp.datastore_manager.sql.validation.query_validators.base_query_validator import SQLSyntaxValidator
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +24,17 @@ def render(
     query's syntax.
 
     This function is designed to read a specified SQL template file, populate it with the data encapsulated in a
-    :class:`~cell_data_manager.sql.TemplateData` instance, and perform an optional syntax validation on the resulting
+    :class:`~datastore_manager.sql.TemplateData` instance, and perform an optional syntax validation on the resulting
     SQL query using the designated validator class. Enabling syntax validation is recommended during development to
     identify potential syntax issues proactively, but not recommended in prod mode as it might cost additional
     computations and additional database hits.
 
     :param template_path: The file path to the SQL template.
-    :param template_data: A :class:`~cell_data_manager.sql.TemplateData` instance with data to be used in the SQL
+    :param template_data: A :class:`~datastore_manager.sql.TemplateData` instance with data to be used in the SQL
         template rendering.
     :param sql_query_validator_class: SQL query syntax validator class. Must be a subclass
-        of :class:`~cell_data_manager.sql.validation.query_validators.SQLSyntaxValidator` |br|
-        `Default:` :class:`~cell_data_manager.sql.validation.query_validators.BigQuerySQLSyntaxValidator`
+        of :class:`~datastore_manager.sql.validation.query_validators.SQLSyntaxValidator` |br|
+        `Default:` :class:`~datastore_manager.sql.validation.query_validators.BigQuerySQLSyntaxValidator`
     :param sql_query_validator_on: A flag describing whether to use a sql query validation. Recommended to use only
         in dev mode |br|
         `Default:` ``False``

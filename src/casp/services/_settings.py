@@ -40,7 +40,7 @@ class AllEnvSettings(BaseSettings):
     DB_USER: str = os.environ.get("DB_USER")
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
     # BigQuery
-    BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/cell_data_manager/sql/templates"
+    BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/datastore_manager/sql/templates"
     # Stage db connector through unix socket
     SQLALCHEMY_DATABASE_URI: str = (
         f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_sock={DB_INSTANCE_UNIX_SOCKET}/.s.PGSQL.5432"

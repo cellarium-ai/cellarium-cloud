@@ -1,5 +1,5 @@
 <%!
-    from casp.cell_data_manager.sql import mako_helpers as mh
+    from casp.datastore_manager.sql import mako_helpers as mh
 %>
 create or replace table `${project}.${dataset}.${extract_table_prefix}__extract_feature_summary`
 as

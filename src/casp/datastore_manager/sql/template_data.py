@@ -1,7 +1,7 @@
 import typing as t
 
-from casp.cell_data_manager.sql.constants import TemplateDataDictNames
-from casp.cell_data_manager.sql.validation import template_data_validator
+from casp.datastore_manager.sql.constants import TemplateDataDictNames
+from casp.datastore_manager.sql.validation import template_data_validator
 
 
 class TemplateData:

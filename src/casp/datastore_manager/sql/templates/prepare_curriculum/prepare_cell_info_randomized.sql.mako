@@ -1,5 +1,5 @@
 <%
-    from casp.cell_data_manager.sql import mako_helpers as mh
+    from casp.datastore_manager.sql import mako_helpers as mh
 
     select_column_names_processed = mh.add_cell_info_required_columns(select_columns)
 %>

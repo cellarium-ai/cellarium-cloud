@@ -1,7 +1,7 @@
 import typing as t
 
-from casp.cell_data_manager.sql.constants import CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, ComparisonOperators
-from casp.cell_data_manager.sql.validation.template_data_validator import validate_column_name
+from casp.datastore_manager.sql.constants import CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, ComparisonOperators
+from casp.datastore_manager.sql.validation.template_data_validator import validate_column_name
 
 
 def _string_value_processor(v: str) -> str:
@@ -83,7 +83,7 @@ def select(column_names: t.List[str]) -> str:
 
     Using in Mako template::
         <%!
-            from casp.cell_data_manager.sql import mako_helpers
+            from casp.datastore_manager.sql import mako_helpers
         %>
         ${mako_helpers.select(["c.CELL_TYPE", "i.DATASET_ID", "c.CELL_TYPE"])}
         from `${project}.${dataset}.table_name`
@@ -115,7 +115,7 @@ def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
 
     Using in Mako template::
         <%!
-            from casp.cell_data_manager.sql import mako_helpers
+            from casp.datastore_manager.sql import mako_helpers
         %>
         ...
         ${mako_helpers.where({"id__in": [1, 3, 5, 10], "organism__eq": "Homo sapiens"})}

@@ -1,5 +1,5 @@
 <%!
-    from casp.cell_data_manager.sql import mako_helpers as mh
+    from casp.datastore_manager.sql import mako_helpers as mh
 %>
 ${mh.select(select_columns)}
 from `${project}.${dataset}.test_table_name` ttn

@@ -3,8 +3,8 @@ import typing as t
 from google.cloud import bigquery
 from google.cloud import exceptions as gc_exceptions
 
-from casp.cell_data_manager.sql.validation import exceptions
-from casp.cell_data_manager.sql.validation.query_validators.base_query_validator import SQLSyntaxValidator
+from casp.datastore_manager.sql.validation import exceptions
+from casp.datastore_manager.sql.validation.query_validators.base_query_validator import SQLSyntaxValidator
 
 if t.TYPE_CHECKING:
     import google
