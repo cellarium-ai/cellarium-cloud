@@ -36,14 +36,19 @@ PROJECT_ID=dsp-cell-annotation-service
 gcloud run deploy cas-api \
 --project $PROJECT_ID \
 --image $IMAGE_NAME \
---memory 2Gi \
---region us-central1 \
---platform managed \
---port 8000 \
+--cpu=1 \
+--memory=4Gi \
+--region=us-central1 \
+--platform=managed \
+--port=8000 \
 --allow-unauthenticated \
---vpc-connector cas-ai-matching \
---add-cloudsql-instances=dsp-cell-annotation-service:us-central1:cas-db-cluster \
---command python --args "casp/services/api/server.py"
+--vpc-connector=cas-ai-matching \
+--add-cloudsql-instances=dsp-cell-annotation-service:us-central1:cas-db-cluster-2 \
+--timeout=1100 \
+--max-instances=500 \
+--min-instances=0 \
+--concurrency=20 \
+--command=python --args="casp/services/api/server.py"
 
 
 BASE_URL="https://cas-api-vi7nxpvk7a-uc.a.run.app:8000"
