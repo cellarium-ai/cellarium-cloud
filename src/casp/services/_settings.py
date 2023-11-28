@@ -34,6 +34,10 @@ class AllEnvSettings(BaseSettings):
     JWT_HASHING_ALGORITHM: str = "HS256"
     JWT_DEFAULT_TOKEN_TTL: int = 60 * 60 * 24 * 180  # 180 days
     # Database
+    DB_CONNECTION_POOL_SIZE: int = 50  # 50 connections
+    DB_CONNECTION_POOL_MAX_OVERFLOW: int = 10  # 10 connections
+    DB_CONNECTION_POOL_TIMEOUT: int = 40  # 40 seconds
+    DB_CONNECTION_POOL_RECYCLE: int = 1800  # 30 minutes
     DB_NAME: str = os.environ.get("DB_NAME")
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
