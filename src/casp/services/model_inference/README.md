@@ -26,5 +26,5 @@ gcloud run deploy cas-model \
 --max-instances=500 \
 --min-instances=0 \
 --concurrency=10 \
---command python --args "casp/services/model_inference/server.py"
+--command python --args "casp/services/model_inference/main.py"
 ```

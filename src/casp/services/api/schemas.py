@@ -37,7 +37,7 @@ class QueryCellDevDetails(BaseModel):
 
 
 class CASModel(BaseModel):
-    model_name: str = Field(example="incremental-pca-001")
+    model_name: str = Field(example="human-pca-001")
     schema_name: str = Field(example="refdata-gex-mm10-2020-A")
     is_default_model: bool = Field(example=False)
     embedding_dimension: int = Field(example=512)

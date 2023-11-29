@@ -28,8 +28,8 @@ def upgrade() -> None:
         f"""
         UPDATE cas_model
             SET     schema_name = '{settings.DEFAULT_SCHEMA_NAME}',
-                    bq_cell_info_table_fqn = '{settings.DEFAULT_MODEL_CELL_INFO_TABLE_FQN}',
-                    bq_temp_table_dataset = '{settings.DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET}'
+                    bq_cell_info_table_fqn = 'cas_50m_dataset.cas_cell_info',
+                    bq_temp_table_dataset = 'cas_50m_dataset'
     """
     )
     op.alter_column("cas_model", "schema_name", nullable=False)

@@ -28,12 +28,7 @@ class CASModel(db.Base):
     embedding_dimension = sa.Column(sa.Integer, nullable=False)
     admin_use_only = sa.Column(sa.Boolean(), default=True, nullable=False)
     schema_name = sa.Column(sa.String(255), default=settings.DEFAULT_SCHEMA_NAME, nullable=False)
-    bq_cell_info_table_fqn = sa.Column(
-        sa.String(255), default=settings.DEFAULT_MODEL_CELL_INFO_TABLE_FQN, nullable=False
-    )
-    bq_temp_table_dataset = sa.Column(
-        sa.String(255), default=settings.DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET, nullable=False
-    )
+    bq_dataset_name = sa.Column(sa.String(255), default=settings.DEFAULT_MODEL_BQ_DATASET_NAME, nullable=False)
     is_default_model = sa.Column(sa.Boolean(), default=False, nullable=False)
     created_date = sa.Column(sa.DateTime, default=datetime.datetime.utcnow)
 
@@ -41,10 +36,6 @@ class CASModel(db.Base):
 
     def __str__(self):
         return self.model_name
-
-    @property
-    def bq_dataset_name(self):
-        return self.bq_cell_info_table_fqn.split(".")[-2]
 
 
 class CASMatchingEngineIndex(db.Base):

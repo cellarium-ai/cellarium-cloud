@@ -111,8 +111,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "admin_use_only",
         "schema_name",
         "is_default_model",
-        "bq_cell_info_table_fqn",
-        "bq_temp_table_dataset",
+        "bq_dataset_name",
         "created_date",
     )
     column_descriptions = {
@@ -131,12 +130,8 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "is_default_model": (
             "Flag showing to CAS client which model schema to use as default. Only one model could be a default model."
         ),
-        "bq_cell_info_table_fqn": (
-            "Cell info table that was used to create extract the model was trained on. "
-            "This would be used for joining cell info for annotations"
-        ),
-        "bq_temp_table_dataset": (
-            "Dataset where CAS would allocate temporary tables for storing annotation request data."
+        "bq_dataset_name": (
+            "Bigquery dataset name that is used to store cell information which were used to train the model. "
         ),
         "created_date": "Datetime when this record has been created. Differs from when model was trained.",
     }
@@ -148,8 +143,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "schema_name",
         "is_default_model",
         "admin_use_only",
-        "bq_cell_info_table_fqn",
-        "bq_temp_table_dataset",
+        "bq_dataset_name",
         "created_date",
     )
     form_widget_args = {"created_date": {"disabled": True}, "is_default_model": {"disabled": True}}
