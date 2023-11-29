@@ -1,0 +1,6 @@
+{
+  "dataset_filename__in": [
+    "tg66rtgh7y-test-source-file-1_ingest_info.avro",
+    "yt55tgy4o-test-source-file-3_ingest_info.avro"
+  ]
+}

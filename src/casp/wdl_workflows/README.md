@@ -45,6 +45,7 @@ bq_ops.ingest_file_to_bq:
 }
 ```
 bq_ops.prepare_extract:
+Current input file could have a filed `CASPrepareExtractBQ.prepare_extract.filters_json_path`. This is a gs json path. Please find an example of this filter file attached as well 
 ```JSON
 {
   "CASPrepareExtractBQ.prepare_extract.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.0a1",
@@ -52,10 +53,16 @@ bq_ops.prepare_extract:
   "CASPrepareExtractBQ.prepare_extract.extract_table_prefix": "fg_extract",
   "CASPrepareExtractBQ.prepare_extract.extract_bin_size": 10000,
   "CASPrepareExtractBQ.prepare_extract.bucket_name": "dsp-cell-annotation-service",
-  "CASPrepareExtractBQ.prepare_extract.filter_by_organism": "Homo sapiens",
-  "CASPrepareExtractBQ.prepare_extract.filter_by_is_primary_data": true, 
-  "CASPrepareExtractBQ.prepare_extract.filter_by_diseases": "age related macular degeneration 7,influenza,basal laminar drusen,Barrett esophagus", 
+  "CASPrepareExtractBQ.prepare_extract.filters_json_path": "gs://cellarium-file-system/curriculum/extract_filters/filters_mus_mus_brain.json",
   "CASPrepareExtractBQ.prepare_extract.obs_columns_to_include_str": "cell_type,total_mrna_umis,donor_id,assay,development_stage,disease,organism,sex,tissue"
+}
+```
+CASPrepareExtractBQ.prepare_extract.filters_json_path example:
+```JSON
+{
+  "organism__eq": "Mus musculus",
+  "cell_type__in": ["L6b glutamatergic cortical neuron", "interneuron", "inhibitory interneuron", "cerebellar Golgi cell"],
+  "is_primary_data__eq": true
 }
 ```
 bq_ops.extract:

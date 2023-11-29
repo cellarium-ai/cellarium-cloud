@@ -6,6 +6,7 @@ import dotenv
 from pydantic import BaseSettings
 
 SERVICE_DIR = os.path.dirname(os.path.abspath(__file__))
+CAS_DIR = os.path.dirname(SERVICE_DIR)
 
 dotenv.load_dotenv(dotenv_path=f"{SERVICE_DIR}/.env")
 
@@ -38,6 +39,8 @@ class AllEnvSettings(BaseSettings):
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
+    # BigQuery
+    BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/datastore_manager/sql/templates"
     # Stage db connector through unix socket
     SQLALCHEMY_DATABASE_URI: str = (
         f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_sock={DB_INSTANCE_UNIX_SOCKET}/.s.PGSQL.5432"
@@ -46,8 +49,8 @@ class AllEnvSettings(BaseSettings):
     SECRET_KEY: str = os.environ.get("FLASK_SECRET_KEY")
     SECURITY_PASSWORD_SALT: str = os.environ.get("FLASK_SECURITY_PASSWORD_SALT")
     FLASK_ADMIN_SWATCH: str = "flatly"
-    _FLASK_BASIC_AUTH_USERNAME: str = os.environ.get("FLASK_BASIC_AUTH_USERNAME")
-    _FLASK_BASIC_AUTH_PASSWORD: str = os.environ.get("FLASK_BASIC_AUTH_PASSWORD")
+    _FLASK_BASIC_AUTH_USERNAME: str = os.environ.get("FLASK_BASIC_AUTH_USERNAME", "")
+    _FLASK_BASIC_AUTH_PASSWORD: str = os.environ.get("FLASK_BASIC_AUTH_PASSWORD", "")
     ADMIN_BASIC_AUTH_USER: t.Dict[str, str] = {
         "username": _FLASK_BASIC_AUTH_USERNAME,
         "password": _FLASK_BASIC_AUTH_PASSWORD,
@@ -76,5 +79,5 @@ class LocalSettings(AllEnvSettings):
     SQLALCHEMY_DATABASE_URI = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 
-class TestSettings(BaseSettings):
+class TestSettings(AllEnvSettings):
     SECRET_KEY = "test"

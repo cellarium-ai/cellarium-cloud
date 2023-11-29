@@ -1,0 +1,1 @@
+drop table `${project}.${dataset}.${extract_table_prefix}__extract_cell_info_randomized`
