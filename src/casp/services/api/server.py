@@ -1,20 +1,21 @@
+import io
 import multiprocessing
 import typing as t
 import uuid
+import warnings
 from datetime import datetime, timedelta
 
+import anndata
+import numpy as np
 import pandas as pd
 import uvicorn
-from fastapi import Depends, FastAPI, File, Form, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from google.cloud import bigquery
 
 from casp.services import settings
-from casp.services.api import async_client, data_controller, matching_engine_client, schemas
+from casp.services.api import async_client, data_controller, exceptions, matching_engine_client, schemas
 from casp.services.api.auth import authenticate_user
 from casp.services.db import init_db, models, ops
-
-if t.TYPE_CHECKING:
-    import numpy
 
 app = FastAPI()
 db_session = init_db()
@@ -25,8 +26,8 @@ def __log(s):
     print(f"{dt_string} - {s}")
 
 
-async def __get_embeddings(myfile, model_name: str) -> t.Tuple[t.List, "numpy.array"]:
-    r_text = await async_client.CASAPIAsyncClient.call_model_service(file_to_embed=myfile.read(), model_name=model_name)
+async def __get_embeddings(file: bytes, model_name: str) -> t.Tuple[t.List[str], np.array]:
+    r_text = await async_client.CASAPIAsyncClient.call_model_service(file_to_embed=file, model_name=model_name)
     # TODO: json isn't very efficient for this
     df = pd.read_json(r_text)
     query_ids = df.obs_ids.tolist()
@@ -97,19 +98,36 @@ def __get_cell_type_distribution(
     return results
 
 
-async def __annotate(file, model_name: str, include_dev_metadata: bool = False) -> t.List[t.Dict[str, t.Any]]:
-    __log("Calculating Embeddings")
-    query_ids, embeddings = await __get_embeddings(file, model_name=model_name)
-    __log("Done")
+async def __annotate(
+    file: t.BinaryIO, model_name: str, include_dev_metadata: bool = False
+) -> t.List[t.Dict[str, t.Any]]:
+    file_bytes = io.BytesIO(file.read())
+    adata = anndata.read_h5ad(file_bytes)
+    file_bytes.seek(0)
+    adata_length = adata.shape[0]
 
+    __log("Calculating Embeddings")
+    query_ids, embeddings = await __get_embeddings(file_bytes, model_name=model_name)
+    if len(query_ids) != adata_length:
+        warnings.warn(
+            f"Embedding service returned a wrong number of cells. Expected {adata_length}, got {len(query_ids)}"
+        )
+    __log("Done")
     __log("Performing kNN lookup")
     knn_response = __get_appx_knn_matches(embeddings, model_name=model_name)
-
+    if len(knn_response) != adata_length:
+        warnings.warn(
+            f"Matching Engine service returned a wrong number of cells. Expected {adata_length}, "
+            f"got {len(knn_response)}"
+        )
     __log("Getting Cell Type Distributions")
     d = __get_cell_type_distribution(
         query_ids, knn_response, model_name=model_name, include_dev_metadata=include_dev_metadata
     )
-
+    if len(d) != adata_length:
+        warnings.warn(
+            f"Cell Type Distribution was returned for a wrong number of cells. Expected {adata_length}, got {len(d)}"
+        )
     __log("Finished")
     return d
 
@@ -123,7 +141,7 @@ async def list_models(
 
 @app.post("/annotate", response_model=t.Union[t.List[schemas.QueryCellDevDetails], t.List[schemas.QueryCell]])
 async def annotate(
-    myfile: UploadFile = File(),
+    file: UploadFile = File(),
     number_of_cells: int = Form(),
     model_name: str = Form(),
     include_dev_metadata: bool = Form(),
@@ -133,7 +151,7 @@ async def annotate(
     Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
     model schema.
 
-    :param myfile: Byte object of :class:`anndata.AnnData` file to annotate.
+    :param file: Byte object of :class:`anndata.AnnData` file to annotate.
     :param number_of_cells: Number of cells in the input file.
     :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
     :param include_dev_metadata: Boolean flag indicating whether to include dev metadata in the response.
@@ -141,7 +159,10 @@ async def annotate(
     :return: JSON response with annotations.
     """
     ops.increment_user_cells_processed(request_user, number_of_cells=number_of_cells)
-    return await __annotate(myfile.file, model_name=model_name, include_dev_metadata=include_dev_metadata)
+    try:
+        return await __annotate(file.file, model_name=model_name, include_dev_metadata=include_dev_metadata)
+    except (exceptions.AnnotationServiceException, exceptions.ServiceAPIException) as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/validate-token")

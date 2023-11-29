@@ -1,4 +1,3 @@
-import io
 import pickle
 import typing as t
 
@@ -11,8 +10,8 @@ from casp.ml.dump_manager import DumpManager
 from casp.services import settings, utils
 
 
-def load_data(file) -> t.Tuple[torch.Tensor, np.ndarray]:
-    adata = anndata.read_h5ad(io.BytesIO(file))
+def load_data(file: t.BinaryIO) -> t.Tuple[torch.Tensor, np.ndarray]:
+    adata = anndata.read_h5ad(file)
     X = torch.Tensor(adata.X.todense().astype(int))
     obs_ids = adata.obs.index.values.astype(str)
     return X, obs_ids

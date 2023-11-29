@@ -3,7 +3,7 @@ import typing as t
 
 import pandas as pd
 import uvicorn
-from fastapi import FastAPI, File, Form
+from fastapi import FastAPI, File, Form, UploadFile
 
 from casp.services.db import ops
 from casp.services.model_inference import utils
@@ -12,14 +12,14 @@ app = FastAPI()
 
 
 @app.post("/predict")
-async def predict(file: bytes = File(), model_name: str = Form()) -> t.Dict:
+async def predict(file: UploadFile = File(), model_name: str = Form()) -> t.Dict:
     # Get Model dump file
     model_info = ops.get_model_by(model_name=model_name)
     dump_manager = utils.get_dump_manager(model_info.model_file_path)
     model = dump_manager.model
     transform = dump_manager.transform
     # Get data and transform it
-    X, obs_ids = utils.load_data(file)
+    X, obs_ids = utils.load_data(file.file)
     X = transform(X)
     # Embed data
     embeddings = model.transform(X)

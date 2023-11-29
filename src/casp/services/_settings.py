@@ -25,7 +25,7 @@ class AllEnvSettings(BaseSettings):
     # API
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
-    MODEL_SERVER_URL: str = "https://cas-model-1-1-xa1-vi7nxpvk7a-uc.a.run.app/predict"
+    MODEL_SERVER_URL: str = "https://cas-model-1-3-xdev-vi7nxpvk7a-uc.a.run.app/predict"
     DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
     DEFAULT_MODEL_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_50m_dataset.cas_cell_info"
     DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_50m_dataset"
