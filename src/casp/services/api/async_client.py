@@ -6,6 +6,10 @@ from casp.services import settings
 from casp.services.api import exceptions
 
 
+AIOHTTP_TOTAL_TIMEOUT_SECONDS = 1200
+AIOHTTP_READ_TIMEOUT_SECONDS = 1100
+
+
 class CASAPIAsyncClient:
     @classmethod
     async def post(
@@ -24,7 +28,10 @@ class CASAPIAsyncClient:
             for key, value in data.items():
                 form_data.add_field(key, value)
 
-        async with aiohttp.ClientSession() as session:
+        # Client Session Arguments
+        timeout = aiohttp.ClientTimeout(total=AIOHTTP_TOTAL_TIMEOUT_SECONDS, sock_read=AIOHTTP_READ_TIMEOUT_SECONDS)
+
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, data=form_data) as response:
                 status = response.status
 
