@@ -7,7 +7,7 @@ from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint impo
 
 from casp.data_manager import BaseDataManager, sql
 from casp.services import settings
-from casp.services.api.data_manager import bigquery_response_parsers, bigquery_schemas
+from casp.services.api.data_manager import bigquery_response_parsers, bigquery_schemas, cellarium_general
 from casp.services.db import models
 
 
@@ -17,11 +17,12 @@ class CellAnalysisDataManager(BaseDataManager):
     """
 
     # Directories for SQL templates
-    KNN_QUERY_TEMPLATE_DIR = f"{settings.SERVICES_DIR}/api/data_manager/sql_templates/knn_query_match"
+    CELL_ANALYSIS_TEMPLATE_DIR = f"{settings.SERVICES_DIR}/api/data_manager/sql_templates/cell_analysis"
 
     # SQL template file paths
-    SQL_MATCH_METADATA = f"{KNN_QUERY_TEMPLATE_DIR}/match_metadata.sql.mako"
-    SQL_MATCH_METADATA_DEV_DETAILS = f"{KNN_QUERY_TEMPLATE_DIR}/match_metadata_dev_details.sql.mako"
+    SQL_MATCH_METADATA = f"{CELL_ANALYSIS_TEMPLATE_DIR}/match_metadata.sql.mako"
+    SQL_MATCH_METADATA_DEV_DETAILS = f"{CELL_ANALYSIS_TEMPLATE_DIR}/match_metadata_dev_details.sql.mako"
+    SQL_GET_CELLS_BY_IDS = f"{CELL_ANALYSIS_TEMPLATE_DIR}/get_cells_by_ids.sql.mako"
 
     def insert_matches_to_temp_table(self, query_ids: t.List[str], knn_response: t.List[t.List[MatchNeighbor]]) -> str:
         """
@@ -105,3 +106,32 @@ class CellAnalysisDataManager(BaseDataManager):
         query_job = self.bigquery_client.query(query=sql_query)
 
         return bigquery_response_parsers.parse_match_query_job(query_job=query_job, include_dev_details=True)
+
+    def get_cells_by_ids(
+        self, cell_ids: t.List[int], metadata_feature_names: t.List[str], model_name: str
+    ) -> t.List[t.Dict[str, t.Any]]:
+        """
+        Get cells by ids.
+
+        :param cell_ids: Cas cell indexes from Big Query
+        :param metadata_feature_names: Metadata features to return from Big Query `cas_cell_info` table
+        :param model_name: Name of the model to query. Used to get the dataset name where to get the cells from
+
+        :return: List of dictionaries representing the query results.
+        """
+        cellarium_general_data_manager = cellarium_general.CellariumGeneralDataManager()
+        model = cellarium_general_data_manager.get_model_by_name(model_name=model_name)
+
+        template_data = sql.TemplateData(
+            project=self.project,
+            dataset=model.bq_dataset_name,
+            select=metadata_feature_names,
+            filters={"cas_cell_index__in": cell_ids},
+        )
+        sql_query = sql.render(template_path=self.SQL_GET_CELLS_BY_IDS, template_data=template_data)
+
+        query_job = self.bigquery_client.query(query=sql_query)
+
+        return bigquery_response_parsers.parse_get_cells_job(
+            query_job=query_job, cell_metadata_features=metadata_feature_names
+        )

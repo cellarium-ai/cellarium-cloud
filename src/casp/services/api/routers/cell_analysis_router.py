@@ -33,3 +33,35 @@ async def annotate(
     return await cell_analysis_service.annotate_adata_file(
         user=request_user, file=file.file, model_name=model_name, include_dev_metadata=include_dev_metadata
     )
+
+
+@cell_analysis_router.post(path="/nearest-neighbor-search", response_model=t.List[schemas.SearchQueryCellResult])
+async def nearest_neighbor_search(
+    file: UploadFile = File(),
+    model_name: str = Form(),
+    user: models.User = Depends(dependencies.authenticate_user),
+):
+    """
+    Search for similar cells in a single anndata file with Cellarium CAS. Input file should be validated and sanitized
+    according to the model schema.
+    Response represents a list of objects, each object contains query cell id and list of cas cell indices and distances
+    that are nearest neighbors to the query cell.
+    """
+    return await cell_analysis_service.search_adata_file(file=file.file, model_name=model_name, user=user)
+
+
+@cell_analysis_router.post(path="/query-cells-by-ids", response_model=t.List[schemas.CellariumCell])
+def get_cells_by_ids(
+    item: schemas.CellariumCellByIdsInput,
+    user: models.User = Depends(dependencies.authenticate_user),
+):
+    """
+    Get cells by their ids from a single anndata file with Cellarium CAS. Input file should be validated and sanitized
+    according to the model schema.
+    """
+    return cell_analysis_service.get_cells_by_ids_for_user(
+        cell_ids=item.cas_cell_ids,
+        model_name=item.model_name,
+        metadata_feature_names=item.metadata_feature_names,
+        user=user,
+    )

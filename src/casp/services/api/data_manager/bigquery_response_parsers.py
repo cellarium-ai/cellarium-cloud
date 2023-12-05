@@ -88,3 +88,23 @@ def parse_match_query_job(
 
     results.append(data)
     return results
+
+
+def parse_get_cells_job(
+    query_job: bigquery.QueryJob, cell_metadata_features: t.List[str]
+) -> t.List[t.Dict[str, t.Any]]:
+    """
+    Parse a BigQuery job object representing a query to retrieve metadata for a matching query.
+
+    :param query_job: BigQuery job object representing the query execution.
+    :param cell_metadata_features: List of cell metadata features to include in the results.
+
+    :return: List of dictionaries representing the query results.
+    """
+    results = []
+
+    for row in query_job:
+        cell_object = {feature: row[feature] for feature in cell_metadata_features}
+        results.append(cell_object)
+
+    return results

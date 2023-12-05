@@ -3,6 +3,7 @@ import typing as t
 from casp.data_manager import BaseDataManager, sql
 from casp.services import settings
 from casp.services.api import schemas
+from casp.services.api.data_manager import exceptions
 from casp.services.db import models
 
 
@@ -75,9 +76,27 @@ class CellariumGeneralDataManager(BaseDataManager):
 
         :param model_name: ML Model name
 
+        :raises: NotFound if model is not found
+
         :return: CAS ML model object from the database
         """
-        return models.CASModel.query.filter_by(model_name=model_name).first()
+        model = models.CASModel.query.filter_by(model_name=model_name).first()
+
+        if model is None:
+            raise exceptions.NotFound(f"Model {model_name} not found in the database")
+
+        return model
+
+    @classmethod
+    def get_index_for_model(cls, model_name: str) -> models.CASMatchingEngineIndex:
+        """
+        Retrieve CAS model index by its system name
+
+        :param model_name: ML Model name
+
+        :return: CAS ML model index object from the database
+        """
+        return cls.get_model_by_name(model_name=model_name).cas_matching_engine
 
     def increment_user_cells_processed(self, user: models.User, number_of_cells: int) -> None:
         """

@@ -120,6 +120,18 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
         batch_request.requests.append(batch_request_for_index)
         return stub, batch_request
 
+    def __get_match_response(
+        self,
+        deployed_index_id: str,
+        queries: t.List[t.List[float]],
+        num_neighbors: int = 1,
+        filter: t.Optional[t.List["Namespace"]] = None,
+    ):
+        stub, batch_request = self.__prepare_stub_batch_request(
+            deployed_index_id=deployed_index_id, queries=queries, num_neighbors=num_neighbors, filter=filter
+        )
+        return stub.BatchMatch(batch_request)
+
     @staticmethod
     def __process_batch_match_response(
         response: match_service_pb2.BatchMatchResponse,
@@ -134,6 +146,25 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
         # Wrap the results in MatchNeighbor objects and return
         return [
             [MatchNeighbor(id=neighbor.id, distance=neighbor.distance) for neighbor in embedding_neighbors.neighbor]
+            for embedding_neighbors in response.responses[0].responses
+        ]
+
+    @staticmethod
+    def __process_batch_match_response_as_dict(
+        response: match_service_pb2.BatchMatchResponse,
+    ) -> t.List[t.List[t.Dict[str, t.Any]]]:
+        """
+        Process the response from the BatchMatch call and return the results.
+
+        :param response: The response from the BatchMatch call.
+
+        :return: A list of lists of MatchNeighbor objects.
+        """
+        return [
+            [
+                {"cas_cell_index": neighbor.id, "distance": neighbor.distance}
+                for neighbor in embedding_neighbors.neighbor
+            ]
             for embedding_neighbors in response.responses[0].responses
         ]
 
@@ -157,9 +188,31 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
                 Please refer to https://cloud.google.com/vertex-ai/docs/matching-engine/filtering#json for more detail.
         :return:  A list of nearest neighbors for each query.
         """
-        stub, batch_request = self.__prepare_stub_batch_request(
+        response = self.__get_match_response(
             deployed_index_id=deployed_index_id, queries=queries, num_neighbors=num_neighbors, filter=filter
         )
-        # Perform the request
-        response = stub.BatchMatch(batch_request)
         return self.__process_batch_match_response(response)
+
+    def match_as_dict(
+        self,
+        deployed_index_id: str,
+        queries: t.List[t.List[float]],
+        num_neighbors: int = 1,
+        filter: t.Optional[t.List["Namespace"]] = None,
+    ) -> t.List[t.List[t.Dict[str, t.Any]]]:
+        """
+        Method is overriden to be capable of larger request sizes. For more info refer to:
+        :class:`aiplatform.MatchingEngineIndexEndpoint`.
+
+        :param deployed_index_id: The ID of the DeployedIndex to match the queries against.
+        :param queries: A list of queries. Each query is a list of floats, representing a single embedding.
+        :param num_neighbors: The number of nearest neighbors to be retrieved from database for each query.
+        :param filter: A list of Namespaces for filtering the matching results.
+                For example, [Namespace("color", ["red"], []), Namespace("shape", [], ["squared"])] will match
+                datapoints that satisfy "red color" but not include datapoints with "squared shape".
+                Please refer to https://cloud.google.com/vertex-ai/docs/matching-engine/filtering
+        """
+        response = self.__get_match_response(
+            deployed_index_id=deployed_index_id, queries=queries, num_neighbors=num_neighbors, filter=filter
+        )
+        return self.__process_batch_match_response_as_dict(response)

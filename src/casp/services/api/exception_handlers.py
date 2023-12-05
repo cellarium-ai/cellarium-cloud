@@ -1,10 +1,8 @@
 from fastapi import Request, responses
 
-from casp.services.api.main import application
-from casp.services.api.services.exceptions import AccessDeniedError
+from casp.services.api.services.exceptions import AccessDeniedError, InvalidInputError
 
 
-@application.exception_handler(AccessDeniedError)
 async def access_denied_error_handler(_: Request, exc: AccessDeniedError) -> responses.JSONResponse:
     """
     Handler for AccessDeniedError exceptions
@@ -16,5 +14,20 @@ async def access_denied_error_handler(_: Request, exc: AccessDeniedError) -> res
     """
     return responses.JSONResponse(
         status_code=403,
-        content={"detail": exc},
+        content={"detail": str(exc)},
+    )
+
+
+async def invalid_input_error_handler(_: Request, exc: InvalidInputError) -> responses.JSONResponse:
+    """
+    Handler for InvalidInputError exceptions
+
+    :param _:
+    :param exc: InvalidInputError exception
+
+    :return: Response with 400 status code and error message
+    """
+    return responses.JSONResponse(
+        status_code=400,
+        content={"detail": str(exc)},
     )
