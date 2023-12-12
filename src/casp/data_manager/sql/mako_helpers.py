@@ -155,9 +155,9 @@ def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
 
         elif filter_type == ComparisonOperators.IN:
             if isinstance(filter_value[0], str):
-                filter_value = (_string_value_processor(x) for x in filter_value)
+                filter_value = [_string_value_processor(x) for x in filter_value]
             if isinstance(filter_value[0], int):
-                filter_value = (_int_value_processor(x) for x in filter_value)
+                filter_value = [_int_value_processor(x) for x in filter_value]
 
             filter_value = ", ".join(filter_value)
             condition = f"{column_name} in ({filter_value})"
