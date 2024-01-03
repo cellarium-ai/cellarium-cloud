@@ -75,12 +75,15 @@ class AllEnvSettings(BaseSettings):
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
+    # Workflows
+    API_INTERNAL_SERVER_URL = "https://cellarium-cloud-api-internal.cellarium.ai"
 
 
 class DevSettings(AllEnvSettings):
     # General
     debug = True
     MODEL_SERVER_URL: str = "https://cellarium-cloud-model-dev.cellarium.ai"
+    API_INTERNAL_SERVER_URL = "https://cellarium-cloud-api-internal-dev.cellarium.ai"
 
 
 class ProductionSettings(AllEnvSettings):
