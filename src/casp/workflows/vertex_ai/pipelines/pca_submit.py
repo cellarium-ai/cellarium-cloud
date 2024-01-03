@@ -39,24 +39,6 @@ def embed(gcs_config_path: Annotated[str, typer.Option()]) -> None:
 
 
 @typer_app.command()
-def train_embed(
-    train_gcs_config_path: Annotated[str, typer.Option()], embed_gcs_config_path: Annotated[str, typer.Option()]
-) -> None:
-    """
-    Run PCA train and embed pipelines in sequence.
-
-    :param train_gcs_config_path: GCS path to the PCA train config file.
-    :param embed_gcs_config_path: GCS path to the PCA embed config file.
-    """
-    pipeline_kwargs = {"train_gcs_config_path": train_gcs_config_path, "embed_gcs_config_path": embed_gcs_config_path}
-    submit_cellarium_ml_pipeline(
-        pipeline_func=pca_pipelines.train_embed_pipeline,
-        pipeline_display_name="ipca_train_embed",
-        pipeline_kwargs=pipeline_kwargs,
-    )
-
-
-@typer_app.command()
 def train_embed_bulk(config_yaml_path: Annotated[str, typer.Option()]) -> None:
     config_paths = create_pca_configs_from_yaml(config_yaml_path)
 
@@ -65,6 +47,20 @@ def train_embed_bulk(config_yaml_path: Annotated[str, typer.Option()]) -> None:
 
     submit_cellarium_ml_pipeline(
         pca_pipelines.train_embed_bulk_pipeline,
+        pipeline_display_name="ipca_train_embed_bulk",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
+@typer_app.command()
+def full_cycle_bulk(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    config_paths = create_pca_configs_from_yaml(config_yaml_path)
+
+    # DSL Pipelines require JSON strings as input
+    config_paths = [json.dumps(config) for config in config_paths]
+
+    submit_cellarium_ml_pipeline(
+        pca_pipelines.model_full_cycle_bulk_pipeline,
         pipeline_display_name="ipca_train_embed_bulk",
         pipeline_kwargs={"pipeline_config_paths": config_paths},
     )

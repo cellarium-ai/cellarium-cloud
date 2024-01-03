@@ -13,10 +13,14 @@ EMBED_ACCELERATOR_COUNT = 4
 REGISTRY_DISPLAY_NAME = "PCA Model Registry"
 REGISTRY_REPLICA_COUNT = 1
 REGISTRY_MACHINE_TYPE = "n1-standard-4"
+# REGISTRY_NETWORK_NAME = "ai-matching"
+REGISTRY_NETWORK_NAME = "projects/350868384795/global/networks/ai-matching"
+
+INDEX_CREATE_DISPLAY_NAME = "PCA Index Create Deploy and Register"
 
 DOCKER_IMAGE_NAME_CPU = (
-    "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-embedding-job-10"
+    "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-embedding-job-23"
 )
 DOCKER_IMAGE_NAME_CUDA = (
-    "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:fg-embedding-job-10"
+    "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:fg-embedding-job-23"
 )

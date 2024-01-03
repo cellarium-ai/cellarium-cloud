@@ -11,7 +11,6 @@ SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
 CAS_DIR = os.path.dirname(SERVICES_DIR)
 # Directory that contains the CAS package and its settings
 ROOT_DIR = os.path.dirname(CAS_DIR)
-CAS_DIR = os.path.dirname(SERVICES_DIR)
 
 dotenv.load_dotenv(dotenv_path=f"{ROOT_DIR}/settings/.env")
 
@@ -102,12 +101,19 @@ class AllEnvSettings(BaseSettings):
     # Email settings
     SENDGRID_API_KEY: str = os.environ.get("SENDGRID_API_KEY", "")
     FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "cas-support@broadinstitute.org")
+    # Workflows
+    API_INTERNAL_SERVER_URL = os.environ.get(
+        "API_INTERNAL_SERVER_URL", "https://cellarium-cloud-api-internal.cellarium.ai"
+    )
 
 
 class DevSettings(AllEnvSettings):
     # General
     debug = True
     MODEL_SERVER_URL: str = os.environ.get("MODEL_SERVER_URL", "https://cellarium-cloud-model-dev.cellarium.ai")
+    API_INTERNAL_SERVER_URL = os.environ.get(
+        "API_INTERNAL_SERVER_URL", "https://cellarium-cloud-api-internal-dev.cellarium.ai"
+    )
 
 
 class ProductionSettings(AllEnvSettings):
