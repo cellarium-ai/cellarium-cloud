@@ -25,4 +25,4 @@ application.add_exception_handler(exceptions.InvalidInputError, exception_handle
 
 if __name__ == "__main__":
     num_workers = multiprocessing.cpu_count() * 2 + 1
-    uvicorn.run("main:application", host=settings.SERVER_HOST, port=settings.SERVER_PORT, workers=num_workers)
+    uvicorn.run("main:application", host=settings.SERVER_HOST, port=8001, workers=num_workers)

@@ -17,7 +17,7 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
-    APP_VERSION: str = "1.4.1a1"
+    APP_VERSION: str = "1.4.2.dev"
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR = SERVICES_DIR
@@ -69,6 +69,10 @@ class AllEnvSettings(BaseSettings):
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
+    # Workflows
+    API_INTERNAL_SERVER_URL = _CELLARIUM_SERVICE_URL_FORMAT.format(
+        service_name="cas-api-internal", app_version=_CELLARIUM_SERVICE_URL_VERSION
+    )
 
 
 class DevSettings(AllEnvSettings):
