@@ -40,3 +40,4 @@ kfp==2.4.0
 typer==0.9.0
 gcsfs==2023.9.2
 PyYAML==6.0.1
+requests==2.31.0
