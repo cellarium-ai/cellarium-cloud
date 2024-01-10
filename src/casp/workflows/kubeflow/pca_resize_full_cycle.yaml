@@ -1,0 +1,54 @@
+pipeline_configs:
+  - curriculum_name: mouse_nov_23
+    model_name: mouse_pca_512_all_genes_no_log1p_v1
+    bq_dataset_name: cas_50m_dataset
+    schema_name: refdata-gex-mm10-2020-A
+    shard_size: 10000
+    embedding_dimension: 512
+    extract_start: 0
+    extract_end: 408
+    last_shard_size: 3531
+    use_log_1p: false
+    use_filter: false
+    normalize_total_target_count: 10000
+    normalize_total_eps: 1e-6
+    pca_resize_and_save__base_model_name: mouse_pca_880_base_all_genes_no_log1p_v1
+    pca_resize_and_save__new_model_name: mouse_pca_512_all_genes_no_log1p_v4
+    pca_resize_and_save__new_embedding_dimension: 512
+    pca_resize_and_save__config_unique_name: mouse_pca_880_to_512_resize_v1
+    pca_embed__config_unique_name: mouse_pca_512_embed_resized_v4
+    pca_embed__n_components: 512
+    pca_register_model__config_unique_name: mouse_pca_512_all_genes_no_log1p_train_register_v4
+    pca_index_create__config_unique_name: mouse_pca_512_all_genes_no_log1p_index_v4
+    pca_index_create__index_endpoint_id: projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904
+    pca_index_create__index_location: us-central1
+    pca_index_create__display_name: mouse_pca_512_all_genes_no_log1p_index_v1
+    pca_index_create__approximate_neighbors_count: 200
+    pca_index_create__distance_measure_type: DOT_PRODUCT_DISTANCE
+
+  - curriculum_name: mouse_nov_23
+    model_name: mouse_pca_128_all_genes_no_log1p_v1
+    bq_dataset_name: cas_50m_dataset
+    schema_name: refdata-gex-mm10-2020-A
+    shard_size: 10000
+    embedding_dimension: 128
+    extract_start: 0
+    extract_end: 408
+    last_shard_size: 3531
+    use_log_1p: false
+    use_filter: false
+    normalize_total_target_count: 10000
+    normalize_total_eps: 1e-6
+    pca_resize_and_save__base_model_name: mouse_pca_880_base_all_genes_no_log1p_v1
+    pca_resize_and_save__new_model_name: mouse_pca_128_all_genes_no_log1p_v1
+    pca_resize_and_save__new_embedding_dimension: 128
+    pca_resize_and_save__config_unique_name: 02_02_24_mouse_pca_880_to_128_resize_v3
+    pca_embed__config_unique_name: 02_02_24_mouse_pca_128_embed_resized_v1
+    pca_embed__n_components: 128
+    pca_register_model__config_unique_name: mouse_pca_128_all_genes_no_log1p_train_register_v3
+    pca_index_create__config_unique_name: mouse_pca_128_all_genes_no_log1p_index_v1
+    pca_index_create__index_endpoint_id: projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904
+    pca_index_create__index_location: us-central1
+    pca_index_create__display_name: mouse_pca_128_all_genes_no_log1p_index_v1
+    pca_index_create__approximate_neighbors_count: 200
+    pca_index_create__distance_measure_type: DOT_PRODUCT_DISTANCE

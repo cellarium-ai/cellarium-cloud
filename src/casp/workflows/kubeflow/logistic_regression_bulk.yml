@@ -1,0 +1,66 @@
+pipeline_configs:
+  - curriculum_name: mouse_nov_23
+    shard_size: 10000
+    extract_start: 0
+    extract_end: 20
+    last_shard_size: 10000
+#    extract_end: 408
+#    last_shard_size: 3531
+    use_log_1p: true
+    normalize_total_eps: 1e-6
+    normalize_total_target_count: 10000
+    logistic_regression_train__model_name: test_01_30_24_lr_with_log_1p_zscore_v1
+    logistic_regression_train__config_unique_name: test_01_30_24_lr_with_log_1p_zscore_v1-3
+    logistic_regression_train__mean_var_std_model_name: 01_23_30_mean_var_std_with_log_1p_v2
+    logistic_regression_train__tdigest_model_name: 01_23_30_tdigest_with_log_1p_v2
+    logistic_regression_train__use_zscore: true
+    logistic_regression_train__use_divide_by_scale: false
+
+  - curriculum_name: mouse_nov_23
+    shard_size: 10000
+    extract_start: 0
+    extract_end: 20
+    last_shard_size: 10000
+#    extract_end: 408
+#    last_shard_size: 3531
+    use_log_1p: true
+    normalize_total_eps: 1e-6
+    normalize_total_target_count: 10000
+    logistic_regression_train__model_name: test_01_30_24_lr_with_log_1p_divide_by_median_v1
+    logistic_regression_train__config_unique_name: test_01_30_24_lr_with_log_1p_divide_by_median_v1-3
+    logistic_regression_train__mean_var_std_model_name: 01_23_30_mean_var_std_with_log_1p_v2
+    logistic_regression_train__tdigest_model_name: 01_23_30_tdigest_with_log_1p_v2
+    logistic_regression_train__use_zscore: false
+    logistic_regression_train__use_divide_by_scale: true
+
+  - curriculum_name: mouse_nov_23
+    shard_size: 10000
+    extract_start: 0
+    extract_end: 20
+    last_shard_size: 10000
+#    extract_end: 408
+#    last_shard_size: 3531
+    use_log_1p: false
+    normalize_total_eps: 1e-6
+    normalize_total_target_count: 10000
+    logistic_regression_train__model_name: test_01_30_24_lr_no_log_1p_zscore_v1
+    logistic_regression_train__config_unique_name: test_01_30_24_lr_no_log_1p_zscore_v1-3
+    logistic_regression_train__mean_var_std_model_name: 01_23_30_mean_var_std_no_log_1p_v2
+    logistic_regression_train__tdigest_model_name: 01_23_30_tdigest_no_log_1p_v2
+    logistic_regression_train__use_zscore: true
+    logistic_regression_train__use_divide_by_scale: false
+
+#  - curriculum_name: mouse_nov_23
+#    shard_size: 10000
+#    extract_start: 0
+#    extract_end: 408
+#    last_shard_size: 3531
+#    use_log_1p: false
+#    normalize_total_eps: 1e-6
+#    normalize_total_target_count: 10000
+#    logistic_regression_train__model_name: 01_30_24_lr_no_log_1p_divide_by_median_v1
+#    logistic_regression_train__config_unique_name: 01_30_24_lr_no_log_1p_divide_by_median_v1-3
+#    logistic_regression_train__mean_var_std_model_name: 01_23_30_mean_var_std_no_log_1p_v2
+#    logistic_regression_train__tdigest_model_name: 01_23_30_tdigest_no_log_1p_v2
+#    logistic_regression_train__use_zscore: false
+#    logistic_regression_train__use_divide_by_scale: true

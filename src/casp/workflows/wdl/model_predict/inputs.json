@@ -1,5 +1,0 @@
-{
-  "CASPCAPredict.predict.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda:fg-embedding-writer-04",
-  "CASPCAPredict.predict.bucket_name": "dsp-cell-annotation-service",
-  "CASPCAPredict.predict.config_blob_name": "cellarium/config/ipca_mouse_predict_test.yaml"
-}
