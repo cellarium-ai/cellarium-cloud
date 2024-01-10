@@ -1,4 +1,4 @@
-FROM anibali/pytorch:2.0.0-cuda11.8
+FROM anibali/pytorch:2.0.0-nocuda
 
 WORKDIR /app
 USER root
@@ -13,7 +13,7 @@ COPY requirements ./requirements
 RUN pip install Cython numpy
 RUN pip install --upgrade pip
 RUN pip install -r requirements/base.txt
-RUN pip install -r requirements/deployable.txt
+RUN pip install -r requirements/pipeline.txt
 RUN pip install -r requirements/test.txt
 
 # Copy Files and Secrets

@@ -1,0 +1,12 @@
+PCA_TRAIN_COMPONENT_NAME: str = "pca_train"
+PCA_EMBED_COMPONENT_NAME: str = "pca_embed"
+PCA_REGISTRY_COMPONENT_NAME: str = "pca_registry"
+PCA_INDEX_CREATE_COMPONENT_NAME: str = "pca_index_create"
+PCA_RESIZE_AND_SAVE_COMPONENT_NAME: str = "pca_resize_and_save"
+MEAN_VAR_STD_COMPONENT_NAME: str = "mean_var_std_train"
+TDIGEST_COMPONENT_NAME: str = "tdigest_train"
+TDIGEST_FILTER_FEATURES_COMPONENT_NAME: str = "tdigest_filter_features"
+LOGISTIC_REGRESSION_TRAIN_COMPONENT_NAME: str = "logistic_regression_train"
+
+NETWORK_NAME: str = "projects/350868384795/global/networks/ai-matching"
+DEFAULT_PIPELINE_LOCATION: str = "us-central1"
