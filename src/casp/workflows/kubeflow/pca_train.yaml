@@ -1,0 +1,15 @@
+pipeline_configs:
+  - curriculum_name: mouse_nov_23
+    model_name: mouse_pca_880_base_all_genes_no_log1p_v1
+    bq_dataset_name: cas_50m_dataset
+    schema_name: refdata-gex-mm10-2020-A
+    shard_size: 10000
+    n_components: 880
+    extract_start: 0
+    extract_end: 408
+    last_shard_size: 3531
+    use_log_1p: false
+    use_filter: false
+    pca_train__config_unique_name: mouse_pca_880_base_all_genes_no_log1p_v3
+    normalize_total_target_count: 10000
+    normalize_total_eps: 1e-6

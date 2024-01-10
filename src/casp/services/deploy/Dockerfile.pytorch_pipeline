@@ -1,4 +1,4 @@
-FROM anibali/pytorch:2.0.0-cuda11.8
+FROM anibali/pytorch:2.0.0-nocuda
 
 WORKDIR /app
 USER root
@@ -13,13 +13,14 @@ COPY requirements ./requirements
 RUN pip install Cython numpy
 RUN pip install --upgrade pip
 RUN pip install -r requirements/base.txt
-RUN pip install -r requirements/deployable.txt
+RUN pip install -r requirements/pipeline.txt
+RUN pip install -r requirements/test.txt
 
 # Copy Files and Secrets
 COPY src .
 COPY tests ./tests
 # Looking for b64 encoded secret environment variables
-RUN --mount=type=secret,id=ENV_SECRETS cat /run/secrets/ENV_SECRETS | base64 -d >> ./settings/.env
+RUN --mount=type=secret,id=ENV_SECRETS cat /run/secrets/ENV_SECRETS | base64 -d >> ./casp/services/.env
 
 # Create a dockeruser to own the app
 RUN useradd -r dockeruser
