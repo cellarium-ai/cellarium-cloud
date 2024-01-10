@@ -15,16 +15,31 @@ jobs:
   update-docker-images:
 #    needs: [unit-tests]
     runs-on: ubuntu-latest
-    # Notice: this job runs only on tagged commit:
     if: startsWith(github.ref, 'refs/tags')
-
     permissions:
       contents: write
       id-token: write
+
     env:
       DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
-      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
-      PYTORCH_CUDA_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda
+
+    strategy:
+      matrix:
+        include:
+          - name: PyTorch Docker
+            docker-file-path: ./src/casp/services/deploy/Dockerfile.pytorch
+            image-name: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch
+          - name: PyTorch CUDA Docker
+            docker-file-path: ./src/casp/services/deploy/Dockerfile.pytorch_cuda
+            image-name: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda
+          - name: PyTorch Pipeline
+            docker-file-path: ./src/casp/services/deploy/Dockerfile.pytorch_pipeline
+            image-name: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline
+          - name: PyTorch CUDA Pipeline
+            docker-file-path: ./src/casp/services/deploy/Dockerfile.pytorch_cuda_pipeline
+            image-name: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline
+
+    # Notice: this job runs only on tagged commit:
     steps:
       - uses: actions/checkout@v2
       - id: get-tag
@@ -34,9 +49,9 @@ jobs:
       - uses: ./.github/actions/docker-update
         with:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
-          pytorch-image-name: ${{ env.PYTORCH_IMAGE_NAME }}
-          pytorch-cuda-image-name: ${{ env.PYTORCH_CUDA_IMAGE_NAME }}
           image-tag: ${{ env.TAG }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
           env-secrets-b64: ${{ secrets.CAS_SERVICES_ENV_b64 }}
+          image-name: ${{ matrix.image-name }}
+          docker-file-path: ${{ matrix.docker-file-path }}

@@ -1,7 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 
 from casp.data_manager import BaseDataManager
-from casp.services import settings
 from casp.services.api_internal import exceptions
 from casp.services.db import models
 
