@@ -23,5 +23,5 @@ class BaseDataManager:
         credentials, project = utils.get_google_service_credentials()
         self.credentials = credentials
         self.project = project
-        self.bigquery_client = bigquery.Client(credentials=self.credentials, project=self.project)
-        self.postgres_db_session = init_db()
+        self.block_coo_matrix_db_client = bigquery.Client(credentials=self.credentials, project=self.project)
+        self.system_data_db_session = init_db()

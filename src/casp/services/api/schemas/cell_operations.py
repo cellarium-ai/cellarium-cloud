@@ -52,7 +52,7 @@ class CellariumCellByIdsInput(BaseModel):
     metadata_feature_names: t.List[str]
 
 
-class CellariumCell(BaseModel):
+class CellariumCellMetadata(BaseModel):
     cas_cell_index: int = Field(default=None, example=123)
     cell_type: t.Optional[str] = Field(default=None, example="enterocyte")
     assay: t.Optional[str] = Field(default=None, example="10x 3' v2")

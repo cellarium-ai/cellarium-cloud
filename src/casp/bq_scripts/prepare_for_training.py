@@ -1,6 +1,7 @@
 """
 Prepare data for extract by randomizing, preprocessing and staging in temporary tables
 """
+
 import argparse
 import time
 import typing as t

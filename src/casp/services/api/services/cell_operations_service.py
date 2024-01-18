@@ -2,22 +2,23 @@
 Cellarium Service Controller. It provides methods to communicate with services in Cellarium Cloud
 infrastructure over different protocols in async manner.
 """
+
 import typing as t
 
 import numpy as np
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 
 from casp.services.api import clients, schemas
-from casp.services.api.data_manager import CellAnalysisDataManager, CellariumGeneralDataManager
+from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import exceptions
 from casp.services.db import models
 from casp.services.utils import numpy_utils
 
-AVAILABLE_FIELDS_DICT = set(schemas.CellariumCell.__fields__.keys())
+AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
 
-class CellAnalysisService:
+class CellOperationsService:
     """
     Cell Analysis Service. It provides methods to communicate with services in Cellarium Cloud infrastructure.
     It leverages async communication with services and uses data access objects to communicate with
@@ -25,7 +26,7 @@ class CellAnalysisService:
     """
 
     def __init__(self):
-        self.cell_analysis_dm = CellAnalysisDataManager()
+        self.cell_operations_dm = CellOperationsDataManager()
         self.cellarium_general_dm = CellariumGeneralDataManager()
 
     def authorize_model_for_user(self, user: models.User, model_name: str) -> None:
@@ -131,16 +132,18 @@ class CellAnalysisService:
         """
         cas_model = self.cellarium_general_dm.get_model_by_name(model_name=model_name)
 
-        temp_table_fqn = self.cell_analysis_dm.insert_matches_to_temp_table(
+        temp_table_fqn = self.cell_operations_dm.insert_matches_to_temp_table(
             query_ids=query_ids, knn_response=knn_response
         )
 
         if include_dev_metadata:
-            return self.cell_analysis_dm.get_match_query_metadata_dev_details(
+            return self.cell_operations_dm.get_neighborhood_distance_summary_dev_details(
                 cas_model=cas_model, match_temp_table_fqn=temp_table_fqn
             )
 
-        return self.cell_analysis_dm.get_match_query_metadata(cas_model=cas_model, match_temp_table_fqn=temp_table_fqn)
+        return self.cell_operations_dm.get_neighborhood_distance_summary(
+            cas_model=cas_model, match_temp_table_fqn=temp_table_fqn
+        )
 
     async def annotate_adata_file(
         self, user: models.User, file: t.BinaryIO, model_name: str, include_dev_metadata: bool
@@ -214,7 +217,7 @@ class CellAnalysisService:
         if "cas_cell_index" not in metadata_feature_names:
             metadata_feature_names.append("cas_cell_index")
         try:
-            return self.cell_analysis_dm.get_cells_by_ids(
+            return self.cell_operations_dm.get_cell_metadata_by_ids(
                 cell_ids=cell_ids,
                 metadata_feature_names=metadata_feature_names,
                 model_name=model_name,

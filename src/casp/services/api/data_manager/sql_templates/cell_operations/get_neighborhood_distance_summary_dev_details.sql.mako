@@ -1,3 +1,41 @@
+<%
+"""
+Description:
+  This template generates a SQL query that does the same thing as `get_neighborhood_distance_summary.sql.mako`,
+  but with additional details of what datasets the neighbor cells are from.
+
+Parameters:
+  - temp_table_fqn: Fully qualified name of the temporary table used in the query.
+  - project: Google Cloud project name.
+  - dataset: Name of the dataset within the BigQuery project.
+
+Tables Accessed:
+  - Temporary table as defined by `temp_table_fqn`.
+  - cas_cell_info in the specified project and dataset.
+
+Output Format:
+  The query returns the following columns:
+  - query_id: Identifier of the query.
+  - cell_type: Type of the cell.
+  - min_distance: Minimum match score.
+  - max_distance: Maximum match score.
+  - p25_distance: 25th percentile of match scores.
+  - median_distance: Median of match scores.
+  - p75_distance: 75th percentile of match scores.
+  - cell_count: Count of cells.
+  - dataset_ids_with_counts: Array of structs containing the following fields:
+    - dataset_id: Identifier of the dataset.
+    - count_per_dataset: Count of cells from the dataset.
+    - min_distance: Minimum match score of cells from the dataset.
+    - max_distance: Maximum match score of cells from the dataset.
+    - median_distance: Median of match scores of cells from the dataset.
+    - mean_distance: Mean of match scores of cells from the dataset.
+
+Notes:
+  - The match scores are calculated and grouped by query_id and cell_type.
+  - The query uses APPROX_QUANTILES for efficiency in calculating percentile values.
+"""
+%>
 with distinct_cell_counts as (
   select
     t_inner.query_id,

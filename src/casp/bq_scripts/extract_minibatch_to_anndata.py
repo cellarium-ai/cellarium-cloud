@@ -1,6 +1,7 @@
 """
 Selects a random subset of cells of a specified size from BigQuery and writes the data to output AnnData files.
 """
+
 import argparse
 import datetime
 import json

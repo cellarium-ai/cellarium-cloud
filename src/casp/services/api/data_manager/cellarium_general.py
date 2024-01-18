@@ -35,7 +35,7 @@ class CellariumGeneralDataManager(BaseDataManager):
         sql_template_data = sql.TemplateData(project=self.project)
         sql_query = sql.render(template_path=self.SQL_GET_ALL_GENE_SCHEMAS, template_data=sql_template_data)
 
-        query_result = self.bigquery_client.query(sql_query).result()
+        query_result = self.block_coo_matrix_db_client.query(sql_query).result()
         return [schemas.FeatureSchemaInfo(schema_name=row["table_name"]) for row in query_result]
 
     def get_feature_schema_by(self, schema_name: str) -> t.List[str]:
@@ -48,7 +48,7 @@ class CellariumGeneralDataManager(BaseDataManager):
         """
         sql_template_data = sql.TemplateData(project=self.project, schema_name=schema_name)
         sql_query = sql.render(template_path=self.SQL_GET_SCHEMA_BY_NAME, template_data=sql_template_data)
-        query_result = self.bigquery_client.query(sql_query).result()
+        query_result = self.block_coo_matrix_db_client.query(sql_query).result()
         return [row["feature_name"] for row in query_result]
 
     @staticmethod
@@ -107,4 +107,4 @@ class CellariumGeneralDataManager(BaseDataManager):
         """
         user.requests_processed += 1
         user.cells_processed += number_of_cells
-        self.postgres_db_session.commit()
+        self.system_data_db_session.commit()

@@ -11,18 +11,20 @@ from casp.services.api.data_manager import bigquery_response_parsers, bigquery_s
 from casp.services.db import models
 
 
-class CellAnalysisDataManager(BaseDataManager):
+class CellOperationsDataManager(BaseDataManager):
     """
-    Data Manager for accessing data withing the framework of Cell Analysis.
+    Data Manager for making data operations in Cellarium Cloud storage.
     """
 
     # Directories for SQL templates
-    CELL_ANALYSIS_TEMPLATE_DIR = f"{settings.SERVICES_DIR}/api/data_manager/sql_templates/cell_analysis"
+    CELL_ANALYSIS_TEMPLATE_DIR = f"{settings.SERVICES_DIR}/api/data_manager/sql_templates/cell_operations"
 
     # SQL template file paths
-    SQL_MATCH_METADATA = f"{CELL_ANALYSIS_TEMPLATE_DIR}/match_metadata.sql.mako"
-    SQL_MATCH_METADATA_DEV_DETAILS = f"{CELL_ANALYSIS_TEMPLATE_DIR}/match_metadata_dev_details.sql.mako"
-    SQL_GET_CELLS_BY_IDS = f"{CELL_ANALYSIS_TEMPLATE_DIR}/get_cells_by_ids.sql.mako"
+    SQL_MATCH_METADATA = f"{CELL_ANALYSIS_TEMPLATE_DIR}/get_neighborhood_distance_summary.sql.mako"
+    SQL_MATCH_METADATA_DEV_DETAILS = (
+        f"{CELL_ANALYSIS_TEMPLATE_DIR}/get_neighborhood_distance_summary_dev_details.sql.mako"
+    )
+    SQL_GET_CELLS_BY_IDS = f"{CELL_ANALYSIS_TEMPLATE_DIR}/get_cell_metadata_by_ids.sql.mako"
 
     def insert_matches_to_temp_table(self, query_ids: t.List[str], knn_response: t.List[t.List[MatchNeighbor]]) -> str:
         """
@@ -41,7 +43,7 @@ class CellAnalysisDataManager(BaseDataManager):
         table = bigquery.Table(temp_table_fqn, schema=bigquery_schemas.MATCH_CELL_RESULTS_SCHEMA)
         table.expires = datetime.now() + timedelta(minutes=settings.API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION)
 
-        self.bigquery_client.create_table(table)
+        self.block_coo_matrix_db_client.create_table(table)
 
         rows_to_insert = []
         for i in range(0, len(knn_response)):
@@ -57,7 +59,7 @@ class CellAnalysisDataManager(BaseDataManager):
 
         job_config = bigquery.LoadJobConfig(schema=bigquery_schemas.MATCH_CELL_RESULTS_SCHEMA)
 
-        job = self.bigquery_client.load_table_from_json(
+        job = self.block_coo_matrix_db_client.load_table_from_json(
             json_rows=rows_to_insert, destination=temp_table_fqn, job_config=job_config
         )
 
@@ -65,7 +67,7 @@ class CellAnalysisDataManager(BaseDataManager):
 
         return temp_table_fqn
 
-    def get_match_query_metadata(
+    def get_neighborhood_distance_summary(
         self, cas_model: models.CASModel, match_temp_table_fqn: str
     ) -> t.List[t.Dict[str, t.Any]]:
         """
@@ -81,11 +83,11 @@ class CellAnalysisDataManager(BaseDataManager):
         )
         sql_query = sql.render(self.SQL_MATCH_METADATA, template_data=sql_template_data)
 
-        query_job = self.bigquery_client.query(query=sql_query)
+        query_job = self.block_coo_matrix_db_client.query(query=sql_query)
 
         return bigquery_response_parsers.parse_match_query_job(query_job=query_job)
 
-    def get_match_query_metadata_dev_details(
+    def get_neighborhood_distance_summary_dev_details(
         self, cas_model: models.CASModel, match_temp_table_fqn: str
     ) -> t.List[t.Dict[str, t.Any]]:
         """
@@ -103,11 +105,11 @@ class CellAnalysisDataManager(BaseDataManager):
         )
         sql_query = sql.render(self.SQL_MATCH_METADATA_DEV_DETAILS, template_data=sql_template_data)
 
-        query_job = self.bigquery_client.query(query=sql_query)
+        query_job = self.block_coo_matrix_db_client.query(query=sql_query)
 
         return bigquery_response_parsers.parse_match_query_job(query_job=query_job, include_dev_details=True)
 
-    def get_cells_by_ids(
+    def get_cell_metadata_by_ids(
         self, cell_ids: t.List[int], metadata_feature_names: t.List[str], model_name: str
     ) -> t.List[t.Dict[str, t.Any]]:
         """
@@ -130,7 +132,7 @@ class CellAnalysisDataManager(BaseDataManager):
         )
         sql_query = sql.render(template_path=self.SQL_GET_CELLS_BY_IDS, template_data=template_data)
 
-        query_job = self.bigquery_client.query(query=sql_query)
+        query_job = self.block_coo_matrix_db_client.query(query=sql_query)
 
         return bigquery_response_parsers.parse_get_cells_job(
             query_job=query_job, cell_metadata_features=metadata_feature_names

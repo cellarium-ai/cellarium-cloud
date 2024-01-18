@@ -1,6 +1,6 @@
-from casp.services.api.schemas.cell_analysis import (  # noqa
-    CellariumCell,
+from casp.services.api.schemas.cell_operations import (  # noqa
     CellariumCellByIdsInput,
+    CellariumCellMetadata,
     QueryCell,
     QueryCellDevDetails,
     SearchQueryCellResult,
