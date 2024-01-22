@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 with open("requirements.txt") as fh:
     install_requires = fh.readlines()
 
-with open("README.md") as fh:
+with open("README.rst") as fh:
     long_description = fh.read()
 
 # following src dir layout according to
@@ -35,4 +35,13 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
     ],
     include_package_data=True,
+    extras_require={
+        "docs": [
+            "Pillow~=9.5",
+            "Sphinx~=7.2",
+            "sphinx_gallery~=0.14",
+            "sphinx_rtd_theme~=1.3",
+            "setuptools-git-versioning==1.13.5",
+        ],
+    },
 )
