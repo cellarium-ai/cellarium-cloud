@@ -1,5 +1,6 @@
 import multiprocessing
 
+import sentry_sdk
 import uvicorn
 from fastapi import FastAPI
 
@@ -7,6 +8,13 @@ from casp.services import settings
 from casp.services.api import exception_handlers
 from casp.services.api.routers import cell_operations_router, cellarium_general_router
 from casp.services.api.services import exceptions
+
+sentry_sdk.init(
+    dsn=settings.SENTRY_DSN,
+    enable_tracing=settings.SENTRY_ENABLE_TRACING,
+    profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
+    traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+)
 
 application = FastAPI(
     title="Cellarium Cloud API",

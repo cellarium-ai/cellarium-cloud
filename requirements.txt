@@ -33,3 +33,4 @@ Mako==1.2.4
 smart-open==6.4.0
 sqlparse==0.4.4
 Werkzeug==2.2.2
+sentry-sdk==1.39.2
