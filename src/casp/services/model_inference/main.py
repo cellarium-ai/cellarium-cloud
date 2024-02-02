@@ -14,9 +14,16 @@ sentry_sdk.init(
     traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
 )
 
-application = FastAPI()
-application.include_router(router=routers.model_embed_router, prefix="/api/model_inference", tags=["model-inference"])
+application = FastAPI(
+    title="Cellarium Cloud Model Inference",
+    description="Cellarium Cloud Model Inference API Documentation",
+    version=settings.APP_VERSION,
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+)
+application.include_router(router=routers.model_embed_router, prefix="/api", tags=["model-inference"])
 
 if __name__ == "__main__":
-    # Run model server
-    uvicorn.run("main:application", host="0.0.0.0", port=8000, workers=multiprocessing.cpu_count())
+    num_workers = 2 if settings.ENVIRONMENT == "local" else multiprocessing.cpu_count()
+    port = settings.MODEL_SERVICE_PORT if settings.ENVIRONMENT == "local" else settings.DEFAULT_SERVICE_PORT
+    uvicorn.run("main:application", host=settings.DEFAULT_SERVICE_HOST, port=port, workers=num_workers)

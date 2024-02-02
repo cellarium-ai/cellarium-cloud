@@ -1,12 +1,13 @@
-import pickle
 import typing as t
 
 import anndata
-import torch
-from google.cloud import storage
+import numpy
+from cellarium.ml import CellariumModule
+from cellarium.ml.utilities.data import AnnDataField, collate_fn
+from jsonargparse import Namespace
 
-from casp.ml.dump_manager import DumpManager
 from casp.services import settings, utils
+from casp.services.db import models
 from casp.services.model_inference import schemas
 from casp.services.model_inference.data_managers import ModelInferenceDataManager
 
@@ -18,34 +19,71 @@ class ModelInferenceService:
         self.model_inference_dm = ModelInferenceDataManager()
 
     @staticmethod
-    def get_dump_manager(dump_manager_location: str) -> DumpManager:
+    def _get_batch_dictionary_from_adata_file(
+        adata_file: t.BinaryIO, cellarium_module: CellariumModule
+    ) -> t.Dict[str, str]:
         """
-        Get Model Dump Manager from Google Cloud Storage
+        Get batch dictionary from adata file using cellarium module.
 
-        :param dump_manager_location: Location of model dump manager in Google Cloud Storage
+        :param adata_file: File object of :class:`anndata.AnnData` object to embed.
+        :param cellarium_module: CellariumModule object
 
-        :return: DumpManager object
+        :return: Batch dictionary
         """
-        credentials, project_id = utils.get_google_service_credentials()
-        storage_client = storage.Client(project=project_id, credentials=credentials)
-        bucket = storage_client.bucket(bucket_name=settings.PROJECT_BUCKET_NAME)
-        blob = bucket.blob(dump_manager_location)
-        pickle_in = blob.download_as_string()
-        return pickle.loads(pickle_in)
+        batch_keys = {}
+        _batch_keys = cellarium_module._hparams["data"]["batch_keys"]
+        _batch_keys["obs_names"] = Namespace(attr="obs_names")
+
+        for key, value in vars(_batch_keys).items():
+            batch_keys[key] = AnnDataField(**vars(value))
+
+        adata = anndata.read_h5ad(adata_file)
+        batch = {key: field(adata)[:] for key, field in batch_keys.items()}
+        batch = collate_fn([batch])
+        return batch
 
     @staticmethod
-    def load_data(file: t.BinaryIO) -> t.Tuple[torch.Tensor, list]:
+    def _get_model_checkpoint_path(model_checkpoint_file_path: str) -> str:
         """
-        Load Sparse Matrix and ids from anndata file
+        Get model checkpoint path from GCS. It expects a filepath that doesn't include bucket protocol prefix and
+        bucket name.
 
-        :param file: File of :class:`anndata.Anndata` object to load
+        :param model_checkpoint_file_path: Model checkpoint file path in GCS
 
-        :return: Tuple of Sparse Matrix and ids
+        :return: Model checkpoint file path with GCS protocol prefix
         """
-        adata = anndata.read_h5ad(file)
-        X = torch.Tensor(adata.X.todense().astype(int))
-        obs_ids = adata.obs.index.values.astype(str).tolist()
-        return X, obs_ids
+        return f"gs://{settings.PROJECT_BUCKET_NAME}/{model_checkpoint_file_path}"
+
+    def _get_model_checkpoint(self, model: models.CASModel) -> CellariumModule:
+        """
+        Get model checkpoint from either local or GCS and load it using CellariumModule.
+
+        :param model: Cellarium Cloud model db object
+
+        :return: CellariumModule object
+        """
+        model_checkpoint_path = self._get_model_checkpoint_path(model.model_file_path)
+        return CellariumModule.load_from_checkpoint(model_checkpoint_path, map_location="cpu")
+
+    def _get_output_from_model(
+        self, model: models.CASModel, adata_file: t.BinaryIO
+    ) -> t.Tuple[numpy.ndarray, t.List[str]]:
+        """
+        Get output from cellarium-ml model that predicts embeddings given an input adata file.
+
+        :param model: Cellarium Cloud model db object
+        :param adata_file: File object of :class:`anndata.AnnData` object to embed.
+
+        :return: Tuple of embeddings and obs_ids.
+        """
+        cellarium_module = self._get_model_checkpoint(model)
+
+        batch = self._get_batch_dictionary_from_adata_file(adata_file=adata_file, cellarium_module=cellarium_module)
+        cellarium_output_dict = cellarium_module(batch)
+
+        embeddings = cellarium_output_dict["x_ng"].numpy()
+        obs_ids = cellarium_output_dict["obs_names"].tolist()
+        return embeddings, obs_ids
 
     def embed_adata_file(self, file_to_embed: t.BinaryIO, model_name: str) -> schemas.ModelEmbeddings:
         """
@@ -54,17 +92,11 @@ class ModelInferenceService:
         :param file_to_embed: File object of :class:`anndata.AnnData` object to embed.
         :param model_name: Model name to use for embedding.
 
+        :return: ModelEmbeddings schema object.
         """
-        # Get Model dump file
         model_info = self.model_inference_dm.get_model_by(model_name=model_name)
-        dump_manager = self.get_dump_manager(model_info.model_file_path)
-        model = dump_manager.model
-        transform = dump_manager.transform
-        # Get data and transform it
-        X, obs_ids = self.load_data(file_to_embed)
-        X = transform(X)
-        # Embed data
-        embeddings = model.transform(X).numpy()
+
+        embeddings, obs_ids = self._get_output_from_model(model=model_info, adata_file=file_to_embed)
 
         embeddings_b64 = utils.numpy_to_base64(embeddings)
 

@@ -32,5 +32,6 @@ application.add_exception_handler(exceptions.AccessDeniedError, exception_handle
 application.add_exception_handler(exceptions.InvalidInputError, exception_handlers.invalid_input_error_handler)
 
 if __name__ == "__main__":
-    num_workers = multiprocessing.cpu_count() * 2 + 1
-    uvicorn.run("main:application", host=settings.SERVER_HOST, port=settings.SERVER_PORT, workers=num_workers)
+    num_workers = 2 if settings.ENVIRONMENT == "local" else multiprocessing.cpu_count() * 2 + 1
+    port = settings.API_SERVICE_PORT if settings.ENVIRONMENT == "local" else settings.DEFAULT_SERVICE_PORT
+    uvicorn.run("main:application", host=settings.DEFAULT_SERVICE_HOST, port=port, workers=num_workers)
