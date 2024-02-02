@@ -5,10 +5,10 @@ import typing as t
 import dotenv
 from pydantic import BaseSettings
 
-SERVICE_DIR = os.path.dirname(os.path.abspath(__file__))
-CAS_DIR = os.path.dirname(SERVICE_DIR)
+SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
+CAS_DIR = os.path.dirname(SERVICES_DIR)
 
-dotenv.load_dotenv(dotenv_path=f"{SERVICE_DIR}/.env")
+dotenv.load_dotenv(dotenv_path=f"{SERVICES_DIR}/.env")
 
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 
@@ -17,18 +17,26 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
-    APP_VERSION: str = "1.0"
+    APP_VERSION: str = "1.4.1a1"
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
+    SERVICES_DIR = SERVICES_DIR
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
-    MODEL_SERVER_URL: str = "https://cas-model-inference-june-release-vi7nxpvk7a-uc.a.run.app/predict"
+    AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 350  # 350 seconds
+    AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 300  # 300 seconds
+    _CELLARIUM_SERVICE_URL_VERSION: str = APP_VERSION.replace(".", "-")
+    _CELLARIUM_SERVICE_URL_FORMAT: str = "https://{service_name}-{app_version}-vi7nxpvk7a-uc.a.run.app"
+    MODEL_SERVER_URL: str = _CELLARIUM_SERVICE_URL_FORMAT.format(
+        service_name="cas-model", app_version=_CELLARIUM_SERVICE_URL_VERSION
+    )
     DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
-    DEFAULT_MODEL_CELL_INFO_TABLE_FQN: str = "dsp-cell-annotation-service.cas_50m_dataset.cas_cell_info"
-    DEFAULT_MODEL_BQ_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cas_50m_dataset"
+    DEFAULT_MODEL_BQ_DATASET_NAME: str = "cas_50m_dataset"
+    API_REQUEST_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cellarium_api_temp_tables"
+    API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION: int = 10  # 10 minutes
     KNN_SEARCH_NUM_MATCHES_DEFAULT: int = 100
     ITEMS_PER_USER: int = 50
     # Auth

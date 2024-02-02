@@ -14,7 +14,7 @@ Create a cas-db-user:
 ```
 gcloud sql users create cas-db-user \
 --instance=cas-db-cluster \
---password={secret-password-goes-here}
+--password=b407f042a92dfac5913764ab
 ```
 Create a cas-db:
 ```

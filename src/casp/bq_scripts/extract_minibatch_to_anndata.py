@@ -1,6 +1,7 @@
 """
 Selects a random subset of cells of a specified size from BigQuery and writes the data to output AnnData files.
 """
+
 import argparse
 import datetime
 import json
@@ -16,7 +17,7 @@ from google.cloud.bigquery_storage import BigQueryReadClient, types
 from scipy.sparse import coo_matrix
 
 from casp.bq_scripts import constants
-from casp.datastore_manager import sql
+from casp.data_manager import sql
 from casp.services import utils
 
 if t.TYPE_CHECKING:

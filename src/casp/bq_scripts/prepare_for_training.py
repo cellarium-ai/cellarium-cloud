@@ -1,6 +1,7 @@
 """
 Prepare data for extract by randomizing, preprocessing and staging in temporary tables
 """
+
 import argparse
 import time
 import typing as t
@@ -8,7 +9,7 @@ import typing as t
 from google.cloud import bigquery
 
 from casp.bq_scripts import constants
-from casp.datastore_manager import sql
+from casp.data_manager import sql
 
 
 def execute_query(client, sql):

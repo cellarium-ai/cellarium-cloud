@@ -8,9 +8,10 @@ These test cases cover the following functions:
 - where_clause
 
 """
+
 import pytest
 
-from casp.datastore_manager.sql import mako_helpers
+from casp.data_manager.sql import mako_helpers
 
 
 def test_string_value_processor() -> None:

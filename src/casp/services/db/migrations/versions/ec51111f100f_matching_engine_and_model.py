@@ -5,6 +5,7 @@ Revises: 62cf59b07367
 Create Date: 2023-05-11 14:27:19.300971
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 
@@ -48,8 +49,8 @@ def upgrade() -> None:
         sa.UniqueConstraint("system_name"),
     )
     op.add_column("user", sa.Column("is_admin", sa.Boolean(), nullable=True))
-    op.execute("UPDATE user SET is_admin = false")
-    op.alter_column("cas_model", "is_default_model", nullable=False)
+    op.execute('UPDATE "user" SET is_admin = false;')
+    op.alter_column("user", "is_admin", nullable=False)
     # ### end Alembic commands ###
 
 

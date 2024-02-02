@@ -48,7 +48,7 @@ gcloud run deploy cas-api \
 --max-instances=500 \
 --min-instances=0 \
 --concurrency=20 \
---command=python --args="casp/services/api/server.py"
+--command=python --args="casp/services/api/main.py"
 
 
 BASE_URL="https://cas-api-vi7nxpvk7a-uc.a.run.app:8000"

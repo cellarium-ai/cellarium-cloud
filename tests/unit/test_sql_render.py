@@ -2,8 +2,8 @@ import typing as t
 
 import pytest
 
-from casp.datastore_manager import sql
-from casp.datastore_manager.sql.validation import exceptions, template_data_validator
+from casp.data_manager import sql
+from casp.data_manager.sql.validation import exceptions, template_data_validator
 
 
 @pytest.fixture
