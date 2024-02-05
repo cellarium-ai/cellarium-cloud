@@ -54,6 +54,15 @@ class PCAIndexCreateMachineSpec(MachineSpecBase):
 
 
 @dataclass
+class PCAResizeAndSaveMachineSpec(MachineSpecBase):
+    display_name = "PCA Resize and Save"
+    replica_count = 1
+    machine_type = "n1-highmem-16"
+    accelerator_type: str = "NVIDIA_TESLA_T4"
+    accelerator_count: int = 1
+
+
+@dataclass
 class MeanVarStdMachineSpec(MachineSpecBase):
     display_name: str = "Mean Var Std Training"
     replica_count: int = 1
@@ -92,6 +101,7 @@ component_machine_specs_map = {
     constants.PCA_EMBED_COMPONENT_NAME: PCAEmbedMachineSpec,
     constants.PCA_REGISTRY_COMPONENT_NAME: PCARegistryMachineSpec,
     constants.PCA_INDEX_CREATE_COMPONENT_NAME: PCAIndexCreateMachineSpec,
+    constants.PCA_RESIZE_AND_SAVE_COMPONENT_NAME: PCAResizeAndSaveMachineSpec,
     constants.MEAN_VAR_STD_COMPONENT_NAME: MeanVarStdMachineSpec,
     constants.TDIGEST_COMPONENT_NAME: TDigestMachineSpec,
     constants.LOGISTIC_REGRESSION_TRAIN_COMPONENT_NAME: LogisticRegressionTrainMachineSpec,

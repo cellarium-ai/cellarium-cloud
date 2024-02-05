@@ -24,24 +24,21 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
     from typing import Dict, List, Optional, Sequence, Tuple
 
     from google.auth import credentials as auth_credentials
-    from google.cloud.aiplatform import base
+    from google.cloud.aiplatform import base, initializer, utils
+    from google.cloud.aiplatform.compat.types import encryption_spec as gca_encryption_spec
+    from google.cloud.aiplatform.compat.types import index_service as gca_index_service
     from google.cloud.aiplatform.compat.types import (
-        index_service as gca_index_service,
         matching_engine_deployed_index_ref as gca_matching_engine_deployed_index_ref,
-        matching_engine_index as gca_matching_engine_index,
-        encryption_spec as gca_encryption_spec,
     )
-    from google.cloud.aiplatform import initializer
-    from google.cloud.aiplatform.matching_engine import (
-        matching_engine_index_config,
-    )
-    from google.cloud.aiplatform import utils
+    from google.cloud.aiplatform.compat.types import matching_engine_index as gca_matching_engine_index
+    from google.cloud.aiplatform.matching_engine import matching_engine_index_config
 
     _LOGGER = base.Logger(__name__)
     _INDEX_UPDATE_METHOD_TO_ENUM_VALUE = {
         "STREAM_UPDATE": gca_matching_engine_index.Index.IndexUpdateMethod.STREAM_UPDATE,
         "BATCH_UPDATE": gca_matching_engine_index.Index.IndexUpdateMethod.BATCH_UPDATE,
     }
+
     class CustomMatchingEngineIndex(aiplatform.MatchingEngineIndex):
         @classmethod
         @base.optional_sync()
@@ -63,9 +60,7 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
 
             index_update_method_enum = None
             if index_update_method in _INDEX_UPDATE_METHOD_TO_ENUM_VALUE:
-                index_update_method_enum = _INDEX_UPDATE_METHOD_TO_ENUM_VALUE[
-                    index_update_method
-                ]
+                index_update_method_enum = _INDEX_UPDATE_METHOD_TO_ENUM_VALUE[index_update_method]
 
             gapic_index = gca_matching_engine_index.Index(
                 display_name=display_name,
@@ -78,9 +73,7 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
             )
 
             if encryption_spec_key_name:
-                encryption_spec = gca_encryption_spec.EncryptionSpec(
-                    kms_key_name=encryption_spec_key_name
-                )
+                encryption_spec = gca_encryption_spec.EncryptionSpec(kms_key_name=encryption_spec_key_name)
                 gapic_index.encryption_spec = encryption_spec
 
             if labels:
@@ -90,9 +83,7 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
             api_client = cls._instantiate_client(location=location, credentials=credentials)
 
             create_lro = api_client.create_index(
-                parent=initializer.global_config.common_location_path(
-                    project=project, location=location
-                ),
+                parent=initializer.global_config.common_location_path(project=project, location=location),
                 index=gapic_index,
                 metadata=request_metadata,
             )
@@ -111,6 +102,7 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
             )
 
             return index_obj
+
     # Creating Index
     index = CustomMatchingEngineIndex.create_tree_ah_index(
         display_name=config_data["display_name"],

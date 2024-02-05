@@ -80,6 +80,29 @@ def pca_full_cycle(config_yaml_path: Annotated[str, typer.Option()]) -> None:
 
 
 @typer_app.command()
+def pca_resize_full_cycle(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    """
+    Run PCA resize and save pipeline in parallel.
+
+    Full cycle resize pipeline consists of the following steps:
+    - Take a trained PCA model as a base, slice its V_kg and S_k to the new embedding dimension and save the new model.
+    - Embed data using a new PCA model
+    - Register the resized PCA model in Cellarium Cloud admin
+    - Create Vector search index using the embedded data
+    - Deploy the vector search index to the endpoint
+    - Register the vector search index in Cellarium Cloud admin
+
+    :param config_yaml_path: Path to the local YAML config file containing a list of configs for each run.
+    """
+    config_paths = config_management.create_configs(config_yaml_path)
+    submit_pipeline(
+        pipelines.pca_resize_full_cycle_pipeline,
+        pipeline_display_name="pca_resize_full_cycle_parallel",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
+@typer_app.command()
 def summary_stats_train(config_yaml_path: Annotated[str, typer.Option()]) -> None:
     """
     Run summary stats train pipeline in parallel.
