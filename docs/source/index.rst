@@ -17,3 +17,5 @@ Table of Contents
    modules/readme_modules/wdl_workflows
    modules/readme_modules/data_manager
    modules/changelog
+   modules/running_locally
+   modules/deploying_in_cloud

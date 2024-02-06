@@ -1,3 +1,5 @@
+.. _ci-cd:
+
 CI/CD
 =====
 Currently repository git actions are configured to run tests and update docker images on every push.

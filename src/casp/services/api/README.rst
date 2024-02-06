@@ -41,6 +41,9 @@ To build and push the Docker image:
 
 Set up VPC
 ----------
+.. note::
+
+    This has to be executed only once.
 
 In order for Cloud Run services to access the ai-matching network, which is necessary to access the Vertex AI Matching Engine, Serverless VPC access must be enabled. This comes with a small cost to run the e2-micro VMs that do the network bridging.
 

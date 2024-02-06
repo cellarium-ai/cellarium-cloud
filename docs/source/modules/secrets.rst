@@ -13,9 +13,9 @@ created manually.
 | Secret Name                        | Description                                                           |
 +====================================+=======================================================================+
 | GOOGLE_SERVICE_ACCOUNT_CREDENTIALS | A string dump of credentials for the service account used to access   |
-|                                    | Google Cloud Storage                                                  |
+|                                    | Google Cloud Storage.                                                 |
 +------------------------------------+-----------------------------------------------------------------------+
-| NEPTUNE_API_KEY                    | API key for Neptune                                                   |
+| NEPTUNE_API_KEY                    | API key for Neptune (Needed only for ML pipelines)                    |
 +------------------------------------+-----------------------------------------------------------------------+
 | DB_PORT                            | Port for the database                                                 |
 +------------------------------------+-----------------------------------------------------------------------+
@@ -25,9 +25,9 @@ created manually.
 +------------------------------------+-----------------------------------------------------------------------+
 | DB_PASSWORD                        | Password for the database                                             |
 +------------------------------------+-----------------------------------------------------------------------+
-| DB_CONNECTION_NAME                 | Connection name for the database                                      |
+| DB_CONNECTION_NAME                 | Connection name for the database (Not needed for local env)           |
 +------------------------------------+-----------------------------------------------------------------------+
-| DB_INSTANCE_UNIX_SOCKET            | Unix socket for the database                                          |
+| DB_INSTANCE_UNIX_SOCKET            | Unix socket for the database (Not needed for local env)               |
 +------------------------------------+-----------------------------------------------------------------------+
 | FLASK_SECRET_KEY                   | Secret key for Flask server                                           |
 +------------------------------------+-----------------------------------------------------------------------+
@@ -37,7 +37,7 @@ created manually.
 +------------------------------------+-----------------------------------------------------------------------+
 | FLASK_BASIC_AUTH_PASSWORD          | Password for basic auth in admin                                      |
 +------------------------------------+-----------------------------------------------------------------------+
-| ENVIRONMENT                        | Environment for the project                                           |
+| ENVIRONMENT                        | Environment for the project `development`, `production` or `local`    |
 +------------------------------------+-----------------------------------------------------------------------+
 | PROJECT_BUCKET_NAME                | Name of the bucket for the project                                    |
 +------------------------------------+-----------------------------------------------------------------------+
