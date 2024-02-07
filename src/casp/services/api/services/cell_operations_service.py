@@ -161,13 +161,17 @@ class CellOperationsService:
         """
         self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
+        print("query_ids", query_ids)
+        print("embeddings", embeddings)
         knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
+        print("knn_response", knn_response)
         annotation_response = self.get_cell_type_distribution(
             query_ids=query_ids,
             knn_response=knn_response,
             model_name=model_name,
             include_dev_metadata=include_dev_metadata,
         )
+        print("annotation_response", annotation_response)
         self.cellarium_general_dm.increment_user_cells_processed(user=user, number_of_cells=len(query_ids))
         return annotation_response
 
