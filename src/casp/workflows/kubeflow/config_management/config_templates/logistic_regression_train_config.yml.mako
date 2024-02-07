@@ -45,6 +45,9 @@ model:
           W_prior_scale: 1.0
           W_init_scale: 1.0
           seed: 0
+  optim_fn: torch.optim.Adam
+  optim_kwargs:
+    lr: 0.001
   transforms:
     - class_path: cellarium.ml.transforms.NormalizeTotal
       init_args:
@@ -102,6 +105,34 @@ data:
   max_cache_size: 2
   cache_size_strictly_enforced: true
   indices_strict: true
+  batch_size: 10_000
+  shuffle: false
+  seed: 0
+  drop_last: true
+  test_mode: false
+  num_workers: 4
+  batch_keys:
+    x_ng:
+      attr: X
+      convert_fn: cellarium.ml.utilities.data.densify
+    var_names_g:
+      attr: var_names
+
+    total_mrna_umis_n:
+      attr: obs
+      key: total_mrna_umis
+
+data:
+  dadc:
+    class_path: cellarium.ml.data.DistributedAnnDataCollection
+    init_args:
+      filenames: gs://cellarium-file-system/curriculum/${curriculum_name}/extract_files/extract_{${extract_start}..${extract_end}}.h5ad
+      shard_size: ${shard_size}
+      last_shard_size: ${last_shard_size}
+      max_cache_size: 2
+      cache_size_strictly_enforced: true
+      indices_strict: true
+      obs_columns_to_validate: ["total_mrna_umis", "cell_type"]
   batch_size: 10_000
   shuffle: false
   seed: 0

@@ -56,15 +56,18 @@ model:
             attr: original_feature_id
             convert_fn: pandas.Series.to_list
 % endif
-  default_lr: 0.001
 data:
-  filenames: gs://cellarium-file-system/curriculum/${curriculum_name}/extract_files/extract_{${extract_start}..${extract_end}}.h5ad
-  shard_size: ${shard_size}
-  last_shard_size: ${last_shard_size}
-  max_cache_size: 2
-  cache_size_strictly_enforced: true
-  indices_strict: true
-  batch_size: 10000
+  dadc:
+    class_path: cellarium.ml.data.DistributedAnnDataCollection
+    init_args:
+      filenames: gs://cellarium-file-system/curriculum/${curriculum_name}/extract_files/extract_{${extract_start}..${extract_end}}.h5ad
+      shard_size: ${shard_size}
+      last_shard_size: ${last_shard_size}
+      max_cache_size: 2
+      cache_size_strictly_enforced: true
+      indices_strict: true
+      obs_columns_to_validate: ["total_mrna_umis"]
+  batch_size: 10_000
   shuffle: false
   seed: 0
   drop_last: true
@@ -79,7 +82,5 @@ data:
     total_mrna_umis_n:
       attr: obs
       key: total_mrna_umis
-    obs_names:
-      attr: obs_names
 return_predictions: false
 ckpt_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/${model_name}/lightning_logs/version_0/checkpoints/model.ckpt

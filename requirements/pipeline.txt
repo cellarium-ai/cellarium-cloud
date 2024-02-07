@@ -1,4 +1,4 @@
 google-cloud-pipeline-components==2.8.0
-cellarium-ml @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.4
+cellarium-ml @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.4+module
 kfp==2.4.0
 gcsfs==2023.9.2

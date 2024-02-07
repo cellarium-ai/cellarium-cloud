@@ -54,12 +54,16 @@ model:
 % endif
 
 data:
-  filenames: gs://cellarium-file-system/curriculum/${curriculum_name}/extract_files/extract_{${extract_start}..${extract_end}}.h5ad
-  shard_size: ${shard_size}
-  last_shard_size: ${last_shard_size}
-  max_cache_size: 2
-  cache_size_strictly_enforced: true
-  indices_strict: true
+  dadc:
+    class_path: cellarium.ml.data.DistributedAnnDataCollection
+    init_args:
+      filenames: gs://cellarium-file-system/curriculum/${curriculum_name}/extract_files/extract_{${extract_start}..${extract_end}}.h5ad
+      shard_size: ${shard_size}
+      last_shard_size: ${last_shard_size}
+      max_cache_size: 2
+      cache_size_strictly_enforced: true
+      indices_strict: true
+      obs_columns_to_validate: ["total_mrna_umis"]
   batch_size: 10_000
   shuffle: false
   seed: 0
