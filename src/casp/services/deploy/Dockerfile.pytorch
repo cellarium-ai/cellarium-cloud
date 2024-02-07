@@ -5,7 +5,8 @@ USER root
 
 # Install Git to be able to install some Dependencies (such as scvid module)
 RUN apt-get update
-RUN yes | apt-get install git gcc
+# RUN yes | apt-get install git gcc
+RUN yes | apt-get install git
 
 # Install Dependencies
 COPY requirements.txt .
