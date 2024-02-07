@@ -1,4 +1,4 @@
-FROM anibali/pytorch:2.0.0-nocuda
+FROM bitnami/pytorch:2.1.2
 
 WORKDIR /app
 USER root
