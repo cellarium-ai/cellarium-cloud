@@ -82,5 +82,7 @@ data:
     total_mrna_umis_n:
       attr: obs
       key: total_mrna_umis
+    obs_names:
+      attr: obs_names
 return_predictions: false
 ckpt_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/${model_name}/lightning_logs/version_0/checkpoints/model.ckpt

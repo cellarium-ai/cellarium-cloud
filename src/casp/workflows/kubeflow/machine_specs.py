@@ -5,11 +5,11 @@ from casp.workflows.kubeflow import constants
 
 DOCKER_IMAGE_NAME_CPU = (
     "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline:"
-    "fg-embedding-job-48"
+    "fg-embedding-job-49"
 )
 DOCKER_IMAGE_NAME_CUDA = (
     "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline:"
-    "fg-embedding-job-48"
+    "fg-embedding-job-49"
 )
 
 
