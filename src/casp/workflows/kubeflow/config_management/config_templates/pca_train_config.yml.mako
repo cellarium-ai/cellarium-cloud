@@ -8,7 +8,7 @@
 # lightning.pytorch==2.0.9
 seed_everything: true
 trainer:
-  accelerator: gpu
+  accelerator: ${accelerator}
   callbacks:
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
