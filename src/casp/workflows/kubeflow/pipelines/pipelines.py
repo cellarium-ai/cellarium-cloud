@@ -146,6 +146,17 @@ def pca_resize_full_cycle_pipeline(pipeline_config_paths: t.List[str]) -> None:
         index_create_task.after(register_embedding_model_task)
 
 
+@dsl.pipeline(
+    name="pca_train_base_and_resize_full_cycle_parallel", description="PCA Train Base and Resize Full Cycle Parallel"
+)
+def pca_train_base_and_resize_full_cycle_pipeline(
+    train_base_config_paths: t.List[str], resize_config_paths: t.List[str]
+) -> None:
+    train_pipeline_task = train_pipeline(pipeline_config_paths=train_base_config_paths)
+    resize_full_cycle_task = pca_resize_full_cycle_pipeline(pipeline_config_paths=resize_config_paths)
+    resize_full_cycle_task.after(train_pipeline_task)
+
+
 @dsl.pipeline(name="summary_stats_train_parallel", description="Summary Stats Train in Parallel")
 def summary_stats_train_pipeline(pipeline_config_paths: t.List[str]) -> None:
     """

@@ -74,7 +74,7 @@ def render_and_save_template(template_path: str, context: dict, output_path: str
         f.write(rendered_content)
 
 
-def create_configs(config_yaml_path: str) -> t.List[str]:
+def create_configs(config_yaml: str | t.Dict[str, t.Any]) -> t.List[str]:
     """
     Create and save the pipeline config files based on the config data in the provided YAML file.
 
@@ -86,10 +86,13 @@ def create_configs(config_yaml_path: str) -> t.List[str]:
     config file name. For example, `pca_train__config_unique_name: pca_train_1` will generate a config file with the
     name of `pca_train-pca_train_1_config.yml`. Missing this key will result in a missing config file.
 
-    :param config_yaml_path: Path to the YAML file containing the config data.
+    :param config_yaml: Path to the YAML file containing the config data or a dictionary of the config data.
     """
-    with open(config_yaml_path, "r") as file:
-        data = yaml.safe_load(file)
+    if type(config_yaml) == str:
+        with open(config_yaml, "r") as file:
+            data = yaml.safe_load(file)
+    else:
+        data: t.Dict[str, t.Any] = config_yaml
 
     pipeline_configs = data["pipeline_configs"]
 
@@ -119,3 +122,5 @@ def create_configs(config_yaml_path: str) -> t.List[str]:
     config_paths = [json.dumps(config) for config in config_paths]
 
     return config_paths
+
+# def create_configs_pipelines_as_components(config_yaml: str | t.Dict[str, t.Any]) -> t.List[str]:

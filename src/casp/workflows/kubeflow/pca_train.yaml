@@ -10,6 +10,6 @@ pipeline_configs:
     last_shard_size: 3531
     use_log_1p: false
     use_filter: false
-    pca_train__config_unique_name: mouse_pca_880_base_all_genes_no_log1p_v1
+    pca_train__config_unique_name: mouse_pca_880_base_all_genes_no_log1p_v3
     normalize_total_target_count: 10000
     normalize_total_eps: 1e-6

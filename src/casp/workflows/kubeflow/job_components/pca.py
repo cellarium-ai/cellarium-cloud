@@ -55,7 +55,7 @@ def resize_and_save(gcs_config_path: str) -> None:
         :new_embedding_dimension, :
     ]
     model_ckpt["state_dict"]["pipeline.1.S_k"] = model_ckpt["state_dict"]["pipeline.1.S_k"][:new_embedding_dimension]
-    model_ckpt["hyper_parameters"]["model"]["model"]["init_args"]["n_components"] = new_embedding_dimension
+    model_ckpt["hyper_parameters"]["model"]["init_args"]["n_components"] = new_embedding_dimension
 
     with open(config_data["new_model_path"], "wb") as file:
         torch.save(model_ckpt, file)

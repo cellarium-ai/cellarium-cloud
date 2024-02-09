@@ -101,7 +101,8 @@ def pca_resize_full_cycle(config_yaml_path: Annotated[str, typer.Option()]) -> N
         pipeline_kwargs={"pipeline_config_paths": config_paths},
     )
 
-
+def pca_train_base_and_resize_full_cycle(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    pass
 @typer_app.command()
 def summary_stats_train(config_yaml_path: Annotated[str, typer.Option()]) -> None:
     """
