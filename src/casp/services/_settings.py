@@ -21,6 +21,11 @@ class AllEnvSettings(BaseSettings):
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR = SERVICES_DIR
+    # Sentry
+    SENTRY_DSN: str = os.environ.get("SENTRY_DSN")
+    SENTRY_ENABLE_TRACING: bool = True
+    SENTRY_PROFILES_SAMPLE_RATE: float = 1.0
+    SENTRY_TRACES_SAMPLE_RATE: float = 1.0
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
