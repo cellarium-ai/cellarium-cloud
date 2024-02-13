@@ -77,7 +77,7 @@ class AllEnvSettings(BaseSettings):
     # If this is value is specified, it will be used instead of the unix socket
     DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP")
     # BigQuery
-    BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/datastore_manager/sql/templates"
+    BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/data_manager/sql/templates"
     # Stage db connector through unix socket or private IP
     if DB_PRIVATE_IP is None:
         SQLALCHEMY_DATABASE_URI: str = (
