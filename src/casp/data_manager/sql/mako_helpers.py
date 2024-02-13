@@ -11,6 +11,9 @@ def _string_value_processor(v: str) -> str:
     :param v: The string to be processed.
     :return: The processed string with single quotes added.
     """
+    if "'" in v:
+        return f'"{v}"'
+
     return f"'{v}'"
 
 
