@@ -5,12 +5,14 @@ class ComparisonOperators:
 
     EQUAL = "eq"
     IN = "in"
+    NOT_EQUAL = "not_eq"
+    NOT_IN = "not_in"
     GREATER_THAN = "gt"
     GREATER_THAN_OR_EQUAL = "gte"
     LESS_THAN = "lt"
     LESS_THAN_OR_EQUAL = "lte"
 
-    CURRENTLY_SUPPORTED = [EQUAL, IN]
+    CURRENTLY_SUPPORTED = [EQUAL, IN, NOT_EQUAL, NOT_IN]
 
 
 class TemplateDataDictNames:
