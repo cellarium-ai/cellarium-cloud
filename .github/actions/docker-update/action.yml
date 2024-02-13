@@ -4,24 +4,21 @@ inputs:
   docker-registry-name:
     required: true
     description: GCP Docker Registry name
-  pytorch-image-name-dev:
+  image-name-dev:
     required: true
     description: PyTorch Image name in the artifact registry for prod environment
-  pytorch-image-name-prod:
+  image-name-prod:
     required: true
     description: PyTorch Image name in the artifact registry for dev environment
-  pytorch-cuda-image-name-dev:
-    required: true
-    description: PyTorch CUDA Image name in the artifact registry for dev environment
-  pytorch-cuda-image-name-prod:
-    required: true
-    description: PyTorch CUDA Image name in the artifact registry for prod environment
   gcp-provider-id:
     required: true
     description: CAS GCP Provider ID
   gcp-service-account-email:
     required: true
     description: CAS Deployer Service Account email
+  docker-file-path:
+    required: true
+    description: Path to the Dockerfile
   image-tag:
     required: true
     description: Current workflow tag
@@ -53,7 +50,7 @@ runs:
       run: |
         current_tag=$(echo "${{ github.ref }}" | awk -F'/' '{print $NF}')
 
-        if [[ $current_tag == *"rc"* || $current_tag == *"a"* || $current_tag == *"b"* ]]; then
+        if [[ $current_tag == *"rc"* || $current_tag == *"alpha"* || $current_tag == *"beta"* ]]; then
           echo "::set-output name=environment::development"
         else
           echo "::set-output name=environment::production"
@@ -68,54 +65,30 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.google-login.outputs.access_token }}
 
-    - name: Debug current branch
-      run: echo "Current branch is ${{ inputs.branch}}"
+    - name: Debug current tag
+      run: echo "Current tag is ${{ inputs.image-tag }}"
       shell: bash
 
-    - name: Update CAS PyTorch image in Google Artifact Registry
-      id: docker-push-pytorch-dev
+    - name: Update development environment image in Google Artifact Registry
+      id: docker-push-dev
       if: steps.get_environment.outputs.environment == 'development'
       uses: docker/build-push-action@v3
       with:
         push: true
-        file: ./src/casp/services/deploy/Dockerfile.pytorch
+        file: ${{ inputs.docker-file-path }}
         secrets: ENV_SECRETS=${{ inputs.env-secrets-b64-dev }}
         tags: |
-          ${{ inputs.pytorch-image-name-dev }}:${{ inputs.image-tag }}
-          ${{ inputs.pytorch-image-name-dev }}:latest
+          ${{ inputs.image-name-dev }}:${{ inputs.image-tag }}
+          ${{ inputs.image-name-dev }}:latest
 
-    - name: Update CAS PyTorch image in Google Artifact Registry
-      id: docker-push-pytorch-prod
+    - name: Update production environment image in Google Artifact Registry
+      id: docker-push-prod
       if: steps.get_environment.outputs.environment == 'production'
       uses: docker/build-push-action@v3
       with:
         push: true
-        file: ./src/casp/services/deploy/Dockerfile.pytorch
+        file: ${{ inputs.docker-file-path }}
         secrets: ENV_SECRETS=${{ inputs.env-secrets-b64-prod }}
         tags: |
-          ${{ inputs.pytorch-image-name-prod }}:${{ inputs.image-tag }}
-          ${{ inputs.pytorch-image-name-prod }}:latest
-
-    - name: Update CAS PyTorch CUDA image in Google Artifact Registry
-      id: docker-push-pytorch-cuda-dev
-      if: steps.get_environment.outputs.environment == 'development'
-      uses: docker/build-push-action@v3
-      with:
-        push: true
-        file: ./src/casp/services/deploy/Dockerfile.pytorch_cuda
-        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64-dev }}
-        tags: |
-          ${{ inputs.pytorch-cuda-image-name-dev }}:${{ inputs.image-tag }}
-          ${{ inputs.pytorch-cuda-image-name-dev }}:latest
-
-    - name: Update CAS PyTorch CUDA image in Google Artifact Registry
-      id: docker-push-pytorch-cuda-prod
-      if: steps.get_environment.outputs.environment == 'production'
-      uses: docker/build-push-action@v3
-      with:
-        push: true
-        file: ./src/casp/services/deploy/Dockerfile.pytorch_cuda
-        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64-prod }}
-        tags: |
-          ${{ inputs.pytorch-cuda-image-name-prod }}:${{ inputs.image-tag }}
-          ${{ inputs.pytorch-cuda-image-name-prod }}:latest
+          ${{ inputs.image-name-prod }}:${{ inputs.image-tag }}
+          ${{ inputs.image-name-prod }}:latest

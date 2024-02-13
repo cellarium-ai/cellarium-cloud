@@ -7,6 +7,7 @@ MEAN_VAR_STD_COMPONENT_NAME: str = "mean_var_std_train"
 TDIGEST_COMPONENT_NAME: str = "tdigest_train"
 TDIGEST_FILTER_FEATURES_COMPONENT_NAME: str = "tdigest_filter_features"
 LOGISTIC_REGRESSION_TRAIN_COMPONENT_NAME: str = "logistic_regression_train"
+BENCHMARKING_COMPONENT_NAME: str = "benchmarking"
 
 NETWORK_NAME: str = "projects/350868384795/global/networks/ai-matching"
 DEFAULT_PIPELINE_LOCATION: str = "us-central1"

@@ -62,11 +62,20 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
             if index_update_method in _INDEX_UPDATE_METHOD_TO_ENUM_VALUE:
                 index_update_method_enum = _INDEX_UPDATE_METHOD_TO_ENUM_VALUE[index_update_method]
 
+            config = config.as_dict()
+            request_metadata_keys = [k for k, _ in request_metadata]
+
+            if "featureNormType" in request_metadata_keys:
+                feature_norm_type = [x[-1] for x in request_metadata if x[0] == "featureNormType"][0]
+                # pop the featureNormType from request_metadata
+                request_metadata = [x for x in request_metadata if x[0] != "featureNormType"]
+                config["featureNormType"] = feature_norm_type
+
             gapic_index = gca_matching_engine_index.Index(
                 display_name=display_name,
                 description=description,
                 metadata={
-                    "config": config.as_dict(),
+                    "config": config,
                     "contentsDeltaUri": contents_delta_uri,
                 },
                 index_update_method=index_update_method_enum,
@@ -103,6 +112,8 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
 
             return index_obj
 
+    request_metadata = {"featureNormType": config_data["feature_norm_type"]}
+    request_metadata = [(k, v) for k, v in request_metadata.items()]
     # Creating Index
     index = CustomMatchingEngineIndex.create_tree_ah_index(
         display_name=config_data["display_name"],
@@ -113,6 +124,8 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
         location=config_data["location"],
         credentials=credentials,
         distance_measure_type=config_data["distance_measure_type"],
+        leaf_node_embedding_count=config_data["leaf_node_embedding_count"],
+        request_metadata=request_metadata,
         sync=False,
     )
 

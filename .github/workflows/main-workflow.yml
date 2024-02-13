@@ -27,6 +27,27 @@ jobs:
       PYTORCH_IMAGE_NAME_PROD: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-prod
       PYTORCH_CUDA_IMAGE_NAME_DEV: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda-dev
       PYTORCH_CUDA_IMAGE_NAME_PROD: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda-prod
+
+    strategy:
+      matrix:
+        include:
+          - name: PyTorch Docker
+            docker-file-path: ./src/casp/services/deploy/Dockerfile.pytorch
+            image-name-dev: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-dev
+            image-name-prod: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-prod
+          - name: PyTorch CUDA Docker
+            docker-file-path: ./src/casp/services/deploy/Dockerfile.pytorch_cuda
+            image-name-dev: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-dev
+            image-name-prod: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-prod
+          - name: PyTorch Pipeline
+            docker-file-path: ./src/casp/services/deploy/Dockerfile.pytorch_pipeline
+            image-name-dev: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline-dev
+            image-name-prod: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline-prod
+          - name: PyTorch CUDA Pipeline
+            docker-file-path: ./src/casp/services/deploy/Dockerfile.pytorch_cuda_pipeline
+            image-name-dev: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline-dev
+            image-name-prod: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline-prod
+
     steps:
       - uses: actions/checkout@v2
       - id: get-tag
@@ -36,12 +57,11 @@ jobs:
       - uses: ./.github/actions/docker-update
         with:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
-          pytorch-image-name-dev: ${{ env.PYTORCH_IMAGE_NAME_DEV }}
-          pytorch-image-name-prod: ${{ env.PYTORCH_IMAGE_NAME_PROD }}
-          pytorch-cuda-image-name-dev: ${{ env.PYTORCH_CUDA_IMAGE_NAME_DEV }}
-          pytorch-cuda-image-name-prod: ${{ env.PYTORCH_CUDA_IMAGE_NAME_PROD }}
-          image-tag: ${{ env.TAG }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          image-tag: ${{ env.TAG }}
+          docker-file-path: ${{ matrix.docker-file-path }}
+          image-name-dev: ${{ matrix.image-name-dev }}
+          image-name-prod: ${{ matrix.image-name-prod }}
           env-secrets-b64-dev: ${{ secrets.CAS_SERVICES_ENV_B64_DEV }}
           env-secrets-b64-prod: ${{ secrets.CAS_SERVICES_ENV_B64_PROD }}

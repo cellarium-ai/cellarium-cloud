@@ -65,6 +65,24 @@ def train_embed_pipeline(pipeline_config_paths: t.List[str]) -> None:
         embed_job_task.after(train_job_task)
 
 
+@dsl.pipeline(name="pca_deploy_index_parallel", description="PCA Deploy Space Vector Index Parallel")
+def pca_deploy_index_pipeline(pipeline_config_paths: t.List[str]) -> None:
+    """
+    KFP pipeline to run PCA deploy index pipeline for multiple models simultaneously.
+
+    :param pipeline_config_paths:  List of JSON strings with train and embed config paths.
+    """
+
+    # :class:`dsl.ParallelFor` requires a list of JSON strings as input
+    with dsl.ParallelFor(pipeline_config_paths) as item:
+        index_create_op = create_job(
+            dsl_component=job_components.pca_index_create.create_deploy_register_index,
+            component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
+            gcs_config_path=item.pca_index_create_gcs_config_path,
+        )
+        _ = index_create_op()
+
+
 @dsl.pipeline(name="pca_full_cycle_parallel", description="Incremental PCA Full Cycle Parallel")
 def pca_full_cycle_pipeline(pipeline_config_paths: t.List[str]) -> None:
     """
@@ -218,3 +236,14 @@ def summary_stats_lr_train_pipeline(
         pipeline_config_paths=logistic_regression_config_paths
     )
     logistic_regression_train_task.after(summary_stats_train_task)
+
+
+@dsl.pipeline(name="benchmark_cas_parallel", description="Benchmarking CAS Parallel")
+def benchmark_cas_pipeline(pipeline_config_paths: t.List[str]) -> None:
+    with dsl.ParallelFor(pipeline_config_paths) as item:
+        benchmark_cas_op = create_job(
+            dsl_component=job_components.benchmarking.benchmark_cas,
+            component_name=constants.BENCHMARKING_COMPONENT_NAME,
+            gcs_config_path=item.benchmarking_gcs_config_path,
+        )
+        _ = benchmark_cas_op()
