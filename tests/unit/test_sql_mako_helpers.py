@@ -1,5 +1,5 @@
 """
-Test cases for the functions in the 'mako_helpers' module of the 'casp.bq_manager.sql' package.
+Test cases for the functions in the 'mako_helpers' module of the 'casp.data_manager' package.
 
 These test cases cover the following functions:
 - _string_value_processor
@@ -67,7 +67,7 @@ def test_where_clause() -> None:
 
     Test cases:
     - When no filters or an empty dictionary is provided, it should return an empty string.
-    - When 'equals' and 'in' filter types are used, it should construct the WHERE clause correctly.
+    - When 'equals', 'in', 'not equals', 'not in' filter types are used, it should construct the WHERE clause correctly.
     - When an unsupported filter type is provided, it should raise a ValueError.
     - When string and boolean values are used in 'equals' filter, it should construct the WHERE clause correctly.
     """
@@ -79,6 +79,15 @@ def test_where_clause() -> None:
 
     # Test 'in' filter
     assert mako_helpers.where({"cell_type__in": ["T cell", "neuron"]}) == "where\n    cell_type in ('T cell', 'neuron')"
+
+    # Test 'not equals' filter
+    assert mako_helpers.where({"organism__not_eq": "Homo sapiens"}) == "where\n    organism != 'Homo sapiens'"
+
+    # Test 'not in' filter
+    assert (
+        mako_helpers.where({"cell_type__not_in": ["T cell", "neuron"]})
+        == "where\n    cell_type not in ('T cell', 'neuron')"
+    )
 
     # Test unsupported filter type
     with pytest.raises(ValueError):

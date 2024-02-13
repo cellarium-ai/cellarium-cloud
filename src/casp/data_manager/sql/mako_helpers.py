@@ -113,7 +113,7 @@ def select(column_names: t.List[str]) -> str:
 
 def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
     """
-    Construct a SQL WHERE clause from the provided filters.
+    Construct a SQL where clause from the provided filters.
 
     :param filters: A dictionary containing filter criteria, structured as {column_name__filter_type: value}. |br|
         Supported filter_types: |br|
@@ -121,6 +121,11 @@ def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
                 Example: ``{"organism__eq": "Homo sapiens"}`` results in ``organism='Homo sapiens'``. |br|
             ``"in"`` - Used for an 'in' comparison with a set of values. |br|
                 Example: ``{"cell_type__in": ["T cell", "neuron"]}`` results in ``cell_type in ('T cell', 'neuron')``.
+            ``"not_eq"`` - Used for an 'not equals' comparison. Meaning that the query would exclude rows with such
+                a value |br|
+                Example: ``{"assay__not_eq": "Drop-seq"}
+            ``"not_in"`` - Used for 'not in' comparison with a set of values to exclude. |br|
+                Example: ``{"assay__not_eq": ["Drop-seq", "microwell-seq", "BD Rhapsody Targeted mRNA"]}
     :raises ValueError: If an unsupported filter type is provided.
     :return: A string representing the constructed WHERE clause, or an empty string if no valid filters are provided.
 
@@ -164,6 +169,24 @@ def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
 
             filter_value = ", ".join(filter_value)
             condition = f"{column_name} in ({filter_value})"
+
+        elif filter_type == ComparisonOperators.NOT_EQUAL:
+            if isinstance(filter_value, str):
+                filter_value = _string_value_processor(v=filter_value)
+            if isinstance(filter_value, bool):
+                filter_value = _bool_value_processor(v=filter_value)
+
+            condition = f"{column_name} != {filter_value}"
+
+        elif filter_type == ComparisonOperators.NOT_IN:
+            if isinstance(filter_value[0], str):
+                filter_value = [_string_value_processor(x) for x in filter_value]
+            if isinstance(filter_value[0], int):
+                filter_value = [_int_value_processor(x) for x in filter_value]
+
+            filter_value = ", ".join(filter_value)
+            condition = f"{column_name} not in ({filter_value})"
+
         else:
             raise ValueError(
                 f"At the moment only {', '.join(ComparisonOperators.CURRENTLY_SUPPORTED)} operators supported"

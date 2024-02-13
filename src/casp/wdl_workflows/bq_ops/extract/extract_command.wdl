@@ -1,7 +1,6 @@
 task extract {
     String version = "extract_v1.1.0"
     String docker_image
-    String project_id
     String bq_dataset
     String extract_table_prefix
     Int start_bin
