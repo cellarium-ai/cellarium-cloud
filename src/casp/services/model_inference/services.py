@@ -1,7 +1,6 @@
 import typing as t
 
 import anndata
-import numpy
 import numpy as np
 from cellarium.ml import CellariumAnnDataDataModule, CellariumModule
 from smart_open import open
@@ -44,7 +43,7 @@ class ModelInferenceService:
 
     def _get_output_from_model(
         self, model: models.CASModel, adata_file: t.BinaryIO
-    ) -> t.Tuple[numpy.ndarray, t.List[str]]:
+    ) -> t.Tuple[np.ndarray, t.List[str]]:
         """
         Get output from cellarium-ml model that predicts embeddings given an input adata file.
 
@@ -86,13 +85,15 @@ class ModelInferenceService:
         """
         if embeddings.shape[0] != len(obs_ids):
             raise exceptions.ModelOutputError(
-                "Model Output Error: Length of obs_ids and embeddings should be the same."
+                f"The number of embeddings generated ({embeddings.shape[0]}) does not match "
+                f"the number of observation IDs provided ({len(obs_ids)})."
             )
 
         if embeddings.shape[1] != model_info.embedding_dimension:
             raise exceptions.ModelOutputError(
-                f"Model Output Error: Number of embedding dimensions should be "
-                f"{model_info.embedding_dimensions} but got {embeddings.shape[1]}"
+                f"The dimensionality of the embeddings generated ({embeddings.shape[1]}) does not match "
+                f"the expected embedding dimension ({model_info.embedding_dimension}) specified in model_info. "
+                f"Ensure that the model is configured to produce embeddings of the correct dimensionality."
             )
 
     def embed_adata_file(self, file_to_embed: t.BinaryIO, model_name: str) -> schemas.ModelEmbeddings:

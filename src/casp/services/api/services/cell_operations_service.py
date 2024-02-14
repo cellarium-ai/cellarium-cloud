@@ -82,7 +82,7 @@ class CellOperationsService:
                 f"This could probably be caused by Vector Search overload."
             )
         if len(knn_response[0]) == 0:
-            raise exceptions.VectorSearchResponseError("Vector Search returned match with 0 neighbors.")
+            raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
     def get_knn_matches(self, embeddings: np.array, model_name: str) -> t.List[t.List[MatchNeighbor]]:
         """
