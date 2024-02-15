@@ -23,8 +23,10 @@ jobs:
       id-token: write
     env:
       DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
-      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
-      PYTORCH_CUDA_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda
+      PYTORCH_IMAGE_NAME_DEV: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-dev
+      PYTORCH_IMAGE_NAME_PROD: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-prod
+      PYTORCH_CUDA_IMAGE_NAME_DEV: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda-dev
+      PYTORCH_CUDA_IMAGE_NAME_PROD: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda-prod
     steps:
       - uses: actions/checkout@v2
       - id: get-tag
@@ -34,8 +36,10 @@ jobs:
       - uses: ./.github/actions/docker-update
         with:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
-          pytorch-image-name: ${{ env.PYTORCH_IMAGE_NAME }}
-          pytorch-cuda-image-name: ${{ env.PYTORCH_CUDA_IMAGE_NAME }}
+          pytorch-image-name-dev: ${{ env.PYTORCH_IMAGE_NAME_DEV }}
+          pytorch-image-name-prod: ${{ env.PYTORCH_IMAGE_NAME_DEV }}
+          pytorch-cuda-image-name-dev: ${{ env.PYTORCH_CUDA_IMAGE_NAME_DEV }}
+          pytorch-cuda-image-name-prod: ${{ env.PYTORCH_CUDA_IMAGE_NAME_PROD }}
           image-tag: ${{ env.TAG }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
