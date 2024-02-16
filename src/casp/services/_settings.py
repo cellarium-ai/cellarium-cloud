@@ -17,10 +17,12 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
-    APP_VERSION: str = "1.4.1-rc.1"
+    APP_VERSION: str = "1.4.1-alpha.2"
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR = SERVICES_DIR
+    DEFAULT_SERVICE_HOST: str = "0.0.0.0"
+    DEFAULT_SERVICE_PORT: int = 8000
     # Sentry
     SENTRY_DSN: str = os.environ.get("SENTRY_DSN")
     SENTRY_ENABLE_TRACING: bool = True
@@ -29,8 +31,6 @@ class AllEnvSettings(BaseSettings):
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
-    SERVER_HOST: str = "0.0.0.0"
-    SERVER_PORT: int = 8000
     AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 350  # 350 seconds
     AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 300  # 300 seconds
     MODEL_SERVER_URL: str = "https://cellarium-cloud-model.cellarium.ai"
@@ -84,6 +84,9 @@ class ProductionSettings(AllEnvSettings):
 class LocalSettings(AllEnvSettings):
     # General
     debug = True
+    MODEL_SERVER_URL: str = "http://localhost:8001"
+    API_SERVICE_PORT: int = 8000
+    MODEL_SERVICE_PORT: int = 8001
     # Database
     DB_HOST: str = os.environ.get("DB_HOST")
     DB_PORT: str = os.environ.get("DB_PORT")

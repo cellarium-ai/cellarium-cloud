@@ -4,13 +4,15 @@ WORKDIR /app
 USER root
 
 # Install Git to be able to install some Dependencies (such as scvid module)
-RUN apt-get update
-RUN yes | apt-get install git gcc
+RUN apt-get update && \
+    apt-get install -y git gcc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Dependencies
 COPY requirements.txt .
 COPY test-requirements.txt .
-RUN pip install Cython numpy
+
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install -r test-requirements.txt
