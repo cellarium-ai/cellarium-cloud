@@ -108,7 +108,7 @@ class CellOperationsService:
             )
             self.__validate_knn_response(embeddings=embeddings_chunks[i], knn_response=matches)
             all_matches.extend(matches)
-        
+
         return all_matches
 
     def get_knn_matches_as_dict(self, embeddings: np.array, model_name: str) -> t.List[t.List[t.Dict[str, t.Any]]]:
