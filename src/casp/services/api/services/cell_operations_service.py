@@ -95,13 +95,21 @@ class CellOperationsService:
         """
         index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
 
-        matches = index_endpoint_client.match(
-            deployed_index_id=index.deployed_index_id,
-            queries=embeddings,
-            num_neighbors=index.num_neighbors,
-        )
-        self.__validate_knn_response(embeddings=embeddings, knn_response=matches)
-        return matches
+        # Break embeddings into chunks so we don't overload the matching engine
+        num_chunks: int = embeddings.length / 20
+        embeddings_chunks = np.array_split(embeddings, num_chunks)
+
+        all_matches = []
+        for i in range(0, num_chunks):
+            matches = index_endpoint_client.match(
+                deployed_index_id=index.deployed_index_id,
+                queries=embeddings_chunks[i],
+                num_neighbors=index.num_neighbors,
+            )
+            self.__validate_knn_response(embeddings=embeddings_chunks[i], knn_response=matches)
+            all_matches.extend(matches)
+        
+        return all_matches
 
     def get_knn_matches_as_dict(self, embeddings: np.array, model_name: str) -> t.List[t.List[t.Dict[str, t.Any]]]:
         index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
