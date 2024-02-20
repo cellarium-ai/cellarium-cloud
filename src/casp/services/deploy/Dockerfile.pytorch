@@ -10,12 +10,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Dependencies
-COPY requirements.txt .
-COPY test-requirements.txt .
+COPY requirements ./requirements
 
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-RUN pip install -r test-requirements.txt
+RUN pip install -r requirements/base.txt
+RUN pip install -r requirements/deployable.txt
+RUN pip install -r requirements/test.txt
 
 # Copy Files and Secrets
 COPY src .
