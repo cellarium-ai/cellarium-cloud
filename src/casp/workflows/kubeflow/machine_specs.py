@@ -96,6 +96,19 @@ class TDigestFilterFeaturesMachineSpec(MachineSpecBase):
     accelerator_count: int = 1
 
 
+class BecnchmarkingMachineSpec(MachineSpecBase):
+    display_name: str = "Benchmarking"
+    replica_count: int = 1
+    machine_type: str = "n1-standard-4"
+
+
+@dataclass
+class PlaygroundMachineSpec(MachineSpecBase):
+    display_name: str = "Playground"
+    replica_count: int = 1
+    machine_type: str = "n1-standard-1"
+
+
 component_machine_specs_map = {
     constants.PCA_TRAIN_COMPONENT_NAME: PCATrainMachineSpec,
     constants.PCA_EMBED_COMPONENT_NAME: PCAEmbedMachineSpec,
@@ -106,4 +119,5 @@ component_machine_specs_map = {
     constants.TDIGEST_COMPONENT_NAME: TDigestMachineSpec,
     constants.LOGISTIC_REGRESSION_TRAIN_COMPONENT_NAME: LogisticRegressionTrainMachineSpec,
     constants.TDIGEST_FILTER_FEATURES_COMPONENT_NAME: TDigestFilterFeaturesMachineSpec,
+    constants.BENCHMARKING_COMPONENT_NAME: BecnchmarkingMachineSpec,
 }

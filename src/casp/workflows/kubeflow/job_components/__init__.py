@@ -1,4 +1,5 @@
 from casp.workflows.kubeflow.job_components import (  # noqa
+    benchmarking,
     logistic_regression,
     pca,
     pca_index_create,

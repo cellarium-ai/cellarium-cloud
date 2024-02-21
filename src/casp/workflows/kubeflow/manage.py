@@ -153,5 +153,20 @@ def summary_stats_and_logistic_regression_train(config_yaml_path: Annotated[str,
     )
 
 
+@typer_app.command()
+def benchmark_cas(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    """
+    Run the benchmarking for CAS.
+
+    :param config_yaml_path: Path to the local YAML config file containing a list of configs for each run.
+    """
+    config_paths = config_management.create_configs(config_yaml_path)
+    submit_pipeline(
+        pipelines.benchmark_cas_pipeline,
+        pipeline_display_name="benchmark_cas_parallel",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
 if __name__ == "__main__":
     typer_app()

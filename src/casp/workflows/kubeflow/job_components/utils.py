@@ -4,6 +4,9 @@ from google_cloud_pipeline_components.v1.custom_job import create_custom_trainin
 
 from casp.workflows.kubeflow import machine_specs
 
+# TODO: Think of passing a bare python function in `create_job` and the
+# decorating it inside of `create_job` with `@dsl.component`
+
 
 def create_job(
     dsl_component: t.Callable[..., t.Any], component_name: str, gcs_config_path: str
@@ -18,7 +21,8 @@ def create_job(
     :return: Callable custom training job.
     """
     machine_spec = machine_specs.component_machine_specs_map[component_name]
-
+    # TODO:
+    # dsl_component.base_image = machine_spec.base_image
     job = create_custom_training_job_from_component(
         dsl_component,
         display_name=machine_spec.display_name,

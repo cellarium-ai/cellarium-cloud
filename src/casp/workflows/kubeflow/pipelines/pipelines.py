@@ -218,3 +218,14 @@ def summary_stats_lr_train_pipeline(
         pipeline_config_paths=logistic_regression_config_paths
     )
     logistic_regression_train_task.after(summary_stats_train_task)
+
+
+@dsl.pipeline(name="benchmark_cas_parallel", description="Benchmarking CAS Parallel")
+def benchmark_cas_pipeline(pipeline_config_paths: t.List[str]) -> None:
+    with dsl.ParallelFor(pipeline_config_paths) as item:
+        benchmark_cas_op = create_job(
+            dsl_component=job_components.benchmarking.benchmark_cas,
+            component_name=constants.BENCHMARKING_COMPONENT_NAME,
+            gcs_config_path=item.benchmarking_gcs_config_path,
+        )
+        _ = benchmark_cas_op()
