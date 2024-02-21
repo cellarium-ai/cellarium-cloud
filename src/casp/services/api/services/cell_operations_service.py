@@ -5,6 +5,8 @@ infrastructure over different protocols in async manner.
 
 import typing as t
 
+import math
+
 import numpy as np
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 
@@ -17,6 +19,7 @@ from casp.services.utils import numpy_utils
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
+GET_MATCHES_CHUNK_SIZE = 20
 
 class CellOperationsService:
     """
@@ -96,7 +99,7 @@ class CellOperationsService:
         index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
 
         # Break embeddings into chunks so we don't overload the matching engine
-        num_chunks: int = int(embeddings.size / 20) + 1
+        num_chunks: int = math.ceil(len(embeddings) / GET_MATCHES_CHUNK_SIZE)
         embeddings_chunks = np.array_split(embeddings, num_chunks)
 
         all_matches = []
