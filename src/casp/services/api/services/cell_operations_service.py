@@ -96,7 +96,7 @@ class CellOperationsService:
         index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
 
         # Break embeddings into chunks so we don't overload the matching engine
-        num_chunks: int = embeddings.size / 20
+        num_chunks: int = int(embeddings.size / 20) + 1
         embeddings_chunks = np.array_split(embeddings, num_chunks)
 
         all_matches = []
