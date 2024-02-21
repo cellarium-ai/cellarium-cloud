@@ -3,9 +3,8 @@ Cellarium Service Controller. It provides methods to communicate with services i
 infrastructure over different protocols in async manner.
 """
 
-import typing as t
-
 import math
+import typing as t
 
 import numpy as np
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
@@ -20,6 +19,7 @@ from casp.services.utils import numpy_utils
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
 GET_MATCHES_CHUNK_SIZE = 20
+
 
 class CellOperationsService:
     """
