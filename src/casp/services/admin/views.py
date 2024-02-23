@@ -230,12 +230,88 @@ class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
     ]
 
 
+def shorten_value_formatter(view, context, model, name) -> str:
+    """
+    Shorten the value to 20 characters plus ellipsis
+    """
+    value = getattr(model, name)
+    return value[:20] + "..." if len(value) > 20 else value
+
+
+class CellInfoAdminView(CellariumCloudAdminModelView):
+    column_list = (
+        "cas_cell_index",
+        "original_cell_id",
+        "cell_type",
+        "cell_type_ontology_term_id",
+        "assay",
+        "development_stage",
+        "tissue",
+        "disease",
+        "cas_ingest.dataset_id",
+    )
+    column_labels = {"cas_ingest.dataset_id": "Dataset ID"}
+    column_filters = (
+        "cas_cell_index",
+        "cas_ingest_id",
+        "original_cell_id",
+        "cell_type",
+        "cell_type_ontology_term_id",
+        "assay",
+        "development_stage",
+        "tissue",
+        "disease",
+        "cas_ingest.dataset_id",
+    )
+    column_select_related_list = ("cas_ingest",)
+    column_formatters = {"original_cell_id": shorten_value_formatter}
+
+    page_size = 100
+
+
+class CellFeatureInfoAdminView(CellariumCloudAdminModelView):
+    column_list = (
+        "cas_feature_index",
+        "original_feature_id",
+        "feature_name",
+        "feature_biotype",
+        "feature_is_filtered",
+        "feature_reference",
+    )
+    column_filters = (
+        "cas_feature_index",
+        "original_feature_id",
+        "feature_name",
+        "feature_biotype",
+        "feature_is_filtered",
+        "feature_reference",
+    )
+    column_formatters = {"original_feature_id": shorten_value_formatter}
+    page_size = 50
+
+
+class CellIngestInfoAdminView(CellariumCloudAdminModelView):
+    column_list = ("cas_ingest_id", "dataset_id", "ingest_timestamp")
+    column_filters = ("cas_ingest_id", "dataset_id", "ingest_timestamp")
+
+
 admin = Admin(
     flask_app,
     name="Cellarium Cloud Admin",
     template_mode="bootstrap3",
     index_view=CellariumCloudAdminIndexView(url="/", template="admin/main_page.html"),
 )
-admin.add_view(UserAdminView(models.User, db_session, name="User"))
-admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel"))
-admin.add_view(CASMatchingEngineAdminView(models.CASMatchingEngineIndex, db_session, name="MatchingEngine"))
+admin.add_view(UserAdminView(models.User, db_session, name="User", category="Users"))
+admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel", category="ML Management"))
+admin.add_view(
+    CASMatchingEngineAdminView(
+        models.CASMatchingEngineIndex, db_session, name="MatchingEngine", category="ML Management"
+    )
+)
+admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category="Cell Data Management"))
+admin.add_view(
+    CellFeatureInfoAdminView(models.CellFeature, db_session, name="CellFeature", category="Cell Data Management")
+)
+admin.add_view(
+    CellIngestInfoAdminView(models.CellIngestInfo, db_session, name="CellIngestInfo", category="Cell Data Management")
+)

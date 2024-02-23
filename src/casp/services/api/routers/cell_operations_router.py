@@ -54,7 +54,7 @@ async def nearest_neighbor_search(
 @cell_operations_router.post(path="/query-cells-by-ids", response_model=t.List[schemas.CellariumCellMetadata])
 def get_cells_by_ids(
     item: schemas.CellariumCellByIdsInput,
-    user: models.User = Depends(dependencies.authenticate_user),
+    # user: models.User = Depends(dependencies.authenticate_user),
 ):
     """
     Get cells by their ids from a single anndata file with Cellarium CAS. Input file should be validated and sanitized
@@ -62,7 +62,4 @@ def get_cells_by_ids(
     """
     return cell_operations_service.get_cells_by_ids_for_user(
         cell_ids=item.cas_cell_ids,
-        model_name=item.model_name,
-        metadata_feature_names=item.metadata_feature_names,
-        user=user,
     )
