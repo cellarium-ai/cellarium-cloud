@@ -126,5 +126,5 @@ class ModelInferenceClient(HTTPAsyncClient):
         """
         request_data = {"model_name": model_name}
         request_files = [{"file": file_to_embed, "filename": "adata.h5ad", "form_data_field_name": "file"}]
-        url_endpoint = cls._get_endpoint_url(endpoint="api/model_inference/embed")
+        url_endpoint = cls._get_endpoint_url(endpoint="api/embed")
         return await cls.post(url=url_endpoint, data=request_data, files=request_files)

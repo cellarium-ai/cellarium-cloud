@@ -81,6 +81,8 @@ class CellOperationsService:
                 f"Number of query ids ({len(embeddings)}) and knn matches ({len(knn_response)}) does not match. "
                 f"This could probably be caused by Vector Search overload."
             )
+        if len(knn_response[0]) == 0:
+            raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
     def get_knn_matches(self, embeddings: np.array, model_name: str) -> t.List[t.List[MatchNeighbor]]:
         """
