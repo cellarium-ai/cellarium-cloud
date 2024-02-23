@@ -12,7 +12,16 @@ class ComparisonOperators:
     LESS_THAN = "lt"
     LESS_THAN_OR_EQUAL = "lte"
 
-    CURRENTLY_SUPPORTED = [EQUAL, IN, NOT_EQUAL, NOT_IN]
+    CURRENTLY_SUPPORTED = [
+        EQUAL,
+        IN,
+        NOT_EQUAL,
+        NOT_IN,
+        GREATER_THAN,
+        GREATER_THAN_OR_EQUAL,
+        LESS_THAN,
+        LESS_THAN_OR_EQUAL,
+    ]
 
 
 class TemplateDataDictNames:

@@ -1,5 +1,6 @@
 import typing as t
 
+from casp.data_manager.sql import exceptions
 from casp.data_manager.sql.constants import CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, ComparisonOperators
 from casp.data_manager.sql.validation.template_data_validator import validate_column_name
 
@@ -17,7 +18,7 @@ def _string_value_processor(v: str) -> str:
     return f"'{v}'"
 
 
-def _int_value_processor(v: int) -> str:
+def _numeric_value_processor(v: int | float) -> str:
     """
     Convert input value into string as is, preparing it for SQL syntax.
 
@@ -34,6 +35,99 @@ def _bool_value_processor(v: bool) -> str:
     :param v: The boolean value to be processed.
     :return: The processed boolean in string format and uppercase."""
     return str(v).upper()
+
+
+def _list_value_processor(v: list) -> str:
+    """
+    Convert the provided list of values to a SQL compatible string format based on the type of the first element in the
+    list.
+
+    :param v: The list of values to be processed.
+
+    :return: The processed list of values in string format.
+    """
+    if isinstance(v[0], str):
+        return f"({', '.join([_string_value_processor(x) for x in v])})"
+    elif isinstance(v[0], int):
+        return f"({', '.join([_numeric_value_processor(x) for x in v])})"
+
+
+def _process_equality_operator_filter_value(filter_value: t.Any, filter_type: str) -> str:
+    """
+    Process the provided filter value for an equality operator.
+
+    :param filter_value: The value to be processed.
+
+    :return: The processed value in string format.
+    """
+    # TODO: Add support for date and time values
+    if isinstance(filter_value, str):
+        return _string_value_processor(v=filter_value)
+    elif isinstance(filter_value, bool):
+        return _bool_value_processor(v=filter_value)
+    elif isinstance(filter_value, (int, float)):
+        return _numeric_value_processor(v=filter_value)
+    else:
+        raise exceptions.UnsupportedSQLTypeException(
+            f"Unsupported type {type(filter_value)} for `{filter_type}`. " f"Value should be a primitive python type."
+        )
+
+
+def _process_relational_operator_filter_value(filter_value: t.Any, filter_type: str) -> str:
+    """
+    Process the provided filter value for a relational operator.
+
+    :param filter_value: The value to be processed.
+
+    :return: The processed value in string format.
+    """
+    if isinstance(filter_value, (int, float)):
+        return _numeric_value_processor(v=filter_value)
+    else:
+        raise exceptions.UnsupportedSQLTypeException(
+            f"Unsupported type {type(filter_value)} of value for filter {filter_type}. "
+            f"`{filter_type}` filter type supports only integers and floats."
+        )
+
+
+def _process_membership_operator_filter_value(filter_value: t.Any, filter_type: str) -> str:
+    """
+    Process the provided filter value for a membership operator.
+
+    :param filter_value: The value to be processed.
+
+    :return: The processed value in string format.
+    """
+    if isinstance(filter_value, (list, tuple)):
+        return _list_value_processor(v=filter_value)
+    else:
+        raise exceptions.UnsupportedSQLTypeException(
+            f"Unsupported type {type(filter_type)} for `{filter_type}`. "
+            f"Value should be a list of numbers or strings."
+        )
+
+
+FILTER_VALUE_PROCESS_HANDLERS_MAPPING = {
+    ComparisonOperators.EQUAL: _process_equality_operator_filter_value,
+    ComparisonOperators.NOT_EQUAL: _process_equality_operator_filter_value,
+    ComparisonOperators.IN: _process_membership_operator_filter_value,
+    ComparisonOperators.NOT_IN: _process_membership_operator_filter_value,
+    ComparisonOperators.GREATER_THAN: _process_relational_operator_filter_value,
+    ComparisonOperators.GREATER_THAN_OR_EQUAL: _process_relational_operator_filter_value,
+    ComparisonOperators.LESS_THAN: _process_relational_operator_filter_value,
+    ComparisonOperators.LESS_THAN_OR_EQUAL: _process_relational_operator_filter_value,
+}
+
+SQL_OPERATORS_MAPPING = {
+    ComparisonOperators.EQUAL: "=",
+    ComparisonOperators.NOT_EQUAL: "!=",
+    ComparisonOperators.IN: "in",
+    ComparisonOperators.NOT_IN: "not in",
+    ComparisonOperators.GREATER_THAN: ">",
+    ComparisonOperators.GREATER_THAN_OR_EQUAL: ">=",
+    ComparisonOperators.LESS_THAN: "<",
+    ComparisonOperators.LESS_THAN_OR_EQUAL: "<=",
+}
 
 
 def _normalize_column_names(column_names: t.List[str]) -> t.List[str]:
@@ -126,6 +220,15 @@ def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
                 Example: ``{"assay__not_eq": "Drop-seq"}
             ``"not_in"`` - Used for 'not in' comparison with a set of values to exclude. |br|
                 Example: ``{"assay__not_eq": ["Drop-seq", "microwell-seq", "BD Rhapsody Targeted mRNA"]}
+            ``"gt"`` - Used for an `greater than` comparison. |br|
+                Example: ``{"total_mrna_umis__gt": 13000}
+            ``"gte"`` - Used for an `greater than or equal` comparison. |br|
+                Example: ``{"total_mrna_umis__gte": 13000}
+            ``"lt"`` - Used for an `less than` comparison. |br|
+                Example: ``{"total_mrna_umis__lt": 13000}
+            ``"lte"`` - Used for an `less than or equal` comparison. |br|
+                Example: ``{"total_mrna_umis__lte": 13000}
+
     :raises ValueError: If an unsupported filter type is provided.
     :return: A string representing the constructed WHERE clause, or an empty string if no valid filters are provided.
 
@@ -153,45 +256,17 @@ def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
     for filter_name, filter_value in filters.items():
         column_name, filter_type = filter_name.split("__")
 
-        if filter_type == ComparisonOperators.EQUAL:
-            if isinstance(filter_value, str):
-                filter_value = _string_value_processor(v=filter_value)
-            if isinstance(filter_value, bool):
-                filter_value = _bool_value_processor(v=filter_value)
+        filter_value_processor = FILTER_VALUE_PROCESS_HANDLERS_MAPPING.get(filter_type)
 
-            condition = f"{column_name} = {filter_value}"
-
-        elif filter_type == ComparisonOperators.IN:
-            if isinstance(filter_value[0], str):
-                filter_value = [_string_value_processor(x) for x in filter_value]
-            if isinstance(filter_value[0], int):
-                filter_value = [_int_value_processor(x) for x in filter_value]
-
-            filter_value = ", ".join(filter_value)
-            condition = f"{column_name} in ({filter_value})"
-
-        elif filter_type == ComparisonOperators.NOT_EQUAL:
-            if isinstance(filter_value, str):
-                filter_value = _string_value_processor(v=filter_value)
-            if isinstance(filter_value, bool):
-                filter_value = _bool_value_processor(v=filter_value)
-
-            condition = f"{column_name} != {filter_value}"
-
-        elif filter_type == ComparisonOperators.NOT_IN:
-            if isinstance(filter_value[0], str):
-                filter_value = [_string_value_processor(x) for x in filter_value]
-            if isinstance(filter_value[0], int):
-                filter_value = [_int_value_processor(x) for x in filter_value]
-
-            filter_value = ", ".join(filter_value)
-            condition = f"{column_name} not in ({filter_value})"
-
-        else:
-            raise ValueError(
+        if not filter_value_processor:
+            raise exceptions.SQLSyntaxParseException(
                 f"At the moment only {', '.join(ComparisonOperators.CURRENTLY_SUPPORTED)} operators supported"
             )
 
+        filter_value = filter_value_processor(filter_value=filter_value, filter_type=filter_type)
+        sql_operator = SQL_OPERATORS_MAPPING[filter_type]
+
+        condition = f"{column_name} {sql_operator} {filter_value}"
         where_conditions.append(condition)
 
     where_clause_body = "\n    and ".join(where_conditions)
