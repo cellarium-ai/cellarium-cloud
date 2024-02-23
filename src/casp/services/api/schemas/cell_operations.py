@@ -48,8 +48,6 @@ class SearchQueryCellResult(BaseModel):
 
 class CellariumCellByIdsInput(BaseModel):
     cas_cell_ids: t.List[int]
-    model_name: str
-    metadata_feature_names: t.List[str]
 
 
 class CellariumCellMetadata(BaseModel):

@@ -59,17 +59,3 @@ async def get_model_list(user: models.User = Depends(dependencies.authenticate_u
     :return: List of CAS models
     """
     return cellarium_general_service.get_model_list_for_user(user=user)
-
-
-@cellarium_general_router.get("/test-redis")
-async def test_redis():
-    cache = RedisCache()
-    value = cache.get("test")
-    return {"value": value}
-
-
-@cellarium_general_router.post("/test-redis")
-async def test_redis(value: str):
-    cache = RedisCache()
-    cache.set("test", value)
-    return {"value": value}

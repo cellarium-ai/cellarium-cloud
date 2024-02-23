@@ -19,7 +19,7 @@ class BaseDataManager:
     """
 
     SQL_TEMPLATE_DIR: str
-    redis_cache_key_prefix: str
+    redis_cache_key_prefix: str = None
 
     def __init__(self):
         credentials, project = utils.get_google_service_credentials()

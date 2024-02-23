@@ -17,8 +17,9 @@ class RedisSerializer:
         :return: Serialized object as bytes.
         """
         if type(obj) is int:
+            # import django.core.cache.backends.base
             return obj
-        return pickle.dumps(obj)
+        return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
     @staticmethod
     def loads(data: t.Any) -> t.Any:
@@ -29,6 +30,7 @@ class RedisSerializer:
 
         :return: Deserialized object.
         """
+        # print(data)
         try:
             return int(data)
         except ValueError:
@@ -143,14 +145,26 @@ class RedisCache:
             timeout is set. It is recommended to avoid using ``None`` as it can lead to memory leaks.
         """
         client = self.get_client()
-        _redis_data = {self._compose_key(key): self.serializer.dumps(value) for key, value in data.items()}
+        _redis_data = {self._compose_key(k): self.serializer.dumps(v) for k, v in data.items()}
         pipeline = client.pipeline()
-        pipeline.mset({k: self.serializer.dumps(v) for k, v in _redis_data.items()})
+        pipeline.mset(_redis_data)
 
         if timeout is not None:
             # Setting timeout for each key as redis does not support timeout
             # with mset().
-            for key in data:
+            for key, _ in _redis_data.items():
                 pipeline.expire(key, timeout)
 
         pipeline.execute()
+
+    def exists_many(self, keys: t.List[str]) -> t.List[bool]:
+        """
+        Check if keys exist in cache.
+
+        :param keys: List of keys to check if they exist in cache.
+
+        :return: List of booleans indicating if keys exist in cache.
+        """
+        client = self.get_client()
+        _redis_keys = [self._compose_key(key) for key in keys]
+        return [client.exists(key) > 0 for key in _redis_keys]

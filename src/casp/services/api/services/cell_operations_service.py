@@ -287,31 +287,15 @@ class CellOperationsService:
             for i in range(0, len(query_ids))
         ]
 
-    def get_cells_by_ids_for_user(
-        self, user: models.User, cell_ids: t.List[int], metadata_feature_names: t.List[str], model_name: str
-    ) -> t.List[t.Dict[str, t.Any]]:
+    def get_cells_by_ids_for_user(self, cell_ids: t.List[int]) -> t.List[t.Dict[str, t.Any]]:
         """
         Get cells by their ids from BigQuery `cas_cell_info` table.
 
-        :param user: User object to check permissions for
         :param cell_ids: Cas cell indexes from BigQuery
-        :param metadata_feature_names: Metadata features to return from BigQuery `cas_cell_info` table
-        :param model_name: Name of the model to query. Used to get the dataset name where to get the cells from
 
         :return: List of dictionaries representing the query results.
         """
-        self.authorize_model_for_user(user=user, model_name=model_name)
-        for feature_name in metadata_feature_names:
-            if feature_name not in AVAILABLE_FIELDS_DICT:
-                raise exceptions.CellMetadataColumnDoesntExist(f"Feature {feature_name} is not available for querying")
-
-        if "cas_cell_index" not in metadata_feature_names:
-            metadata_feature_names.append("cas_cell_index")
         try:
-            return self.cell_operations_dm.get_cell_metadata_by_ids(
-                cell_ids=cell_ids,
-                metadata_feature_names=metadata_feature_names,
-                model_name=model_name,
-            )
+            return self.cell_operations_dm.get_cell_metadata_by_ids(cell_ids=cell_ids)
         except dm_exc.NotFound as e:
             raise exceptions.InvalidInputError(str(e))
