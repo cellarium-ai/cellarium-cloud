@@ -18,7 +18,7 @@ from casp.services.utils import numpy_utils
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
-GET_MATCHES_CHUNK_SIZE = 5
+GET_MATCHES_CHUNK_SIZE = 2
 
 
 class CellOperationsService:
