@@ -4,7 +4,7 @@ This repository is intended to hold the functional prototype for a single cell a
 
 ### Prerequisites / Installation
 
- - Python 3.7+
+ - Python 3.10+
 
 ### Developer Setup
 

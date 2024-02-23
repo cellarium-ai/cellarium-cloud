@@ -20,7 +20,7 @@ setup(
     long_description=long_description,
     install_requires=install_requires,
     tests_require=["coverage", "pytest"],
-    python_requires=">=3.7",
+    python_requires=">=3.10",
     packages=find_packages("src"),
     package_dir={"": "src"},
     classifiers=[
@@ -28,9 +28,6 @@ setup(
         "Intended Audience :: Science/Research",
         "Natural Language :: English",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
