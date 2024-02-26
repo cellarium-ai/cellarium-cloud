@@ -6,6 +6,7 @@ infrastructure over different protocols in async manner.
 import math
 import typing as t
 
+import backoff
 import numpy as np
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 
@@ -104,15 +105,29 @@ class CellOperationsService:
 
         all_matches = []
         for i in range(0, num_chunks):
-            matches = index_endpoint_client.match(
-                deployed_index_id=index.deployed_index_id,
-                queries=embeddings_chunks[i],
-                num_neighbors=index.num_neighbors,
+            matches = self.__get_knn_matches_for_chunk(
+                embeddings_chunk=embeddings_chunks[i], index=index, index_endpoint_client=index_endpoint_client
             )
-            self.__validate_knn_response(embeddings=embeddings_chunks[i], knn_response=matches)
             all_matches.extend(matches)
 
         return all_matches
+
+    @backoff.on_exception(
+        backoff.expo, exceptions.VectorSearchResponseError, base=2, max_tries=4, backoff=backoff.full_jitter
+    )
+    def __get_knn_matches_for_chunk(
+        self,
+        embeddings_chunk: np.array,
+        index: models.CASMatchingEngineIndex,
+        index_endpoint_client: clients.CustomMatchingEngineIndexEndpointClient,
+    ) -> t.List[t.List[MatchNeighbor]]:
+        matches = index_endpoint_client.match(
+            deployed_index_id=index.deployed_index_id,
+            queries=embeddings_chunk,
+            num_neighbors=index.num_neighbors,
+        )
+        self.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
+        return matches
 
     def get_knn_matches_as_dict(self, embeddings: np.array, model_name: str) -> t.List[t.List[t.Dict[str, t.Any]]]:
         index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
