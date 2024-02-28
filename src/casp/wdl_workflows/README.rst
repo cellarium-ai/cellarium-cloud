@@ -208,6 +208,7 @@ Parameters
 - **CASExtractBQ.extract.bq_dataset** - BigQuery dataset name where to ingest the data.
 - **CASExtractBQ.extract.extract_table_prefix** - Prefix for the extract table name. This value should be the same as the one used in `CASPrepareExtractBQ.prepare_extract.extract_table_prefix`
 - **CASExtractBQ.bin_borders** - A list of lists with bin borders. Each list should contain two numbers, the first one is the start of the bin, the second one is the end of the bin.
+
 For example, `[[0, 9], [10, 19], [20, 29]]` will create 30 bins: 0-9, 10-19, 20-29. Each bin will be a
 separate `.h5ad` extract file. Each bin group will be executed in parallel on a separate VM. Number of bins per group
 should correspond to a number of CPU cores in each of the machine. It is not recommended to have more than 50 groups at

@@ -24,7 +24,12 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-# exclude_patterns = ["**/installation_template.rst"]
+
+html_logo = "assets/cellarium-logo-background-white.png"
+html_theme_options = {
+    "logo_only": True,
+    "style_nav_header_background": "#343131",
+}
 
 rst_epilog = """
 .. |br| raw:: html
@@ -36,4 +41,4 @@ rst_epilog = """
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
+html_static_path = ["assets"]

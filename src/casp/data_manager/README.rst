@@ -54,7 +54,7 @@ Example
 
 1. SQL Template example ``your_path_to_templates/templated_query.sql.mako``
 
-   .. code-block:: genericsql
+   .. code-block::
 
        <%!
            from casp.data_access_manager.sql import mako_helpers

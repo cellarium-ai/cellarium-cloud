@@ -1,11 +1,6 @@
 Cellarium Cloud
 ===============
 
-.. image:: https://raw.githubusercontent.com/cellarium-ai/cellarium-cloud/fg-docs/assets/cellarium-logo.png
-   :width: 150
-   :height: 150
-   :alt: Cellarium Logo
-
 **What's Cellarium Cloud?** Cellarium Cloud is the backend application that serves the Cellarium Cloud platform.
 This is a backend application that provides API for Cellarium Client tool. It is a mono-repository that contains all
 the services that are required to run the Cellarium Cloud platform.
