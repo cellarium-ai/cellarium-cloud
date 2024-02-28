@@ -16,26 +16,30 @@ Building Docker Image
 
 .. code-block:: bash
 
-    IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0
+    IMAGE_NAME=docker-image.dev/example # Name of the docker image
     docker build -t $IMAGE_NAME -f ./src/casp/services/deploy/Dockerfile.pytorch .
     docker push $IMAGE_NAME
 
 Deploying Docker Image via Cloud Run
 ------------------------------------
 
+To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <https://cloud.google.com/sdk/gcloud/reference/run/deploy>`_ for more information)
+
 .. code-block:: bash
 
-    IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0
-    ZONE=us-central1
-    DB_CONNECTION=dsp-cell-annotation-service:us-central1:cas-db-cluster
-    PROJECT_ID=dsp-cell-annotation-service
+    SERVICE_NAME=cas-admin-service # Name of the service
+    PROJECT_ID=example-project # Name of the project
+    IMAGE_NAME=docker-image.dev/example # Name of the docker image # Name of the docker image
+    REGION=us-central1 # Region where the service will be deployed
+    PORT=5000 # Port on which the service will be running (matches the port in the flask app)
+    DB_CONNECTION=example-project:us-region-example:db-cluster-name # Cloud SQL connection name
 
-    gcloud run deploy casp-admin-service \
-    --project $PROJECT_ID \
-    --image $IMAGE_NAME \
-    --region $ZONE \
-    --platform managed \
-    --port 8000 \
-    --allow-unauthenticated \
+    gcloud run deploy $SERVICE_NAME \
+    --project=$PROJECT_ID \
+    --image=$IMAGE_NAME \
+    --region=$ZONE \
+    --port=$PORT \
     --add-cloudsql-instances=$DB_CONNECTION \
-    --command casp/services/admin/entrypoint.sh
+    --command=casp/services/admin/entrypoint.sh
+    --platform managed \
+    --allow-unauthenticated

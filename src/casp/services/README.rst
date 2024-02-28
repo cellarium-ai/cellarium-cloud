@@ -36,7 +36,8 @@ Building Docker Images
 
 .. code-block:: bash
 
-    IMAGE_NAME=us-east4-docker.pkg.dev/dsp-cell-annotation-service/casp-pca/casp_pca_service:1.0-gpu
+    IMAGE_NAME=docker-image.dev/example
+
     docker build -t $IMAGE_NAME -f ./src/casp/services/deploy/Dockerfile.pytorch_cuda .
     docker push $IMAGE_NAME
 

@@ -37,27 +37,3 @@ rst_epilog = """
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
-
-
-# def substitute_installation_version():
-#     """
-#     Generate /modules/installation_.rst from /modules/installation.rst by substituting '|cas_version|' with a tagged
-#     version of a library.
-#     This step was necessary because the Sphinx builder couldn't replace the '|cas_version|' variable with a value
-#     inside a code block.
-#     """
-#     dir_path = os.path.dirname(os.path.realpath(__file__))
-#     cellarium_cas_version = get_tag()
-#
-#     with open(f"{dir_path}/modules/installation_template.rst", "r") as f:
-#         content = f.read()
-#
-#     # Replace the placeholder with the version
-#     content = content.replace("|cas_version|", cellarium_cas_version)
-#
-#     # Write the processed content to the actual .rst file
-#     with open(f"{dir_path}/modules/installation.rst", "w") as f:
-#         f.write(content)
-#
-#
-# substitute_installation_version()

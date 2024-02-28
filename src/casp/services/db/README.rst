@@ -9,34 +9,44 @@ but rather a library that is used by other services.
 Setting up a Database Cluster
 -----------------------------
 
-Create a db cluster:
+Create a db cluster (`More info  <https://cloud.google.com/sdk/gcloud/reference/sql/instances/create>`_)
 
 .. code-block:: bash
 
-    gcloud sql instances create cas-db-cluster \
+    DB_CLUSTER_NAME=cluster-example-name # Cluster name
+    NUM_CPUS=4 # Number of CPUs
+    MEMORY=15GB # Memory size
+    STORAGE_SIZE=100GB # Disk storage size
+
+    gcloud sql instances create $DB_CLUSTER_NAME \
     --database-version=POSTGRES_14 \
-    --cpu=1 \
-    --memory 3.75GB \
-    --storage-size 10GB \
+    --cpu=$NUM_CPUS \
+    --memory=$MEMORY \
+    --storage-size=$STORAGE_SIZE \
     --require-ssl \
     --region=us-central
 
-Create a cas-db-user:
+Create a db user and password for the cluster (`More info  <https://cloud.google.com/sdk/gcloud/reference/sql/users/create>`_)
 
 .. code-block:: bash
 
-    SECRET_PASSWORD='secretPassW0rd'
+    DB_CLUSTER_NAME=cluster-example-name # Cluster name
+    USERNAME=example-user # Username
+    SECRET_PASSWORD='secretPassW0rd' # Password
 
-    gcloud sql users create cas-db-user \
-    --instance=cas-db-cluster \
+    gcloud sql users create $USERNAME \
+    --instance=$DB_CLUSTER_NAME \
     --password=$SECRET_PASSWORD
 
-Create a cas-db:
+Create a database for the cluster (`More info  <https://cloud.google.com/sdk/gcloud/reference/sql/databases/create>`_)
 
 .. code-block:: bash
 
-    gcloud sql databases create cas-db \
-    --instance=cas-db-cluster
+    DB_NAME=example-db-name # Database name
+    DB_CLUSTER_NAME=cluster-example-name # Cluster name
+
+    gcloud sql databases create $DB_NAME \
+    --instance=$DB_CLUSTER_NAME
 
 Code Base Info
 --------------
