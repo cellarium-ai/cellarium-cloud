@@ -113,7 +113,7 @@ class CellOperationsService:
         return all_matches
 
     @backoff.on_exception(
-        backoff.expo, exceptions.VectorSearchResponseError, base=2, max_tries=4, backoff=backoff.full_jitter
+        backoff.expo, exceptions.VectorSearchResponseError, base=2, max_tries=4, jitter=backoff.full_jitter
     )
     def __get_knn_matches_for_chunk(
         self,
