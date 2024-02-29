@@ -1,0 +1,1 @@
+.. include:: ../../../../src/casp/services/admin/README.rst
