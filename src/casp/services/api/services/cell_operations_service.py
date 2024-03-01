@@ -122,9 +122,10 @@ class CellOperationsService:
                 reraise=True,
             )
             matches = retryer(
-                self.__get_knn_matches_for_chunk(
-                    embeddings_chunk=embeddings_chunks[i], index=index, index_endpoint_client=index_endpoint_client
-                )
+                self.__get_knn_matches_for_chunk,
+                embeddings_chunk=embeddings_chunks[i],
+                index=index,
+                index_endpoint_client=index_endpoint_client
             )
             all_matches.extend(matches)
 
