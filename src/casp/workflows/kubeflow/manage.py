@@ -54,6 +54,21 @@ def pca_train_embed(config_yaml_path: Annotated[str, typer.Option()]) -> None:
 
 
 @typer_app.command()
+def pca_deploy_vector_search_index(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    """
+    Run PCA deploy vector search index pipeline in parallel.
+
+    :param config_yaml_path: Path to the local YAML config file containing a list of configs for each run.
+    """
+    config_paths = config_management.create_configs(config_yaml_path)
+    submit_pipeline(
+        pipelines.pca_deploy_index_pipeline,
+        pipeline_display_name="pca_deploy_vector_search_index_parallel",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
+@typer_app.command()
 def pca_full_cycle(config_yaml_path: Annotated[str, typer.Option()]) -> None:
     """
     Run PCA full cycle pipeline in parallel.
