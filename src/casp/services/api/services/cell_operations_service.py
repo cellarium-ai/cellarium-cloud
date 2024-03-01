@@ -6,9 +6,9 @@ infrastructure over different protocols in async manner.
 import math
 import typing as t
 
-import backoff
 import numpy as np
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
+from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_random
 
 from casp.services.api import clients, schemas
 from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
@@ -19,7 +19,7 @@ from casp.services.utils import numpy_utils
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
-GET_MATCHES_CHUNK_SIZE = 5
+# GET_MATCHES_CHUNK_SIZE = 5
 
 
 class CellOperationsService:
@@ -88,7 +88,16 @@ class CellOperationsService:
         if len(knn_response[0]) == 0:
             raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
-    def get_knn_matches(self, embeddings: np.array, model_name: str) -> t.List[t.List[MatchNeighbor]]:
+    def get_knn_matches(
+        self,
+        embeddings: np.array,
+        model_name: str,
+        chunk_size: int = 5,
+        retry_count: int = 4,
+        backoff_multiplier: float = 1.0,
+        backoff_min: float = 2.0,
+        backoff_max: float = 30.0,
+    ) -> t.List[t.List[MatchNeighbor]]:
         """
         Run KNN matching synchronously using Matching Engine client over gRPC.
 
@@ -100,21 +109,27 @@ class CellOperationsService:
         index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
 
         # Break embeddings into chunks so we don't overload the matching engine
-        num_chunks: int = math.ceil(len(embeddings) / GET_MATCHES_CHUNK_SIZE)
+        num_chunks: int = math.ceil(len(embeddings) / chunk_size)
         embeddings_chunks = np.array_split(embeddings, num_chunks)
 
         all_matches = []
         for i in range(0, num_chunks):
-            matches = self.__get_knn_matches_for_chunk(
-                embeddings_chunk=embeddings_chunks[i], index=index, index_endpoint_client=index_endpoint_client
+            # Set up retry logic for for the matching engine requests
+            retryer = Retrying(
+                stop=stop_after_attempt(retry_count),
+                wait=wait_exponential(multiplier=backoff_multiplier, min=backoff_min, max=backoff_max)
+                + wait_random(0, 2),
+                reraise=True,
+            )
+            matches = retryer(
+                self.__get_knn_matches_for_chunk(
+                    embeddings_chunk=embeddings_chunks[i], index=index, index_endpoint_client=index_endpoint_client
+                )
             )
             all_matches.extend(matches)
 
         return all_matches
 
-    @backoff.on_exception(
-        backoff.expo, exceptions.VectorSearchResponseError, base=2, max_tries=4, jitter=backoff.full_jitter
-    )
     def __get_knn_matches_for_chunk(
         self,
         embeddings_chunk: np.array,
@@ -174,7 +189,16 @@ class CellOperationsService:
         )
 
     async def annotate_adata_file(
-        self, user: models.User, file: t.BinaryIO, model_name: str, include_dev_metadata: bool
+        self,
+        user: models.User,
+        file: t.BinaryIO,
+        model_name: str,
+        include_dev_metadata: bool,
+        chunk_size: int = 5,
+        retry_count: int = 4,
+        backoff_multiplier: float = 1.0,
+        backoff_min: float = 2.0,
+        backoff_max: float = 30.0,
     ) -> t.List[t.Dict[str, t.Any]]:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -189,7 +213,15 @@ class CellOperationsService:
         """
         self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
-        knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
+        knn_response = self.get_knn_matches(
+            embeddings=embeddings,
+            model_name=model_name,
+            chunk_size=chunk_size,
+            retry_count=retry_count,
+            backoff_multiplier=backoff_multiplier,
+            backoff_min=backoff_min,
+            backoff_max=backoff_max,
+        )
         annotation_response = self.get_cell_type_distribution(
             query_ids=query_ids,
             knn_response=knn_response,

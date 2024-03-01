@@ -19,6 +19,11 @@ async def annotate(
     model_name: str = Form(),
     include_dev_metadata: bool = Form(),
     request_user: models.User = Depends(dependencies.authenticate_user),
+    chunk_size: t.Annotated[int, Form()] = 5,
+    retry_count: t.Annotated[int, Form()] = 4,
+    backoff_multiplier: t.Annotated[float, Form()] = 1.0,
+    backoff_min: t.Annotated[float, Form()] = 2.0,
+    backoff_max: t.Annotated[float, Form()] = 30.0,
 ):
     """
     Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -32,7 +37,15 @@ async def annotate(
     :return: JSON response with annotations.
     """
     return await cell_operations_service.annotate_adata_file(
-        user=request_user, file=file.file, model_name=model_name, include_dev_metadata=include_dev_metadata
+        user=request_user,
+        file=file.file,
+        model_name=model_name,
+        include_dev_metadata=include_dev_metadata,
+        chunk_size=chunk_size,
+        retry_count=retry_count,
+        backoff_multiplier=backoff_multiplier,
+        backoff_min=backoff_min,
+        backoff_max=backoff_max,
     )
 
 
