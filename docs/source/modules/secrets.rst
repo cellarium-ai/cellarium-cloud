@@ -29,6 +29,15 @@ created manually.
 +------------------------------------+-----------------------------------------------------------------------+
 | DB_INSTANCE_UNIX_SOCKET            | Unix socket for the database (Not needed for local env)               |
 +------------------------------------+-----------------------------------------------------------------------+
+| REDIS_HOST                         | Host for the redis instance                                           |
++------------------------------------+-----------------------------------------------------------------------+
+| REDIS_PORT                         | Port for the redis instance used for connection (it usually is 6379)  |
++------------------------------------+-----------------------------------------------------------------------+
+| REDIS_DB                           | Integer number of the redis database to use (Redis instance should    |
+|                                    | have 15 databases)                                                    |
++------------------------------------+-----------------------------------------------------------------------+
+| REDIS_PASSWORD                     | Redis secret password                                                 |
++------------------------------------+-----------------------------------------------------------------------+
 | FLASK_SECRET_KEY                   | Secret key for Flask server                                           |
 +------------------------------------+-----------------------------------------------------------------------+
 | FLASK_SECURITY_PASSWORD_SALT       | Password salt for Flask server                                        |

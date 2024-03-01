@@ -1,5 +1,6 @@
 from google.cloud import bigquery
 
+from casp.data_manager import cache
 from casp.services import utils
 from casp.services.db import init_db
 
@@ -18,6 +19,7 @@ class BaseDataManager:
     """
 
     SQL_TEMPLATE_DIR: str
+    redis_cache_key_prefix: str
 
     def __init__(self):
         credentials, project = utils.get_google_service_credentials()
@@ -25,3 +27,4 @@ class BaseDataManager:
         self.project = project
         self.block_coo_matrix_db_client = bigquery.Client(credentials=self.credentials, project=self.project)
         self.system_data_db_session = init_db()
+        self.cache = cache.RedisCache(cache_key_prefix=self.redis_cache_key_prefix)

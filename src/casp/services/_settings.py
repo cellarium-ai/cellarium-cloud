@@ -57,6 +57,12 @@ class AllEnvSettings(BaseSettings):
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
+    # Redis
+    REDIS_HOST: str = os.environ.get("REDIS_HOST")
+    REDIS_PORT: int = int(os.environ.get("REDIS_PORT"))
+    REDIS_DB: int = os.environ.get("REDIS_DB")
+    REDIS_PASSWORD: str = os.environ.get("REDIS_PASSWORD")
+    REDIS_CACHE_DEFAULT_TTL: int = 900  # 15 minutes
     # BigQuery
     BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/datastore_manager/sql/templates"
     # Stage db connector through unix socket

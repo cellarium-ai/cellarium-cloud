@@ -15,6 +15,7 @@ Table of Contents
    :maxdepth: 1
 
    modules/vertex_ai_matching_engine
+   modules/redis
    modules/cicd
    modules/secrets
    modules/readme_modules/wdl_workflows
