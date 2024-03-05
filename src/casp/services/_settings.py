@@ -23,6 +23,7 @@ class AllEnvSettings(BaseSettings):
     SERVICES_DIR = SERVICES_DIR
     DEFAULT_SERVICE_HOST: str = "0.0.0.0"
     DEFAULT_SERVICE_PORT: int = 8000
+    CAS_DIR = CAS_DIR
     # Sentry
     SENTRY_DSN: str = os.environ.get("SENTRY_DSN")
     SENTRY_ENABLE_TRACING: bool = True
@@ -69,12 +70,15 @@ class AllEnvSettings(BaseSettings):
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
+    # Workflows
+    API_INTERNAL_SERVER_URL = "https://cellarium-cloud-api-internal.cellarium.ai"
 
 
 class DevSettings(AllEnvSettings):
     # General
     debug = True
     MODEL_SERVER_URL: str = "https://cellarium-cloud-model-dev.cellarium.ai"
+    API_INTERNAL_SERVER_URL = "https://cellarium-cloud-api-internal-dev.cellarium.ai"
 
 
 class ProductionSettings(AllEnvSettings):

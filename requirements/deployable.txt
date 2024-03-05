@@ -1,0 +1,1 @@
+scvi-distributed @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.1

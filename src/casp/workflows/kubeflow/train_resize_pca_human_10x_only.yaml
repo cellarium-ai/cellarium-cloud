@@ -1,0 +1,187 @@
+train_base:
+  pipeline_configs:
+    - curriculum_name: human_10x_only
+      model_name: human-pca-10x-only-880-base-all-genes-log1p-v1
+      bq_dataset_name: cas_50m_dataset
+      schema_name: refdata-gex-GRCh38-2020-A
+      shard_size: 10000
+      n_components: 880
+      extract_start: 0
+      extract_end: 2871
+      last_shard_size: 9758
+      use_log_1p: true
+      use_z_score: false
+      mean_var_std_model_name: mean-var-std-log1p-v1
+      use_filter: false
+      pca_train__config_unique_name: human-pca-10x-only-880-base-all-genes-log1p-v2
+      normalize_total_target_count: 10000
+      normalize_total_eps: 1e-6
+
+    - curriculum_name: human_10x_only
+      model_name: human-pca-10x-only-880-base-all-genes-log1p-zscore-v1
+      bq_dataset_name: cas_50m_dataset
+      schema_name: refdata-gex-GRCh38-2020-A
+      shard_size: 10000
+      n_components: 880
+      extract_start: 0
+      extract_end: 2871
+      last_shard_size: 9758
+      use_log_1p: true
+      use_z_score: true
+      use_filter: false
+      mean_var_std_model_name: mean-var-std-log1p-v1
+      pca_train__config_unique_name: human-pca-10x-only-880-base-all-genes-log1p-zscore-v2
+      normalize_total_target_count: 10000
+      normalize_total_eps: 1e-6
+
+    - curriculum_name: human_10x_exclude_benchmarking
+      model_name: human-pca-10x-exclude-benchmarking-880-base-all-genes-log1p-v1
+      bq_dataset_name: cas_50m_dataset
+      schema_name: refdata-gex-GRCh38-2020-A
+      shard_size: 10000
+      n_components: 880
+      extract_start: 0
+      extract_end: 2188
+      last_shard_size: 3501
+      use_log_1p: true
+      use_z_score: false
+      mean_var_std_model_name: mean-var-std-log1p-v1
+      use_filter: false
+      pca_train__config_unique_name: human-pca-10x-exclude-benchmarking-880-base-all-genes-log1p-v2
+      normalize_total_target_count: 10000
+      normalize_total_eps: 1e-6
+
+    - curriculum_name: human_10x_exclude_benchmarking
+      model_name: human-pca-10x-exclude-benchmarking-880-base-all-genes-log1p-zscore-v1
+      bq_dataset_name: cas_50m_dataset
+      schema_name: refdata-gex-GRCh38-2020-A
+      shard_size: 10000
+      n_components: 880
+      extract_start: 0
+      extract_end: 2188
+      last_shard_size: 3501
+      use_log_1p: true
+      use_z_score: true
+      mean_var_std_model_name: mean-var-std-log1p-v1
+      use_filter: false
+      pca_train__config_unique_name: human-pca-10x-exclude-benchmarking-880-base-all-genes-log1p-score-v2
+      normalize_total_target_count: 10000
+      normalize_total_eps: 1e-6
+
+resize_full_cycle:
+  pipeline_configs:
+    - curriculum_name: human_10x_only
+      model_name: human-pca-10x-only-512-log1p-v1
+      bq_dataset_name: cas_50m_dataset
+      schema_name: refdata-gex-GRCh38-2020-A
+      shard_size: 10000
+      embedding_dimension: 512
+      extract_start: 0
+      extract_end: 2871
+      last_shard_size: 9758
+      use_log_1p: true
+      use_z_score: false
+      use_filter: false
+      normalize_total_target_count: 10000
+      normalize_total_eps: 1e-6
+#      mean_var_std_model_name: mean-var-std-log1p-v1
+      pca_resize_and_save__base_model_name: human-pca-10x-only-880-base-all-genes-log1p-v1
+      pca_resize_and_save__new_model_name: human-pca-10x-only-512-log1p-v1
+      pca_resize_and_save__new_embedding_dimension: 512
+      pca_resize_and_save__config_unique_name: human-pca-10x-only-880-to-512-all-genes-log1p-v1
+      pca_embed__config_unique_name: human-pca-10x-only-512-embed-log1p-resized-v2
+      pca_embed__n_components: 512
+      pca_register_model__config_unique_name: human-pca-10x-only-512-log1p-train-register-v1
+      pca_index_create__config_unique_name: human-pca-10x-only-512-all-genes-log1p-index-v1
+      pca_index_create__index_endpoint_id: projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904
+      pca_index_create__index_location: us-central1
+      pca_index_create__display_name: human_pca_10x_only_512_log1p_index_v1
+      pca_index_create__approximate_neighbors_count: 500
+      pca_index_create__distance_measure_type: DOT_PRODUCT_DISTANCE
+
+    - curriculum_name: human_10x_only
+      model_name: human-pca-10x-only-512-log1p-zscore-v1
+      bq_dataset_name: cas_50m_dataset
+      schema_name: refdata-gex-GRCh38-2020-A
+      shard_size: 10000
+      embedding_dimension: 512
+      extract_start: 0
+      extract_end: 2871
+      last_shard_size: 9758
+      use_log_1p: true
+      use_z_score: true
+      use_filter: false
+      mean_var_std_model_name: mean-var-std-log1p-v1
+      normalize_total_target_count: 10000
+      normalize_total_eps: 1e-6
+      pca_resize_and_save__base_model_name: human-pca-10x-only-880-base-all-genes-log1p-zscore-v1
+      pca_resize_and_save__new_model_name: human-pca-10x-only-512-log1p-zscore-v1
+      pca_resize_and_save__new_embedding_dimension: 512
+      pca_resize_and_save__config_unique_name: human-pca-10x-only-880-to-512-all-genes-log1p-zscore-v1
+      pca_embed__config_unique_name: human-pca-10x-only-512-embed-log1p-zscore-resized-v2
+      pca_embed__n_components: 512
+      pca_register_model__config_unique_name: human-pca-10x-only-512-log1p-zscore-train-register-v1
+      pca_index_create__config_unique_name: human-pca-10x-only-512-all-genes-log1p-zscore-index-v1
+      pca_index_create__index_endpoint_id: projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904
+      pca_index_create__index_location: us-central1
+      pca_index_create__display_name: human_pca_10x_only_512_log1p_zscore_index_v1
+      pca_index_create__approximate_neighbors_count: 500
+      pca_index_create__distance_measure_type: DOT_PRODUCT_DISTANCE
+
+    - curriculum_name: human_10x_exclude_benchmarking
+      model_name: human-pca-10x-exclude-benchmarking-512-log1p-v1
+      bq_dataset_name: cas_50m_dataset
+      schema_name: refdata-gex-GRCh38-2020-A
+      shard_size: 10000
+      embedding_dimension: 512
+      extract_start: 0
+      extract_end: 2188
+      last_shard_size: 3501
+      use_log_1p: true
+      use_z_score: false
+      use_filter: false
+#      mean_var_std_model_name: mean-var-std-log1p-v1
+      normalize_total_target_count: 10000
+      normalize_total_eps: 1e-6
+      pca_resize_and_save__base_model_name: human-pca-10x-exclude-benchmarking-880-base-all-genes-log1p-v1
+      pca_resize_and_save__new_model_name: human-pca-10x-exclude-benchmarking-512-log1p-v1
+      pca_resize_and_save__new_embedding_dimension: 512
+      pca_resize_and_save__config_unique_name: human-pca-10x-exclude-benchmarking-880-to-512-all-genes-log1p-v1
+      pca_embed__config_unique_name: human-pca-10x-exclude-benchmarking-512-log1p-embed-resized-v2
+      pca_embed__n_components: 512
+      pca_register_model__config_unique_name: human-pca-10x-exclude-benchmarking-512-all-genes-log1p-train-register-v1
+      pca_index_create__config_unique_name: human-pca-10x-exclude-benchmarking-512-all-genes-log1p-index-v1
+      pca_index_create__index_endpoint_id: projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904
+      pca_index_create__index_location: us-central1
+      pca_index_create__display_name: human_pca_10x_exclude_benchmarking_512_log1p_index_v1
+      pca_index_create__approximate_neighbors_count: 500
+      pca_index_create__distance_measure_type: DOT_PRODUCT_DISTANCE
+
+    - curriculum_name: human_10x_exclude_benchmarking
+      model_name: human-pca-10x-exclude-benchmarking-512-log1p-zscore-v1
+      bq_dataset_name: cas_50m_dataset
+      schema_name: refdata-gex-GRCh38-2020-A
+      shard_size: 10000
+      embedding_dimension: 512
+      extract_start: 0
+      extract_end: 2188
+      last_shard_size: 3501
+      use_log_1p: true
+      use_z_score: true
+      mean_var_std_model_name: mean-var-std-log1p-v1
+      use_filter: false
+      normalize_total_target_count: 10000
+      normalize_total_eps: 1e-6
+      pca_resize_and_save__base_model_name: human-pca-10x-exclude-benchmarking-880-base-all-genes-log1p-zscore-v1
+      pca_resize_and_save__new_model_name: human-pca-10x-exclude-benchmarking-512-log1p-zscore-v1
+      pca_resize_and_save__new_embedding_dimension: 512
+      pca_resize_and_save__config_unique_name: human-pca-10x-exclude-benchmarking-880-to-512-all-genes-log1p-zscore-v1
+      pca_embed__config_unique_name: human-pca-10x-exclude-benchmarking-512-log1p-zscore-embed-resized-v2
+      pca_embed__n_components: 512
+      pca_register_model__config_unique_name: human-pca-10x-exclude-benchmarking-512-all-genes-log1p-zscore-train-register-v1
+      pca_index_create__config_unique_name: human-pca-10x-exclude-benchmarking-512-all-genes-log1p-zscore-index-v1
+      pca_index_create__index_endpoint_id: projects/350868384795/locations/us-central1/indexEndpoints/2348891088464379904
+      pca_index_create__index_location: us-central1
+      pca_index_create__display_name: human_pca_10x_exclude_benchmarking_512_log1p_zscore_index_v1
+      pca_index_create__approximate_neighbors_count: 500
+      pca_index_create__distance_measure_type: DOT_PRODUCT_DISTANCE
