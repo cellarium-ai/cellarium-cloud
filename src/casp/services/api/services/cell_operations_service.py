@@ -100,11 +100,10 @@ class CellOperationsService:
         index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
 
         # Break embeddings into chunks so we don't overload the matching engine
-        num_chunks: int = math.ceil(len(embeddings) / GET_MATCHES_CHUNK_SIZE)
-        embeddings_chunks = np.array_split(embeddings, num_chunks)
+        embeddings_chunks = self.__split_embeddings_into_chunks(embeddings=embeddings, chunk_size=GET_MATCHES_CHUNK_SIZE)
 
         all_matches = []
-        for i in range(0, num_chunks):
+        for i in range(0, len(embeddings_chunks)):
             # Set up retry logic for for the matching engine requests
             retryer = Retrying(
                 stop=stop_after_attempt(4),
@@ -150,11 +149,10 @@ class CellOperationsService:
         index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
 
         # Break embeddings into chunks so we don't overload the matching engine
-        num_chunks: int = math.ceil(len(embeddings) / GET_MATCHES_CHUNK_SIZE)
-        embeddings_chunks = np.array_split(embeddings, num_chunks)
+        embeddings_chunks = self.__split_embeddings_into_chunks(embeddings=embeddings, chunk_size=GET_MATCHES_CHUNK_SIZE)
 
         all_matches = []
-        for i in range(0, num_chunks):
+        for i in range(0, len(embeddings_chunks)):
             # Set up retry logic for for the matching engine requests
             retryer = Retrying(
                 stop=stop_after_attempt(4),
@@ -184,6 +182,19 @@ class CellOperationsService:
         )
         self.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
+    
+    @staticmethod
+    def __split_embeddings_into_chunks(embeddings: np.array, chunk_size: int) -> t.List[np.array]:
+        """
+        Splits the embeddings into chunks based on the configured chunk size.
+
+        :param embeddings: The embeddings to split into chunks.
+        :param chunk_size: The number of query embeddings to include in each chunk.
+
+        :return: A list of numpy arrays, each containing a chunk of the embeddings.
+        """
+        num_chunks: int = math.ceil(len(embeddings) / chunk_size)
+        return np.array_split(embeddings, num_chunks)
 
     def get_cell_type_distribution(
         self,
