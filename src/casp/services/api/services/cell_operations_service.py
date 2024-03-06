@@ -10,6 +10,7 @@ import numpy as np
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_random
 
+from casp.services import settings
 from casp.services.api import clients, schemas
 from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
@@ -18,8 +19,6 @@ from casp.services.db import models
 from casp.services.utils import numpy_utils
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
-
-GET_MATCHES_CHUNK_SIZE = 5
 
 
 class CellOperationsService:
@@ -88,6 +87,47 @@ class CellOperationsService:
         if len(knn_response[0]) == 0:
             raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
+    def __get_knn_matches_with_retry(
+        self, embeddings: np.array, model_name: str, chunk_matches_function: t.Callable
+    ) -> t.List[t.List[MatchNeighbor]]:
+        """
+        Get KNN matches for embeddings broken into chunks with retry logic
+
+        :param embeddings: Embeddings to match.
+        :param model_name: Model name to use for matching.
+
+        :return: List of lists of MatchNeighbor objects.
+        """
+        index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
+
+        # Break embeddings into chunks so we don't overload the matching engine
+        embeddings_chunks = self.__split_embeddings_into_chunks(
+            embeddings=embeddings, chunk_size=settings.GET_MATCHES_CHUNK_SIZE
+        )
+
+        all_matches = []
+        for i in range(0, len(embeddings_chunks)):
+            # Set up retry logic for the matching engine requests
+            retryer = Retrying(
+                stop=stop_after_attempt(settings.GET_MATCHES_MAX_RETRIES),
+                wait=wait_exponential(
+                    multiplier=settings.GET_MATCHES_RETRY_BACKOFF_MULTIPLIER,
+                    min=settings.GET_MATCHES_RETRY_BACKOFF_MIN,
+                    max=settings.GET_MATCHES_RETRY_BACKOFF_MAX,
+                )
+                + wait_random(0, 2),
+                reraise=True,
+            )
+            matches = retryer(
+                chunk_matches_function,
+                embeddings_chunk=embeddings_chunks[i],
+                index=index,
+                index_endpoint_client=index_endpoint_client,
+            )
+            all_matches.extend(matches)
+
+        return all_matches
+
     def get_knn_matches(self, embeddings: np.array, model_name: str) -> t.List[t.List[MatchNeighbor]]:
         """
         Run KNN matching synchronously using Matching Engine client over gRPC.
@@ -97,28 +137,12 @@ class CellOperationsService:
 
         :return: List of lists of MatchNeighbor objects.
         """
-        index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
 
-        # Break embeddings into chunks so we don't overload the matching engine
-        embeddings_chunks = self.__split_embeddings_into_chunks(embeddings=embeddings, chunk_size=GET_MATCHES_CHUNK_SIZE)
-
-        all_matches = []
-        for i in range(0, len(embeddings_chunks)):
-            # Set up retry logic for for the matching engine requests
-            retryer = Retrying(
-                stop=stop_after_attempt(4),
-                wait=wait_exponential(multiplier=2, min=0, max=30) + wait_random(0, 2),
-                reraise=True,
-            )
-            matches = retryer(
-                self.__get_knn_matches_for_chunk,
-                embeddings_chunk=embeddings_chunks[i],
-                index=index,
-                index_endpoint_client=index_endpoint_client,
-            )
-            all_matches.extend(matches)
-
-        return all_matches
+        return self.__get_knn_matches_with_retry(
+            embeddings=embeddings,
+            model_name=model_name,
+            chunk_matches_function=self.__get_knn_matches_for_chunk,
+        )
 
     def __get_knn_matches_for_chunk(
         self,
@@ -146,28 +170,11 @@ class CellOperationsService:
         return matches
 
     def get_knn_matches_as_dict(self, embeddings: np.array, model_name: str) -> t.List[t.List[t.Dict[str, t.Any]]]:
-        index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
-
-        # Break embeddings into chunks so we don't overload the matching engine
-        embeddings_chunks = self.__split_embeddings_into_chunks(embeddings=embeddings, chunk_size=GET_MATCHES_CHUNK_SIZE)
-
-        all_matches = []
-        for i in range(0, len(embeddings_chunks)):
-            # Set up retry logic for for the matching engine requests
-            retryer = Retrying(
-                stop=stop_after_attempt(4),
-                wait=wait_exponential(multiplier=2, min=0, max=30) + wait_random(0, 2),
-                reraise=True,
-            )
-            matches = retryer(
-                self.__get_knn_matches_as_dict_for_chunk,
-                embeddings_chunk=embeddings_chunks[i],
-                index=index,
-                index_endpoint_client=index_endpoint_client,
-            )
-            all_matches.extend(matches)
-
-        return all_matches
+        return self.__get_knn_matches_with_retry(
+            embeddings=embeddings,
+            model_name=model_name,
+            chunk_matches_function=self.__get_knn_matches_as_dict_for_chunk,
+        )
 
     def __get_knn_matches_as_dict_for_chunk(
         self,
@@ -182,7 +189,7 @@ class CellOperationsService:
         )
         self.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
-    
+
     @staticmethod
     def __split_embeddings_into_chunks(embeddings: np.array, chunk_size: int) -> t.List[np.array]:
         """

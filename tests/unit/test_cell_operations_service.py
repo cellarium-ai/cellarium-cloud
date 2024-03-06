@@ -6,6 +6,7 @@ import numpy
 
 from casp.services.api.services.cell_operations_service import CellOperationsService
 
+
 def test_split_embeddings_into_chunks_even_split() -> None:
     embeddings = numpy.random.rand(100, 100)
     chunk_size = 10
@@ -15,6 +16,7 @@ def test_split_embeddings_into_chunks_even_split() -> None:
 
     assert len(chunks) == 10
     assert sum(len(chunk) for chunk in chunks) == 100
+
 
 def test_split_embeddings_into_chunks_uneven_split() -> None:
     embeddings = numpy.random.rand(100, 100)
