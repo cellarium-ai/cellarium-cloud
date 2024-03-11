@@ -89,7 +89,7 @@ class CellOperationsService:
 
     def __get_knn_matches_with_retry(
         self, embeddings: np.array, model_name: str, chunk_matches_function: t.Callable
-    ) -> t.List[t.List[MatchNeighbor]]:
+    ) -> t.List[t.List[MatchNeighbor | t.Dict[str, t.Any]]]:
         """
         Get KNN matches for embeddings broken into chunks with retry logic
 
@@ -128,22 +128,6 @@ class CellOperationsService:
 
         return all_matches
 
-    def get_knn_matches(self, embeddings: np.array, model_name: str) -> t.List[t.List[MatchNeighbor]]:
-        """
-        Run KNN matching synchronously using Matching Engine client over gRPC.
-
-        :param embeddings: Embeddings from the model.
-        :param model_name: Model name to use for matching.
-
-        :return: List of lists of MatchNeighbor objects.
-        """
-
-        return self.__get_knn_matches_with_retry(
-            embeddings=embeddings,
-            model_name=model_name,
-            chunk_matches_function=self.__get_knn_matches_for_chunk,
-        )
-
     def __get_knn_matches_for_chunk(
         self,
         embeddings_chunk: np.array,
@@ -169,11 +153,20 @@ class CellOperationsService:
         self.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
 
-    def get_knn_matches_as_dict(self, embeddings: np.array, model_name: str) -> t.List[t.List[t.Dict[str, t.Any]]]:
+    def get_knn_matches(self, embeddings: np.array, model_name: str) -> t.List[t.List[MatchNeighbor]]:
+        """
+        Run KNN matching synchronously using Matching Engine client over gRPC.
+
+        :param embeddings: Embeddings from the model.
+        :param model_name: Model name to use for matching.
+
+        :return: List of lists of MatchNeighbor objects.
+        """
+
         return self.__get_knn_matches_with_retry(
             embeddings=embeddings,
             model_name=model_name,
-            chunk_matches_function=self.__get_knn_matches_as_dict_for_chunk,
+            chunk_matches_function=self.__get_knn_matches_for_chunk,
         )
 
     def __get_knn_matches_as_dict_for_chunk(
@@ -181,7 +174,7 @@ class CellOperationsService:
         embeddings_chunk: np.array,
         index: models.CASMatchingEngineIndex,
         index_endpoint_client: clients.CustomMatchingEngineIndexEndpointClient,
-    ) -> t.List[t.List[MatchNeighbor]]:
+    ) -> t.List[t.List[t.Dict[str, t.Any]]]:
         matches = index_endpoint_client.match_as_dict(
             deployed_index_id=index.deployed_index_id,
             queries=embeddings_chunk,
@@ -189,6 +182,13 @@ class CellOperationsService:
         )
         self.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
+
+    def get_knn_matches_as_dict(self, embeddings: np.array, model_name: str) -> t.List[t.List[t.Dict[str, t.Any]]]:
+        return self.__get_knn_matches_with_retry(
+            embeddings=embeddings,
+            model_name=model_name,
+            chunk_matches_function=self.__get_knn_matches_as_dict_for_chunk,
+        )
 
     @staticmethod
     def __split_embeddings_into_chunks(embeddings: np.array, chunk_size: int) -> t.List[np.array]:
