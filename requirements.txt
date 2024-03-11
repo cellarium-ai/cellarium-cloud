@@ -35,3 +35,4 @@ sqlparse==0.4.4
 Werkzeug==2.2.2
 sentry-sdk==1.39.2
 gcsfs==2023.9.2
+tenacity==8.2.3

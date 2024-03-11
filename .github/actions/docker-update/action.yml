@@ -25,9 +25,12 @@ inputs:
   image-tag:
     required: true
     description: Current workflow tag
-  env-secrets-b64:
+  env-secrets-b64-dev:
     required: true
-    description: Secret Environment variables (db hosts, password salt, etc)
+    description: Secret Dev Environment variables (db hosts, password salt, etc)
+  env-secrets-b64-prod:
+    required: true
+    description: Secret Prod Environment variables (db hosts, password salt, etc)
 
 runs:
   using: "composite"
@@ -76,7 +79,7 @@ runs:
       with:
         push: true
         file: ./src/casp/services/deploy/Dockerfile.pytorch
-        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64 }}
+        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64-dev }}
         tags: |
           ${{ inputs.pytorch-image-name-dev }}:${{ inputs.image-tag }}
           ${{ inputs.pytorch-image-name-dev }}:latest
@@ -88,7 +91,7 @@ runs:
       with:
         push: true
         file: ./src/casp/services/deploy/Dockerfile.pytorch
-        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64 }}
+        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64-prod }}
         tags: |
           ${{ inputs.pytorch-image-name-prod }}:${{ inputs.image-tag }}
           ${{ inputs.pytorch-image-name-prod }}:latest
@@ -100,7 +103,7 @@ runs:
       with:
         push: true
         file: ./src/casp/services/deploy/Dockerfile.pytorch_cuda
-        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64 }}
+        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64-dev }}
         tags: |
           ${{ inputs.pytorch-cuda-image-name-dev }}:${{ inputs.image-tag }}
           ${{ inputs.pytorch-cuda-image-name-dev }}:latest
@@ -112,7 +115,7 @@ runs:
       with:
         push: true
         file: ./src/casp/services/deploy/Dockerfile.pytorch_cuda
-        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64 }}
+        secrets: ENV_SECRETS=${{ inputs.env-secrets-b64-prod }}
         tags: |
           ${{ inputs.pytorch-cuda-image-name-prod }}:${{ inputs.image-tag }}
           ${{ inputs.pytorch-cuda-image-name-prod }}:latest

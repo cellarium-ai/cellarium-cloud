@@ -37,10 +37,11 @@ jobs:
         with:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
           pytorch-image-name-dev: ${{ env.PYTORCH_IMAGE_NAME_DEV }}
-          pytorch-image-name-prod: ${{ env.PYTORCH_IMAGE_NAME_DEV }}
+          pytorch-image-name-prod: ${{ env.PYTORCH_IMAGE_NAME_PROD }}
           pytorch-cuda-image-name-dev: ${{ env.PYTORCH_CUDA_IMAGE_NAME_DEV }}
           pytorch-cuda-image-name-prod: ${{ env.PYTORCH_CUDA_IMAGE_NAME_PROD }}
           image-tag: ${{ env.TAG }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
-          env-secrets-b64: ${{ secrets.CAS_SERVICES_ENV_b64 }}
+          env-secrets-b64-dev: ${{ secrets.CAS_SERVICES_ENV_B64_DEV }}
+          env-secrets-b64-prod: ${{ secrets.CAS_SERVICES_ENV_B64_PROD }}

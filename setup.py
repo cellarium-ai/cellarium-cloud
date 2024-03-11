@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 with open("requirements.txt") as fh:
     install_requires = fh.readlines()
 
-with open("README.md") as fh:
+with open("README.rst") as fh:
     long_description = fh.read()
 
 # following src dir layout according to
@@ -20,7 +20,7 @@ setup(
     long_description=long_description,
     install_requires=install_requires,
     tests_require=["coverage", "pytest"],
-    python_requires=">=3.7",
+    python_requires=">=3.10",
     packages=find_packages("src"),
     package_dir={"": "src"},
     classifiers=[
@@ -28,11 +28,17 @@ setup(
         "Intended Audience :: Science/Research",
         "Natural Language :: English",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
     include_package_data=True,
+    extras_require={
+        "docs": [
+            "Pillow~=9.5",
+            "Sphinx~=7.2",
+            "sphinx_gallery~=0.14",
+            "sphinx_rtd_theme~=1.3",
+            "setuptools-git-versioning==1.13.5",
+        ],
+    },
 )
