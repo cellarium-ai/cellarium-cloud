@@ -7,6 +7,9 @@ The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
 
+
+
+
 1.4.2 - 2024-02-13
 ----------------------
 
@@ -23,3 +26,5 @@ Changed
 - ``src/casp/services/db/README.md`` is now ``casp/services/db/README.rst``
 - ``src/casp/services/wdl_workflows/README.md`` is now ``casp/services/wdl_workflows/README.rst``
 - ``docs/VERTEX_AI_MATCHING_ENGINE.md`` is now ``docs/vertex_ai_matching_engine.rst``
+- Requests to matching engine are now made in batches of 5 to avoid overloading Vertex API
+- Requests to matching engine are now made with retry logic to account for errors caused by rapid increases in traffic
