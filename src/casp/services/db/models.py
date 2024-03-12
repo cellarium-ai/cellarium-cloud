@@ -47,6 +47,8 @@ class CASMatchingEngineIndex(db.Base):
     num_neighbors = sa.Column(sa.Integer, nullable=False)
     model_id = sa.Column(sa.Integer, sa.ForeignKey(f"{CASModel.__tablename__}.id"), nullable=False)
     model = relationship("CASModel", backref=backref("cas_matching_engine", uselist=False))
+    is_grpc = sa.Column(sa.Boolean(), default=True, nullable=False)
+    api_endpoint = sa.Column(sa.String(255), nullable=True)
 
     def __str__(self):
         return self.index_name
