@@ -1,0 +1,50 @@
+{
+  "nearestNeighbors": [
+    {
+      "neighbors": [
+        {
+          "datapoint": {
+            "datapointId": "0",
+            "featureVector": [
+              0,
+              1,
+              2
+            ],
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 0
+        },
+        {
+          "datapoint": {
+            "datapointId": "1",
+            "featureVector": [
+              3,
+              4,
+              5
+            ],
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 10
+        },
+        {
+          "datapoint": {
+            "datapointId": "2",
+            "featureVector": [
+              6,
+              7,
+              8
+            ],
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 20
+        }
+      ]
+    }
+  ]
+}
