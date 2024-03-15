@@ -9,7 +9,7 @@ select f.original_feature_id,
 from `${project}.${dataset}.cas_raw_count_matrix` m
 join `${project}.${dataset}.cas_feature_info` f on (m.cas_feature_index = f.cas_feature_index)
 join `${project}.${dataset}.cas_cell_info` c on (m.cas_cell_index = c.cas_cell_index)
-% if "dataset_id__eq" in filter_statements.keys() or "dataset_id__in" in filter_statements.keys():
+% if "dataset_id" in " ".join(filter_statements.keys()):
 join `${project}.${dataset}.cas_ingest_info` i on (c.cas_ingest_id = i.cas_ingest_id)
 % endif
 ${mh.where(filter_statements)}

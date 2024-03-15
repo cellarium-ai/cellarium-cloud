@@ -129,11 +129,9 @@ def assign_uns_metadata(anndata, json_string):
         anndata.uns[key] = val
 
 
-def add_cell_type_info(
-    dataset: str, extract_table_prefix: str, bucket_name: str, adata: "ad.AnnData", cell_types: list
-):
+def add_cell_type_info(extract_bucket_path: str, bucket_name: str, adata: "ad.AnnData", cell_types: list):
     filename = "all_cell_types.csv"
-    source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
+    source_blob_name = f"{extract_bucket_path}/shared_meta/{filename}"
 
     if not os.path.exists(filename):
         utils.download_file_from_bucket(
@@ -145,11 +143,9 @@ def add_cell_type_info(
     adata.obs.cell_type = pd.Categorical(adata.obs.cell_type.values, categories=df["cell_type"].values)
 
 
-def add_measured_genes_layer_mask(
-    dataset: str, extract_table_prefix: str, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list
-):
+def add_measured_genes_layer_mask(extract_bucket_path, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list):
     filename = "measured_genes_info.csv"
-    source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
+    source_blob_name = f"{extract_bucket_path}/shared_meta/{filename}"
 
     if not os.path.exists(filename):
         utils.download_file_from_bucket(
@@ -172,6 +168,7 @@ def extract_minibatch_to_anndata(
     end_bin: int,
     output: str,
     bucket_name: str,
+    extract_bucket_path: str,
     credentials: "Credentials" = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
@@ -186,6 +183,9 @@ def extract_minibatch_to_anndata(
     :param end_bin: Ending (inclusive) integer bin to extract
     :param output: Filename of the AnnData file
     :param bucket_name: Bucket name where to save extracted minibatch
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
     :param credentials: Google Cloud Credentials with the access to BigQuery
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
         If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
@@ -262,8 +262,7 @@ def extract_minibatch_to_anndata(
         # To avoid adding and overwriting cell types, pop them from dictionary:
         cell_types = obs_columns_values.pop("cell_type")
         add_cell_type_info(
-            dataset=dataset,
-            extract_table_prefix=extract_table_prefix,
+            extract_bucket_path=extract_bucket_path,
             bucket_name=bucket_name,
             adata=adata,
             cell_types=cell_types,
@@ -271,8 +270,7 @@ def extract_minibatch_to_anndata(
 
     print("Adding Measured Genes Layer Mask...")
     add_measured_genes_layer_mask(
-        dataset=dataset,
-        extract_table_prefix=extract_table_prefix,
+        extract_bucket_path=extract_bucket_path,
         bucket_name=bucket_name,
         adata=adata,
         cas_ingest_ids=cas_ingest_ids,
