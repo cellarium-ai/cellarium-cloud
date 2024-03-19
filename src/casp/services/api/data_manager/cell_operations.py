@@ -7,6 +7,7 @@ from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint impo
 
 from casp.data_manager import BaseDataManager, sql
 from casp.services import settings
+from casp.services.api import schemas
 from casp.services.api.data_manager import bigquery_response_parsers, bigquery_schemas, cellarium_general
 from casp.services.db.models import CASModel, CellInfo
 
@@ -110,7 +111,7 @@ class CellOperationsDataManager(BaseDataManager):
 
         return bigquery_response_parsers.parse_match_query_job(query_job=query_job, include_dev_details=True)
 
-    def get_cell_metadata_by_ids(self, cell_ids: t.List[int]) -> t.List[t.Dict[str, t.Any]]:
+    def get_cell_metadata_by_ids(self, cell_ids: t.List[int]) -> t.List[schemas.CellariumCellMetadata]:
         """
         Get cells by ids, maintaining the order of cell_ids. Try to get cell metadata from cache first, then from the
         database if not found in cache.
@@ -155,7 +156,13 @@ class CellOperationsDataManager(BaseDataManager):
                 ordered_metadata[cell_id] = cell_dict
 
             # Cache the new items with a timeout
-            self.cache.set_many(new_cache_items, timeout=240)
+            # TODO: raise an error if the ids don't exist in the db
+            if new_cache_items:
+                self.cache.set_many(new_cache_items, timeout=240)
 
         # Extract the ordered results, filtering out any None values in case of missing IDs
-        return [ordered_metadata[cell_id] for cell_id in cell_ids if ordered_metadata[cell_id] is not None]
+        return [
+            schemas.CellariumCellMetadata(**ordered_metadata[cell_id])
+            for cell_id in cell_ids
+            if ordered_metadata[cell_id] is not None
+        ]
