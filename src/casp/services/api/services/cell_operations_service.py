@@ -2,6 +2,7 @@
 Cellarium Service Controller. It provides methods to communicate with services in Cellarium Cloud
 infrastructure over different protocols in async manner.
 """
+
 import math
 import typing as t
 
@@ -10,8 +11,8 @@ from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_random
 
 from casp.services import settings
 from casp.services.api import clients, schemas
-from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.clients.matching.matching_client import MatchingClient, MatchResult
+from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import exceptions
 from casp.services.db import models
@@ -27,7 +28,9 @@ class CellOperationsService:
     datastore.
     """
 
-    def __init__(self, cell_operations_dm: CellOperationsDataManager, cellarium_general_dm: CellariumGeneralDataManager):
+    def __init__(
+        self, cell_operations_dm: CellOperationsDataManager, cellarium_general_dm: CellariumGeneralDataManager
+    ):
         self.cell_operations_dm = cell_operations_dm
         self.cellarium_general_dm = cellarium_general_dm
 
@@ -67,16 +70,11 @@ class CellOperationsService:
         embeddings = numpy_utils.base64_to_numpy(embeddings_response_json["embeddings_b64"])
         return query_ids, embeddings
 
-    def __get_match_index_endpoint_for_model(
-        self, model_name: str
-    ) -> models.CASMatchingEngineIndex:
+    def __get_match_index_endpoint_for_model(self, model_name: str) -> models.CASMatchingEngineIndex:
         return self.cellarium_general_dm.get_index_for_model(model_name=model_name)
 
     @staticmethod
-    def __validate_knn_response(
-        embeddings: np.array,
-        knn_response: MatchResult
-    ) -> None:
+    def __validate_knn_response(embeddings: np.array, knn_response: MatchResult) -> None:
         if len(knn_response.matches) != len(embeddings):
             raise exceptions.VectorSearchResponseError(
                 f"Number of query ids ({len(embeddings)}) and knn matches ({len(knn_response.matches)}) does not match. "
@@ -116,24 +114,16 @@ class CellOperationsService:
                     multiplier=settings.GET_MATCHES_RETRY_BACKOFF_MULTIPLIER,
                     min=settings.GET_MATCHES_RETRY_BACKOFF_MIN,
                     max=settings.GET_MATCHES_RETRY_BACKOFF_MAX,
-                ) +
-                wait_random(0, 2),
+                )
+                + wait_random(0, 2),
                 reraise=True,
             )
-            matches = retryer(
-                chunk_matches_function,
-                embeddings_chunk=embeddings_chunks[i],
-                client=matching_client
-            )
+            matches = retryer(chunk_matches_function, embeddings_chunk=embeddings_chunks[i], client=matching_client)
             all_matches = all_matches.concat(matches)
 
         return all_matches
 
-    def __get_knn_matches_for_chunk(
-        self,
-        embeddings_chunk: np.array,
-        client: MatchingClient
-    ) -> MatchResult:
+    def __get_knn_matches_for_chunk(self, embeddings_chunk: np.array, client: MatchingClient) -> MatchResult:
         """
         Get KNN matches for a chunk of embeddings (split out from get_knn_matches so it can be
         retried and called in chunks).
@@ -228,7 +218,7 @@ class CellOperationsService:
         self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
 
-        if (embeddings.size == 0):
+        if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
         knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
@@ -256,7 +246,7 @@ class CellOperationsService:
         """
         self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
-        if (embeddings.size == 0):
+        if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
         knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
@@ -270,7 +260,7 @@ class CellOperationsService:
                         "distance": neighbor.distance,
                     }
                     for neighbor in knn_response.matches[i].neighbors
-                ]
+                ],
             }
             for i in range(0, len(query_ids))
         ]
@@ -292,7 +282,8 @@ class CellOperationsService:
         for feature_name in metadata_feature_names:
             if feature_name not in AVAILABLE_FIELDS_DICT:
                 raise exceptions.CellMetadataColumnDoesntExist(
-                    f"Feature {feature_name} is not available for querying. Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}.")
+                    f"Feature {feature_name} is not available for querying. Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}."
+                )
 
         if "cas_cell_index" not in metadata_feature_names:
             metadata_feature_names.append("cas_cell_index")

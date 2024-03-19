@@ -3,13 +3,11 @@ import uuid
 from datetime import datetime, timedelta
 
 from google.cloud import bigquery
-from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 
 from casp.data_manager import BaseDataManager, sql
 from casp.services import settings
-from casp.services.api.data_manager import bigquery_response_parsers, bigquery_schemas, cellarium_general
 from casp.services.api.clients.matching.matching_client import MatchResult
-
+from casp.services.api.data_manager import bigquery_response_parsers, bigquery_schemas, cellarium_general
 from casp.services.db import models
 
 
@@ -43,7 +41,9 @@ class CellOperationsDataManager(BaseDataManager):
         my_uuid = str(uuid.uuid4())[:8]
         temp_table_fqn = f"{settings.API_REQUEST_TEMP_TABLE_DATASET}.api_request_matches_{my_uuid}"
         table = bigquery.Table(temp_table_fqn, schema=bigquery_schemas.MATCH_CELL_RESULTS_SCHEMA)
-        table.expires = datetime.now().astimezone() + timedelta(minutes=settings.API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION)
+        table.expires = datetime.now().astimezone() + timedelta(
+            minutes=settings.API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION
+        )
 
         self.block_coo_matrix_db_client.create_table(table)
 
