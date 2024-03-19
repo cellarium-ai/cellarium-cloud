@@ -158,25 +158,6 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
             for embedding_neighbors in response.responses[0].responses
         ]
 
-    @staticmethod
-    def __process_batch_match_response_as_dict(
-        response: match_service_pb2.BatchMatchResponse,
-    ) -> t.List[t.List[t.Dict[str, t.Any]]]:
-        """
-        Process the response from the BatchMatch call and return the results.
-
-        :param response: The response from the BatchMatch call.
-
-        :return: A list of lists of MatchNeighbor objects.
-        """
-        return [
-            [
-                {"cas_cell_index": neighbor.id, "distance": neighbor.distance}
-                for neighbor in embedding_neighbors.neighbor
-            ]
-            for embedding_neighbors in response.responses[0].responses
-        ]
-
     def match(
         self,
         deployed_index_id: str,
@@ -201,27 +182,3 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
             deployed_index_id=deployed_index_id, queries=queries, num_neighbors=num_neighbors, filter=filter
         )
         return self.__process_batch_match_response(response)
-
-    def match_as_dict(
-        self,
-        deployed_index_id: str,
-        queries: t.List[t.List[float]],
-        num_neighbors: int = 1,
-        filter: t.Optional[t.List["Namespace"]] = None,
-    ) -> t.List[t.List[t.Dict[str, t.Any]]]:
-        """
-        Method is overriden to be capable of larger request sizes. For more info refer to:
-        :class:`aiplatform.MatchingEngineIndexEndpoint`.
-
-        :param deployed_index_id: The ID of the DeployedIndex to match the queries against.
-        :param queries: A list of queries. Each query is a list of floats, representing a single embedding.
-        :param num_neighbors: The number of nearest neighbors to be retrieved from database for each query.
-        :param filter: A list of Namespaces for filtering the matching results.
-                For example, [Namespace("color", ["red"], []), Namespace("shape", [], ["squared"])] will match
-                datapoints that satisfy "red color" but not include datapoints with "squared shape".
-                Please refer to https://cloud.google.com/vertex-ai/docs/matching-engine/filtering
-        """
-        response = self.__get_match_response(
-            deployed_index_id=deployed_index_id, queries=queries, num_neighbors=num_neighbors, filter=filter
-        )
-        return self.__process_batch_match_response_as_dict(response)
