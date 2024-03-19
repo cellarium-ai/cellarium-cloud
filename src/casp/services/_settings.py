@@ -16,8 +16,8 @@ ENV_TYPE = os.environ.get("ENVIRONMENT")
 class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
-    ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
-    APP_VERSION: str = "1.4.1-alpha.2"
+    ENVIRONMENT: str = ENV_TYPE
+    APP_VERSION: str = "1.4.3-alpha.1"
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR = SERVICES_DIR
@@ -45,6 +45,9 @@ class AllEnvSettings(BaseSettings):
     GET_MATCHES_RETRY_BACKOFF_MULTIPLIER: int = 2
     GET_MATCHES_RETRY_BACKOFF_MIN: int = 0
     GET_MATCHES_RETRY_BACKOFF_MAX: int = 30
+    MAX_CELL_IDS_PER_QUERY = 20_000  # Maximum number of cell IDs that can be queried at once
+    # Consensus Engine
+    GCS_CELL_ONTOLOGY_RESOURCE_FILE: str = f"gs://{PROJECT_BUCKET_NAME}/consensus_engine/cell_ontology_resources.json"
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
     JWT_DEFAULT_TOKEN_TTL: int = 60 * 60 * 24 * 180  # 180 days

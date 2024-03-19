@@ -16,7 +16,7 @@ from casp.services import utils
 from casp.services.api import clients
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import exceptions as dm_exc
-from casp.services.api.services import exceptions
+from casp.services.api.services import consensus_engine, exceptions
 from casp.services.api.services.cell_operations_service import CellOperationsService
 from casp.services.db import models
 from tests.unit.test_utils import async_return
@@ -162,6 +162,7 @@ class TestCellOperationsService:
             file=io.BytesIO(ANNDATA_DATA),
             model_name=MODEL.model_name,
             include_dev_metadata=include_dev_metadata,
+            consensus_strategy=consensus_engine.ConsensusStrategyType.CELL_TYPE_COUNT,
         )
         assert actual_response == response
 
@@ -209,7 +210,7 @@ class TestCellOperationsService:
     @pytest.mark.asyncio
     async def test_get_cells_by_ids_for_user(self) -> None:
         self.__mock_apis()
-        cell_ids = ["cell1", "cell2", "cell3"]
+        cell_ids = [1, 2, 3]
         metadata_feature_names = ["cell_type", "assay"]
 
         self.cell_operations_service.get_cells_by_ids_for_user(
@@ -220,14 +221,13 @@ class TestCellOperationsService:
         )
         verify(self.cell_operations_service.cell_operations_dm).get_cell_metadata_by_ids(
             cell_ids=cell_ids,
-            metadata_feature_names=["cell_type", "assay", "cas_cell_index"],
-            model_name=MODEL.model_name,
+            metadata_feature_names=metadata_feature_names,
         )
 
     @pytest.mark.asyncio
     async def test_get_cells_by_ids_for_user_bad_feature_name(self) -> None:
         self.__mock_apis()
-        cell_ids = ["cell1", "cell2", "cell3"]
+        cell_ids = [1, 2, 3]
         metadata_feature_names = ["cell_type", "foo"]
 
         with pytest.raises(

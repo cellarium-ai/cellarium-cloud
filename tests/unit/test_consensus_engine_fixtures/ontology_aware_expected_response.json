@@ -1,0 +1,77 @@
+[
+  {
+    "query_cell_id": "query_ACGTGCTGATG_1",
+    "matches": [
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000000",
+        "cell_type": "cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000003",
+        "cell_type": "native cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000548",
+        "cell_type": "animal cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000988",
+        "cell_type": "hematopoietic cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0002371",
+        "cell_type": "somatic cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000738",
+        "cell_type": "leukocyte"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000084",
+        "cell_type": "T cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000542",
+        "cell_type": "lymphocyte"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000226",
+        "cell_type": "single nucleate cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000219",
+        "cell_type": "motile cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0002242",
+        "cell_type": "nucleate cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000255",
+        "cell_type": "eukaryotic cell"
+      },
+      {
+        "score": 1,
+        "cell_type_ontology_term_id": "CL_0000842",
+        "cell_type": "mononuclear cell"
+      },
+      {
+        "score": 0.5084737648565952,
+        "cell_type_ontology_term_id": "CL_0000789",
+        "cell_type": "alpha-beta T cell"
+      }
+    ]
+  }
+]

@@ -2,8 +2,10 @@ import typing as t
 
 from google.cloud import bigquery
 
+from casp.services.api import schemas
 
-def _parse_match_object(row: bigquery.Row) -> t.Dict[str, t.Any]:
+
+def _parse_match_object(row: bigquery.Row) -> schemas.AnnotationInfoCellTypeCount:
     """
     Parse a single row of a BigQuery job object representing a query to retrieve metadata for a matching query.
 
@@ -11,18 +13,18 @@ def _parse_match_object(row: bigquery.Row) -> t.Dict[str, t.Any]:
 
     :return: Dictionary representing the query results.
     """
-    return {
-        "cell_type": row["cell_type"],
-        "cell_count": row["cell_count"],
-        "min_distance": row["min_distance"],
-        "p25_distance": row["p25_distance"],
-        "median_distance": row["median_distance"],
-        "p75_distance": row["p75_distance"],
-        "max_distance": row["max_distance"],
-    }
+    return schemas.AnnotationInfoCellTypeCount(
+        cell_type=row["cell_type"],
+        cell_count=row["cell_count"],
+        min_distance=row["min_distance"],
+        p25_distance=row["p25_distance"],
+        median_distance=row["median_distance"],
+        p75_distance=row["p75_distance"],
+        max_distance=row["max_distance"],
+    )
 
 
-def _parse_match_object_dev_details(row: bigquery.Row) -> t.Dict[str, t.Any]:
+def _parse_match_object_dev_details(row: bigquery.Row) -> schemas.AnnotationInfoCellTypeCountDevDetail:
     """
     Parse a single row of a BigQuery job object representing a query to retrieve metadata for a matching query.
 
@@ -33,30 +35,30 @@ def _parse_match_object_dev_details(row: bigquery.Row) -> t.Dict[str, t.Any]:
     dataset_ids_with_counts = []
     for dataset_ids_with_counts_struct in row["dataset_ids_with_counts"]:
         dataset_ids_with_counts.append(
-            {
-                "dataset_id": dataset_ids_with_counts_struct["dataset_id"],
-                "count_per_dataset": dataset_ids_with_counts_struct["count_per_dataset"],
-                "min_distance": dataset_ids_with_counts_struct["min_distance"],
-                "max_distance": dataset_ids_with_counts_struct["max_distance"],
-                "median_distance": dataset_ids_with_counts_struct["median_distance"],
-                "mean_distance": dataset_ids_with_counts_struct["mean_distance"],
-            }
+            schemas.DevDetailObject(
+                dataset_id=dataset_ids_with_counts_struct["dataset_id"],
+                count_per_dataset=dataset_ids_with_counts_struct["count_per_dataset"],
+                min_distance=dataset_ids_with_counts_struct["min_distance"],
+                max_distance=dataset_ids_with_counts_struct["max_distance"],
+                median_distance=dataset_ids_with_counts_struct["median_distance"],
+                mean_distance=dataset_ids_with_counts_struct["mean_distance"],
+            )
         )
-    return {
-        "cell_type": row["cell_type"],
-        "cell_count": row["cell_count"],
-        "min_distance": row["min_distance"],
-        "p25_distance": row["p25_distance"],
-        "median_distance": row["median_distance"],
-        "p75_distance": row["p75_distance"],
-        "max_distance": row["max_distance"],
-        "dataset_ids_with_counts": dataset_ids_with_counts,
-    }
+    return schemas.AnnotationInfoCellTypeCountDevDetail(
+        cell_type=row["cell_type"],
+        cell_count=row["cell_count"],
+        min_distance=row["min_distance"],
+        p25_distance=row["p25_distance"],
+        median_distance=row["median_distance"],
+        p75_distance=row["p75_distance"],
+        max_distance=row["max_distance"],
+        dataset_ids_with_counts=dataset_ids_with_counts,
+    )
 
 
 def parse_match_query_job(
     query_job: bigquery.QueryJob, include_dev_details: bool = False
-) -> t.List[t.Dict[str, t.Any]]:
+) -> t.List[schemas.QueryCellAnnotationCellTypeCount | schemas.QueryCellAnnotationCellTypeCountDevDetail]:
     """
     Parse a BigQuery job object representing a query to retrieve metadata for a matching query.
 
@@ -87,24 +89,7 @@ def parse_match_query_job(
         data["matches"].append(x)
 
     results.append(data)
-    return results
+    if include_dev_details:
+        return [schemas.QueryCellAnnotationCellTypeCountDevDetail(**x) for x in results]
 
-
-def parse_get_cells_job(
-    query_job: bigquery.QueryJob, cell_metadata_features: t.List[str]
-) -> t.List[t.Dict[str, t.Any]]:
-    """
-    Parse a BigQuery job object representing a query to retrieve metadata for a matching query.
-
-    :param query_job: BigQuery job object representing the query execution.
-    :param cell_metadata_features: List of cell metadata features to include in the results.
-
-    :return: List of dictionaries representing the query results.
-    """
-    results = []
-
-    for row in query_job:
-        cell_object = {feature: row[feature] for feature in cell_metadata_features}
-        results.append(cell_object)
-
-    return results
+    return [schemas.QueryCellAnnotationCellTypeCount(**x) for x in results]

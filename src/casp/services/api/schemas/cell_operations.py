@@ -3,7 +3,7 @@ import typing as t
 from pydantic import BaseModel, Field
 
 
-class MatchInfo(BaseModel):
+class AnnotationInfoCellTypeCount(BaseModel):
     cell_type: str = Field(example="erythrocyte")
     cell_count: int = Field(example=94)
     min_distance: float = Field(example=1589.847900390625)
@@ -22,18 +22,46 @@ class DevDetailObject(BaseModel):
     mean_distance: float = Field(example=1791.372802734375)
 
 
-class MatchInfoDevDetails(MatchInfo):
+class AnnotationInfoCellTypeCountDevDetail(AnnotationInfoCellTypeCount):
     dataset_ids_with_counts: t.List[DevDetailObject]
 
 
-class QueryCell(BaseModel):
+class QueryCellAnnotationAbstract(BaseModel):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
-    matches: t.List[MatchInfo]
+    matches: t.List
 
 
-class QueryCellDevDetails(BaseModel):
+class QueryCellAnnotationCellTypeCount(QueryCellAnnotationAbstract):
+    matches: t.List[AnnotationInfoCellTypeCount]
+
+
+class QueryCellAnnotationCellTypeCountDevDetail(QueryCellAnnotationAbstract):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
-    matches: t.List[MatchInfoDevDetails]
+    matches: t.List[AnnotationInfoCellTypeCountDevDetail]
+
+
+class AnnotationInfoOntologyAware(BaseModel):
+    score: float = Field(example=0.789)
+    cell_type_ontology_term_id: str = Field(example="CL:0000121")
+    cell_type: str = Field(example="erythrocyte")
+
+
+class QueryCellAnnotationOntologyAware(QueryCellAnnotationAbstract):
+    query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
+    matches: t.List[AnnotationInfoOntologyAware]
+
+
+QueryAnnotationAbstractType: t.TypeAlias = t.List[QueryCellAnnotationAbstract]
+QueryAnnotationOntologyAwareType: t.TypeAlias = t.List[QueryCellAnnotationOntologyAware]
+QueryAnnotationCellTypeCountType: t.TypeAlias = t.Union[
+    t.List[QueryCellAnnotationCellTypeCount],
+    t.List[QueryCellAnnotationCellTypeCountDevDetail],
+]
+QueryAnnotationType: t.TypeAlias = t.Union[
+    t.List[QueryCellAnnotationCellTypeCountDevDetail],
+    t.List[QueryCellAnnotationOntologyAware],
+    t.List[QueryCellAnnotationCellTypeCount],
+]
 
 
 class SearchNeighborInfo(BaseModel):
@@ -48,6 +76,7 @@ class SearchQueryCellResult(BaseModel):
 
 class CellariumCellByIdsInput(BaseModel):
     cas_cell_ids: t.List[int]
+    metadata_feature_names: t.List[str]
 
 
 class CellariumCellMetadata(BaseModel):

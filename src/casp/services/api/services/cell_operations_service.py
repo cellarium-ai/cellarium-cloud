@@ -14,7 +14,7 @@ from casp.services.api import clients, schemas
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
-from casp.services.api.services import exceptions
+from casp.services.api.services import consensus_engine, exceptions
 from casp.services.db import models
 from casp.services.utils import numpy_utils
 
@@ -170,42 +170,15 @@ class CellOperationsService:
         num_chunks: int = math.ceil(len(embeddings) / chunk_size)
         return np.array_split(embeddings, num_chunks)
 
-    def get_cell_type_distribution(
-        self,
-        query_ids: t.List[str],
-        knn_response: MatchResult,
-        model_name: str,
-        include_dev_metadata: bool,
-    ) -> t.List[t.Dict[str, t.Any]]:
-        """
-        Get cell type distribution for the given query ids and knn response. Put results into temporary table and
-        aggregate summary statistics.
-
-        :param query_ids: List of query ids (original cell ids from the input file).
-        :param knn_response: List of lists of MatchNeighbor objects returned by space vector search service.
-        :param model_name: Model name to use for matching.
-        :param include_dev_metadata: Boolean flag to include dev metadata in the response.
-
-        :return: List of cell type distribution objects.
-        """
-        cas_model = self.cellarium_general_dm.get_model_by_name(model_name=model_name)
-
-        temp_table_fqn = self.cell_operations_dm.insert_matches_to_temp_table(
-            query_ids=query_ids, knn_response=knn_response
-        )
-
-        if include_dev_metadata:
-            return self.cell_operations_dm.get_neighborhood_distance_summary_dev_details(
-                cas_model=cas_model, match_temp_table_fqn=temp_table_fqn
-            )
-
-        return self.cell_operations_dm.get_neighborhood_distance_summary(
-            cas_model=cas_model, match_temp_table_fqn=temp_table_fqn
-        )
-
     async def annotate_adata_file(
-        self, user: models.User, file: t.BinaryIO, model_name: str, include_dev_metadata: bool
-    ) -> t.List[t.Dict[str, t.Any]]:
+        self,
+        user: models.User,
+        file: t.BinaryIO,
+        model_name: str,
+        consensus_strategy: consensus_engine.ConsensusStrategyType,
+        include_dev_metadata: t.Optional[bool] = None,
+        normalize: t.Optional[bool] = None,
+    ) -> schemas.QueryAnnotationType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
         model schema. Increment user cells processed counter after successful annotation.
@@ -213,27 +186,55 @@ class CellOperationsService:
         :param user: User object used to increment user cells processed counter.
         :param file: Byte object of :class:`anndata.AnnData` file to annotate.
         :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
-        :param include_dev_metadata: Boolean flag indicating whether to include dev metadata in the response.
+        :param consensus_strategy: Consensus strategy to use for annotation from `ConsensusStrategyType` enum.
+        :param normalize: Boolean flag indicating whether to normalize the embeddings before annotation. Used only in
+            `ontology_aware` method.
+        :param include_dev_metadata: Boolean flag indicating whether to include dev metadata in the response. Used only
+            in `cell_type_count` method.
 
         :return: JSON response with annotations.
         """
-        self.authorize_model_for_user(user=user, model_name=model_name)
+        if normalize is None and consensus_strategy == consensus_engine.ConsensusStrategyType.ONTOLOGY_AWARE:
+            raise exceptions.InvalidInputError("Normalization flag is required for Ontology Aware method.")
+        if (
+            include_dev_metadata is None
+            and consensus_strategy == consensus_engine.ConsensusStrategyType.CELL_TYPE_COUNT
+        ):
+            raise exceptions.InvalidInputError("Include Dev Metadata flag is required for Cell Type Count method.")
 
-        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
+        self.authorize_model_for_user(user=user, model_name=model_name)
+        query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
 
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
         knn_response = await self.get_knn_matches(embeddings=embeddings, model_name=model_name)
-        annotation_response = self.get_cell_type_distribution(
-            query_ids=query_ids,
-            knn_response=knn_response,
-            model_name=model_name,
-            include_dev_metadata=include_dev_metadata,
-        )
-        self.cellarium_general_dm.log_user_activity(
-            user_id=user.id, model_name=model_name, method="annotate", cell_count=len(query_ids)
-        )
+        cas_model = self.cellarium_general_dm.get_model_by_name(model_name=model_name)
+
+        match consensus_strategy:
+            case consensus_engine.ConsensusStrategyType.ONTOLOGY_AWARE:
+                strategy = consensus_engine.OntologyAwareConsensusStrategy(
+                    cell_operations_dm=self.cell_operations_dm,
+                    normalize=normalize,
+                )
+            case consensus_engine.ConsensusStrategyType.CELL_TYPE_COUNT:
+                strategy = consensus_engine.CellTypeCountConsensusStrategy(
+                    cell_operations_dm=self.cell_operations_dm,
+                    cas_model=cas_model,
+                    include_dev_metadata=include_dev_metadata,
+                )
+            case _:
+                raise exceptions.InvalidInputError(f"Invalid Consensus Engine Method: {consensus_strategy}")
+
+        engine = consensus_engine.ConsensusEngine(strategy=strategy)
+
+        try:
+            annotation_response = await engine.summarize_async(query_ids=query_ids, knn_query=knn_response)
+        except dm_exc.CellMetadataDatabaseError as e:
+            raise exceptions.InvalidInputError(str(e))
+
+        self.cellarium_general_dm.increment_user_cells_processed(user=user, number_of_cells=len(query_ids))
+
         return annotation_response
 
     async def search_adata_file(
@@ -272,7 +273,7 @@ class CellOperationsService:
 
     def get_cells_by_ids_for_user(
         self, user: models.User, cell_ids: t.List[int], metadata_feature_names: t.List[str], model_name: str
-    ) -> t.List[t.Dict[str, t.Any]]:
+    ) -> t.List[schemas.CellariumCellMetadata]:
         """
         Get cells by their ids from BigQuery `cas_cell_info` table.
 
@@ -293,11 +294,10 @@ class CellOperationsService:
 
         if "cas_cell_index" not in metadata_feature_names:
             metadata_feature_names.append("cas_cell_index")
+
         try:
             return self.cell_operations_dm.get_cell_metadata_by_ids(
-                cell_ids=cell_ids,
-                metadata_feature_names=metadata_feature_names,
-                model_name=model_name,
+                cell_ids=cell_ids, metadata_feature_names=metadata_feature_names
             )
         except dm_exc.NotFound as e:
             raise exceptions.InvalidInputError(str(e))
