@@ -1,3 +1,7 @@
+import asyncio
+
+from typing import Any
+
 
 def read_resource(resource_path: str) -> str:
     """
@@ -12,3 +16,20 @@ def read_resource(resource_path: str) -> str:
     """
     with open(resource_path) as file:
         return file.read()
+
+
+def async_return(result: Any) -> asyncio.Future:
+    """
+    Return a result from an async function.
+
+    Useful for mocking client calls.
+
+    Args:
+        result: The result to return.
+
+    Returns:
+        An asyncio Future that will return the result.
+    """
+    f = asyncio.Future()
+    f.set_result(result)
+    return f

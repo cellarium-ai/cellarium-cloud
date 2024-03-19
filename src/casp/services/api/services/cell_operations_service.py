@@ -2,17 +2,16 @@
 Cellarium Service Controller. It provides methods to communicate with services in Cellarium Cloud
 infrastructure over different protocols in async manner.
 """
-
 import math
 import typing as t
 
 import numpy as np
-from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_random
 
 from casp.services import settings
 from casp.services.api import clients, schemas
 from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
+from casp.services.api.clients.matching.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import exceptions
 from casp.services.db import models
@@ -28,9 +27,9 @@ class CellOperationsService:
     datastore.
     """
 
-    def __init__(self):
-        self.cell_operations_dm = CellOperationsDataManager()
-        self.cellarium_general_dm = CellariumGeneralDataManager()
+    def __init__(self, cell_operations_dm: CellOperationsDataManager, cellarium_general_dm: CellariumGeneralDataManager):
+        self.cell_operations_dm = cell_operations_dm
+        self.cellarium_general_dm = cellarium_general_dm
 
     def authorize_model_for_user(self, user: models.User, model_name: str) -> None:
         """
@@ -68,28 +67,29 @@ class CellOperationsService:
         embeddings = numpy_utils.base64_to_numpy(embeddings_response_json["embeddings_b64"])
         return query_ids, embeddings
 
-    def __get_match_index_endpoint_client_for_model(
+    def __get_match_index_endpoint_for_model(
         self, model_name: str
-    ) -> t.Tuple[models.CASMatchingEngineIndex, clients.CustomMatchingEngineIndexEndpointClient]:
-        index = self.cellarium_general_dm.get_index_for_model(model_name=model_name)
-
-        return index, clients.CustomMatchingEngineIndexEndpointClient(index_endpoint_name=index.endpoint_id)
+    ) -> models.CASMatchingEngineIndex:
+        return self.cellarium_general_dm.get_index_for_model(model_name=model_name)
 
     @staticmethod
     def __validate_knn_response(
-        embeddings: np.array, knn_response: t.Union[t.List[t.List[MatchNeighbor]], t.List[t.List[t.Dict[str, t.Any]]]]
+        embeddings: np.array,
+        knn_response: MatchResult
     ) -> None:
-        if len(knn_response) != len(embeddings):
+        if len(knn_response.matches) != len(embeddings):
             raise exceptions.VectorSearchResponseError(
-                f"Number of query ids ({len(embeddings)}) and knn matches ({len(knn_response)}) does not match. "
+                f"Number of query ids ({len(embeddings)}) and knn matches ({len(knn_response.matches)}) does not match. "
                 f"This could probably be caused by Vector Search overload."
             )
-        if len(knn_response[0]) == 0:
-            raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
+
+        for match in knn_response.matches:
+            if len(match.neighbors) == 0:
+                raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
     def __get_knn_matches_with_retry(
         self, embeddings: np.array, model_name: str, chunk_matches_function: t.Callable
-    ) -> t.List[t.List[MatchNeighbor | t.Dict[str, t.Any]]]:
+    ) -> MatchResult:
         """
         Get KNN matches for embeddings broken into chunks with retry logic
 
@@ -98,14 +98,16 @@ class CellOperationsService:
 
         :return: List of lists of MatchNeighbor objects.
         """
-        index, index_endpoint_client = self.__get_match_index_endpoint_client_for_model(model_name=model_name)
+        index = self.__get_match_index_endpoint_for_model(model_name=model_name)
+
+        matching_client = MatchingClient.from_index(index)
 
         # Break embeddings into chunks so we don't overload the matching engine
-        embeddings_chunks = self.__split_embeddings_into_chunks(
+        embeddings_chunks = CellOperationsService.__split_embeddings_into_chunks(
             embeddings=embeddings, chunk_size=settings.GET_MATCHES_CHUNK_SIZE
         )
 
-        all_matches = []
+        all_matches = MatchResult()
         for i in range(0, len(embeddings_chunks)):
             # Set up retry logic for the matching engine requests
             retryer = Retrying(
@@ -114,26 +116,24 @@ class CellOperationsService:
                     multiplier=settings.GET_MATCHES_RETRY_BACKOFF_MULTIPLIER,
                     min=settings.GET_MATCHES_RETRY_BACKOFF_MIN,
                     max=settings.GET_MATCHES_RETRY_BACKOFF_MAX,
-                )
-                + wait_random(0, 2),
+                ) +
+                wait_random(0, 2),
                 reraise=True,
             )
             matches = retryer(
                 chunk_matches_function,
                 embeddings_chunk=embeddings_chunks[i],
-                index=index,
-                index_endpoint_client=index_endpoint_client,
+                client=matching_client
             )
-            all_matches.extend(matches)
+            all_matches = all_matches.concat(matches)
 
         return all_matches
 
     def __get_knn_matches_for_chunk(
         self,
         embeddings_chunk: np.array,
-        index: models.CASMatchingEngineIndex,
-        index_endpoint_client: clients.CustomMatchingEngineIndexEndpointClient,
-    ) -> t.List[t.List[MatchNeighbor]]:
+        client: MatchingClient
+    ) -> MatchResult:
         """
         Get KNN matches for a chunk of embeddings (split out from get_knn_matches so it can be
         retried and called in chunks).
@@ -145,49 +145,24 @@ class CellOperationsService:
 
         :return: List of lists of MatchNeighbor objects.
         """
-        matches = index_endpoint_client.match(
-            deployed_index_id=index.deployed_index_id,
-            queries=embeddings_chunk,
-            num_neighbors=index.num_neighbors,
-        )
-        self.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
+        matches = client.match(queries=embeddings_chunk)
+        CellOperationsService.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
 
-    def get_knn_matches(self, embeddings: np.array, model_name: str) -> t.List[t.List[MatchNeighbor]]:
+    def get_knn_matches(self, embeddings: np.array, model_name: str) -> MatchResult:
         """
         Run KNN matching synchronously using Matching Engine client over gRPC.
 
         :param embeddings: Embeddings from the model.
         :param model_name: Model name to use for matching.
 
-        :return: List of lists of MatchNeighbor objects.
+        :return: Matches in a MatchResult object
         """
 
         return self.__get_knn_matches_with_retry(
             embeddings=embeddings,
             model_name=model_name,
             chunk_matches_function=self.__get_knn_matches_for_chunk,
-        )
-
-    def __get_knn_matches_as_dict_for_chunk(
-        self,
-        embeddings_chunk: np.array,
-        index: models.CASMatchingEngineIndex,
-        index_endpoint_client: clients.CustomMatchingEngineIndexEndpointClient,
-    ) -> t.List[t.List[t.Dict[str, t.Any]]]:
-        matches = index_endpoint_client.match_as_dict(
-            deployed_index_id=index.deployed_index_id,
-            queries=embeddings_chunk,
-            num_neighbors=index.num_neighbors,
-        )
-        self.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
-        return matches
-
-    def get_knn_matches_as_dict(self, embeddings: np.array, model_name: str) -> t.List[t.List[t.Dict[str, t.Any]]]:
-        return self.__get_knn_matches_with_retry(
-            embeddings=embeddings,
-            model_name=model_name,
-            chunk_matches_function=self.__get_knn_matches_as_dict_for_chunk,
         )
 
     @staticmethod
@@ -206,7 +181,7 @@ class CellOperationsService:
     def get_cell_type_distribution(
         self,
         query_ids: t.List[str],
-        knn_response: t.List[t.List[MatchNeighbor]],
+        knn_response: MatchResult,
         model_name: str,
         include_dev_metadata: bool,
     ) -> t.List[t.Dict[str, t.Any]]:
@@ -251,7 +226,11 @@ class CellOperationsService:
         :return: JSON response with annotations.
         """
         self.authorize_model_for_user(user=user, model_name=model_name)
-        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
+        query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
+
+        if (embeddings.size == 0):
+            # No further processing needed if there are no embeddings
+            return []
         knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
         annotation_response = self.get_cell_type_distribution(
             query_ids=query_ids,
@@ -276,13 +255,22 @@ class CellOperationsService:
         :return: JSON response with search results.
         """
         self.authorize_model_for_user(user=user, model_name=model_name)
-        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
-        knn_matches_dict = self.get_knn_matches_as_dict(embeddings=embeddings, model_name=model_name)
+        query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
+        if (embeddings.size == 0):
+            # No further processing needed if there are no embeddings
+            return []
+        knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
 
         return [
             {
                 "query_cell_id": query_ids[i],
-                "neighbors": knn_matches_dict[i],
+                "neighbors": [
+                    {
+                        "cas_cell_index": neighbor.id,
+                        "distance": neighbor.distance,
+                    }
+                    for neighbor in knn_response.matches[i].neighbors
+                ]
             }
             for i in range(0, len(query_ids))
         ]
@@ -303,7 +291,8 @@ class CellOperationsService:
         self.authorize_model_for_user(user=user, model_name=model_name)
         for feature_name in metadata_feature_names:
             if feature_name not in AVAILABLE_FIELDS_DICT:
-                raise exceptions.CellMetadataColumnDoesntExist(f"Feature {feature_name} is not available for querying")
+                raise exceptions.CellMetadataColumnDoesntExist(
+                    f"Feature {feature_name} is not available for querying. Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}.")
 
         if "cas_cell_index" not in metadata_feature_names:
             metadata_feature_names.append("cas_cell_index")
