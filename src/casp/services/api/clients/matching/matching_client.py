@@ -1,10 +1,10 @@
-from typing import NamedTuple, List
-from casp.services.api import clients
-from casp.services.db import models
+from typing import List, NamedTuple
 
 from google.cloud import aiplatform_v1
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 
+from casp.services.api import clients
+from casp.services.db import models
 
 """
 Contains a common interface for querying the matching engine regarless of API (e.g. gRPC vs REST)
@@ -17,6 +17,7 @@ class MatchResult(NamedTuple):
         """
         Neighbor represents a neighbor of a feature vector in the matching service.
         """
+
         id: str
         distance: float
         feature_vector: List[float] = None
@@ -26,6 +27,7 @@ class MatchResult(NamedTuple):
         NearestNeighbors represents the result of a nearest neighbors request to the matching service. There should be 1
         per query that was sent.
         """
+
         neighbors: List["MatchResult.Neighbor"] = []
 
     """
@@ -44,7 +46,7 @@ class MatchResult(NamedTuple):
         return MatchResult(matches=self.matches + other.matches)
 
 
-class MatchingClient():
+class MatchingClient:
     def __init__(self, index: models.CASMatchingEngineIndex) -> None:
         self.index = index
 
@@ -97,20 +99,27 @@ class MatchingClientGRPC(MatchingClient):
 
         return self.__adapt_result(matches)
 
-    def __get_match_index_endpoint_client(
-        self
-    ) -> clients.CustomMatchingEngineIndexEndpointClient:
+    def __get_match_index_endpoint_client(self) -> clients.CustomMatchingEngineIndexEndpointClient:
         return clients.CustomMatchingEngineIndexEndpointClient(index_endpoint_name=self.index.endpoint_id)
 
     def __adapt_result(self, result: List[List[MatchNeighbor]]) -> MatchResult:
         return MatchResult(
-            matches=list(map(lambda r: MatchResult.NearestNeighbors(
-                neighbors=list(map(lambda n: MatchResult.Neighbor(
-                    id=n.id,
-                    distance=n.distance,
-                    feature_vector=n.feature_vector),
-                    r))),
-                result)))
+            matches=list(
+                map(
+                    lambda r: MatchResult.NearestNeighbors(
+                        neighbors=list(
+                            map(
+                                lambda n: MatchResult.Neighbor(
+                                    id=n.id, distance=n.distance, feature_vector=n.feature_vector
+                                ),
+                                r,
+                            )
+                        )
+                    ),
+                    result,
+                )
+            )
+        )
 
 
 class MatchingClientREST(MatchingClient):
@@ -130,8 +139,14 @@ class MatchingClientREST(MatchingClient):
         vector_search_client = self.__get_match_index_endpoint_client()
 
         # Build query objects
-        query_objects = list(map(lambda e: aiplatform_v1.FindNeighborsRequest.Query(
-            datapoint=aiplatform_v1.IndexDatapoint(feature_vector=e), neighbor_count=self.index.num_neighbors), queries))
+        query_objects = list(
+            map(
+                lambda e: aiplatform_v1.FindNeighborsRequest.Query(
+                    datapoint=aiplatform_v1.IndexDatapoint(feature_vector=e), neighbor_count=self.index.num_neighbors
+                ),
+                queries,
+            )
+        )
 
         # Prepare the request to be sent
         request = aiplatform_v1.FindNeighborsRequest(
@@ -147,22 +162,29 @@ class MatchingClientREST(MatchingClient):
         return self.__adapt_result(matches)
 
     # @classmethod
-    def __get_match_index_endpoint_client(
-        self
-    ) -> aiplatform_v1.MatchServiceClient:
-        client_options = {
-            "api_endpoint": self.index.api_endpoint
-        }
+    def __get_match_index_endpoint_client(self) -> aiplatform_v1.MatchServiceClient:
+        client_options = {"api_endpoint": self.index.api_endpoint}
         return aiplatform_v1.MatchServiceClient(
             client_options=client_options,
         )
 
     def __adapt_result(self, result: aiplatform_v1.FindNeighborsResponse) -> MatchResult:
         return MatchResult(
-            matches=list(map(lambda q: MatchResult.NearestNeighbors(
-                neighbors=list(map(lambda n: MatchResult.Neighbor(
-                    id=n.datapoint.datapoint_id,
-                    distance=n.distance,
-                    feature_vector=n.datapoint.feature_vector),
-                    q.neighbors))),
-                result.nearest_neighbors)))
+            matches=list(
+                map(
+                    lambda q: MatchResult.NearestNeighbors(
+                        neighbors=list(
+                            map(
+                                lambda n: MatchResult.Neighbor(
+                                    id=n.datapoint.datapoint_id,
+                                    distance=n.distance,
+                                    feature_vector=n.datapoint.feature_vector,
+                                ),
+                                q.neighbors,
+                            )
+                        )
+                    ),
+                    result.nearest_neighbors,
+                )
+            )
+        )

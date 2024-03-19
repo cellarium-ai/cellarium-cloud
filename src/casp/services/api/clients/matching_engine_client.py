@@ -4,6 +4,7 @@ import grpc
 from google.cloud import aiplatform
 from google.cloud.aiplatform.matching_engine._protos import match_service_pb2, match_service_pb2_grpc
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
+
 from casp.services import settings
 
 if t.TYPE_CHECKING:
@@ -91,7 +92,7 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
             ("grpc.max_receive_message_length", self.grpc_message_max_size),
         ]
 
-        if (settings.ENVIRONMENT == "local"):
+        if settings.ENVIRONMENT == "local":
             # If running locally with a gRPC index endpoint, the developer need to create a tunnel to the gRPC server
             # For more information, see the "Running Locally" doc section about configuring the tunnel
             options.append(("grpc.primary_user_agent", f"target_ip:{server_ip}"))
