@@ -50,7 +50,7 @@ class MatchingClient:
     def __init__(self, index: models.CASMatchingEngineIndex) -> None:
         self.index = index
 
-    def match(self, queries: List[List[float]]) -> MatchResult:
+    async def match(self, queries: List[List[float]]) -> MatchResult:
         """
         Match queries against the specified index.
 
@@ -80,7 +80,7 @@ class MatchingClientGRPC(MatchingClient):
     def __init__(self, index: models.CASMatchingEngineIndex) -> None:
         super().__init__(index)
 
-    def match(self, queries: List[List[float]]) -> MatchResult:
+    async def match(self, queries: List[List[float]]) -> MatchResult:
         """
         Match queries against the specified index using gRPC.
 
@@ -126,7 +126,7 @@ class MatchingClientREST(MatchingClient):
     def __init__(self, index: models.CASMatchingEngineIndex) -> None:
         super().__init__(index)
 
-    def match(self, queries: List[List[float]]) -> MatchResult:
+    async def match(self, queries: List[List[float]]) -> MatchResult:
         """
         Match queries against the specified index using REST.
 
@@ -157,14 +157,12 @@ class MatchingClientREST(MatchingClient):
         )
 
         # Send the request
-        matches = vector_search_client.find_neighbors(request)
-
+        matches = await vector_search_client.find_neighbors(request)
         return self.__adapt_result(matches)
 
-    # @classmethod
-    def __get_match_index_endpoint_client(self) -> aiplatform_v1.MatchServiceClient:
+    def __get_match_index_endpoint_client(self) -> aiplatform_v1.MatchServiceAsyncClient:
         client_options = {"api_endpoint": self.index.api_endpoint}
-        return aiplatform_v1.MatchServiceClient(
+        return aiplatform_v1.MatchServiceAsyncClient(
             client_options=client_options,
         )
 

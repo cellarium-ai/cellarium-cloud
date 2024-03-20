@@ -295,7 +295,7 @@ class TestCellOperationsService:
 
         # Note: comparing numpy arrays with == doesn't work well with mockito so we need to be a little clever here
         when(matching_client).match(queries=matchers.arg_that(lambda arg: np.array_equal(arg, embeddings))).thenReturn(
-            matching_client_response
+            async_return(matching_client_response)
         )
         when(MatchingClient).from_index(index).thenReturn(matching_client)
 
