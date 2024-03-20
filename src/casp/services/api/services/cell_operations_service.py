@@ -7,7 +7,7 @@ import math
 import typing as t
 
 import numpy as np
-from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_random
+from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_random
 
 from casp.services import settings
 from casp.services.api import clients, schemas
@@ -29,10 +29,12 @@ class CellOperationsService:
     """
 
     def __init__(
-        self, cell_operations_dm: CellOperationsDataManager, cellarium_general_dm: CellariumGeneralDataManager
+        self,
+        cell_operations_dm: CellOperationsDataManager = None,
+        cellarium_general_dm: CellariumGeneralDataManager = None,
     ):
-        self.cell_operations_dm = cell_operations_dm
-        self.cellarium_general_dm = cellarium_general_dm
+        self.cell_operations_dm = cell_operations_dm if cell_operations_dm else CellOperationsDataManager()
+        self.cellarium_general_dm = cellarium_general_dm if cellarium_general_dm else CellariumGeneralDataManager()
 
     def authorize_model_for_user(self, user: models.User, model_name: str) -> None:
         """
@@ -85,7 +87,7 @@ class CellOperationsService:
             if len(match.neighbors) == 0:
                 raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
-    def __get_knn_matches_with_retry(
+    async def __get_knn_matches_with_retry(
         self, embeddings: np.array, model_name: str, chunk_matches_function: t.Callable
     ) -> MatchResult:
         """
@@ -108,7 +110,7 @@ class CellOperationsService:
         all_matches = MatchResult()
         for i in range(0, len(embeddings_chunks)):
             # Set up retry logic for the matching engine requests
-            retryer = Retrying(
+            retryer = AsyncRetrying(
                 stop=stop_after_attempt(settings.GET_MATCHES_MAX_RETRIES),
                 wait=wait_exponential(
                     multiplier=settings.GET_MATCHES_RETRY_BACKOFF_MULTIPLIER,
@@ -118,12 +120,14 @@ class CellOperationsService:
                 + wait_random(0, 2),
                 reraise=True,
             )
-            matches = retryer(chunk_matches_function, embeddings_chunk=embeddings_chunks[i], client=matching_client)
+            matches = await retryer(
+                chunk_matches_function, embeddings_chunk=embeddings_chunks[i], client=matching_client
+            )
             all_matches = all_matches.concat(matches)
 
         return all_matches
 
-    def __get_knn_matches_for_chunk(self, embeddings_chunk: np.array, client: MatchingClient) -> MatchResult:
+    async def __get_knn_matches_for_chunk(self, embeddings_chunk: np.array, client: MatchingClient) -> MatchResult:
         """
         Get KNN matches for a chunk of embeddings (split out from get_knn_matches so it can be
         retried and called in chunks).
@@ -135,11 +139,11 @@ class CellOperationsService:
 
         :return: List of lists of MatchNeighbor objects.
         """
-        matches = client.match(queries=embeddings_chunk)
+        matches = await client.match(queries=embeddings_chunk)
         CellOperationsService.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
 
-    def get_knn_matches(self, embeddings: np.array, model_name: str) -> MatchResult:
+    async def get_knn_matches(self, embeddings: np.array, model_name: str) -> MatchResult:
         """
         Run KNN matching synchronously using Matching Engine client over gRPC.
 
@@ -149,7 +153,7 @@ class CellOperationsService:
         :return: Matches in a MatchResult object
         """
 
-        return self.__get_knn_matches_with_retry(
+        return await self.__get_knn_matches_with_retry(
             embeddings=embeddings,
             model_name=model_name,
             chunk_matches_function=self.__get_knn_matches_for_chunk,
@@ -221,7 +225,7 @@ class CellOperationsService:
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
-        knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
+        knn_response = await self.get_knn_matches(embeddings=embeddings, model_name=model_name)
         annotation_response = self.get_cell_type_distribution(
             query_ids=query_ids,
             knn_response=knn_response,
@@ -249,7 +253,7 @@ class CellOperationsService:
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
-        knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
+        knn_response = await self.get_knn_matches(embeddings=embeddings, model_name=model_name)
 
         return [
             {

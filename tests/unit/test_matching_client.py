@@ -1,12 +1,12 @@
 from typing import List
 
+import pytest
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 from google.cloud.aiplatform_v1 import FindNeighborsRequest, FindNeighborsResponse, IndexDatapoint, MatchServiceClient
 from google.protobuf.json_format import Parse
 from mockito import mock, unstub, when
 from parameterized import parameterized
 
-import tests.unit.test_utils as test_utils
 from casp.services.api.clients import CustomMatchingEngineIndexEndpointClient
 from casp.services.api.clients.matching import matching_client
 from casp.services.api.clients.matching.matching_client import (
@@ -16,6 +16,7 @@ from casp.services.api.clients.matching.matching_client import (
     MatchResult,
 )
 from casp.services.db import models
+from tests.unit.test_utils import async_return, read_resource
 
 GRPC_INDEX = models.CASMatchingEngineIndex(
     is_grpc=True, endpoint_id="endpoint_id_grpc", deployed_index_id="deployed_index_id_grpc", num_neighbors=3
@@ -89,7 +90,7 @@ class TestMatchingClient:
                 [FindNeighborsRequest.Query(neighbor_count=3, datapoint=IndexDatapoint(feature_vector=[1, 2, 3]))],
                 # Note: reading from JSON so that we have a few examples of responses from the REST service.
                 Parse(
-                    test_utils.read_resource("tests/unit/test_query_responses/rest_response_0.json"),
+                    read_resource("tests/unit/test_query_responses/rest_response_0.json"),
                     FindNeighborsResponse()._pb,
                 ),
                 MatchResult(
@@ -111,7 +112,7 @@ class TestMatchingClient:
                     FindNeighborsRequest.Query(neighbor_count=3, datapoint=IndexDatapoint(feature_vector=[4, 5, 6])),
                 ],
                 Parse(
-                    test_utils.read_resource("tests/unit/test_query_responses/rest_response_1.json"),
+                    read_resource("tests/unit/test_query_responses/rest_response_1.json"),
                     FindNeighborsResponse()._pb,
                 ),
                 MatchResult(
@@ -141,7 +142,8 @@ class TestMatchingClient:
             ),
         ]
     )
-    def test_rest_client(
+    @pytest.mark.asyncio
+    async def test_rest_client(
         self,
         queries: List[List[float]],
         client_queries: List[FindNeighborsRequest.Query],
@@ -165,11 +167,11 @@ class TestMatchingClient:
                 queries=client_queries,
                 return_full_datapoint=True,
             )
-        ).thenReturn(client_response)
+        ).thenReturn(async_return(client_response))
 
         match_client = MatchingClient.from_index(REST_INDEX)
         when(match_client)._MatchingClientREST__get_match_index_endpoint_client().thenReturn(rest_client)
-        assert match_client.match(queries) == expected_response
+        assert await match_client.match(queries) == expected_response
 
     @parameterized.expand(
         [
@@ -254,7 +256,8 @@ class TestMatchingClient:
             ),
         ]
     )
-    def test_grpc_client(
+    @pytest.mark.asyncio
+    async def test_grpc_client(
         self,
         queries: List[List[float]],
         client_response: List[List[MatchNeighbor]],
@@ -277,4 +280,4 @@ class TestMatchingClient:
 
         match_client = MatchingClient.from_index(GRPC_INDEX)
         when(match_client)._MatchingClientGRPC__get_match_index_endpoint_client().thenReturn(grpc_client)
-        assert match_client.match(queries) == expected_response
+        assert await match_client.match(queries) == expected_response
