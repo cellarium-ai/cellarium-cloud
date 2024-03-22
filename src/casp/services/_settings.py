@@ -46,9 +46,7 @@ class AllEnvSettings(BaseSettings):
     GET_MATCHES_RETRY_BACKOFF_MIN: int = 0
     GET_MATCHES_RETRY_BACKOFF_MAX: int = 30
     # Consensus Engine
-    GCS_CELL_ONTOLOGY_SPARSE_MATRIX_NPZ: str = (
-        "gs://cellarium-file-system/consensus_engine/cell_ontology_sparse_matrix.npz"
-    )
+    GCS_CELL_ONTOLOGY_RESOURCE_FILE: str = "gs://cellarium-file-system/consensus_engine/cell_ontology.pickle"
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
     JWT_DEFAULT_TOKEN_TTL: int = 60 * 60 * 24 * 180  # 180 days
