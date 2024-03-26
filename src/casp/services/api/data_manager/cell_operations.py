@@ -120,49 +120,68 @@ class CellOperationsDataManager(BaseDataManager):
 
         :return: List of dictionaries representing the query results, ordered according to cell_ids.
         """
-        # Attempt to get cell metadata from cache
-        cache_keys = [f"cell_metadata:{cell_id}" for cell_id in cell_ids]
-        cached_metadata_dicts = self.cache.get_many(cache_keys)
-        found_ids = [int(key.split(":")[-1]) for key in cached_metadata_dicts.keys()]
-        missed_ids = list(set(cell_ids) - set(found_ids))
+        # # Attempt to get cell metadata from cache
+        # cache_keys = [f"cell_metadata:{cell_id}" for cell_id in cell_ids]
+        # cached_metadata_dicts = self.cache.get_many(cache_keys)
+        # found_ids = [int(key.split(":")[-1]) for key in cached_metadata_dicts.keys()]
+        # missed_ids = list(set(cell_ids) - set(found_ids))
+        #
+        # # Initialize a dict to hold the final result in order
+        # ordered_metadata = {cell_id: None for cell_id in cell_ids}
+        #
+        # # Update the ordered dict with cached results
+        # for cell_id in found_ids:
+        #     ordered_metadata[cell_id] = cached_metadata_dicts[f"cell_metadata:{cell_id}"]
+        #
+        # # If there are missed_ids, retrieve them from the database
+        # if missed_ids:
+        #     columns = [column.key for column in CellInfo.__table__.columns if column.key != "obs_metadata_extra"]
+        #     with_entity_items = [getattr(CellInfo, name) for name in columns]
+        #     database_cells = (
+        #         self.system_data_db_session.query(CellInfo)
+        #         .with_entities(*with_entity_items)
+        #         .filter(CellInfo.cas_cell_index.in_(missed_ids))
+        #         .all()
+        #     )
+        #
+        #     # Convert database result to dictionary format
+        #     database_cells_dicts = [{columns[i]: value for i, value in enumerate(row)} for row in database_cells]
+        #
+        #     # Cache newly retrieved items and update the ordered dict
+        #     new_cache_items = {}
+        #     for cell_dict in database_cells_dicts:
+        #         cell_id = cell_dict["cas_cell_index"]
+        #         cache_key = f"cell_metadata:{cell_id}"
+        #         new_cache_items[cache_key] = cell_dict
+        #         ordered_metadata[cell_id] = cell_dict
+        #
+        #     # Cache the new items with a timeout
+        #     # TODO: raise an error if the ids don't exist in the db
+        #     if new_cache_items:
+        #         self.cache.set_many(new_cache_items, timeout=240)
+        #
+        # # Extract the ordered results, filtering out any None values in case of missing IDs
+        # return [
+        #     schemas.CellariumCellMetadata(**ordered_metadata[cell_id])
+        #     for cell_id in cell_ids
+        #     if ordered_metadata[cell_id] is not None
+        # ]
+        columns = [column.key for column in CellInfo.__table__.columns if column.key != "obs_metadata_extra"]
+        with_entity_items = [getattr(CellInfo, name) for name in columns]
+        print("======================================= LEN CELL IDS ========================================", len(cell_ids))
+        database_cells = (
+            self.system_data_db_session.query(CellInfo)
+            .with_entities(*with_entity_items)
+            .filter(CellInfo.cas_cell_index.in_(cell_ids))
+            .all()
+        )
 
-        # Initialize a dict to hold the final result in order
-        ordered_metadata = {cell_id: None for cell_id in cell_ids}
+        # Convert database result to dictionary format
+        database_cells_dicts = [{columns[i]: value for i, value in enumerate(row)} for row in database_cells]
 
-        # Update the ordered dict with cached results
-        for cell_id in found_ids:
-            ordered_metadata[cell_id] = cached_metadata_dicts[f"cell_metadata:{cell_id}"]
-
-        # If there are missed_ids, retrieve them from the database
-        if missed_ids:
-            columns = [column.key for column in CellInfo.__table__.columns if column.key != "obs_metadata_extra"]
-            with_entity_items = [getattr(CellInfo, name) for name in columns]
-            database_cells = (
-                self.system_data_db_session.query(CellInfo)
-                .with_entities(*with_entity_items)
-                .filter(CellInfo.cas_cell_index.in_(missed_ids))
-                .all()
-            )
-
-            # Convert database result to dictionary format
-            database_cells_dicts = [{columns[i]: value for i, value in enumerate(row)} for row in database_cells]
-
-            # Cache newly retrieved items and update the ordered dict
-            new_cache_items = {}
-            for cell_dict in database_cells_dicts:
-                cell_id = cell_dict["cas_cell_index"]
-                cache_key = f"cell_metadata:{cell_id}"
-                new_cache_items[cache_key] = cell_dict
-                ordered_metadata[cell_id] = cell_dict
-
-            # Cache the new items with a timeout
-            # TODO: raise an error if the ids don't exist in the db
-            if new_cache_items:
-                self.cache.set_many(new_cache_items, timeout=240)
-
-        # Extract the ordered results, filtering out any None values in case of missing IDs
-        return [
-            schemas.CellariumCellMetadata(**ordered_metadata[cell_id])
-            for cell_id in cell_ids
-            if ordered_metadata[cell_id] is not None
-        ]
+        return [schemas.CellariumCellMetadata(**cell_dict) for cell_dict in database_cells_dicts]
+        # return [
+        #     schemas.CellariumCellMetadata(**ordered_metadata[cell_id])
+        #     for cell_id in cell_ids
+        #     if ordered_metadata[cell_id] is not None
+        # ]

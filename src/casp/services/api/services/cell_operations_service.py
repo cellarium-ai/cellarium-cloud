@@ -15,6 +15,7 @@ from casp.services.api import clients, schemas
 from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import exceptions
+from casp.services.api.services.consensus_engine import ConsensusEngine
 from casp.services.db import models
 from casp.services.utils import numpy_utils
 
@@ -250,45 +251,15 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
-        # self.authorize_model_for_user(user=user, model_name=model_name)
-        # query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
-        # knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
-        # annotation_response = self.get_cell_type_distribution(
-        #     query_ids=query_ids,
-        #     knn_response=knn_response,
-        #     model_name=model_name,
-        #     include_dev_metadata=include_dev_metadata,
-        # )
-        query_ids = ["ACTGAGACTGA", "TTGCGCGGGCGAA", "GGGAAAGGG", "TTTAAAGGGCCCTCTC"]
-        knn_response = [
-            [
-                MatchNeighbor(id="1660112158", distance=0.993),
-                MatchNeighbor(id="30575638", distance=0.992),
-                MatchNeighbor(id="578041585", distance=0.992),
-            ],
-            [
-                MatchNeighbor(id="514148662", distance=0.993),
-                MatchNeighbor(id="30575638", distance=0.992),
-                MatchNeighbor(id="1692163769", distance=0.992),
-            ],
-            [
-                MatchNeighbor(id="750013210", distance=0.993),
-                MatchNeighbor(id="1258009603", distance=0.992),
-                MatchNeighbor(id="308093484", distance=0.992),
-            ],
-            [
-                MatchNeighbor(id="1678081110", distance=0.993),
-                MatchNeighbor(id="1262066013", distance=0.992),
-                MatchNeighbor(id="128559761", distance=0.992),
-            ],
-        ]
-        from casp.services.api.services.consensus_engine import ConsensusEngine
+        self.authorize_model_for_user(user=user, model_name=model_name)
+        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
+        knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
 
         consensus_engine = ConsensusEngine()
         annotation_response = await consensus_engine.summarize_query_neighbor_context_async(
             query_ids=query_ids, knn_query=knn_response
         )
-        # self.cellarium_general_dm.increment_user_cells_processed(user=user, number_of_cells=len(query_ids))
+        self.cellarium_general_dm.increment_user_cells_processed(user=user, number_of_cells=len(query_ids))
         return annotation_response
 
     async def search_adata_file(

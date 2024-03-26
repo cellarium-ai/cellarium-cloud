@@ -33,8 +33,8 @@ class CellOntologyResource:
 
 class ConsensusEngine:
 
-    def __init__(self):
-        self.cell_operations_dm = CellOperationsDataManager()
+    def __init__(self, cell_operations_dm: t.Optional[CellOperationsDataManager] = None):
+        self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
 
         with open(settings.GCS_CELL_ONTOLOGY_RESOURCE_FILE, "rb") as f:
             cell_ontology_dict = pickle.load(f)
