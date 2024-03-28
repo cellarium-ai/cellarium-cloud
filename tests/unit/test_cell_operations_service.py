@@ -4,7 +4,7 @@ Tests things in the cell_operations_service that can reasonably be tested with a
 
 import io
 import re
-from typing import Any, Dict, List, Optional
+import typing as t
 
 import numpy
 import numpy as np
@@ -14,7 +14,7 @@ from parameterized import parameterized
 
 from casp.services import utils
 from casp.services.api import clients
-from casp.services.api.clients.matching.matching_client import MatchingClient, MatchResult
+from casp.services.api.clients.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import exceptions
 from casp.services.api.services.cell_operations_service import CellOperationsService
@@ -125,7 +125,7 @@ class TestCellOperationsService:
     )
     @pytest.mark.asyncio
     async def test_annotate_adata_file(
-        self, embeddings: List[List[float]], cell_types: List[str], include_dev_metadata: bool
+        self, embeddings: t.List[t.List[float]], cell_types: t.List[str], include_dev_metadata: bool
     ) -> None:
         """
         Test the annotate_adata_file method.
@@ -190,7 +190,7 @@ class TestCellOperationsService:
     )
     @pytest.mark.asyncio
     async def test_search_adata_file(
-        self, embeddings: List[List[float]], expected_response: List[Dict[str, Any]]
+        self, embeddings: t.List[t.List[float]], expected_response: t.List[t.Dict[str, t.Any]]
     ) -> None:
         """
         Test the search_adata_file method.
@@ -245,12 +245,12 @@ class TestCellOperationsService:
         model: models.CASModel = MODEL,
         index: models.CASMatchingEngineIndex = INDEX,
         anndata_data: bytes = ANNDATA_DATA,
-        embeddings: List[List[float]] = [],
-        matching_client_response: Optional[MatchResult] = None,
+        embeddings: t.List[t.List[float]] = [],
+        matching_client_response: t.Optional[MatchResult] = None,
     ) -> MatchResult:
         """
 
-        Mock call to the model embeding service and the matching client.
+        Mock call to the model embedding service and the matching client.
 
         :param model: The model to mock.
         :param index: The index to mock.  This should be an index for the model.
@@ -262,7 +262,7 @@ class TestCellOperationsService:
         :return: The response from the matching client to be used for further mocking.
         """
 
-        # mock calls to model embeding service
+        # mock calls to model embedding service
         model_name = model.model_name
         embeddings = np.array(embeddings, dtype=np.float32)
         query_ids = [f"q{i}" for i in range(len(embeddings))]
@@ -278,13 +278,15 @@ class TestCellOperationsService:
             index
         )
 
-        # mock calls to that use the matching client
+        # mock calls to the matching client
         matching_client = mock()
         matching_client_response = (
             MatchResult(
                 matches=[
                     MatchResult.NearestNeighbors(
-                        neighbors=[MatchResult.Neighbor(id=str(i), distance=0.0, feature_vector=embedding)]
+                        neighbors=[
+                            MatchResult.Neighbor(cas_cell_index=str(i), distance=0.0, feature_vector=list(embedding))
+                        ]
                     )
                     for i, embedding in enumerate(embeddings)
                 ]

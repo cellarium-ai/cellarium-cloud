@@ -6,7 +6,7 @@ from google.cloud import bigquery
 
 from casp.data_manager import BaseDataManager, sql
 from casp.services import settings
-from casp.services.api.clients.matching.matching_client import MatchResult
+from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import bigquery_response_parsers, bigquery_schemas, cellarium_general
 from casp.services.db import models
 
@@ -54,7 +54,7 @@ class CellOperationsDataManager(BaseDataManager):
                 rows_to_insert.append(
                     {
                         "query_id": str(query_id),
-                        "match_cas_cell_index": int(neighbor.id),
+                        "match_cas_cell_index": int(neighbor.cas_cell_index),
                         "match_score": float(neighbor.distance),
                     }
                 )
