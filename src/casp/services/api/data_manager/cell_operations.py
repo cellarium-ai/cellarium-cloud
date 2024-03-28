@@ -3,10 +3,10 @@ import uuid
 from datetime import datetime, timedelta
 
 from google.cloud import bigquery
-from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 
 from casp.data_manager import BaseDataManager, sql
 from casp.services import settings
+from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import bigquery_response_parsers, bigquery_schemas, cellarium_general
 from casp.services.db import models
 
@@ -26,7 +26,7 @@ class CellOperationsDataManager(BaseDataManager):
     )
     SQL_GET_CELLS_BY_IDS = f"{CELL_ANALYSIS_TEMPLATE_DIR}/get_cell_metadata_by_ids.sql.mako"
 
-    def insert_matches_to_temp_table(self, query_ids: t.List[str], knn_response: t.List[t.List[MatchNeighbor]]) -> str:
+    def insert_matches_to_temp_table(self, query_ids: t.List[str], knn_response: MatchResult) -> str:
         """
         Insert matches to temporary table in async manner in a separate thread.
 
@@ -34,26 +34,28 @@ class CellOperationsDataManager(BaseDataManager):
         main thread. Parsing of the response is done in the main thread in sync manner.
 
         :param query_ids: List of query ids (original cell ids from the input file).
-        :param knn_response: List of lists of MatchNeighbor objects returned by space vector search service.
+        :param knn_response: MatchResult returned by space vector search service.
 
         :return: The fully-qualified name of the temporary table.
         """
         my_uuid = str(uuid.uuid4())[:8]
         temp_table_fqn = f"{settings.API_REQUEST_TEMP_TABLE_DATASET}.api_request_matches_{my_uuid}"
         table = bigquery.Table(temp_table_fqn, schema=bigquery_schemas.MATCH_CELL_RESULTS_SCHEMA)
-        table.expires = datetime.now() + timedelta(minutes=settings.API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION)
+        table.expires = datetime.now().astimezone() + timedelta(
+            minutes=settings.API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION
+        )
 
         self.block_coo_matrix_db_client.create_table(table)
 
         rows_to_insert = []
-        for i in range(0, len(knn_response)):
+        for i in range(0, len(knn_response.matches)):
             query_id = query_ids[i]
-            for match in knn_response[i]:
+            for neighbor in knn_response.matches[i].neighbors:
                 rows_to_insert.append(
                     {
                         "query_id": str(query_id),
-                        "match_cas_cell_index": int(match.id),
-                        "match_score": float(match.distance),
+                        "match_cas_cell_index": int(neighbor.cas_cell_index),
+                        "match_score": float(neighbor.distance),
                     }
                 )
 

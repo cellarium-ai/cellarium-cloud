@@ -5,6 +5,8 @@ from google.cloud import aiplatform
 from google.cloud.aiplatform.matching_engine._protos import match_service_pb2, match_service_pb2_grpc
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 
+from casp.services import settings
+
 if t.TYPE_CHECKING:
     from google.auth import credentials as auth_credentials
     from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import Namespace
@@ -85,14 +87,22 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
         # Retrieve server ip from deployed index
         server_ip = deployed_indexes[0].private_endpoints.match_grpc_address
 
+        options = [
+            ("grpc.max_send_message_length", self.grpc_message_max_size),
+            ("grpc.max_receive_message_length", self.grpc_message_max_size),
+        ]
+
+        if settings.ENVIRONMENT == "local":
+            # If running locally with a gRPC index endpoint, the developer need to create a tunnel to the gRPC server
+            # For more information, see the "Running Locally" doc section about configuring the tunnel
+            options.append(("grpc.primary_user_agent", f"target_ip:{server_ip}"))
+            server_ip = "localhost"
+
         # Set up channel and stub
         # ==== Here is overridden part ====
         channel = grpc.insecure_channel(
-            "{}:10000".format(server_ip),
-            options=[
-                ("grpc.max_send_message_length", self.grpc_message_max_size),
-                ("grpc.max_receive_message_length", self.grpc_message_max_size),
-            ],
+            f"{server_ip}:10000",
+            options=options,
         )
         # ==== overridden part ends ====
         stub = match_service_pb2_grpc.MatchServiceStub(channel)
@@ -149,25 +159,6 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
             for embedding_neighbors in response.responses[0].responses
         ]
 
-    @staticmethod
-    def __process_batch_match_response_as_dict(
-        response: match_service_pb2.BatchMatchResponse,
-    ) -> t.List[t.List[t.Dict[str, t.Any]]]:
-        """
-        Process the response from the BatchMatch call and return the results.
-
-        :param response: The response from the BatchMatch call.
-
-        :return: A list of lists of MatchNeighbor objects.
-        """
-        return [
-            [
-                {"cas_cell_index": neighbor.id, "distance": neighbor.distance}
-                for neighbor in embedding_neighbors.neighbor
-            ]
-            for embedding_neighbors in response.responses[0].responses
-        ]
-
     def match(
         self,
         deployed_index_id: str,
@@ -192,27 +183,3 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
             deployed_index_id=deployed_index_id, queries=queries, num_neighbors=num_neighbors, filter=filter
         )
         return self.__process_batch_match_response(response)
-
-    def match_as_dict(
-        self,
-        deployed_index_id: str,
-        queries: t.List[t.List[float]],
-        num_neighbors: int = 1,
-        filter: t.Optional[t.List["Namespace"]] = None,
-    ) -> t.List[t.List[t.Dict[str, t.Any]]]:
-        """
-        Method is overriden to be capable of larger request sizes. For more info refer to:
-        :class:`aiplatform.MatchingEngineIndexEndpoint`.
-
-        :param deployed_index_id: The ID of the DeployedIndex to match the queries against.
-        :param queries: A list of queries. Each query is a list of floats, representing a single embedding.
-        :param num_neighbors: The number of nearest neighbors to be retrieved from database for each query.
-        :param filter: A list of Namespaces for filtering the matching results.
-                For example, [Namespace("color", ["red"], []), Namespace("shape", [], ["squared"])] will match
-                datapoints that satisfy "red color" but not include datapoints with "squared shape".
-                Please refer to https://cloud.google.com/vertex-ai/docs/matching-engine/filtering
-        """
-        response = self.__get_match_response(
-            deployed_index_id=deployed_index_id, queries=queries, num_neighbors=num_neighbors, filter=filter
-        )
-        return self.__process_batch_match_response_as_dict(response)

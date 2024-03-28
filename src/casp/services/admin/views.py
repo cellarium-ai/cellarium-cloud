@@ -1,9 +1,13 @@
 import tempfile
 
-from flask import Response, redirect, request, send_file
+from flask import Response, flash, redirect, request, send_file
 from flask_admin import Admin, AdminIndexView, expose
+from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.model.template import EndpointLinkRowAction
+from flask_admin.form import FormOpts
+from flask_admin.helpers import get_redirect_target
+from flask_admin.model.helpers import get_mdict_item_or_list
+from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
 from werkzeug.exceptions import HTTPException
 
 from casp.services import _auth
@@ -59,7 +63,53 @@ class CellariumCloudAdminModelView(BasicHTTPAuthMixin, ModelView):
     Inherits a Basic HTTP protection rule from `BasicHTTPAuthMixin`
     """
 
-    pass
+    @expose("/clone/", methods=("GET", "POST"))
+    def clone_view(self):
+        """
+        Clone model view.
+        Derived from flask_admin.model.BaseModelView.create_view and flask_admin.model.BaseModelView.edit_view
+        """
+        return_url = get_redirect_target() or self.get_url(".index_view")
+
+        if not self.can_create:
+            return redirect(return_url)
+
+        id = get_mdict_item_or_list(request.args, "id")
+        if id is None:
+            return redirect(return_url)
+
+        model = self.get_one(id)
+
+        if model is None:
+            flash(gettext("Record does not exist."), "error")
+            return redirect(return_url)
+
+        form = self.create_form(obj=model)
+        if not hasattr(form, "_validated_ruleset") or not form._validated_ruleset:
+            self._validate_form_instance(ruleset=self._form_edit_rules, form=form)
+
+        if self.validate_form(form):
+            if self.create_model(form):
+                flash(gettext("Record was successfully created."), "success")
+                if "_add_another" in request.form:
+                    return redirect(self.get_url(".create_view", url=return_url))
+                elif "_continue_editing" in request.form:
+                    return redirect(self.get_url(".edit_view", id=self.get_pk_value(model)))
+                else:
+                    # save button
+                    return redirect(self.get_save_return_url(model, is_created=False))
+
+        if request.method == "GET" or form.errors:
+            self.on_form_prefill(form, id)
+
+        form_opts = FormOpts(widget_args=self.form_widget_args, form_rules=self._form_edit_rules)
+
+        if self.create_modal and request.args.get("modal"):
+            template = self.create_modal_template
+        else:
+            template = self.create_template
+
+        return self.render(template, model=model, form=form, form_opts=form_opts, return_url=return_url)
 
 
 class UserAdminView(CellariumCloudAdminModelView):
@@ -70,6 +120,7 @@ class UserAdminView(CellariumCloudAdminModelView):
 
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
+        LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
     ]
     column_list = ("email", "is_admin", "is_active", "requests_processed", "cells_processed")
     column_editable_list = ("is_admin",)
@@ -103,6 +154,7 @@ class UserAdminView(CellariumCloudAdminModelView):
 class CASModelAdminView(CellariumCloudAdminModelView):
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-chevron-up", ".set_default_model"),
+        LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
     ]
     column_list = (
         "model_name",
@@ -171,6 +223,9 @@ class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
         "deployed_index_id": "Deployed Index ID that is used in GCP in Vertex AI",
         "num_neighbors": "Number of neighbors that is used for an approximate neighbors search",
     }
+    column_extra_row_actions = [
+        LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
+    ]
 
 
 admin = Admin(

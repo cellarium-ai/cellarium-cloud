@@ -110,6 +110,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+casp-venv/
 
 # Spyder project settings
 .spyderproject
@@ -133,3 +134,4 @@ dmypy.json
 src/data/
 .DS_Store
 .idea/
+.vscode/

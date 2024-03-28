@@ -24,7 +24,7 @@ class User(db.Base):
 class CASModel(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     model_name = sa.Column(sa.String(255), unique=True, nullable=False)
-    model_file_path = sa.Column(sa.String(255), unique=True, nullable=False)
+    model_file_path = sa.Column(sa.String(255), unique=False, nullable=False)
     embedding_dimension = sa.Column(sa.Integer, nullable=False)
     admin_use_only = sa.Column(sa.Boolean(), default=True, nullable=False)
     schema_name = sa.Column(sa.String(255), default=settings.DEFAULT_SCHEMA_NAME, nullable=False)
@@ -47,6 +47,8 @@ class CASMatchingEngineIndex(db.Base):
     num_neighbors = sa.Column(sa.Integer, nullable=False)
     model_id = sa.Column(sa.Integer, sa.ForeignKey(f"{CASModel.__tablename__}.id"), nullable=False)
     model = relationship("CASModel", backref=backref("cas_matching_engine", uselist=False))
+    is_grpc = sa.Column(sa.Boolean(), default=True, nullable=False)
+    api_endpoint = sa.Column(sa.String(255), nullable=True)
 
     def __str__(self):
         return self.index_name
