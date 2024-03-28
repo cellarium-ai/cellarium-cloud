@@ -24,11 +24,11 @@ Most of the methods will reuqire you to be authenticated. To do this, you'd need
     python src/casp/services/admin/server.py
 
 
-Once the Admin service is running, you can visit `Admin Dashboard <http://localhost:5000>`_ to create a user and token.
+Once the Admin service is running, you can visit `Admin Dashboard <http://127.0.0.1:5000>`_ to create a user and token.
 
 To run commands that require accessing the vector search API using gRPC, you will need to create a tunnel.  To do this you
 must:
-- be on the Broad non-split VPN and have your 
+- log into the Broad non-split VPN
 - log into the gcloud cli with the command ``gcloud auth login``
 
 You can then run the following command to create a tunnel:

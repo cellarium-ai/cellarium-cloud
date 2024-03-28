@@ -79,7 +79,7 @@ Database Migrations
 
 `Alembic <https://alembic.sqlalchemy.org/en/latest/>`_ is used for managing database migrations.
 
-Note: migration operations must be run from the cellarium-cloud/src directory.
+.. note:: migration operations must be run from the cellarium-cloud/src directory.
 
 Each time CAS Database models are updated, it is required to:
 
@@ -89,7 +89,7 @@ Generate a new migration:
 
     alembic -c casp/services/db/alembic.ini revision --autogenerate -m "{migration-message-goes-here}"
 
-Note: You may need to modify the migration file in certain cases (e.g. backfilling data into new required columns)
+.. note:: You may need to modify the migration file in certain cases (e.g. backfilling data into new required columns)
 
 Apply migrations to the database:
 

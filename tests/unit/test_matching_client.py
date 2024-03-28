@@ -1,4 +1,4 @@
-from typing import List
+import typing as t
 
 import pytest
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
@@ -7,9 +7,8 @@ from google.protobuf.json_format import Parse
 from mockito import mock, unstub, when
 from parameterized import parameterized
 
-from casp.services.api.clients import CustomMatchingEngineIndexEndpointClient
-from casp.services.api.clients.matching import matching_client
-from casp.services.api.clients.matching.matching_client import (
+from casp.services.api.clients import CustomMatchingEngineIndexEndpointClient, matching_client
+from casp.services.api.clients.matching_client import (
     MatchingClient,
     MatchingClientGRPC,
     MatchingClientREST,
@@ -55,14 +54,14 @@ class TestMatchingClient:
         match1 = MatchResult(
             matches=[
                 MatchResult.NearestNeighbors(
-                    neighbors=[MatchResult.Neighbor(id="0", distance=0.0, feature_vector=[0, 1, 2])]
+                    neighbors=[MatchResult.Neighbor(cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2])]
                 )
             ]
         )
         match2 = MatchResult(
             matches=[
                 MatchResult.NearestNeighbors(
-                    neighbors=[MatchResult.Neighbor(id="1", distance=1.0, feature_vector=[10, 11, 12])]
+                    neighbors=[MatchResult.Neighbor(cas_cell_index="1", distance=1.0, feature_vector=[10, 11, 12])]
                 )
             ]
         )
@@ -71,12 +70,12 @@ class TestMatchingClient:
             matches=[
                 MatchResult.NearestNeighbors(
                     neighbors=[
-                        MatchResult.Neighbor(id="0", distance=0.0, feature_vector=[0, 1, 2]),
+                        MatchResult.Neighbor(cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2]),
                     ]
                 ),
                 MatchResult.NearestNeighbors(
                     neighbors=[
-                        MatchResult.Neighbor(id="1", distance=1.0, feature_vector=[10, 11, 12]),
+                        MatchResult.Neighbor(cas_cell_index="1", distance=1.0, feature_vector=[10, 11, 12]),
                     ]
                 ),
             ]
@@ -97,9 +96,15 @@ class TestMatchingClient:
                     matches=[
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(id="0", distance=0.0, feature_vector=[0, 1, 2]),
-                                matching_client.MatchResult.Neighbor(id="1", distance=10.0, feature_vector=[3, 4, 5]),
-                                matching_client.MatchResult.Neighbor(id="2", distance=20.0, feature_vector=[6, 7, 8]),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="0", distance=0.0, feature_vector=[0.0, 1.0, 2.0]
+                                ),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="1", distance=10.0, feature_vector=[3.0, 4.0, 5.0]
+                                ),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="2", distance=20.0, feature_vector=[6.0, 7.0, 8.0]
+                                ),
                             ]
                         )
                     ]
@@ -119,21 +124,27 @@ class TestMatchingClient:
                     matches=[
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(id="0", distance=0.0, feature_vector=[0, 1, 2]),
-                                matching_client.MatchResult.Neighbor(id="1", distance=10.0, feature_vector=[3, 4, 5]),
-                                matching_client.MatchResult.Neighbor(id="2", distance=20.0, feature_vector=[6, 7, 8]),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2]
+                                ),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="1", distance=10.0, feature_vector=[3, 4, 5]
+                                ),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="2", distance=20.0, feature_vector=[6, 7, 8]
+                                ),
                             ]
                         ),
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
                                 matching_client.MatchResult.Neighbor(
-                                    id="10", distance=0.0, feature_vector=[10, 11, 12]
+                                    cas_cell_index="10", distance=0.0, feature_vector=[10, 11, 12]
                                 ),
                                 matching_client.MatchResult.Neighbor(
-                                    id="11", distance=0.1, feature_vector=[13, 14, 15]
+                                    cas_cell_index="11", distance=0.1, feature_vector=[13, 14, 15]
                                 ),
                                 matching_client.MatchResult.Neighbor(
-                                    id="12", distance=0.2, feature_vector=[16, 17, 18]
+                                    cas_cell_index="12", distance=0.2, feature_vector=[16, 17, 18]
                                 ),
                             ]
                         ),
@@ -145,8 +156,8 @@ class TestMatchingClient:
     @pytest.mark.asyncio
     async def test_rest_client(
         self,
-        queries: List[List[float]],
-        client_queries: List[FindNeighborsRequest.Query],
+        queries: t.List[t.List[float]],
+        client_queries: t.List[FindNeighborsRequest.Query],
         client_response: FindNeighborsResponse,
         expected_response: MatchResult,
     ) -> None:
@@ -195,9 +206,15 @@ class TestMatchingClient:
                     matches=[
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(id="0", distance=0.0, feature_vector=[0, 1, 2]),
-                                matching_client.MatchResult.Neighbor(id="1", distance=10.0, feature_vector=[3, 4, 5]),
-                                matching_client.MatchResult.Neighbor(id="2", distance=20.0, feature_vector=[6, 7, 8]),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2]
+                                ),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="1", distance=10.0, feature_vector=[3, 4, 5]
+                                ),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="2", distance=20.0, feature_vector=[6, 7, 8]
+                                ),
                             ]
                         )
                     ]
@@ -233,21 +250,27 @@ class TestMatchingClient:
                     matches=[
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(id="0", distance=0.0, feature_vector=[0, 1, 2]),
-                                matching_client.MatchResult.Neighbor(id="1", distance=10.0, feature_vector=[3, 4, 5]),
-                                matching_client.MatchResult.Neighbor(id="2", distance=20.0, feature_vector=[6, 7, 8]),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2]
+                                ),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="1", distance=10.0, feature_vector=[3, 4, 5]
+                                ),
+                                matching_client.MatchResult.Neighbor(
+                                    cas_cell_index="2", distance=20.0, feature_vector=[6, 7, 8]
+                                ),
                             ]
                         ),
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
                                 matching_client.MatchResult.Neighbor(
-                                    id="10", distance=0.0, feature_vector=[10, 11, 12]
+                                    cas_cell_index="10", distance=0.0, feature_vector=[10, 11, 12]
                                 ),
                                 matching_client.MatchResult.Neighbor(
-                                    id="11", distance=0.1, feature_vector=[13, 14, 15]
+                                    cas_cell_index="11", distance=0.1, feature_vector=[13, 14, 15]
                                 ),
                                 matching_client.MatchResult.Neighbor(
-                                    id="12", distance=0.2, feature_vector=[16, 17, 18]
+                                    cas_cell_index="12", distance=0.2, feature_vector=[16, 17, 18]
                                 ),
                             ]
                         ),
@@ -259,8 +282,8 @@ class TestMatchingClient:
     @pytest.mark.asyncio
     async def test_grpc_client(
         self,
-        queries: List[List[float]],
-        client_response: List[List[MatchNeighbor]],
+        queries: t.List[t.List[float]],
+        client_response: t.List[t.List[MatchNeighbor]],
         expected_response: MatchResult,
     ) -> None:
         """

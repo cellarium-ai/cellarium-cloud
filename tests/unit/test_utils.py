@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any
+import typing as t
 
 
 def read_resource(resource_path: str) -> str:
@@ -17,7 +17,7 @@ def read_resource(resource_path: str) -> str:
         return file.read()
 
 
-def async_return(result: Any) -> asyncio.Future:
+def async_return(result: t.Any) -> asyncio.Future:
     """
     Return a result from an async function.
 

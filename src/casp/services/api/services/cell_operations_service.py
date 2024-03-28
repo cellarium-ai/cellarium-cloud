@@ -11,7 +11,7 @@ from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_r
 
 from casp.services import settings
 from casp.services.api import clients, schemas
-from casp.services.api.clients.matching.matching_client import MatchingClient, MatchResult
+from casp.services.api.clients.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import exceptions
@@ -33,8 +33,8 @@ class CellOperationsService:
         cell_operations_dm: CellOperationsDataManager = None,
         cellarium_general_dm: CellariumGeneralDataManager = None,
     ):
-        self.cell_operations_dm = cell_operations_dm if cell_operations_dm else CellOperationsDataManager()
-        self.cellarium_general_dm = cellarium_general_dm if cellarium_general_dm else CellariumGeneralDataManager()
+        self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
+        self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
 
     def authorize_model_for_user(self, user: models.User, model_name: str) -> None:
         """
@@ -133,9 +133,7 @@ class CellOperationsService:
         retried and called in chunks).
 
         :param embeddings_chunk: Chunk of embeddings to match.
-        :param index: Matching engine index to use for matching.
-        :param index_endpoint_client: Matching engine client that will handle communicating with
-        the matching engine.
+        :param client: Matching engine client that will handle communicating with the matching engine.
 
         :return: List of lists of MatchNeighbor objects.
         """
@@ -260,7 +258,7 @@ class CellOperationsService:
                 "query_cell_id": query_ids[i],
                 "neighbors": [
                     {
-                        "cas_cell_index": neighbor.id,
+                        "cas_cell_index": neighbor.cas_cell_index,
                         "distance": neighbor.distance,
                     }
                     for neighbor in knn_response.matches[i].neighbors
@@ -286,7 +284,8 @@ class CellOperationsService:
         for feature_name in metadata_feature_names:
             if feature_name not in AVAILABLE_FIELDS_DICT:
                 raise exceptions.CellMetadataColumnDoesntExist(
-                    f"Feature {feature_name} is not available for querying. Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}."
+                    f"Feature {feature_name} is not available for querying. "
+                    + f"Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}."
                 )
 
         if "cas_cell_index" not in metadata_feature_names:
