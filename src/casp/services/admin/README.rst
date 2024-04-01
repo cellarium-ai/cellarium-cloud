@@ -37,9 +37,9 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     gcloud run deploy $SERVICE_NAME \
     --project=$PROJECT_ID \
     --image=$IMAGE_NAME \
-    --region=$ZONE \
+    --region=$REGION \
     --port=$PORT \
     --add-cloudsql-instances=$DB_CONNECTION \
-    --command=casp/services/admin/entrypoint.sh
+    --command=casp/services/admin/entrypoint.sh \
     --platform managed \
     --allow-unauthenticated
