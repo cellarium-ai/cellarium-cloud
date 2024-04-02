@@ -96,15 +96,9 @@ class TestMatchingClient:
                     matches=[
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="0", distance=0.0, feature_vector=[0.0, 1.0, 2.0]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="1", distance=10.0, feature_vector=[3.0, 4.0, 5.0]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="2", distance=20.0, feature_vector=[6.0, 7.0, 8.0]
-                                ),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="0", distance=0.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="1", distance=10.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=20.0),
                             ]
                         )
                     ]
@@ -124,28 +118,16 @@ class TestMatchingClient:
                     matches=[
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="1", distance=10.0, feature_vector=[3, 4, 5]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="2", distance=20.0, feature_vector=[6, 7, 8]
-                                ),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="0", distance=0.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="1", distance=10.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=20.0),
                             ]
                         ),
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="10", distance=0.0, feature_vector=[10, 11, 12]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="11", distance=0.1, feature_vector=[13, 14, 15]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="12", distance=0.2, feature_vector=[16, 17, 18]
-                                ),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="10", distance=0.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="11", distance=0.1),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="12", distance=0.2),
                             ]
                         ),
                     ]
@@ -176,7 +158,7 @@ class TestMatchingClient:
                 index_endpoint=REST_INDEX.endpoint_id,
                 deployed_index_id=REST_INDEX.deployed_index_id,
                 queries=client_queries,
-                return_full_datapoint=True,
+                return_full_datapoint=False,
             )
         ).thenReturn(async_return(client_response))
 
@@ -206,15 +188,9 @@ class TestMatchingClient:
                     matches=[
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="1", distance=10.0, feature_vector=[3, 4, 5]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="2", distance=20.0, feature_vector=[6, 7, 8]
-                                ),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="0", distance=0.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="1", distance=10.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=20.0),
                             ]
                         )
                     ]
@@ -224,54 +200,30 @@ class TestMatchingClient:
                 [[1, 2, 3], [4, 5, 6]],
                 [
                     [
-                        MatchNeighbor(
-                            id="0", distance=0.0, feature_vector=[0, 1, 2], crowding_tag="0", numeric_restricts=[]
-                        ),
-                        MatchNeighbor(
-                            id="1", distance=10.0, feature_vector=[3, 4, 5], crowding_tag="0", numeric_restricts=[]
-                        ),
-                        MatchNeighbor(
-                            id="2", distance=20.0, feature_vector=[6, 7, 8], crowding_tag="0", numeric_restricts=[]
-                        ),
+                        MatchNeighbor(id="0", distance=0.0, crowding_tag="0", numeric_restricts=[]),
+                        MatchNeighbor(id="1", distance=10.0, crowding_tag="0", numeric_restricts=[]),
+                        MatchNeighbor(id="2", distance=20.0, crowding_tag="0", numeric_restricts=[]),
                     ],
                     [
-                        MatchNeighbor(
-                            id="10", distance=0.0, feature_vector=[10, 11, 12], crowding_tag="0", numeric_restricts=[]
-                        ),
-                        MatchNeighbor(
-                            id="11", distance=0.1, feature_vector=[13, 14, 15], crowding_tag="0", numeric_restricts=[]
-                        ),
-                        MatchNeighbor(
-                            id="12", distance=0.2, feature_vector=[16, 17, 18], crowding_tag="0", numeric_restricts=[]
-                        ),
+                        MatchNeighbor(id="10", distance=0.0, crowding_tag="0", numeric_restricts=[]),
+                        MatchNeighbor(id="11", distance=0.1, crowding_tag="0", numeric_restricts=[]),
+                        MatchNeighbor(id="12", distance=0.2, crowding_tag="0", numeric_restricts=[]),
                     ],
                 ],
                 MatchResult(
                     matches=[
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="1", distance=10.0, feature_vector=[3, 4, 5]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="2", distance=20.0, feature_vector=[6, 7, 8]
-                                ),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="0", distance=0.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="1", distance=10.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=20.0),
                             ]
                         ),
                         matching_client.MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="10", distance=0.0, feature_vector=[10, 11, 12]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="11", distance=0.1, feature_vector=[13, 14, 15]
-                                ),
-                                matching_client.MatchResult.Neighbor(
-                                    cas_cell_index="12", distance=0.2, feature_vector=[16, 17, 18]
-                                ),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="10", distance=0.0),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="11", distance=0.1),
+                                matching_client.MatchResult.Neighbor(cas_cell_index="12", distance=0.2),
                             ]
                         ),
                     ]

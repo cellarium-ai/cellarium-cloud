@@ -15,12 +15,11 @@ class MatchResult(BaseModel):
 
     class Neighbor(BaseModel):
         """
-        Neighbor represents a neighbor of a feature vector in the matching service.
+        Neighbor represents a neighbor of a feature vector (e.g. a cell) in the matching service.
         """
 
         cas_cell_index: str = Field(default=None)
         distance: float = Field(default=None)
-        feature_vector: t.List[float] = Field(default=[])
 
     class NearestNeighbors(BaseModel):
         """
@@ -95,7 +94,8 @@ class MatchingClientGRPC(MatchingClient):
             for neighbor in query_result:
                 neighbors.append(
                     MatchResult.Neighbor(
-                        cas_cell_index=neighbor.id, distance=neighbor.distance, feature_vector=neighbor.feature_vector
+                        cas_cell_index=neighbor.id,
+                        distance=neighbor.distance,
                     )
                 )
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
@@ -141,7 +141,6 @@ class MatchingClientREST(MatchingClient):
                     MatchResult.Neighbor(
                         cas_cell_index=neighbor.datapoint.datapoint_id,
                         distance=neighbor.distance,
-                        feature_vector=list(neighbor.datapoint.feature_vector),
                     )
                 )
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
@@ -171,7 +170,7 @@ class MatchingClientREST(MatchingClient):
             index_endpoint=self.index.endpoint_id,
             deployed_index_id=self.index.deployed_index_id,
             queries=query_objects,
-            return_full_datapoint=True,
+            return_full_datapoint=False,
         )
 
         # Send the request

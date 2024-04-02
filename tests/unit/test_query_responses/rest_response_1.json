@@ -5,11 +5,6 @@
         {
           "datapoint": {
             "datapointId": "0",
-            "featureVector": [
-              0,
-              1,
-              2
-            ],
             "crowdingTag": {
               "crowdingAttribute": "0"
             }
@@ -19,11 +14,6 @@
         {
           "datapoint": {
             "datapointId": "1",
-            "featureVector": [
-              3,
-              4,
-              5
-            ],
             "crowdingTag": {
               "crowdingAttribute": "0"
             }
@@ -33,11 +23,6 @@
         {
           "datapoint": {
             "datapointId": "2",
-            "featureVector": [
-              6,
-              7,
-              8
-            ],
             "crowdingTag": {
               "crowdingAttribute": "0"
             }
@@ -51,11 +36,6 @@
         {
           "datapoint": {
             "datapointId": "10",
-            "featureVector": [
-              10,
-              11,
-              12
-            ],
             "crowdingTag": {
               "crowdingAttribute": "0"
             }
@@ -65,11 +45,6 @@
         {
           "datapoint": {
             "datapointId": "11",
-            "featureVector": [
-              13,
-              14,
-              15
-            ],
             "crowdingTag": {
               "crowdingAttribute": "0"
             }
@@ -79,11 +54,6 @@
         {
           "datapoint": {
             "datapointId": "12",
-            "featureVector": [
-              16,
-              17,
-              18
-            ],
             "crowdingTag": {
               "crowdingAttribute": "0"
             }
