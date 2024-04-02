@@ -1,7 +1,7 @@
 from google.cloud import bigquery
 
 from casp.services import utils
-from casp.services.db import init_db
+from casp.services.db import get_db_session_maker
 
 
 class BaseDataManager:
@@ -24,4 +24,4 @@ class BaseDataManager:
         self.credentials = credentials
         self.project = project
         self.block_coo_matrix_db_client = bigquery.Client(credentials=self.credentials, project=self.project)
-        self.system_data_db_session = init_db()
+        self.system_data_db_session_maker = get_db_session_maker()

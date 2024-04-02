@@ -21,6 +21,18 @@ class User(db.Base):
         return self.email
 
 
+class UserActivity(db.Base):
+    id = sa.Column(sa.Integer, primary_key=True)
+    user_id = sa.Column(sa.Integer, sa.ForeignKey(f"{User.__tablename__}.id"))
+    cell_count = sa.Column(sa.Integer, default=0, nullable=False)
+    model_name = sa.Column(sa.String(255), nullable=False)
+    method = sa.Column(sa.String(255), nullable=True)
+    finished_time = sa.Column(sa.DateTime, default=datetime.datetime.now(datetime.timezone.utc))
+
+    __tablename__ = "user_activity"
+
+
+
 class CASModel(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     model_name = sa.Column(sa.String(255), unique=True, nullable=False)

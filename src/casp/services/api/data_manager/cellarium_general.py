@@ -51,26 +51,25 @@ class CellariumGeneralDataManager(BaseDataManager):
         query_result = self.block_coo_matrix_db_client.query(sql_query).result()
         return [row["feature_name"] for row in query_result]
 
-    @staticmethod
-    def get_models_all() -> t.List[models.CASModel]:
+    def get_models_all(self) -> t.List[models.CASModel]:
         """
         Retrieve query with all available models
 
         :return: List of CAS models
         """
-        return models.CASModel.query.all()
+        with self.system_data_db_session_maker() as session:
+            return session.query(models.CASModel).all()
 
-    @staticmethod
-    def get_models_non_admin() -> t.List[models.CASModel]:
+    def get_models_non_admin(self) -> t.List[models.CASModel]:
         """
         Retrieve query with available models only for non-admin use (admin_use_only=False)
 
         :return: List of CAS models
         """
-        return models.CASModel.query.filter_by(admin_use_only=False).all()
+        with self.system_data_db_session_maker() as session:
+            return session.query(models.CASModel).filter_by(admin_use_only=False).all()
 
-    @staticmethod
-    def get_model_by_name(model_name: str) -> models.CASModel:
+    def get_model_by_name(self, model_name: str) -> models.CASModel:
         """
         Retrieve CAS model by its system name
 
@@ -80,12 +79,13 @@ class CellariumGeneralDataManager(BaseDataManager):
 
         :return: CAS ML model object from the database
         """
-        model = models.CASModel.query.filter_by(model_name=model_name).first()
+        with self.system_data_db_session_maker() as session:
+            model = session.query(models.CASModel).filter_by(model_name=model_name).first()
 
-        if model is None:
-            raise exceptions.NotFound(f"Model {model_name} not found in the database")
+            if model is None:
+                raise exceptions.NotFound(f"Model {model_name} not found in the database")
 
-        return model
+            return model
 
     @classmethod
     def get_index_for_model(cls, model_name: str) -> models.CASMatchingEngineIndex:
@@ -97,14 +97,17 @@ class CellariumGeneralDataManager(BaseDataManager):
         :return: CAS ML model index object from the database
         """
         return cls.get_model_by_name(model_name=model_name).cas_matching_engine
-
-    def increment_user_cells_processed(self, user: models.User, number_of_cells: int) -> None:
+    
+    def log_user_activity(self, user_id: int, model_name: str, method: str, cell_count: int) -> None:
         """
-        Increment `requests_processed` and `cells_processed user stats`.
+        Log the information to the DB about a request from a user
 
-        :param user: A SQLAlchemy user model
-        :param number_of_cells: number of cells to increment by
+        :param user_id: The id for a user
+        :param model_name: Model name that user is using
+        :param method: Method that user is using
+        :param cell_count: Number of cells processed in this request
         """
-        user.requests_processed += 1
-        user.cells_processed += number_of_cells
-        self.system_data_db_session.commit()
+        user_activity = models.UserActivity(user_id=user_id, model_name=model_name, method=method, cell_count=cell_count)
+        with self.system_data_db_session_maker() as session:
+            with session.begin():
+                session.add(user_activity)

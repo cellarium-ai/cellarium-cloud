@@ -4,9 +4,9 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from casp.services import settings
-from casp.services.db import Base, init_db
+from casp.services.db import Base, get_db_session_maker
 
-init_db()
+get_db_session_maker()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
