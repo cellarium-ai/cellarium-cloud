@@ -87,8 +87,7 @@ class CellariumGeneralDataManager(BaseDataManager):
 
             return model
 
-    @classmethod
-    def get_index_for_model(cls, model_name: str) -> models.CASMatchingEngineIndex:
+    def get_index_for_model(self, model_name: str) -> models.CASMatchingEngineIndex:
         """
         Retrieve CAS model index by its system name
 
@@ -96,7 +95,14 @@ class CellariumGeneralDataManager(BaseDataManager):
 
         :return: CAS ML model index object from the database
         """
-        return cls.get_model_by_name(model_name=model_name).cas_matching_engine
+
+        with self.system_data_db_session_maker() as session:
+            model = session.query(models.CASModel).filter_by(model_name=model_name).first()
+
+            if model is None:
+                raise exceptions.NotFound(f"Model {model_name} not found in the database")
+            
+            return model.cas_matching_engine
     
     def log_user_activity(self, user_id: int, model_name: str, method: str, cell_count: int) -> None:
         """

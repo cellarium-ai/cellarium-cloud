@@ -25,7 +25,8 @@ def upgrade() -> None:
         sa.Column('method', sa.String(length=255), nullable=True),
         sa.Column('finished_time', sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
+        sa.Index('ix_user_activity_user_id', 'user_id', unique=False)
     )
 
 

@@ -218,8 +218,6 @@ class CellOperationsService:
         :return: JSON response with annotations.
         """
         self.authorize_model_for_user(user=user, model_name=model_name)
-        """
-        TODO: Return this to the way it was once we have been able to replicate the bug
 
         query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
         
@@ -232,11 +230,9 @@ class CellOperationsService:
             knn_response=knn_response,
             model_name=model_name,
             include_dev_metadata=include_dev_metadata,
-        """
-        #self.cellarium_general_dm.increment_user_cells_processed(user=user, number_of_cells=random.randint(1, 1000))
-        self.cellarium_general_dm.log_user_activity(user_id=user.id, model_name=model_name, method="annotate", cell_count=random.randint(1, 1000))
-        # return annotation_response
-        return []
+        )
+        self.cellarium_general_dm.log_user_activity(user_id=user.id, model_name=model_name, method="annotate", cell_count=len(query_ids))
+        return annotation_response
 
     async def search_adata_file(
         self, user: models.User, file: t.BinaryIO, model_name: str

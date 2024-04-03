@@ -12,8 +12,9 @@ from werkzeug.exceptions import HTTPException
 
 from casp.services import _auth
 from casp.services.admin import basic_auth, flask_app
-from casp.services.db import db_session, models, ops
+from casp.services.db import get_db_session_maker, models, ops
 
+db_session = get_db_session_maker()()
 
 class AuthException(HTTPException):
     def __init__(self, message):
