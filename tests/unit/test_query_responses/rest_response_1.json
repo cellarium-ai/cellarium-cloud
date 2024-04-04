@@ -1,0 +1,66 @@
+{
+  "nearestNeighbors": [
+    {
+      "neighbors": [
+        {
+          "datapoint": {
+            "datapointId": "0",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 0
+        },
+        {
+          "datapoint": {
+            "datapointId": "1",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 10
+        },
+        {
+          "datapoint": {
+            "datapointId": "2",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 20
+        }
+      ]
+    },
+    {
+      "neighbors": [
+        {
+          "datapoint": {
+            "datapointId": "10",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 0
+        },
+        {
+          "datapoint": {
+            "datapointId": "11",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 0.1
+        },
+        {
+          "datapoint": {
+            "datapointId": "12",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 0.2
+        }
+      ]
+    }
+  ]
+}

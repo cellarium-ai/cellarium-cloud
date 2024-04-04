@@ -31,15 +31,15 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     PROJECT_ID=example-project # Name of the project
     IMAGE_NAME=docker-image.dev/example # Name of the docker image # Name of the docker image
     REGION=us-central1 # Region where the service will be deployed
-    PORT=5000 # Port on which the service will be running (matches the port in the flask app)
+    PORT=8000 # Port on which the service will be running (matches the port in the flask app)
     DB_CONNECTION=example-project:us-region-example:db-cluster-name # Cloud SQL connection name
 
     gcloud run deploy $SERVICE_NAME \
     --project=$PROJECT_ID \
     --image=$IMAGE_NAME \
-    --region=$ZONE \
+    --region=$REGION \
     --port=$PORT \
     --add-cloudsql-instances=$DB_CONNECTION \
-    --command=casp/services/admin/entrypoint.sh
+    --command=casp/services/admin/entrypoint.sh \
     --platform managed \
     --allow-unauthenticated
