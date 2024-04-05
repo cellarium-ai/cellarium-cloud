@@ -3,7 +3,6 @@ import typing as t
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from casp.services.api import dependencies, schemas, services
-from casp.services.api.services.consensus_engine import ConsensusStrategyType
 from casp.services.db import models
 
 cell_operations_router = APIRouter(prefix="/cellarium-cell-operations")
@@ -12,14 +11,18 @@ cell_operations_service = services.CellOperationsService()
 cellarium_general_service = services.CellariumGeneralService()
 
 
-@cell_operations_router.post("/annotate", response_model=schemas.QueryAnnotationCellTypeCountType)
+@cell_operations_router.post(
+    "/annotate", response_model=schemas.QueryAnnotationCellTypeSummaryStatisticsType, deprecated=True
+)
 async def annotate(
     file: UploadFile = File(),
     model_name: str = Form(),
-    include_dev_metadata: t.Optional[bool] = Form(default=None),
+    include_dev_metadata: t.Optional[bool] = Form(default=False),
     request_user: models.User = Depends(dependencies.authenticate_user),
 ):
     """
+    Deprecated endpoint. Will be removed in the future version.
+
     Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
     model schema.
 
@@ -31,24 +34,23 @@ async def annotate(
     :return: JSON response with annotations.
     """
 
-    return await cell_operations_service.annotate_adata_file(
+    return await cell_operations_service.annotate_cell_type_summary_statistics_strategy(
         user=request_user,
         file=file.file,
         model_name=model_name,
-        include_dev_metadata=include_dev_metadata,
-        consensus_strategy=ConsensusStrategyType.CELL_TYPE_COUNT,
+        include_extended_output=include_dev_metadata,
     )
 
 
 @cell_operations_router.post(
-    "/annotate-ontology-aware-strategy",
-    response_model=schemas.QueryAnnotationOntologyAwareType,
+    "/annotate-cell-type-summary-statistics-strategy",
+    response_model=schemas.QueryAnnotationCellTypeSummaryStatisticsType,
 )
-async def annotate_ontology_aware_strategy(
+async def annotate_cell_type_summary_statistics(
     file: UploadFile = File(),
     model_name: str = Form(),
-    normalize: t.Optional[bool] = Form(default=None),
     request_user: models.User = Depends(dependencies.authenticate_user),
+    include_extended_output: t.Optional[bool] = Form(default=False),
 ):
     """
     Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -56,18 +58,50 @@ async def annotate_ontology_aware_strategy(
 
     :param file: Byte object of :class:`anndata.AnnData` file to annotate.
     :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
-    :param normalize: Boolean flag indicating whether to normalize the data before annotation.
     :param request_user: Authorized user object obtained  by token from `Bearer` header.
+    :param include_extended_output: Boolean flag indicating whether to include a breakdown by dataset id in the
+        response.
 
     :return: JSON response with annotations.
     """
 
-    return await cell_operations_service.annotate_adata_file(
+    return await cell_operations_service.annotate_cell_type_summary_statistics_strategy(
         user=request_user,
         file=file.file,
         model_name=model_name,
-        consensus_strategy=ConsensusStrategyType.ONTOLOGY_AWARE,
-        normalize=normalize,
+        include_extended_output=include_extended_output,
+    )
+
+
+@cell_operations_router.post(
+    "/annotate-cell-type-ontology-aware-strategy", response_model=schemas.QueryAnnotationOntologyAwareType
+)
+async def annotate_cell_type_ontology_aware_strategy(
+    file: UploadFile = File(),
+    model_name: str = Form(),
+    prune_threshold: float = Form(),
+    weighting_prefactor: float = Form(),
+    request_user: models.User = Depends(dependencies.authenticate_user),
+):
+    """
+    Annotate a single anndata file with Cellarium CAS using the cell type statistics strategy. Input file should be
+    validated and sanitized according to the model schema.
+
+    :param file: Byte object of :class:`anndata.AnnData` file to annotate.
+    :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
+    :param request_user: Authorized user object obtained  by token from `Bearer` header.
+    :param prune_threshold: Prune threshold. Threshold for pruning the ontology graph in the response.
+    :param weighting_prefactor: Distance exponential weighting prefactor.
+
+    :return: JSON response with annotations.
+    """
+
+    return await cell_operations_service.annotate_cell_type_ontology_aware_strategy(
+        user=request_user,
+        file=file.file,
+        model_name=model_name,
+        prune_threshold=prune_threshold,
+        weighting_prefactor=weighting_prefactor,
     )
 
 

@@ -17,7 +17,7 @@ class CASModel(db.Base):
     is_default_model = sa.Column(sa.Boolean(), default=False, nullable=False)
     created_date = sa.Column(sa.DateTime, default=datetime.datetime.utcnow)
 
-    __tablename__ = "cas_model"
+    __tablename__ = "ml_management_model"
 
     def __str__(self):
         return self.model_name
@@ -38,4 +38,4 @@ class CASMatchingEngineIndex(db.Base):
     def __str__(self):
         return self.index_name
 
-    __tablename__ = "cas_matching_engine_index"
+    __tablename__ = "ml_management_matchingengineindex"

@@ -3,7 +3,7 @@ import typing as t
 from pydantic import BaseModel, Field
 
 
-class AnnotationInfoCellTypeCount(BaseModel):
+class NeighborhoodCellTypeSummaryStatistics(BaseModel):
     cell_type: str = Field(example="erythrocyte")
     cell_count: int = Field(example=94)
     min_distance: float = Field(example=1589.847900390625)
@@ -13,7 +13,7 @@ class AnnotationInfoCellTypeCount(BaseModel):
     max_distance: float = Field(example=1840.047119140625)
 
 
-class DevDetailObject(BaseModel):
+class CellTypeStatisticsExtendedObject(BaseModel):
     dataset_id: str = Field(example="a7a92fb49-50741b00a-244955d47")
     count_per_dataset: int = Field(example=10)
     min_distance: float = Field(example=1589.847900390625)
@@ -22,45 +22,48 @@ class DevDetailObject(BaseModel):
     mean_distance: float = Field(example=1791.372802734375)
 
 
-class AnnotationInfoCellTypeCountDevDetail(AnnotationInfoCellTypeCount):
-    dataset_ids_with_counts: t.List[DevDetailObject]
+class NeighborhoodCellTypeSummaryStatisticsExtended(NeighborhoodCellTypeSummaryStatistics):
+    dataset_ids_with_counts: t.List[CellTypeStatisticsExtendedObject]
 
 
-class QueryCellAnnotationAbstract(BaseModel):
+class QueryCellNeighborhoodAbstract(BaseModel):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
     matches: t.List
 
 
-class QueryCellAnnotationCellTypeCount(QueryCellAnnotationAbstract):
-    matches: t.List[AnnotationInfoCellTypeCount]
+class QueryCellNeighborhoodCellTypeSummaryStatistics(QueryCellNeighborhoodAbstract):
+    matches: t.List[NeighborhoodCellTypeSummaryStatistics]
 
 
-class QueryCellAnnotationCellTypeCountDevDetail(QueryCellAnnotationAbstract):
+class QueryCellNeighborhoodCellTypeSummaryStatisticsExtended(QueryCellNeighborhoodAbstract):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
-    matches: t.List[AnnotationInfoCellTypeCountDevDetail]
+    matches: t.List[NeighborhoodCellTypeSummaryStatisticsExtended]
 
 
-class AnnotationInfoOntologyAware(BaseModel):
+class NeighborhoodSummaryOntologyAware(BaseModel):
     score: float = Field(example=0.789)
     cell_type_ontology_term_id: str = Field(example="CL:0000121")
     cell_type: str = Field(example="erythrocyte")
 
 
-class QueryCellAnnotationOntologyAware(QueryCellAnnotationAbstract):
+class QueryCellNeighborhoodOntologyAware(QueryCellNeighborhoodAbstract):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
-    matches: t.List[AnnotationInfoOntologyAware]
+    matches: t.List[NeighborhoodSummaryOntologyAware]
+    total_weight: float = Field(example=11.23232)
+    total_neighbors: int = Field(example=1023)
+    total_neighbors_unrecognized: int = Field(example=5)
 
 
-QueryAnnotationAbstractType: t.TypeAlias = t.List[QueryCellAnnotationAbstract]
-QueryAnnotationOntologyAwareType: t.TypeAlias = t.List[QueryCellAnnotationOntologyAware]
-QueryAnnotationCellTypeCountType: t.TypeAlias = t.Union[
-    t.List[QueryCellAnnotationCellTypeCount],
-    t.List[QueryCellAnnotationCellTypeCountDevDetail],
+QueryAnnotationAbstractType: t.TypeAlias = t.List[QueryCellNeighborhoodAbstract]
+QueryAnnotationOntologyAwareType: t.TypeAlias = t.List[QueryCellNeighborhoodOntologyAware]
+QueryAnnotationCellTypeSummaryStatisticsType: t.TypeAlias = t.Union[
+    t.List[QueryCellNeighborhoodCellTypeSummaryStatistics],
+    t.List[QueryCellNeighborhoodCellTypeSummaryStatisticsExtended],
 ]
 QueryAnnotationType: t.TypeAlias = t.Union[
-    t.List[QueryCellAnnotationCellTypeCountDevDetail],
-    t.List[QueryCellAnnotationOntologyAware],
-    t.List[QueryCellAnnotationCellTypeCount],
+    t.List[QueryCellNeighborhoodCellTypeSummaryStatisticsExtended],
+    t.List[QueryCellNeighborhoodOntologyAware],
+    t.List[QueryCellNeighborhoodCellTypeSummaryStatistics],
 ]
 
 

@@ -29,7 +29,7 @@ def load_ontology_resource_from_file() -> t.Dict[str, t.Any]:
         return json.load(f)
 
 
-def load_expected_response() -> list[schemas.QueryCellAnnotationOntologyAware]:
+def load_expected_response() -> list[schemas.QueryCellNeighborhoodOntologyAware]:
     """
     Load the expected response from a predefined JSON file.
 
@@ -40,7 +40,7 @@ def load_expected_response() -> list[schemas.QueryCellAnnotationOntologyAware]:
     with open(filepath, "r") as file:
         json_data = json.load(file)
 
-    return [schemas.QueryCellAnnotationOntologyAware(**item) for item in json_data]
+    return [schemas.QueryCellNeighborhoodOntologyAware(**item) for item in json_data]
 
 
 @pytest.fixture
@@ -84,8 +84,11 @@ def consensus_engine_mock(cell_ontology_resource_mock, cell_operations_dm_mock) 
     :param cell_operations_dm_mock: A fixture providing a mocked `CellOperationsDataManager` instance.
     :return:
     """
-    strategy = consensus_engine.OntologyAwareConsensusStrategy(
-        normalize=True, cell_ontology_resource=cell_ontology_resource_mock, cell_operations_dm=cell_operations_dm_mock
+    strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
+        prune_threshold=0.1,
+        weighting_prefactor=1.0,
+        cell_ontology_resource=cell_ontology_resource_mock,
+        cell_operations_dm=cell_operations_dm_mock,
     )
     return consensus_engine.ConsensusEngine(strategy=strategy)
 
@@ -133,7 +136,7 @@ def test_summarize_query_neighbor_context_ontology_aware(consensus_engine_mock, 
     # Assertions to validate the output
     assert isinstance(result, list), "The result should be a list"
     assert all(
-        isinstance(item, schemas.QueryCellAnnotationOntologyAware) for item in result
+        isinstance(item, schemas.QueryCellNeighborhoodOntologyAware) for item in result
     ), "All items should be of type QueryCellAnnotationOntologyAware"
 
     assert expected == result, "The expected response should match the result"

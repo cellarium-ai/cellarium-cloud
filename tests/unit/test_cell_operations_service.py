@@ -16,7 +16,7 @@ from casp.services import utils
 from casp.services.api import clients
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import exceptions as dm_exc
-from casp.services.api.services import consensus_engine, exceptions
+from casp.services.api.services import exceptions
 from casp.services.api.services.cell_operations_service import CellOperationsService
 from casp.services.db import models
 from tests.unit.test_utils import async_return
@@ -157,12 +157,11 @@ class TestCellOperationsService:
                 cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
             ).thenReturn(response)
 
-        actual_response = await self.cell_operations_service.annotate_adata_file(
+        actual_response = await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy(
             user=USER_ADMIN,
             file=io.BytesIO(ANNDATA_DATA),
             model_name=MODEL.model_name,
-            include_dev_metadata=include_dev_metadata,
-            consensus_strategy=consensus_engine.ConsensusStrategyType.CELL_TYPE_COUNT,
+            include_extended_output=include_dev_metadata,
         )
         assert actual_response == response
 
@@ -173,7 +172,10 @@ class TestCellOperationsService:
             )
         else:
             verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
-                user_id=USER_ADMIN.id, model_name=MODEL.model_name, method="annotate", cell_count=len(query_ids)
+                user_id=USER_ADMIN.id,
+                model_name=MODEL.model_name,
+                method="annotate_cell_type_summary_statistics_strategy",
+                cell_count=len(query_ids),
             )
 
     @parameterized.expand(

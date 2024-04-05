@@ -68,10 +68,13 @@
         "cell_type": "mononuclear cell"
       },
       {
-        "score": 0.5084737648565952,
+        "score": 0.4915262351434047,
         "cell_type_ontology_term_id": "CL_0000789",
         "cell_type": "alpha-beta T cell"
       }
-    ]
+    ],
+    "total_weight": 0.7358645669875553,
+    "total_neighbors": 2,
+    "total_neighbors_unrecognized": 0
   }
 ]

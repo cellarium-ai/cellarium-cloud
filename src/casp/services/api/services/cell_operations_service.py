@@ -36,15 +36,15 @@ class CellOperationsService:
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
 
-    def authorize_model_for_user(self, user: models.User, model_name: str) -> None:
+    def authorize_model_for_user(self, user: models.User, model_name: str) -> models.CASModel:
         """
         Authorize user to use a specific model. If user is not authorized, raise an exception.
 
         :param user: User object to check permissions for.
         :param model_name: Model name to check permissions for.
+
+        :return: Model object if user is authorized.
         """
-        if user.is_admin:
-            return
         try:
             model = self.cellarium_general_dm.get_model_by_name(model_name=model_name)
         except dm_exc.NotFound as e:
@@ -53,6 +53,7 @@ class CellOperationsService:
             raise exceptions.AccessDeniedError(
                 f"{model_name} model is not available. Please reach out to the Cellarium team for more information."
             )
+        return model
 
     @staticmethod
     async def get_embeddings(file_to_embed: t.BinaryIO, model_name: str) -> t.Tuple[t.List[str], np.array]:
@@ -87,7 +88,7 @@ class CellOperationsService:
             if len(match.neighbors) == 0:
                 raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
-    async def __get_knn_matches_with_retry(
+    async def __get_knn_matches_from_embeddings_with_retry(
         self, embeddings: np.array, model_name: str, chunk_matches_function: t.Callable
     ) -> MatchResult:
         """
@@ -127,9 +128,10 @@ class CellOperationsService:
 
         return all_matches
 
-    async def __get_knn_matches_for_chunk(self, embeddings_chunk: np.array, client: MatchingClient) -> MatchResult:
+    @staticmethod
+    async def __get_knn_matches_for_chunk(embeddings_chunk: np.array, client: MatchingClient) -> MatchResult:
         """
-        Get KNN matches for a chunk of embeddings (split out from get_knn_matches so it can be
+        Get KNN matches for a chunk of embeddings (split out from get_knn_matches, so it can be
         retried and called in chunks).
 
         :param embeddings_chunk: Chunk of embeddings to match.
@@ -141,7 +143,7 @@ class CellOperationsService:
         CellOperationsService.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
 
-    async def get_knn_matches(self, embeddings: np.array, model_name: str) -> MatchResult:
+    async def get_knn_matches_from_embeddings(self, embeddings: np.array, model_name: str) -> MatchResult:
         """
         Run KNN matching synchronously using Matching Engine client over gRPC.
 
@@ -151,7 +153,7 @@ class CellOperationsService:
         :return: Matches in a MatchResult object
         """
 
-        return await self.__get_knn_matches_with_retry(
+        return await self.__get_knn_matches_from_embeddings_with_retry(
             embeddings=embeddings,
             model_name=model_name,
             chunk_matches_function=self.__get_knn_matches_for_chunk,
@@ -170,15 +172,32 @@ class CellOperationsService:
         num_chunks: int = math.ceil(len(embeddings) / chunk_size)
         return np.array_split(embeddings, num_chunks)
 
-    async def annotate_adata_file(
+    async def get_knn_matches(self, file: t.Any, model_name: str) -> t.Tuple[t.List[str], MatchResult]:
+        """
+        Get KNN matches for anndata object.
+
+        :param file: Anndata object to get KNN matches for.
+        :param model_name: Model name to use for matching.
+
+        :return: Matches in a MatchResult object
+        """
+        query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
+
+        if embeddings.size == 0:
+            # No further processing needed if there are no embeddings, return empty match result
+            return [], MatchResult()
+
+        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model_name=model_name)
+
+        return query_ids, knn_response
+
+    async def annotate_cell_type_summary_statistics_strategy(
         self,
         user: models.User,
         file: t.BinaryIO,
         model_name: str,
-        consensus_strategy: consensus_engine.ConsensusStrategyType,
-        include_dev_metadata: t.Optional[bool] = None,
-        normalize: t.Optional[bool] = None,
-    ) -> schemas.QueryAnnotationType:
+        include_extended_output: t.Optional[bool] = None,
+    ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
         model schema. Increment user cells processed counter after successful annotation.
@@ -186,45 +205,57 @@ class CellOperationsService:
         :param user: User object used to increment user cells processed counter.
         :param file: Byte object of :class:`anndata.AnnData` file to annotate.
         :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
-        :param consensus_strategy: Consensus strategy to use for annotation from `ConsensusStrategyType` enum.
-        :param normalize: Boolean flag indicating whether to normalize the embeddings before annotation. Used only in
-            `ontology_aware` method.
-        :param include_dev_metadata: Boolean flag indicating whether to include dev metadata in the response. Used only
+        :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
             in `cell_type_count` method.
 
         :return: JSON response with annotations.
         """
-        if normalize is None and consensus_strategy == consensus_engine.ConsensusStrategyType.ONTOLOGY_AWARE:
-            raise exceptions.InvalidInputError("Normalization flag is required for Ontology Aware method.")
-        if (
-            include_dev_metadata is None
-            and consensus_strategy == consensus_engine.ConsensusStrategyType.CELL_TYPE_COUNT
-        ):
-            raise exceptions.InvalidInputError("Include Dev Metadata flag is required for Cell Type Count method.")
+        cas_model = self.authorize_model_for_user(user=user, model_name=model_name)
+        query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
 
-        self.authorize_model_for_user(user=user, model_name=model_name)
-        query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
+        strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
+            cell_operations_dm=self.cell_operations_dm,
+            cas_model=cas_model,
+            include_extended_output=include_extended_output,
+        )
 
-        if embeddings.size == 0:
-            # No further processing needed if there are no embeddings
-            return []
-        knn_response = await self.get_knn_matches(embeddings=embeddings, model_name=model_name)
-        cas_model = self.cellarium_general_dm.get_model_by_name(model_name=model_name)
+        engine = consensus_engine.ConsensusEngine(strategy=strategy)
 
-        match consensus_strategy:
-            case consensus_engine.ConsensusStrategyType.ONTOLOGY_AWARE:
-                strategy = consensus_engine.OntologyAwareConsensusStrategy(
-                    cell_operations_dm=self.cell_operations_dm,
-                    normalize=normalize,
-                )
-            case consensus_engine.ConsensusStrategyType.CELL_TYPE_COUNT:
-                strategy = consensus_engine.CellTypeCountConsensusStrategy(
-                    cell_operations_dm=self.cell_operations_dm,
-                    cas_model=cas_model,
-                    include_dev_metadata=include_dev_metadata,
-                )
-            case _:
-                raise exceptions.InvalidInputError(f"Invalid Consensus Engine Method: {consensus_strategy}")
+        annotation_response = await engine.summarize_async(query_ids=query_ids, knn_query=knn_response)
+
+        if query_ids:
+            self.cellarium_general_dm.log_user_activity(
+                user_id=user.id,
+                model_name=model_name,
+                method="annotate_cell_type_summary_statistics_strategy",
+                cell_count=len(query_ids),
+            )
+
+        return annotation_response
+
+    async def annotate_cell_type_ontology_aware_strategy(
+        self, user: models.User, file: t.BinaryIO, model_name: str, prune_threshold: float, weighting_prefactor: float
+    ) -> schemas.QueryAnnotationOntologyAwareType:
+        """
+        Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
+        model schema. Increment user cells processed counter after successful annotation.
+
+        :param user: User object used to increment user cells processed counter.
+        :param file: Byte object of :class:`anndata.AnnData` file to annotate.
+        :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
+        :param prune_threshold: Prune threshold for the ontology-aware annotation strategy.
+        :param weighting_prefactor: Distance exponential weighting prefactor.
+
+        :return: JSON response with annotations.
+        """
+        _ = self.authorize_model_for_user(user=user, model_name=model_name)
+        query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
+
+        strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
+            cell_operations_dm=self.cell_operations_dm,
+            prune_threshold=prune_threshold,
+            weighting_prefactor=weighting_prefactor,
+        )
 
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
 
@@ -233,7 +264,13 @@ class CellOperationsService:
         except dm_exc.CellMetadataDatabaseError as e:
             raise exceptions.InvalidInputError(str(e))
 
-        self.cellarium_general_dm.increment_user_cells_processed(user=user, number_of_cells=len(query_ids))
+        if query_ids:
+            self.cellarium_general_dm.log_user_activity(
+                user_id=user.id,
+                model_name=model_name,
+                method="annotate_cell_type_ontology_aware_strategy",
+                cell_count=len(query_ids),
+            )
 
         return annotation_response
 
@@ -255,7 +292,7 @@ class CellOperationsService:
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
-        knn_response = await self.get_knn_matches(embeddings=embeddings, model_name=model_name)
+        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model_name=model_name)
 
         return [
             {

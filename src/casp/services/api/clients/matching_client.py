@@ -92,10 +92,15 @@ class MatchingClientGRPC(MatchingClient):
         for query_result in result:
             neighbors = []
             for neighbor in query_result:
+                # TODO: We have to make sure that index returns a distance, not a similarity score. All indexes
+                # that we use at the moment (DOT_PRODUCT_DISTANCE with L2_NORM_TYPE) return cosine similarity instead
+                # of cosine distance. We have to develop a more sophisticated handler for index depending on its type.
+                # Also we should get rid of this boilerplate code and comments..
+                distance = round(1 - neighbor.distance, 9)
                 neighbors.append(
                     MatchResult.Neighbor(
                         cas_cell_index=neighbor.id,
-                        distance=neighbor.distance,
+                        distance=distance,
                     )
                 )
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
@@ -137,10 +142,15 @@ class MatchingClientREST(MatchingClient):
         for query_reqult in result.nearest_neighbors:
             neighbors = []
             for neighbor in query_reqult.neighbors:
+                # TODO: We have to make sure that index returns a distance, not a similarity score. All indexes
+                # that we use at the moment (DOT_PRODUCT_DISTANCE with L2_NORM_TYPE return cosine similarity instead of
+                # cosine distance. We have to develop a more sophisticated handler for index depending on its type.
+                # Also we should get rid of this boilerplate code and comments.
+                distance = round(1 - neighbor.distance, 9)
                 neighbors.append(
                     MatchResult.Neighbor(
                         cas_cell_index=neighbor.datapoint.datapoint_id,
-                        distance=neighbor.distance,
+                        distance=distance,
                     )
                 )
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))

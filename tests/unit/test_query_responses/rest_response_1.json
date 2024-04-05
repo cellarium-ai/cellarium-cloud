@@ -9,7 +9,7 @@
               "crowdingAttribute": "0"
             }
           },
-          "distance": 0
+          "distance": 0.9
         },
         {
           "datapoint": {
@@ -18,7 +18,7 @@
               "crowdingAttribute": "0"
             }
           },
-          "distance": 10
+          "distance": 0.8
         },
         {
           "datapoint": {
@@ -27,7 +27,7 @@
               "crowdingAttribute": "0"
             }
           },
-          "distance": 20
+          "distance": 0.7
         }
       ]
     },
@@ -40,7 +40,7 @@
               "crowdingAttribute": "0"
             }
           },
-          "distance": 0
+          "distance": 0.6
         },
         {
           "datapoint": {
@@ -49,7 +49,7 @@
               "crowdingAttribute": "0"
             }
           },
-          "distance": 0.1
+          "distance": 0.5
         },
         {
           "datapoint": {
@@ -58,7 +58,7 @@
               "crowdingAttribute": "0"
             }
           },
-          "distance": 0.2
+          "distance": 0.4
         }
       ]
     }

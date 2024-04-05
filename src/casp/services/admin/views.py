@@ -124,7 +124,7 @@ class UserAdminView(CellariumCloudAdminModelView):
         EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
         LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
     ]
-    column_list = ("email", "is_admin", "is_active", "total_requests_processed", "total_cells_processed")
+    column_list = ("email", "is_admin", "active", "total_requests_processed", "total_cells_processed")
     column_editable_list = ("is_admin",)
     form_excluded_columns = ("requests_processed", "cells_processed")
 
@@ -265,8 +265,12 @@ class CellInfoAdminView(CellariumCloudAdminModelView):
     )
     column_select_related_list = ("cas_ingest",)
     column_formatters = {"original_cell_id": shorten_value_formatter}
+    # Do not allow to edit or delete the records, neither create new ones. This is a read-only view.
+    can_edit = False
+    can_delete = False
+    can_create = False
 
-    page_size = 100
+    page_size = 50
 
 
 class CellFeatureInfoAdminView(CellariumCloudAdminModelView):
@@ -310,7 +314,7 @@ admin.add_view(
 )
 admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category="Cell Data Management"))
 admin.add_view(
-    CellFeatureInfoAdminView(models.CellFeature, db_session, name="CellFeature", category="Cell Data Management")
+    CellFeatureInfoAdminView(models.FeatureInfo, db_session, name="CellFeature", category="Cell Data Management")
 )
 admin.add_view(
     CellIngestInfoAdminView(models.CellIngestInfo, db_session, name="CellIngestInfo", category="Cell Data Management")

@@ -72,7 +72,7 @@ class CellOperationsDataManager(BaseDataManager):
 
     def get_neighborhood_distance_summary(
         self, cas_model: models.CASModel, match_temp_table_fqn: str
-    ) -> t.List[schemas.QueryCellAnnotationCellTypeCount]:
+    ) -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
         """
         Execute a BigQuery query to retrieve metadata for a matching query.
 
@@ -92,7 +92,7 @@ class CellOperationsDataManager(BaseDataManager):
 
     def get_neighborhood_distance_summary_dev_details(
         self, cas_model: models.CASModel, match_temp_table_fqn: str
-    ) -> t.List[schemas.QueryCellAnnotationCellTypeCountDevDetail]:
+    ) -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatisticsExtended]:
         """
         Execute a BigQuery query to retrieve metadata for a matching query. The returned query, similar to
         :meth:`get_match_query_metadata`, includes a breakdown of the number of cells that matched each cell type
@@ -110,15 +110,16 @@ class CellOperationsDataManager(BaseDataManager):
 
         query_job = self.block_coo_matrix_db_client.query(query=sql_query)
 
-        return bigquery_response_parsers.parse_match_query_job(query_job=query_job, include_dev_details=True)
+        return bigquery_response_parsers.parse_match_query_job(query_job=query_job, include_extended_output=True)
 
     def _get_cell_metadata_by_ids(
         self, cell_ids: t.List[int], feature_names: t.List[str]
     ) -> t.List[schemas.CellariumCellMetadata]:
         """
-        Get cells by ids, maintaining the order of cell_ids. Preserves the order of cell_ids in the query results.
+        Get cells by CAS IDs, maintaining the order of `cell_ids`. Preserves the order of `cell_ids` in the query
+        results.
 
-        :param cell_ids: Cas cell indexes to retrieve metadata for.
+        :param cell_ids: CAS cell IDs to retrieve metadata for.
 
         :return: List of dictionaries representing the query results, ordered according to cell_ids.
         """
@@ -130,17 +131,20 @@ class CellOperationsDataManager(BaseDataManager):
                 f"Number of cell IDs exceeds the maximum of {settings.MAX_CELL_IDS_PER_QUERY}"
             )
 
-        with self.system_data_db_session.begin():
+        with self.system_data_db_session_maker.begin() as session:
             # Creating temp table, it will be dropped automatically when the session is closed
             metadata = sa.MetaData()
             cell_info_tmp_table = sa.Table(
-                "cells_cellinfotemptable", metadata, sa.Column("cas_cell_index", sa.Integer), prefixes=["temporary"]
+                f"cells_cellinfotemptable_{str(uuid.uuid4())[:8]}",
+                metadata,
+                sa.Column("cas_cell_index", sa.Integer),
+                prefixes=["temporary"],
             )
-            metadata.create_all(self.system_data_db_session.bind)
+            metadata.create_all(session.bind)
 
             # Insert values into the temp table
             insert_query = cell_info_tmp_table.insert().values([{"cas_cell_index": cell_id} for cell_id in cell_ids])
-            self.system_data_db_session.execute(insert_query)
+            session.execute(insert_query)
 
             # Select values from the temp table, joining with the CellInfo table
             select_columns = [getattr(models.CellInfo, feature_name) for feature_name in feature_names]
@@ -148,7 +152,7 @@ class CellOperationsDataManager(BaseDataManager):
                 cell_info_tmp_table, models.CellInfo.cas_cell_index == cell_info_tmp_table.c.cas_cell_index
             )
 
-            query_result = self.system_data_db_session.execute(statement).fetchall()
+            query_result = session.execute(statement).fetchall()
 
         # Reconstruct the ordered list based on cell_ids
         index_to_metadata = {row["cas_cell_index"]: row for row in query_result}
@@ -160,24 +164,24 @@ class CellOperationsDataManager(BaseDataManager):
         self, cell_ids: t.List[int], metadata_feature_names: t.List[str]
     ) -> t.List[schemas.CellariumCellMetadata]:
         """
-        Get cells by ids, maintaining the order of cell_ids. If the number of querying cell IDs exceeds the maximum
-        allowed, split the query into multiple queries. Database gets overwhelmed when querying a large number of cell.
+        Get cells by CAS IDs, maintaining the order of `cell_ids`. If the number of querying cell IDs exceeds the
+        maximum allowed, split the query into multiple queries. Database gets overwhelmed when querying a large number
+        of cell.
 
-        :param cell_ids: Cas cell indexes to retrieve metadata for.
+        :param cell_ids: CAS cell IDs to retrieve metadata for.
         :param metadata_feature_names: List of feature names to retrieve.
 
-        :return: List of dictionaries representing the query results, ordered according to cell_ids.
+        :return: List of dictionaries representing the query results, ordered according to `cell_ids`.
         """
         if len(cell_ids) >= settings.MAX_CELL_IDS_PER_QUERY:
             neighbors_metadata = []
             for i in range(0, len(cell_ids), settings.MAX_CELL_IDS_PER_QUERY):
+                upper_bound_slice_index = min(len(cell_ids), i + settings.MAX_CELL_IDS_PER_QUERY)
                 neighbors_metadata += self._get_cell_metadata_by_ids(
-                    cell_ids=list(cell_ids)[i : i + settings.MAX_CELL_IDS_PER_QUERY],
+                    cell_ids=cell_ids[i:upper_bound_slice_index],
                     feature_names=metadata_feature_names,
                 )
         else:
-            neighbors_metadata = self._get_cell_metadata_by_ids(
-                cell_ids=list(cell_ids), feature_names=metadata_feature_names
-            )
+            neighbors_metadata = self._get_cell_metadata_by_ids(cell_ids=cell_ids, feature_names=metadata_feature_names)
 
         return neighbors_metadata

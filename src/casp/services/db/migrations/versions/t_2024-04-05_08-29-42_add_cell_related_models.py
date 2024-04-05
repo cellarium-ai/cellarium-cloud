@@ -1,7 +1,7 @@
 """0010_add_cell_related_models
 
 Revision ID: 7de52712f144
-Revises: 0009
+Revises: 310657f0e46c
 Create Date: 2024-02-26 16:00:07.051642
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "86eda43c427a"
-down_revision = "a2e0ae902a06"
+down_revision = "310657f0e46c"
 branch_labels = None
 depends_on = None
 
@@ -19,13 +19,11 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "cells_cellingestinfo",
-        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("cas_ingest_id", sa.String(length=255), nullable=False),
         sa.Column("dataset_id", sa.String(length=255), nullable=False),
         sa.Column("uns_metadata", sa.JSON(), nullable=False),
         sa.Column("ingest_timestamp", sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("cas_ingest_id"),
+        sa.PrimaryKeyConstraint("cas_ingest_id"),
     )
     op.create_table(
         "cells_cellfeature",
@@ -42,12 +40,10 @@ def upgrade() -> None:
             ["cas_ingest_id"],
             ["cells_cellingestinfo.cas_ingest_id"],
         ),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("cas_feature_index"),
+        sa.PrimaryKeyConstraint("cas_feature_index"),
     )
     op.create_table(
         "cells_cellinfo",
-        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("cas_cell_index", sa.Integer(), nullable=False),
         sa.Column("cas_ingest_id", sa.String(length=255), nullable=False),
         sa.Column("original_cell_id", sa.String(length=255), nullable=False),
@@ -76,8 +72,7 @@ def upgrade() -> None:
             ["cas_ingest_id"],
             ["cells_cellingestinfo.cas_ingest_id"],
         ),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("cas_cell_index"),
+        sa.PrimaryKeyConstraint("cas_cell_index"),
     )
 
 

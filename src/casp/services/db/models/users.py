@@ -15,7 +15,7 @@ class User(db.Base):
     cells_processed = sa.Column(sa.Integer, default=0, nullable=False)
     is_admin = sa.Column(sa.Boolean(), default=True, nullable=False)
 
-    __tablename__ = "user"
+    __tablename__ = "users_user"
 
     def __repr__(self):
         return self.email
@@ -29,7 +29,7 @@ class UserActivity(db.Base):
     method = sa.Column(sa.String(255), nullable=True)
     finished_time = sa.Column(sa.DateTime, default=datetime.datetime.now(datetime.timezone.utc))
 
-    __tablename__ = "user_activity"
+    __tablename__ = "users_useractivity"
 
 
 # Add properties to user model for metrics

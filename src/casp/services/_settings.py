@@ -17,7 +17,7 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = ENV_TYPE
-    APP_VERSION: str = "1.4.3-alpha.1"
+    APP_VERSION: str = "1.4.3"
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR = SERVICES_DIR
@@ -31,8 +31,8 @@ class AllEnvSettings(BaseSettings):
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
-    AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 350  # 350 seconds
-    AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 300  # 300 seconds
+    AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 650  # 650 seconds
+    AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 600  # 600 seconds
     MODEL_SERVER_URL: str = "https://cellarium-cloud-model.cellarium.ai"
     DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
     DEFAULT_MODEL_BQ_DATASET_NAME: str = "cas_50m_dataset"

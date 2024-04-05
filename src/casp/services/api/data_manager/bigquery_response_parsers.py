@@ -5,7 +5,7 @@ from google.cloud import bigquery
 from casp.services.api import schemas
 
 
-def _parse_match_object(row: bigquery.Row) -> schemas.AnnotationInfoCellTypeCount:
+def _parse_match_object(row: bigquery.Row) -> schemas.NeighborhoodCellTypeSummaryStatistics:
     """
     Parse a single row of a BigQuery job object representing a query to retrieve metadata for a matching query.
 
@@ -13,7 +13,7 @@ def _parse_match_object(row: bigquery.Row) -> schemas.AnnotationInfoCellTypeCoun
 
     :return: Dictionary representing the query results.
     """
-    return schemas.AnnotationInfoCellTypeCount(
+    return schemas.NeighborhoodCellTypeSummaryStatistics(
         cell_type=row["cell_type"],
         cell_count=row["cell_count"],
         min_distance=row["min_distance"],
@@ -24,9 +24,12 @@ def _parse_match_object(row: bigquery.Row) -> schemas.AnnotationInfoCellTypeCoun
     )
 
 
-def _parse_match_object_dev_details(row: bigquery.Row) -> schemas.AnnotationInfoCellTypeCountDevDetail:
+def _parse_match_object_with_extended_output(
+    row: bigquery.Row,
+) -> schemas.NeighborhoodCellTypeSummaryStatisticsExtended:
     """
-    Parse a single row of a BigQuery job object representing a query to retrieve metadata for a matching query.
+    Parse a single row of a BigQuery job object representing a query to retrieve metadata for a matching query. Include
+    a breakdown of the number of cells by dataset.
 
     :param row: Row of the BigQuery job object representing the query execution.
 
@@ -35,7 +38,7 @@ def _parse_match_object_dev_details(row: bigquery.Row) -> schemas.AnnotationInfo
     dataset_ids_with_counts = []
     for dataset_ids_with_counts_struct in row["dataset_ids_with_counts"]:
         dataset_ids_with_counts.append(
-            schemas.DevDetailObject(
+            schemas.CellTypeStatisticsExtendedObject(
                 dataset_id=dataset_ids_with_counts_struct["dataset_id"],
                 count_per_dataset=dataset_ids_with_counts_struct["count_per_dataset"],
                 min_distance=dataset_ids_with_counts_struct["min_distance"],
@@ -44,7 +47,7 @@ def _parse_match_object_dev_details(row: bigquery.Row) -> schemas.AnnotationInfo
                 mean_distance=dataset_ids_with_counts_struct["mean_distance"],
             )
         )
-    return schemas.AnnotationInfoCellTypeCountDevDetail(
+    return schemas.NeighborhoodCellTypeSummaryStatisticsExtended(
         cell_type=row["cell_type"],
         cell_count=row["cell_count"],
         min_distance=row["min_distance"],
@@ -57,13 +60,16 @@ def _parse_match_object_dev_details(row: bigquery.Row) -> schemas.AnnotationInfo
 
 
 def parse_match_query_job(
-    query_job: bigquery.QueryJob, include_dev_details: bool = False
-) -> t.List[schemas.QueryCellAnnotationCellTypeCount | schemas.QueryCellAnnotationCellTypeCountDevDetail]:
+    query_job: bigquery.QueryJob, include_extended_output: bool = False
+) -> t.List[
+    schemas.QueryCellNeighborhoodCellTypeSummaryStatistics
+    | schemas.QueryCellNeighborhoodCellTypeSummaryStatisticsExtended
+]:
     """
     Parse a BigQuery job object representing a query to retrieve metadata for a matching query.
 
     :param query_job: BigQuery job object representing the query execution.
-    :param include_dev_details: Boolean indicating whether to include a breakdown of the number of cells by dataset
+    :param include_extended_output: Boolean indicating whether to include a breakdown of the number of cells by dataset
 
     :return: List of dictionaries representing the query results.
     """
@@ -81,15 +87,15 @@ def parse_match_query_job(
             data = {"query_cell_id": row["query_id"], "matches": []}
             last_query_id = data["query_cell_id"]
 
-        if not include_dev_details:
+        if not include_extended_output:
             x = _parse_match_object(row=row)
         else:
-            x = _parse_match_object_dev_details(row=row)
+            x = _parse_match_object_with_extended_output(row=row)
 
         data["matches"].append(x)
 
     results.append(data)
-    if include_dev_details:
-        return [schemas.QueryCellAnnotationCellTypeCountDevDetail(**x) for x in results]
+    if include_extended_output:
+        return [schemas.QueryCellNeighborhoodCellTypeSummaryStatisticsExtended(**x) for x in results]
 
-    return [schemas.QueryCellAnnotationCellTypeCount(**x) for x in results]
+    return [schemas.QueryCellNeighborhoodCellTypeSummaryStatistics(**x) for x in results]
