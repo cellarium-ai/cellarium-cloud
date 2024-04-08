@@ -32,7 +32,6 @@ class UserActivity(db.Base):
     __tablename__ = "user_activity"
 
 
-
 class CASModel(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     model_name = sa.Column(sa.String(255), unique=True, nullable=False)

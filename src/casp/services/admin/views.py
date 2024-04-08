@@ -16,6 +16,7 @@ from casp.services.db import get_db_session_maker, models, ops
 
 db_session = get_db_session_maker()()
 
+
 class AuthException(HTTPException):
     def __init__(self, message):
         super().__init__(

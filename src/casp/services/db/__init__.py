@@ -14,7 +14,6 @@ db_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-
 def get_db_session_maker() -> sessionmaker:
     import casp.services.db.models  # noqa
 

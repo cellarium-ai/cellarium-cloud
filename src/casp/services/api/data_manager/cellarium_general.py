@@ -101,9 +101,9 @@ class CellariumGeneralDataManager(BaseDataManager):
 
             if model is None:
                 raise exceptions.NotFound(f"Model {model_name} not found in the database")
-            
+
             return model.cas_matching_engine
-    
+
     def log_user_activity(self, user_id: int, model_name: str, method: str, cell_count: int) -> None:
         """
         Log the information to the DB about a request from a user
@@ -113,7 +113,9 @@ class CellariumGeneralDataManager(BaseDataManager):
         :param method: Method that user is using
         :param cell_count: Number of cells processed in this request
         """
-        user_activity = models.UserActivity(user_id=user_id, model_name=model_name, method=method, cell_count=cell_count)
+        user_activity = models.UserActivity(
+            user_id=user_id, model_name=model_name, method=method, cell_count=cell_count
+        )
         with self.system_data_db_session_maker() as session:
             with session.begin():
                 session.add(user_activity)

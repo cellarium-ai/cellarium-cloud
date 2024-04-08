@@ -220,7 +220,7 @@ class CellOperationsService:
         self.authorize_model_for_user(user=user, model_name=model_name)
 
         query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
-        
+
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
@@ -231,7 +231,9 @@ class CellOperationsService:
             model_name=model_name,
             include_dev_metadata=include_dev_metadata,
         )
-        self.cellarium_general_dm.log_user_activity(user_id=user.id, model_name=model_name, method="annotate", cell_count=len(query_ids))
+        self.cellarium_general_dm.log_user_activity(
+            user_id=user.id, model_name=model_name, method="annotate", cell_count=len(query_ids)
+        )
         return annotation_response
 
     async def search_adata_file(
