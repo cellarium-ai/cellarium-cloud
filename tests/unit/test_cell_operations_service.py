@@ -167,12 +167,12 @@ class TestCellOperationsService:
 
         # if there are no embeddings, then we should not increment the number of cells processed
         if len(embeddings) == 0:
-            verify(self.cell_operations_service.cellarium_general_dm, times=0).increment_user_cells_processed(
-                user=ANY, number_of_cells=ANY
+            verify(self.cell_operations_service.cellarium_general_dm, times=0).log_user_activity(
+                user=ANY, model_name=ANY, method=ANY, cell_count=ANY
             )
         else:
-            verify(self.cell_operations_service.cellarium_general_dm).increment_user_cells_processed(
-                user=USER_ADMIN, number_of_cells=len(embeddings)
+            verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
+                user_id=USER_ADMIN.id, model_name=MODEL.model_name, method="annotate", cell_count=len(query_ids)
             )
 
     @parameterized.expand(
