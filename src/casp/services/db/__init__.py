@@ -1,5 +1,5 @@
 import sqlalchemy.orm
-from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from casp.services import settings
 
