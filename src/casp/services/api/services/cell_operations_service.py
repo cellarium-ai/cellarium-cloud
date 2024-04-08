@@ -224,7 +224,7 @@ class CellOperationsService:
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
-        knn_response = self.get_knn_matches(embeddings=embeddings, model_name=model_name)
+        knn_response = await self.get_knn_matches(embeddings=embeddings, model_name=model_name)
         annotation_response = self.get_cell_type_distribution(
             query_ids=query_ids,
             knn_response=knn_response,
