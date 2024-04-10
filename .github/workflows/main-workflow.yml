@@ -59,10 +59,9 @@ jobs:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
-          env-secrets-b64: ${{ secrets.CAS_SERVICES_ENV_b64 }}
-          image-name-dev: ${{ matrix.image-name-dev }}
-          image-name-prod: ${{ matrix.image-name-prod }}
           image-tag: ${{ env.TAG }}
           docker-file-path: ${{ matrix.docker-file-path }}
+          image-name-dev: ${{ matrix.image-name-dev }}
+          image-name-prod: ${{ matrix.image-name-prod }}
           env-secrets-b64-dev: ${{ secrets.CAS_SERVICES_ENV_B64_DEV }}
           env-secrets-b64-prod: ${{ secrets.CAS_SERVICES_ENV_B64_PROD }}

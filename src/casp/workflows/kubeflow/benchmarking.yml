@@ -1,8 +1,0 @@
-pipeline_configs:
-  - curriculum_name: human-pca-10x-exclude-benchmarking
-    neptune_project: cellarium-pipelines/cas
-    neptune_api_token: eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJkNjNhOTY3ZS1mOGU2LTQ2ZGItYTFmOS01MGY4ZDdiNGU1YTcifQ==
-    benchmark_data_paths: gs://cellarium-file-system/curriculum/human_10x_only/extract_files/extract_100.h5ad,gs://cellarium-file-system/curriculum/human_10x_only/extract_files/extract_120.h5ad,gs://cellarium-file-system/curriculum/human_10x_only/extract_files/extract_130.h5ad
-    model_name: human-pca-10x-exclude-benchmarking-512-log1p-zscore-v1
-    cas_api_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHBpcmF0aW9uIjoiMjAyNC0wOC0xOSAxNToyODoyNS4yODU2ODIifQ.WJdWX8kTma39MoVbV9rKpUBr-snLfuSlCDJO-24rm-A
-    benchmarking__config_unique_name: benchmarking-human-10x-exclude-benchamrking-data-002
