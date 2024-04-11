@@ -8,5 +8,5 @@ def set_default_model_by(model_id: int) -> None:
     """
     with get_db_session_maker()() as db_session:
         with db_session.begin():
-            models.CASModel.query.update({models.CASModel.is_default_model: False})
-            models.CASModel.query.filter_by(id=model_id).update({models.CASModel.is_default_model: True})
+            db_session.query(models.CASModel).update({models.CASModel.is_default_model: False})
+            db_session.query(models.CASModel).filter_by(id=model_id).update({models.CASModel.is_default_model: True})
