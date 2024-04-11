@@ -40,7 +40,7 @@ class AllEnvSettings(BaseSettings):
     API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION: int = 10  # 10 minutes
     KNN_SEARCH_NUM_MATCHES_DEFAULT: int = 100
     ITEMS_PER_USER: int = 50
-    GET_MATCHES_CHUNK_SIZE: int = 5
+    GET_MATCHES_CHUNK_SIZE: int = 500000
     GET_MATCHES_MAX_RETRIES: int = 10
     GET_MATCHES_RETRY_BACKOFF_MULTIPLIER: int = 2
     GET_MATCHES_RETRY_BACKOFF_MIN: int = 0
@@ -74,6 +74,8 @@ class AllEnvSettings(BaseSettings):
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
+    LOG_LEVEL: str = "info"
+    LOG_CONFIG: str = f"{SERVICES_DIR}/log_config.yaml"
 
 
 class DevSettings(AllEnvSettings):
