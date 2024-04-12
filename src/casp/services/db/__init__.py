@@ -1,5 +1,5 @@
 import sqlalchemy.orm
-from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from casp.services import settings
 
@@ -10,18 +10,11 @@ engine = sqlalchemy.create_engine(
     pool_timeout=settings.DB_CONNECTION_POOL_TIMEOUT,
     pool_recycle=settings.DB_CONNECTION_POOL_RECYCLE,
 )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-db_session = scoped_session(SessionLocal)
+db_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-Base.query = db_session.query_property()
 
 
-def save(record) -> None:
-    db_session.add(record)
-    db_session.commit()
-
-
-def init_db() -> sqlalchemy.orm.scoped_session:
+def get_db_session_maker() -> sessionmaker:
     import casp.services.db.models  # noqa
 
-    return db_session
+    return db_session_maker

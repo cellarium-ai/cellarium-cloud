@@ -1,7 +1,7 @@
 import datetime
 
 import sqlalchemy as sa
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm import backref, column_property, relationship
 
 from casp.services import db, settings
 
@@ -19,6 +19,17 @@ class User(db.Base):
 
     def __repr__(self):
         return self.email
+
+
+class UserActivity(db.Base):
+    id = sa.Column(sa.Integer, primary_key=True)
+    user_id = sa.Column(sa.Integer, sa.ForeignKey(f"{User.__tablename__}.id"))
+    cell_count = sa.Column(sa.Integer, default=0, nullable=False)
+    model_name = sa.Column(sa.String(255), nullable=False)
+    method = sa.Column(sa.String(255), nullable=True)
+    finished_time = sa.Column(sa.DateTime, default=datetime.datetime.now(datetime.timezone.utc))
+
+    __tablename__ = "user_activity"
 
 
 class CASModel(db.Base):
@@ -54,3 +65,20 @@ class CASMatchingEngineIndex(db.Base):
         return self.index_name
 
     __tablename__ = "cas_matching_engine_index"
+
+
+# Add properties to user model for metrics
+sa.inspect(User).add_property(
+    key="total_cells_processed",
+    prop=column_property(
+        User.cells_processed
+        + sa.select(sa.func.sum(UserActivity.cell_count)).where(UserActivity.user_id == User.id).scalar_subquery()
+    ),
+)
+sa.inspect(User).add_property(
+    key="total_requests_processed",
+    prop=column_property(
+        User.requests_processed
+        + sa.select(sa.func.count(UserActivity.id)).where(UserActivity.user_id == User.id).scalar_subquery()
+    ),
+)

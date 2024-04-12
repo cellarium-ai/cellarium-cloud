@@ -6,7 +6,7 @@ from casp.services import db, settings
 flask_app = Flask(__name__)
 flask_app.config.from_object(settings)
 basic_auth = HTTPBasicAuth()
-db_session = db.init_db()
+db_session = db.get_db_session_maker()
 
 
 @basic_auth.verify_password
