@@ -116,6 +116,5 @@ class CellariumGeneralDataManager(BaseDataManager):
         user_activity = models.UserActivity(
             user_id=user_id, model_name=model_name, method=method, cell_count=cell_count
         )
-        with self.system_data_db_session_maker() as session:
-            with session.begin():
-                session.add(user_activity)
+        with self.system_data_db_session_maker.begin() as session:
+            session.add(user_activity)
