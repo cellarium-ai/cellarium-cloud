@@ -1,6 +1,6 @@
 import typing as t
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 
 from casp.services.api import dependencies, schemas, services
 from casp.services.db import models
@@ -39,7 +39,7 @@ async def get_feature_schemas(_: models.User = Depends(dependencies.authenticate
 
 
 @cellarium_general_router.get("/feature-schema/{schema_name}", response_model=t.List[str])
-async def get_feature_schema_by(schema_name: str):
+async def get_feature_schema_by(schema_name: str, _: models.User = Depends(dependencies.authenticate_user)):
     """
     Get a specific feature schema by its unique name
 
