@@ -1,6 +1,6 @@
 import typing as t
 
-from fastapi import APIRouter, Depends, Security
+from fastapi import APIRouter, Depends
 
 from casp.services.api import dependencies, schemas, services
 from casp.services.db import models

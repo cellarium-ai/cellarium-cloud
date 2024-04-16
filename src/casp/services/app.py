@@ -1,17 +1,17 @@
-import typing as t
 import multiprocessing
 import time
+import typing as t
 
+import google.cloud.logging
 import sentry_sdk
-from fastapi import FastAPI, APIRouter, Request, Response
-from starlette.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
-from starlette_context import context, plugins, request_cycle_context
-from starlette_context.plugins import Plugin
-from starlette_context.middleware import RawContextMiddleware
 import uvicorn
 import uvicorn.config
-import google.cloud.logging
+from fastapi import APIRouter, FastAPI, Request, Response
+from starlette.middleware import Middleware
+from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
+from starlette_context import context, plugins
+from starlette_context.middleware import RawContextMiddleware
+from starlette_context.plugins import Plugin
 
 from casp.services import settings
 from casp.services.api import exception_handlers
@@ -60,14 +60,14 @@ class CASService(FastAPI):
     """
 
     def __init__(
-            self,
-            local_port: int,
-            plugins: t.Optional[t.Sequence[Plugin]] = None,
-            routers: t.List[RouterDef] = None,
-            exception_handlers: t.Optional[t.List[ExceptionHandlerDef]] = None,
-            sentry_application_id: str = "",
-            *args,
-            **kwargs,
+        self,
+        local_port: int,
+        plugins: t.Optional[t.Sequence[Plugin]] = None,
+        routers: t.List[RouterDef] = None,
+        exception_handlers: t.Optional[t.List[ExceptionHandlerDef]] = None,
+        sentry_application_id: str = "",
+        *args,
+        **kwargs,
     ):
         """
         Initialize the service with the given configuration.
@@ -77,7 +77,7 @@ class CASService(FastAPI):
         @param routers: A list of routers to include in the service.
         @param exception_handlers: A list of exception handlers to include in the service in addition to the default ones
                                    as defined in BASE_ERROR_HANDLERS
-        @param sentry_application_id: The application ID to use when reporting errors to Sentry.    
+        @param sentry_application_id: The application ID to use when reporting errors to Sentry.
         """
 
         self.local_port = local_port
@@ -96,19 +96,11 @@ class CASService(FastAPI):
         client.setup_logging()
 
         # Configure middleware
-        if (plugins):
+        if plugins:
             _plugins = BASE_PLUGGINS + plugins
         else:
             _plugins = BASE_PLUGGINS
-        middleware = [
-            Middleware(
-                RawContextMiddleware,
-                plugins=_plugins
-            ),
-            Middleware(
-                TimingMiddleware
-            )
-        ]
+        middleware = [Middleware(RawContextMiddleware, plugins=_plugins), Middleware(TimingMiddleware)]
 
         # Perform basic initialization
         super().__init__(
@@ -118,7 +110,8 @@ class CASService(FastAPI):
             docs_url="/api/docs",
             redoc_url="/api/redoc",
             swagger_ui_parameters={"displayRequestDuration": True},
-            middleware=middleware)
+            middleware=middleware,
+        )
 
         # Register routers
         for router_def in routers:
@@ -135,9 +128,11 @@ class CASService(FastAPI):
         num_workers = 2 if settings.ENVIRONMENT == "local" else multiprocessing.cpu_count() * 2 + 1
         port = self.local_port if settings.ENVIRONMENT == "local" else settings.DEFAULT_SERVICE_PORT
 
-        uvicorn.run("main:application",
-                    host=settings.DEFAULT_SERVICE_HOST,
-                    port=port,
-                    workers=num_workers,
-                    log_level=settings.LOG_LEVEL,
-                    log_config=settings.LOG_CONFIG)
+        uvicorn.run(
+            "main:application",
+            host=settings.DEFAULT_SERVICE_HOST,
+            port=port,
+            workers=num_workers,
+            log_level=settings.LOG_LEVEL,
+            log_config=settings.LOG_CONFIG,
+        )

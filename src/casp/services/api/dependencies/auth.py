@@ -1,4 +1,3 @@
-import typing as t
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette_context import context

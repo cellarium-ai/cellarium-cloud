@@ -1,10 +1,8 @@
-
 import logging
 from copy import copy
 
-from starlette_context import context
 import uvicorn
-
+from starlette_context import context
 
 ANONYMOUS_USER_ID_STR: str = ""
 ANONYMOUS_USER_EMAIL_STR: str = "anonymous"
@@ -59,7 +57,7 @@ class CustomAccessFormatter(uvicorn.logging.AccessFormatter):
                 "user_id": user_id,
                 "user_email": user_email,
                 "user_agent": user_agent,
-                "request_time": request_time
+                "request_time": request_time,
             }
         )
         return super().formatMessage(recordcopy)
