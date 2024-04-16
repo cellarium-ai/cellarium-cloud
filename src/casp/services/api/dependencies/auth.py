@@ -1,5 +1,7 @@
+import typing as t
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from starlette_context import context
 
 from casp.services import _auth
 from casp.services.db import models
@@ -21,4 +23,6 @@ async def authenticate_user(auth_token_scheme: HTTPAuthorizationCredentials = De
         user = _auth.authenticate_user_with_jwt(jwt_token)
     except _auth.exceptions.TokenInvalid or _auth.exceptions.TokenExpired:
         raise credentials_exception
+
+    context["user"] = user
     return user

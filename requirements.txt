@@ -25,6 +25,7 @@ neptune==1.1.1
 matplotlib
 pandas
 google-cloud-run==0.7.1
+google-cloud-logging==3.10.0
 scikit-learn
 cellarium-ml @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.4+module
 lightning==2.2.0
@@ -36,3 +37,4 @@ Werkzeug==2.2.2
 sentry-sdk==1.39.2
 gcsfs==2023.9.2
 tenacity==8.2.3
+starlette_context==0.3.6
