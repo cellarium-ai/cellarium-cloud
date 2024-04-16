@@ -7,8 +7,8 @@ formatters:
     fmt: '%(levelprefix)s %(message)s'
     use_colors: null
   access:
-    (): uvicorn.logging.AccessFormatter
-    fmt: '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
+    (): casp.services.logging.CustomAccessFormatter
+    fmt: '%(levelprefix)s %(client_addr)s "%(user)s" "%(request_line)s" %(user_agent)s %(status_code)s %(request_time)s'
 handlers:
   default:
     formatter: default
