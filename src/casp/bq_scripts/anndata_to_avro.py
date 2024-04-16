@@ -255,7 +255,7 @@ def dump_feature_info(
     # return col_index_to_cas_feature_index
 
 
-def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included_adata_uns_keys=None):
+def dump_ingest_info(adata, filename, dataset_id, ingest_id, load_uns_data, prefix, included_adata_uns_keys=None):
     """
     Write ingest (AnnData-file level) data.
     """
@@ -266,7 +266,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included
         "type": "record",
         "fields": [
             {"name": "cas_ingest_id", "type": "string"},
-            {"name": "dataset_filename", "type": "string"},
+            {"name": "dataset_id", "type": "string"},
             {"name": "uns_metadata", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "ingest_timestamp", "type": ["null", "long"], "logicalType": ["null", "timestamp-millis"]},
         ],
@@ -322,7 +322,7 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included
 
         yield {
             "uns_metadata": json.dumps(uns, cls=NumpyEncoder),
-            "dataset_filename": filename,
+            "dataset_id": dataset_id,
             "cas_ingest_id": ingest_id,
             "ingest_timestamp": None,
             "ingest_prefix_name": prefix,
@@ -390,14 +390,15 @@ def find_max_index(client, project, dataset, table, column):
 
 
 def process(
-    input_file,
-    cas_cell_index_start,
-    cas_feature_index_start,
-    prefix,
-    project,
-    dataset,
-    load_uns_data,
+    input_file: str,
+    cas_cell_index_start: int,
+    cas_feature_index_start: int,
+    prefix: str,
+    czi_dataset_id: str,
+    project: str,
+    load_uns_data: bool,
     original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
+    dataset: t.Optional[str] = None,
     included_adata_uns_keys: t.List = None,
     count_matrix_multiprocessing_batch_size: int = COUNT_MATRIX_MULTIPROCESSING_BATCH_SIZE_DEFAULT,
 ):
@@ -446,7 +447,7 @@ def process(
     adata = optimized_read_andata(input_file)
 
     print("Processing ingest metadata...")
-    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data, prefix, included_adata_uns_keys)
+    dump_ingest_info(adata, ingest_filename, czi_dataset_id, ingest_id, load_uns_data, prefix, included_adata_uns_keys)
 
     print("Processing cell/observation metadata...")
     dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)

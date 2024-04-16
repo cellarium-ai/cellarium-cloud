@@ -1,6 +1,7 @@
 import argparse
 import math
 import time
+import pathlib
 
 from google.api_core.exceptions import Forbidden
 from google.cloud import bigquery
@@ -15,12 +16,15 @@ def get_avro_prefixes(bucket_name, gcs_stage_dir):
     blob_names_return = []
 
     for blob_name in blob_names:
-        blob_directory, blob_name = blob_name.split("/")
+        path = pathlib.Path(blob_name)
+        blob_directory = str(path.parent)
+        # Getting prefixes (everything before `_cell_info`, `_ingest_info`, `_feature_info` `_raw_counts`)
+        prefix = path.name.split("_cell_info")[0].split("_ingest_info")[0].split("_feature_info")[0].split("_raw_counts")[0]
 
         if blob_directory != gcs_stage_dir:
             continue
 
-        blob_names_return.append(blob_name.split("_")[0])
+        blob_names_return.append(prefix)
 
     return set(blob_names_return)
 
