@@ -61,7 +61,7 @@ class CASService(FastAPI):
 
     def __init__(
         self,
-        local_port: int,
+        port: int,
         plugins: t.Optional[t.Sequence[Plugin]] = None,
         routers: t.List[RouterDef] = None,
         exception_handlers: t.Optional[t.List[ExceptionHandlerDef]] = None,
@@ -72,7 +72,7 @@ class CASService(FastAPI):
         """
         Initialize the service with the given configuration.
 
-        @param local_port: The port to use when running the service locally.
+        @param port: The port to use when running the service.
         @param plugins: A list of middleware plugins to use for the service.
         @param routers: A list of routers to include in the service.
         @param exception_handlers: A list of exception handlers to include in the service in addition to the default ones
@@ -80,7 +80,7 @@ class CASService(FastAPI):
         @param sentry_application_id: The application ID to use when reporting errors to Sentry.
         """
 
-        self.local_port = local_port
+        self.port = port
 
         # Configure Sentry integration
         sentry_sdk.init(
@@ -126,12 +126,11 @@ class CASService(FastAPI):
         Launch the service using Uvicorn.
         """
         num_workers = 2 if settings.ENVIRONMENT == "local" else multiprocessing.cpu_count() * 2 + 1
-        port = self.local_port if settings.ENVIRONMENT == "local" else settings.DEFAULT_SERVICE_PORT
 
         uvicorn.run(
             "main:application",
             host=settings.DEFAULT_SERVICE_HOST,
-            port=port,
+            port=self.port,
             workers=num_workers,
             log_level=settings.LOG_LEVEL,
             log_config=settings.LOG_CONFIG,

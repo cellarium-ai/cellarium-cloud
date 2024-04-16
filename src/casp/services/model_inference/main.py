@@ -10,7 +10,7 @@ application = CASService(
         RouterDef(router=model_embed_router, tags=["model-inference"]),
     ],
     sentry_application_id="model-inference-service",
-    local_port=settings.MODEL_SERVICE_PORT,
+    port=settings.MODEL_SERVICE_PORT,
 )
 
 if __name__ == "__main__":
