@@ -2,26 +2,28 @@
 Selects a random subset of cells of a specified size from BigQuery and writes the data to output AnnData files.
 """
 
-import argparse
+import concurrent.futures as concurrency
 import datetime
 import json
+import multiprocessing
 import os
+import tempfile
+import traceback
 import typing as t
 from pathlib import Path
 
 import anndata as ad
 import numpy as np
 import pandas as pd
+import typer
 from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
+from google.oauth2.service_account import Credentials
 from scipy.sparse import coo_matrix
 
 from casp.bq_scripts import constants
 from casp.data_manager import sql
 from casp.services import utils
-
-if t.TYPE_CHECKING:
-    from google.oauth2.service_account import Credentials
 
 
 class Feature:
@@ -169,7 +171,7 @@ def extract_minibatch_to_anndata(
     output: str,
     bucket_name: str,
     extract_bucket_path: str,
-    credentials: "Credentials" = None,
+    credentials: t.Optional[Credentials] = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
@@ -333,16 +335,121 @@ def convert_matrix_data_to_coo_matrix_input_format(
     return rows, columns, data
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(allow_abbrev=False, description="Query CASP tables for random cells")
-    parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
-    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
-    parser.add_argument("--extract_table_prefix", type=str, help="Prefix of extract tables", required=True)
-    parser.add_argument("--start_bin", type=int, help="starting (inclusive) integer bin to extract", required=True)
-    parser.add_argument("--end_bin", type=int, help="ending (inclusive) integer bin to extract", required=True)
-    parser.add_argument("--output", type=str, help="Filename of the AnnData file", required=True)
+def extract_bin(
+    project_id: str,
+    dataset: str,
+    extract_table_prefix: str,
+    bin_number: int,
+    file_name: str,
+    file_path: str,
+    output_bucket_name: str,
+    extract_bucket_path: str,
+    obs_columns_to_include: t.List[str],
+) -> None:
+    """
+    Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
+    one bin at a time and saves the output anndata file to a GCS bucket.
 
-    args = parser.parse_args()
-    extract_minibatch_to_anndata(
-        args.project, args.dataset, args.extract_table_prefix, args.start_bin, args.end_bin, args.output
-    )
+    :param project_id: Google Cloud Project id
+    :param dataset: BigQuery Dataset
+    :param extract_table_prefix: Prefix of extract tables
+    :param bin_number: Bin to extract
+    :param file_name: Name for a local file (.h5ad anndata) to save the output
+    :param file_path: Local file path
+    :param output_bucket_name: Name of GCS bucket
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
+    """
+    try:
+        extract_minibatch_to_anndata(
+            project=project_id,
+            dataset=dataset,
+            extract_table_prefix=extract_table_prefix,
+            start_bin=bin_number,
+            end_bin=bin_number,
+            output=file_path,
+            bucket_name=output_bucket_name,
+            extract_bucket_path=extract_bucket_path,
+            obs_columns_to_include=obs_columns_to_include,
+        )
+        blob_name = f"{extract_bucket_path}/extract_files/{file_name}"
+        utils.upload_file_to_bucket(local_file_name=file_path, blob_name=blob_name, bucket=output_bucket_name)
+    except Exception as e:
+        print(f"Error occurred in thread: {str(e)}")
+
+    print(f"Processed bin {bin_number}")
+
+
+def extract_bins_in_parallel_workers(
+    project_id: str,
+    dataset: str,
+    extract_table_prefix: str,
+    start_bin: int,
+    end_bin: int,
+    output_bucket_name: str,
+    extract_bucket_path: str,
+    obs_columns_to_include: t.List[str],
+) -> None:
+    """
+    Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
+    one bin at a time and saves the output anndata file to a GCS bucket.
+
+    :param project_id: Google Cloud Project id
+    :param dataset: BigQuery Dataset
+    :param extract_table_prefix: Prefix of extract tables
+    :param start_bin: Start bin to extract
+    :param end_bin: End bin to extract
+    :param output_bucket_name: Name of GCS bucket
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
+    """
+    obs_columns_to_include = [x.split(".")[-1] for x in obs_columns_to_include]
+
+    num_of_workers = multiprocessing.cpu_count()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        with concurrency.ProcessPoolExecutor(max_workers=num_of_workers) as executor:
+            futures = []
+            for bin_number in range(start_bin, end_bin + 1, 1):
+                file_name = f"extract_{bin_number}.h5ad"
+                file_path = f"{temp_dir}/{file_name}"
+
+                extract_task_kwargs = {
+                    "project_id": project_id,
+                    "dataset": dataset,
+                    "extract_table_prefix": extract_table_prefix,
+                    "bin_number": bin_number,
+                    "file_name": file_name,
+                    "file_path": file_path,
+                    "output_bucket_name": output_bucket_name,
+                    "extract_bucket_path": extract_bucket_path,
+                    "obs_columns_to_include": obs_columns_to_include,
+                }
+                print("Submitting parallel extract job to thread executor...")
+                future = executor.submit(extract_bin, **extract_task_kwargs)
+                futures.append(future)
+
+            done, not_done = concurrency.wait(futures, return_when=concurrency.ALL_COMPLETED)
+
+            for future in done:
+                try:
+                    # Attempt to get the result of the future
+                    _ = future.result()
+                except Exception as e:
+                    # If an exception is raised, print the exception details
+                    print(f"Future: {future}")
+                    print(f"Exception type: {type(e).__name__}")
+                    print(f"Exception message: {e}")
+                    # Format and print the full traceback
+                    traceback.print_exception(type(e), e, e.__traceback__)

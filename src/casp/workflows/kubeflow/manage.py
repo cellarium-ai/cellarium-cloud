@@ -183,5 +183,65 @@ def benchmark_cas(config_yaml_path: Annotated[str, typer.Option()]) -> None:
     )
 
 
+@typer_app.command()
+def bq_ops_create_avro_files(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    config_paths = config_management.create_configs(config_yaml_path)
+    submit_pipeline(
+        pipelines.bq_ops_create_avro_files,
+        pipeline_display_name="Create avro files for BigQuery ingest",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
+@typer_app.command()
+def bq_ops_ingest_data(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    config_paths = config_management.create_configs(config_yaml_path)
+    submit_pipeline(
+        pipelines.bq_ops_ingest_data,
+        pipeline_display_name="Ingest data to BigQuery",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
+@typer_app.command()
+def bq_ops_create_avro_files_and_ingest(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    pipeline_as_components_kwargs = config_management.create_configs_pipelines_as_components(config_yaml_path)
+    submit_pipeline(
+        pipelines.bq_ops_create_avro_files_and_ingest_data,
+        pipeline_display_name="bq_ops_create_avro_files_and_ingest",
+        pipeline_kwargs=pipeline_as_components_kwargs,
+    )
+
+
+@typer_app.command()
+def bq_ops_precalculate_fields(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    config_paths = config_management.create_configs(config_yaml_path)
+    submit_pipeline(
+        pipelines.bq_ops_precalculate_fields,
+        pipeline_display_name="Precalculate fields in BigQuery",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
+@typer_app.command()
+def bq_ops_prepare_extract(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    config_paths = config_management.create_configs(config_yaml_path)
+    submit_pipeline(
+        pipelines.bq_ops_prepare_extract,
+        pipeline_display_name="Prepare extract table in BigQuery",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
+@typer_app.command()
+def bq_ops_extract(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    config_paths = config_management.create_configs(config_yaml_path)
+    submit_pipeline(
+        pipelines.bq_ops_extract,
+        pipeline_display_name="Extract files from BigQuery",
+        pipeline_kwargs={"pipeline_config_paths": config_paths},
+    )
+
+
 if __name__ == "__main__":
     typer_app()

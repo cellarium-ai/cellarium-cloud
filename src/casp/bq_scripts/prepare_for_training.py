@@ -2,17 +2,21 @@
 Prepare data for extract by randomizing, preprocessing and staging in temporary tables
 """
 
-import argparse
+import json
+import tempfile
 import time
 import typing as t
 
 from google.cloud import bigquery
+from google.oauth2.service_account import Credentials
+from smart_open import open
 
-from casp.bq_scripts import constants
+from casp.bq_scripts import constants, prepare_all_cell_types, prepare_measured_genes_info
 from casp.data_manager import sql
+from casp.services import utils
 
 
-def execute_query(client, sql):
+def execute_query(client: bigquery.Client, sql: str):
     """
     Runs the supplied query
     """
@@ -30,7 +34,7 @@ def execute_query(client, sql):
 
 
 def prepare_feature_summary(
-    client: "bigquery.Client",
+    client: bigquery.Client,
     project: str,
     dataset: str,
     extract_table_prefix: str,
@@ -48,7 +52,9 @@ def prepare_feature_summary(
     return query
 
 
-def prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allowed_original_feature_ids):
+def prepare_feature_info(
+    client: bigquery.Client, project: str, dataset: str, extract_table_prefix: str, fq_allowed_original_feature_ids: str
+):
     """
     create subset of features based on
       - a minimum number of observed cells
@@ -71,7 +77,7 @@ def prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allo
 
 
 def prepare_cell_info(
-    client: "bigquery.Client",
+    client: bigquery.Client,
     project: str,
     dataset: str,
     extract_table_prefix: str,
@@ -149,13 +155,22 @@ def prepare_cell_info(
 
 
 def prepare_extract_matrix(
-    client, project, dataset, extract_table_prefix, partition_bin_count=40000, partition_size=10
+    client: bigquery.Client,
+    project: str,
+    dataset: str,
+    extract_table_prefix: str,
+    partition_bin_count: int = 40000,
+    partition_size: int = 10,
 ):
     """
     Create extract table of count data -- remapping feature identifiers, and including batch identifier
 
-    :param partition_bin_count: Number of partition bins that is used by BigQuery to optimize future queries
-    :param partition_size: A size of each of the partition bins
+    :param client: BigQuery client.
+    :param project: Google Cloud project.
+    :param dataset: BigQuery dataset.
+    :param extract_table_prefix: A prefix string for naming tables for the extract.
+    :param partition_bin_count: Number of partition bins that is used by BigQuery to optimize future queries.
+    :param partition_size: A size of each of the partition bins.
 
     For more info on BigQuery partitioning refer to
     https://cloud.google.com/bigquery/docs/partitioned-tables
@@ -180,7 +195,7 @@ def prepare_extract_matrix(
     return query
 
 
-def prepare_extract(
+def prepare_extract_tables(
     project: str,
     dataset: str,
     extract_table_prefix: str,
@@ -189,7 +204,7 @@ def prepare_extract(
     ci_random_seed_offset: int = 0,
     ci_partition_bin_count: int = 40000,
     ci_partition_size: int = 10,
-    credentials=None,
+    credentials: t.Optional[Credentials] = None,
     filters: t.Optional[t.Dict[str, t.Any]] = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
@@ -239,33 +254,87 @@ def prepare_extract(
     prepare_extract_matrix(client, project, dataset, extract_table_prefix)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        allow_abbrev=False, description="Prepare CASP tables ML Training/Inference Extract"
-    )
-    parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
-    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
-    parser.add_argument("--extract_table_prefix", type=str, help="Prefix for extract tables", required=True)
-    parser.add_argument(
-        "--min_observed_cells", type=int, help="minimum observed cells per gene", default=3, required=False
-    )
-    parser.add_argument(
-        "--extract_bin_size", type=int, help="desired cells per extract bin", default=10000, required=False
-    )
-    parser.add_argument(
-        "--fq_allowed_original_feature_ids",
-        type=str,
-        help="fully qualified reference to table of allowed feature names",
-        default="dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A",
-        required=False,
-    )
+def prepare_extract(
+    project_id: str,
+    dataset: str,
+    extract_table_prefix: str,
+    fq_allowed_original_feature_ids: str,
+    extract_bin_size: int,
+    filters_json_path: str,
+    obs_columns_to_include: t.List[str],
+    bucket_name: str,
+    extract_bucket_path: str,
+    ci_random_seed_offset: int = 0,
+    ci_partition_bin_count: int = 40000,
+    ci_partition_size: int = 10,
+):
+    """
+    Prepare CAS BigQuery tables used for data extraction.
 
-    args = parser.parse_args()
-    prepare_extract(
-        args.project,
-        args.dataset,
-        args.extract_table_prefix,
-        args.min_observed_cells,
-        args.fq_allowed_original_feature_ids,
-        args.extract_bin_size,
+    :param project_id: The ID of the Google Cloud project where the BigQuery dataset is hosted.
+    :param dataset: The ID of the dataset in BigQuery where the data is hosted.
+    :param extract_table_prefix: A prefix string for naming tables or for similar purposes.
+    :param fq_allowed_original_feature_ids: BigQuery table with feature schema needed for the extract
+    :param extract_bin_size: The size for the bins where cells are allocated.
+    :param bucket_name: GCS Bucket name where to store the metadata files.
+    :param extract_bucket_path: GCS Bucket path where the extract will be executed. Used to save metadata files there.
+        It is required to use the same bucket path during extract
+    :param ci_random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization
+        Used in cas_cell_info table.
+        `Defaults:` ``0``
+    :param ci_partition_bin_count: The count of bins for partitioning cas_cell_info table.
+        `Default:` ``40000``
+    :param ci_partition_size: The size for the partitions in cas_cell_info table.
+        `Default:` ``10``
+    :param filters_json_path: A path to json with filters. Filters that have to be included in a SQL query.
+        :func:`casp.bq_manager.sql.mako_helpers.parse_where_body`
+        Filter format should follow convention described in
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
+    """
+    with open(filters_json_path) as f:
+        filters = json.loads(f.read())
+
+    prepare_extract_tables(
+        project=project_id,
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix,
+        fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
+        extract_bin_size=extract_bin_size,
+        filters=filters,
+        obs_columns_to_include=obs_columns_to_include,
+        ci_random_seed_offset=ci_random_seed_offset,
+        ci_partition_bin_count=ci_partition_bin_count,
+        ci_partition_size=ci_partition_size,
     )
+    print("Preparing measured genes info")
+    measured_genes_info_df = prepare_measured_genes_info(
+        project=project_id,
+        dataset=dataset,
+        fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
+    )
+    print("Preparing cell type categorical variable info")
+    all_cell_types_df = prepare_all_cell_types(project=project_id, dataset=dataset)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        measured_genes_file_name = f"measured_genes_info.csv"
+        measured_genes_file_path = f"{temp_dir}/{measured_genes_file_name}"
+        measured_genes_info_df.to_csv(measured_genes_file_path)
+
+        all_cell_types_file_name = f"all_cell_types.csv"
+        all_cell_types_file_path = f"{temp_dir}/{all_cell_types_file_name}"
+        all_cell_types_df.to_csv(all_cell_types_file_path, index=False)
+
+        utils.upload_file_to_bucket(
+            local_file_name=measured_genes_file_path,
+            bucket=bucket_name,
+            blob_name=f"{extract_bucket_path}/shared_meta/{measured_genes_file_name}",
+        )
+        utils.upload_file_to_bucket(
+            local_file_name=all_cell_types_file_path,
+            bucket=bucket_name,
+            blob_name=f"{extract_bucket_path}/shared_meta/{all_cell_types_file_name}",
+        )

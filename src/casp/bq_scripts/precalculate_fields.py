@@ -3,7 +3,6 @@ import typing as t
 from google.cloud import bigquery
 
 from casp.bq_scripts import constants
-from casp.services.utils import get_google_service_credentials
 
 SQL_PRECALCULATE_TOTAL_MRNA_UMIS_FORMAT = f"""
     UPDATE `{{project}}.{{dataset}}.cas_cell_info` ci
@@ -21,11 +20,15 @@ SQL_PRECALCULATE_TOTAL_MRNA_UMIS_FORMAT = f"""
 SQL_FIELD_MAPPING = {"total_mrna_umis": SQL_PRECALCULATE_TOTAL_MRNA_UMIS_FORMAT}
 
 
-def precalculate_fields(dataset: str, fields: t.List[str]):
-    assert set(fields).issubset(set(SQL_FIELD_MAPPING.keys())), "Fields should be one of `SQL_FIELD_MAPPING` key"
-    credentials, project = get_google_service_credentials()
-    client = bigquery.Client(credentials=credentials)
+def precalculate_fields(dataset: str, fields: t.List[str], project: str):
+    if not set(fields).issubset(set(SQL_FIELD_MAPPING.keys())):
+        raise ValueError("Fields should be one of the `SQL_FIELD_MAPPING` keys")
+
+    client = bigquery.Client(project=project)
 
     for field in fields:
+        print(f"Executing calculation for {field}")
         sql_format = SQL_FIELD_MAPPING[field]
-        client.query(query=sql_format.format(project=project, dataset=dataset))
+        query_job = client.query(query=sql_format.format(project=project, dataset=dataset))
+        _ = query_job.result()  # Wait till command runs
+        print("Done.")

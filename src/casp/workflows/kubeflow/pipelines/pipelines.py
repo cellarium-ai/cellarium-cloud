@@ -7,11 +7,13 @@ from casp.workflows.kubeflow.job_components.utils import create_job
 
 
 @dsl.pipeline(name="pca_train", description="Incremental PCA Train")
-def train_pipeline(pipeline_config_paths: t.List[str]) -> None:
+def train_pipeline(pipeline_config_paths: t.List[str]):
     """
     KFP pipeline to run PCA train pipeline.
 
     :param pipeline_config_paths: List of JSON strings with train and embed config paths.
+
+    :rtype: dsl.Pipeline
     """
     with dsl.ParallelFor(pipeline_config_paths) as item:
         train_job_task_op = create_job(
@@ -126,11 +128,13 @@ def pca_full_cycle_pipeline(pipeline_config_paths: t.List[str]) -> None:
 
 
 @dsl.pipeline(name="pca_resize_full_cycle_parallel", description="Incremental PCA Resize and Save Full Cycle Parallel")
-def pca_resize_full_cycle_pipeline(pipeline_config_paths: t.List[str]) -> None:
+def pca_resize_full_cycle_pipeline(pipeline_config_paths: t.List[str]):
     """
     KFP pipeline that takes a model resizes it, saves and the uses for creating new index, and then registers it.
 
     :param pipeline_config_paths: List of JSON strings with train and embed config paths.
+
+    :rtype: dsl.Pipeline
     """
     with dsl.ParallelFor(pipeline_config_paths) as item:
         resize_and_save_op = create_job(
@@ -165,11 +169,13 @@ def pca_resize_full_cycle_pipeline(pipeline_config_paths: t.List[str]) -> None:
 
 
 @dsl.pipeline(name="summary_stats_train_parallel", description="Summary Stats Train in Parallel")
-def summary_stats_train_pipeline(pipeline_config_paths: t.List[str]) -> None:
+def summary_stats_train_pipeline(pipeline_config_paths: t.List[str]):
     """
     KFP pipeline to run Summary Stats train pipeline for multiple models simultaneously.
 
     :param pipeline_config_paths:  List of JSON strings with train config paths.
+
+    :rtype: dls.Pipeline
     """
 
     # :class:`dsl.ParallelFor` requires a list of JSON strings as input
@@ -197,11 +203,12 @@ def summary_stats_train_pipeline(pipeline_config_paths: t.List[str]) -> None:
 
 
 @dsl.pipeline(name="logistic_regression_train_parallel", description="Logistic Regression Train Parallel")
-def logistic_regression_train_pipeline(pipeline_config_paths: t.List[str]) -> None:
+def logistic_regression_train_pipeline(pipeline_config_paths: t.List[str]):
     """
     KFP pipeline to run Logistic Regression train pipeline for multiple models simultaneously.
 
     :param pipeline_config_paths:  List of JSON strings with train config paths.
+    :rtype: dls.Pipeline
     """
 
     with dsl.ParallelFor(pipeline_config_paths) as item:
@@ -219,7 +226,7 @@ def logistic_regression_train_pipeline(pipeline_config_paths: t.List[str]) -> No
 )
 def pca_train_base_and_resize_full_cycle_pipeline(
     train_base_config_paths: t.List[str], resize_full_cycle_config_paths: t.List[str]
-) -> None:
+):
     train_pipeline_task = train_pipeline(pipeline_config_paths=train_base_config_paths)
     resize_full_cycle_task = pca_resize_full_cycle_pipeline(pipeline_config_paths=resize_full_cycle_config_paths)
     resize_full_cycle_task.after(train_pipeline_task)
@@ -239,7 +246,7 @@ def summary_stats_lr_train_pipeline(
 
 
 @dsl.pipeline(name="benchmark_cas_parallel", description="Benchmarking CAS Parallel")
-def benchmark_cas_pipeline(pipeline_config_paths: t.List[str]) -> None:
+def benchmark_cas_pipeline(pipeline_config_paths: t.List[str]):
     with dsl.ParallelFor(pipeline_config_paths) as item:
         benchmark_cas_op = create_job(
             dsl_component=job_components.benchmarking.benchmark_cas,
@@ -247,3 +254,96 @@ def benchmark_cas_pipeline(pipeline_config_paths: t.List[str]) -> None:
             gcs_config_path=item.benchmarking_gcs_config_path,
         )
         _ = benchmark_cas_op()
+
+
+@dsl.pipeline(name="bq_ops_create_avro_files", description="Create avro files for BigQuery ingest")
+def bq_ops_create_avro_files(pipeline_config_paths: t.List[str]):
+    """
+
+    :rtype: dsl.Pipeline
+    """
+    with dsl.ParallelFor(pipeline_config_paths) as item:
+        create_avro_files_op = create_job(
+            dsl_component=job_components.bq_ops.create_avro_files,
+            component_name=constants.BQ_OPS_CREATE_AVRO_FILES_COMPONENT_NAME,
+            gcs_config_path=item.bq_ops_create_avro_files_gcs_config_path,
+        )
+        _ = create_avro_files_op()
+
+
+@dsl.pipeline(name="bq_ops_ingest_data", description="Ingest data to BigQuery")
+def bq_ops_ingest_data(pipeline_config_paths: t.List[str]):
+    """
+
+    :rtype: dsl.Pipeline
+    """
+    with dsl.ParallelFor(pipeline_config_paths) as item:
+        ingest_files_op = create_job(
+            dsl_component=job_components.bq_ops.ingest_data,
+            component_name=constants.BQ_OPS_INGEST_DATA_COMPONENT_NAME,
+            gcs_config_path=item.bq_ops_ingest_data_gcs_config_path,
+        )
+        _ = ingest_files_op()
+
+
+@dsl.pipeline(
+    name="bq_ops_create_avro_files_and_ingest_data", description="Create avro files and ingest them into BigQuery"
+)
+def bq_ops_create_avro_files_and_ingest_data(
+    bq_ops_create_avro_files_config_paths: t.List[str], bq_ops_ingest_data_config_paths: t.List[str]
+):
+    bq_ops_create_avro_files_task = bq_ops_create_avro_files(
+        pipeline_config_paths=bq_ops_create_avro_files_config_paths
+    )
+    bq_ops_ingest_data_task = bq_ops_ingest_data(pipeline_config_paths=bq_ops_ingest_data_config_paths)
+    bq_ops_ingest_data_task.after(bq_ops_create_avro_files_task)
+
+
+@dsl.pipeline(name="bq_ops_precalculate_fields", description="Precalculate fields in BigQuery")
+def bq_ops_precalculate_fields(pipeline_config_paths: t.List[str]):
+    with dsl.ParallelFor(pipeline_config_paths) as item:
+        precalculate_fields_op = create_job(
+            dsl_component=job_components.bq_ops.precalculate_fields,
+            component_name=constants.BQ_OPS_PRECALCULATE_FIELDS_COMPONENT_NAME,
+            gcs_config_path=item.bq_ops_precalculate_fields_gcs_config_path,
+        )
+        _ = precalculate_fields_op()
+
+
+@dsl.pipeline(name="bq_ops_prepare_extract", description="Prepare tables for extract in BigQuery")
+def bq_ops_prepare_extract(pipeline_config_paths: t.List[str]):
+    """
+
+    :rtype: dsl.Pipeline
+    """
+    with dsl.ParallelFor(pipeline_config_paths) as item:
+        prepare_extract_op = create_job(
+            dsl_component=job_components.bq_ops.prepare_extract,
+            component_name=constants.BQ_OPS_PREPARE_EXTRACT_COMPONENT_NAME,
+            gcs_config_path=item.bq_ops_prepare_extract_gcs_config_path,
+        )
+        _ = prepare_extract_op()
+
+
+@dsl.pipeline(name="bq_ops_extract", description="Extract data from BigQuery")
+def bq_ops_extract(pipeline_config_paths: t.List[str]):
+    """
+
+    :rtype: dls.Pipeline
+    """
+    with dsl.ParallelFor(pipeline_config_paths) as item:
+        extract_op = create_job(
+            dsl_component=job_components.bq_ops.extract,
+            component_name=constants.BQ_OPS_EXTRACT_COMPONENT_NAME,
+            gcs_config_path=item.bq_ops_extract_gcs_config_path,
+        )
+        _ = extract_op()
+
+
+@dsl.pipeline(
+    name="bq_ops_prepare_and_extract", description="Prepare extract tables in BigQuery and extract data to GCS bucket"
+)
+def bq_ops_prepare_and_extract(prepare_extract_config_paths: t.List[str], extract_config_paths: t.List[str]) -> None:
+    prepare_extract_task = bq_ops_prepare_extract(pipeline_config_paths=prepare_extract_config_paths)
+    extract_task = bq_ops_extract(pipeline_config_paths=extract_config_paths)
+    extract_task.after(prepare_extract_task)

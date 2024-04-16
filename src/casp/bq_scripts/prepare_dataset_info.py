@@ -1,10 +1,13 @@
+import typing as t
+
 import numpy as np
 import pandas as pd
 from google.cloud import bigquery
+from google.oauth2.service_account import Credentials
 
 
 def prepare_measured_genes_info(
-    project: str, dataset: str, fq_allowed_original_feature_ids: str, credentials=None
+    project: str, dataset: str, fq_allowed_original_feature_ids: str, credentials: t.Optional[Credentials] = None
 ) -> pd.DataFrame:
     if credentials is not None:
         client = bigquery.Client(project=project, credentials=credentials)
@@ -42,7 +45,7 @@ def prepare_measured_genes_info(
     )
 
 
-def prepare_all_cell_types(project: str, dataset: str, credentials) -> pd.DataFrame:
+def prepare_all_cell_types(project: str, dataset: str, credentials: t.Optional[Credentials] = None) -> pd.DataFrame:
     if credentials is not None:
         client = bigquery.Client(project=project, credentials=credentials)
     else:

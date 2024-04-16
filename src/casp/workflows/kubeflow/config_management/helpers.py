@@ -1,14 +1,17 @@
 import json
+import secrets
+import tempfile
 import typing as t
 
 import yaml
 from mako.template import Template
 from smart_open import open
 
-from casp.services import settings
+from casp.services import settings, utils
 
 PIPELINE_CONFIGS_TEMPLATE_PATH = f"{settings.CAS_DIR}/workflows/kubeflow/config_management/config_templates"
-CONFIG_BUCKET_PATH = "gs://cellarium-file-system/ml-configs/auto-generated"
+AUTO_GENERATED_CONFIG_PREFIX = "ml-configs/auto-generated-new"
+CONFIG_BUCKET_PATH = f"gs://{settings.PROJECT_BUCKET_NAME}/{AUTO_GENERATED_CONFIG_PREFIX}"
 
 
 def get_component_config_template_kwargs(config_data: t.Dict[str, t.Any], component_name: str) -> t.Dict[str, t.Any]:
@@ -88,7 +91,7 @@ def create_configs(config_yaml: str | t.Dict[str, t.Any]) -> t.List[str]:
 
     :param config_yaml: Path to the YAML file containing the config data or a dictionary of the config data.
     """
-    if type(config_yaml) == str:
+    if isinstance(config_yaml, str):
         with open(config_yaml, "r") as file:
             data = yaml.safe_load(file)
     else:
@@ -98,26 +101,42 @@ def create_configs(config_yaml: str | t.Dict[str, t.Any]) -> t.List[str]:
 
     print("Creating config files")
     config_paths = []
-    for pipeline_config in pipeline_configs:
-        curriculum_name = pipeline_config["curriculum_name"]
+    with tempfile.TemporaryDirectory() as temp_dir:
+        config_file_names = []
+        for pipeline_config in pipeline_configs:
+            # curriculum_name = pipeline_config["curriculum_name"]
 
-        component_names = get_component_names_from_config_data(pipeline_config)
-        config_object = {}
+            component_names = get_component_names_from_config_data(pipeline_config)
+            config_object = {}
+            for component_name in component_names:
+                template_path = f"{PIPELINE_CONFIGS_TEMPLATE_PATH}/{component_name}_config.yml.mako"
+                component_config_unique_name = pipeline_config.get(
+                    f"{component_name}__config_unique_name", secrets.token_hex()
+                )
+                component_config_filename = f"{component_name}-{component_config_unique_name}_config.yml"
+                output_path = f"{CONFIG_BUCKET_PATH}/{component_config_filename}"
 
-        for component_name in component_names:
-            template_path = f"{PIPELINE_CONFIGS_TEMPLATE_PATH}/{component_name}_config.yml.mako"
-            component_config_unique_name = pipeline_config[f"{component_name}__config_unique_name"]
-            component_config_filename = f"{component_name}-{component_config_unique_name}_config.yml"
-            output_path = f"{CONFIG_BUCKET_PATH}/{curriculum_name}/{component_config_filename}"
+                context = get_component_config_template_kwargs(
+                    config_data=pipeline_config, component_name=component_name
+                )
 
-            context = get_component_config_template_kwargs(config_data=pipeline_config, component_name=component_name)
-            render_and_save_template(template_path=template_path, context=context, output_path=output_path)
+                local_config_file_path = f"{temp_dir}/{component_config_filename}"
 
-            config_object[f"{component_name}_gcs_config_path"] = output_path
+                render_and_save_template(
+                    template_path=template_path, context=context, output_path=local_config_file_path
+                )
 
-        config_paths.append(config_object)
-    print(f"Config files created and saved in {CONFIG_BUCKET_PATH}")
+                config_object[f"{component_name}_gcs_config_path"] = output_path
+                config_file_names.append(local_config_file_path)
 
+            config_paths.append(config_object)
+
+        utils.upload_many_blobs_with_transfer_manager(
+            bucket_name=settings.PROJECT_BUCKET_NAME,
+            file_paths=config_file_names,
+            prefix=AUTO_GENERATED_CONFIG_PREFIX,
+            workers=14,
+        )
     # DSL Pipelines require JSON strings as input
     config_paths = [json.dumps(config) for config in config_paths]
 

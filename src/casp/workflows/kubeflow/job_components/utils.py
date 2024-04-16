@@ -30,5 +30,6 @@ def create_job(
         machine_type=machine_spec.machine_type,
         accelerator_type=machine_spec.accelerator_type,
         accelerator_count=machine_spec.accelerator_count,
+        boot_disk_size_gb=100,
     )
     return lambda: job(gcs_config_path=gcs_config_path)

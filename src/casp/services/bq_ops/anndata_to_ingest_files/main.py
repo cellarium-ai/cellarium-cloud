@@ -45,6 +45,7 @@ def main(
         uns_meta_keys_list = None
 
     prefix = filename.split(".")[0]
+    dataset_id = filename.split("__")[0]
 
     anndata_to_avro(
         input_file=filename,
@@ -52,7 +53,7 @@ def main(
         cas_cell_index_start=cas_cell_index_start,
         cas_feature_index_start=cas_feature_index_start,
         prefix=prefix,
-        dataset=None,
+        czi_dataset_id=dataset_id,
         load_uns_data=load_uns_data,
         original_feature_id_lookup=original_feature_id_lookup,
         included_adata_uns_keys=uns_meta_keys_list,

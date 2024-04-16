@@ -4,12 +4,12 @@ from dataclasses import dataclass
 from casp.workflows.kubeflow import constants
 
 DOCKER_IMAGE_NAME_CPU = (
-    "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline:"
-    "fg-embedding-job-50"
+    "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline-dev:"
+    "fgembeddingjob-alpha.7"
 )
 DOCKER_IMAGE_NAME_CUDA = (
-    "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline:"
-    "fg-embedding-job-50"
+    "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline-dev:"
+    "fgembeddingjob-alpha.7"
 )
 
 
@@ -109,6 +109,41 @@ class PlaygroundMachineSpec(MachineSpecBase):
     machine_type: str = "n1-standard-1"
 
 
+@dataclass
+class CreateAvroFilesMachineSpec(MachineSpecBase):
+    display_name: str = "Create avro files for ingest"
+    replica_count: int = 1
+    machine_type: str = "n1-standard-16"
+
+
+@dataclass
+class IngestDataMachineSpec(MachineSpecBase):
+    display_name: str = "Ingest data to BigQuery"
+    replica_count: int = 1
+    machine_type: str = "n1-standard-4"
+
+
+@dataclass
+class PrecalculateFieldsMachineSpec(MachineSpecBase):
+    display_name: str = "Precalculate fields in BigQuery"
+    replica_count: int = 1
+    machine_type: str = "n1-standard-4"
+
+
+@dataclass
+class PrepareExtractMachineSpec(MachineSpecBase):
+    display_name: str = "Prepare tables in BigQuery for extract"
+    replica_count: int = 1
+    machine_type: str = "n1-standard-4"
+
+
+@dataclass
+class ExtractMachineSpec(MachineSpecBase):
+    display_name: str = "Prepare tables in BigQuery for extract"
+    replica_count: int = 1
+    machine_type: str = "n1-standard-96"
+
+
 component_machine_specs_map = {
     constants.PCA_TRAIN_COMPONENT_NAME: PCATrainMachineSpec,
     constants.PCA_EMBED_COMPONENT_NAME: PCAEmbedMachineSpec,
@@ -120,4 +155,9 @@ component_machine_specs_map = {
     constants.LOGISTIC_REGRESSION_TRAIN_COMPONENT_NAME: LogisticRegressionTrainMachineSpec,
     constants.TDIGEST_FILTER_FEATURES_COMPONENT_NAME: TDigestFilterFeaturesMachineSpec,
     constants.BENCHMARKING_COMPONENT_NAME: BecnchmarkingMachineSpec,
+    constants.BQ_OPS_CREATE_AVRO_FILES_COMPONENT_NAME: CreateAvroFilesMachineSpec,
+    constants.BQ_OPS_INGEST_DATA_COMPONENT_NAME: IngestDataMachineSpec,
+    constants.BQ_OPS_PRECALCULATE_FIELDS_COMPONENT_NAME: PrecalculateFieldsMachineSpec,
+    constants.BQ_OPS_PREPARE_EXTRACT_COMPONENT_NAME: PrepareExtractMachineSpec,
+    constants.BQ_OPS_EXTRACT_COMPONENT_NAME: ExtractMachineSpec,
 }
