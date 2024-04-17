@@ -2,7 +2,6 @@ import multiprocessing
 import time
 import typing as t
 
-import google.cloud.logging
 import sentry_sdk
 import uvicorn
 import uvicorn.config
@@ -16,6 +15,7 @@ from starlette_context.plugins import Plugin
 from casp.services import settings
 from casp.services.api import exception_handlers
 from casp.services.api.services import exceptions
+from casp.services.logging import setup_logging
 
 
 class RouterDef(t.NamedTuple):
@@ -29,6 +29,10 @@ class ExceptionHandlerDef(t.NamedTuple):
     handler: t.Callable
 
 
+class CloudTraceContextPlugin(Plugin):
+    key = "X-Cloud-Trace-Context"
+
+
 BASE_PLUGGINS: t.Sequence[Plugin] = (
     # Adds an x-request-id header to all responses and makes it available to the request context.
     plugins.RequestIdPlugin(),
@@ -36,6 +40,7 @@ BASE_PLUGGINS: t.Sequence[Plugin] = (
     plugins.CorrelationIdPlugin(),
     # Extracts the user-agent header and makes it available to the request context.
     plugins.UserAgentPlugin(),
+    # Extracts the x-cloud-trace-context header provided by CloudRun and makes it available to the request context.
 )
 
 
@@ -91,9 +96,11 @@ class CASService(FastAPI):
             traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
         )
 
-        # Init stackdriver logging
-        client = google.cloud.logging.Client()
-        client.setup_logging()
+        # # Init stackdriver logging
+        # client = google.cloud.logging.Client()
+        # client.setup_logging()
+
+        setup_logging(settings.LOG_LEVEL, json_logs=settings.ENVIRONMENT != "local")
 
         # Configure middleware
         if plugins:

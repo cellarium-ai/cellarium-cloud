@@ -11,7 +11,7 @@ application = CASService(
         RouterDef(router=cell_operations_router, tags=["cell-operations"]),
     ],
     sentry_application_id="api-service",
-    local_port=settings.API_SERVICE_PORT,
+    port=settings.API_SERVICE_PORT,
 )
 
 if __name__ == "__main__":
