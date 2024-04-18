@@ -1,6 +1,7 @@
 import asyncio
 import json
 import typing as t
+import logging
 
 import aiohttp
 from aiohttp import client_exceptions
@@ -9,6 +10,8 @@ from casp.services import settings
 from casp.services.api.clients import exceptions
 
 JSON = t.Union[t.Dict[str, t.Any], t.List[t.Any]]
+
+logger = logging.getLogger(__name__)
 
 
 class HTTPAsyncClient:
@@ -64,7 +67,7 @@ class HTTPAsyncClient:
                         except (json.decoder.JSONDecodeError, client_exceptions.ClientResponseError):
                             response_detail = await response.text()
                         except KeyError:
-                            print("Response body doesn't have a 'detail' key, returning full response body")
+                            logger.info("Response body doesn't have a 'detail' key, returning full response body")
                             response_detail = str(await response.json())
 
                         cls.raise_response_exception(status_code=status_code, detail=response_detail)
