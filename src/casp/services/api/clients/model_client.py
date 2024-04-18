@@ -1,7 +1,7 @@
 import asyncio
 import json
-import typing as t
 import logging
+import typing as t
 
 import aiohttp
 from aiohttp import client_exceptions

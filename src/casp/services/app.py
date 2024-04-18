@@ -41,6 +41,7 @@ BASE_PLUGGINS: t.Sequence[Plugin] = (
     # Extracts the user-agent header and makes it available to the request context.
     plugins.UserAgentPlugin(),
     # Extracts the x-cloud-trace-context header provided by CloudRun and makes it available to the request context.
+    CloudTraceContextPlugin(),
 )
 
 

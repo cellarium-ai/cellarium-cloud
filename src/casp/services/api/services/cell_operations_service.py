@@ -3,6 +3,7 @@ Cellarium Service Controller. It provides methods to communicate with services i
 infrastructure over different protocols in async manner.
 """
 
+import logging
 import math
 import typing as t
 
@@ -19,6 +20,8 @@ from casp.services.db import models
 from casp.services.utils import numpy_utils
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
+
+logger = logging.getLogger(__name__)
 
 
 class CellOperationsService:
@@ -217,20 +220,25 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
+        logger.info("Authorizing user")
         self.authorize_model_for_user(user=user, model_name=model_name)
 
+        logger.info("Getting embeddings")
         query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
 
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
+        logger.info("Performing neaest neighbor search")
         knn_response = await self.get_knn_matches(embeddings=embeddings, model_name=model_name)
+        logger.info("Getting cell distribution")
         annotation_response = self.get_cell_type_distribution(
             query_ids=query_ids,
             knn_response=knn_response,
             model_name=model_name,
             include_dev_metadata=include_dev_metadata,
         )
+        logger.info("Logging user metrics")
         self.cellarium_general_dm.log_user_activity(
             user_id=user.id, model_name=model_name, method="annotate", cell_count=len(query_ids)
         )
