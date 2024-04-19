@@ -15,6 +15,7 @@ from starlette_context.plugins import Plugin
 from casp.services import settings
 from casp.services.api import exception_handlers
 from casp.services.api.services import exceptions
+from casp.services.constants import HeaderKeys
 
 # from casp.services.logging import setup_logging
 
@@ -31,7 +32,7 @@ class ExceptionHandlerDef(t.NamedTuple):
 
 
 class CloudTraceContextPlugin(Plugin):
-    key = "X-Cloud-Trace-Context"
+    key = HeaderKeys.cloud_trace_context
 
 
 BASE_PLUGGINS: t.Sequence[Plugin] = (

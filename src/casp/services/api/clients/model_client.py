@@ -5,9 +5,11 @@ import typing as t
 
 import aiohttp
 from aiohttp import client_exceptions
+from starlette_context import context
 
 from casp.services import settings
 from casp.services.api.clients import exceptions
+from casp.services.constants import HeaderKeys
 
 JSON = t.Union[t.Dict[str, t.Any], t.List[t.Any]]
 
@@ -56,6 +58,14 @@ class HTTPAsyncClient:
             total=settings.AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS, sock_read=settings.AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS
         )
 
+        headers = {} if headers is None else headers
+        # Forward along the trace id if it exists
+        if HeaderKeys.cloud_trace_context in context:
+            headers[HeaderKeys.cloud_trace_context] = context[HeaderKeys.cloud_trace_context]
+        # Forward along the user auth if it exists
+        if HeaderKeys.authorization in context:
+            headers[HeaderKeys.authorization] = context[HeaderKeys.authorization]
+
         async with aiohttp.ClientSession(timeout=timeout) as session:
             try:
                 async with session.post(url, data=form_data, headers=headers) as response:
@@ -85,7 +95,11 @@ class HTTPAsyncClient:
 
     @classmethod
     async def post(
-        cls, url: str, data: t.Optional[t.Dict[str, t.Any]] = None, files: t.Optional[t.List[t.Dict[str, t.Any]]] = None
+        cls,
+        url: str,
+        data: t.Optional[t.Dict[str, t.Any]] = None,
+        files: t.Optional[t.List[t.Dict[str, t.Any]]] = None,
+        headers: t.Optional[t.Dict[str, t.Any]] = None,
     ) -> JSON:
         form_data = aiohttp.FormData()
 
@@ -101,7 +115,7 @@ class HTTPAsyncClient:
                 form_data.add_field(key, value)
 
         # Client Session Arguments
-        return await cls._aiohttp_async_post(url=url, form_data=form_data)
+        return await cls._aiohttp_async_post(url=url, form_data=form_data, headers=headers)
 
 
 class ModelInferenceClient(HTTPAsyncClient):

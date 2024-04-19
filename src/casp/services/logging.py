@@ -9,6 +9,7 @@ from starlette_context import context
 from starlette_context.errors import ContextDoesNotExistError
 
 from casp.services import settings
+from casp.services.constants import HeaderKeys
 
 ANONYMOUS_USER_ID_STR: str = ""
 ANONYMOUS_USER_EMAIL_STR: str = "anonymous"
@@ -84,7 +85,7 @@ class StreamHandler(logging.StreamHandler):
             # (In particular, non-HTTP-based Cloud Functions.)
             # request_is_defined = "request" in globals() or "request" in locals()
             try:
-                trace_header = context.get("X-Cloud-Trace-Context")
+                trace_header = context.get(HeaderKeys.cloud_trace_context)
 
             except ContextDoesNotExistError:
                 # Logging outside of a request context.
