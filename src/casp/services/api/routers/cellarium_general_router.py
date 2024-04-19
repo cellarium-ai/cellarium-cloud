@@ -1,3 +1,4 @@
+import logging
 import typing as t
 
 from fastapi import APIRouter, Depends
@@ -7,6 +8,8 @@ from casp.services.db import models
 
 cellarium_general_router = APIRouter(prefix="/cellarium-general")
 cellarium_general_service = services.CellariumGeneralService()
+
+logger = logging.getLogger(__name__)
 
 
 @cellarium_general_router.get("/application-info", response_model=schemas.ApplicationInfo)
@@ -18,13 +21,14 @@ async def application_info():
 
 
 @cellarium_general_router.get("/validate-token")
-async def validate_token(_: models.User = Depends(dependencies.authenticate_user)):
+async def validate_token(user: models.User = Depends(dependencies.authenticate_user)):
     """
     Validate authorization token from `Bearer` header
 
     :return: Success message if token is valid, otherwise return 401 Unauthorized status code if token
     is invalid or missing
     """
+    logger.info(f"User {user.username} requested token validation")
     return {"detail": "Success"}
 
 
@@ -57,4 +61,5 @@ async def get_model_list(user: models.User = Depends(dependencies.authenticate_u
 
     :return: List of CAS models
     """
+    logger.info(f"User {user.username} requested list of models")
     return cellarium_general_service.get_model_list_for_user(user=user)

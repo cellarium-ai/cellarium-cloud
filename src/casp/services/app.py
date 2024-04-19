@@ -8,14 +8,15 @@ import uvicorn.config
 from fastapi import APIRouter, FastAPI, Request, Response
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
-from starlette_context import context, plugins
+from starlette_context import context
 from starlette_context.middleware import RawContextMiddleware
 from starlette_context.plugins import Plugin
 
 from casp.services import settings
 from casp.services.api import exception_handlers
 from casp.services.api.services import exceptions
-from casp.services.logging import setup_logging
+
+# from casp.services.logging import setup_logging
 
 
 class RouterDef(t.NamedTuple):
@@ -35,11 +36,11 @@ class CloudTraceContextPlugin(Plugin):
 
 BASE_PLUGGINS: t.Sequence[Plugin] = (
     # Adds an x-request-id header to all responses and makes it available to the request context.
-    plugins.RequestIdPlugin(),
-    # Adds an x-correlation-id header to all responses and makes it available to the request context.
-    plugins.CorrelationIdPlugin(),
-    # Extracts the user-agent header and makes it available to the request context.
-    plugins.UserAgentPlugin(),
+    # plugins.RequestIdPlugin(),
+    # # Adds an x-correlation-id header to all responses and makes it available to the request context.
+    # plugins.CorrelationIdPlugin(),
+    # # Extracts the user-agent header and makes it available to the request context.
+    # plugins.UserAgentPlugin(),
     # Extracts the x-cloud-trace-context header provided by CloudRun and makes it available to the request context.
     CloudTraceContextPlugin(),
 )
@@ -100,8 +101,8 @@ class CASService(FastAPI):
         # # Init stackdriver logging
         # client = google.cloud.logging.Client()
         # client.setup_logging()
-
-        setup_logging(settings.LOG_LEVEL, json_logs=settings.ENVIRONMENT != "local")
+        # setup_logging()
+        # setup_logging(settings.LOG_LEVEL, json_logs=settings.ENVIRONMENT != "local" or True)
 
         # Configure middleware
         if plugins:
