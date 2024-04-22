@@ -1,3 +1,4 @@
+import logging
 import multiprocessing
 import time
 import typing as t
@@ -8,7 +9,7 @@ import uvicorn.config
 from fastapi import APIRouter, FastAPI, Request, Response
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
-from starlette_context import context
+from starlette_context import context, plugins
 from starlette_context.middleware import RawContextMiddleware
 from starlette_context.plugins import Plugin
 
@@ -18,6 +19,8 @@ from casp.services.api.services import exceptions
 from casp.services.constants import HeaderKeys
 
 # from casp.services.logging import setup_logging
+
+logger = logging.getLogger(__name__)
 
 
 class RouterDef(t.NamedTuple):
@@ -35,15 +38,21 @@ class CloudTraceContextPlugin(Plugin):
     key = HeaderKeys.cloud_trace_context
 
 
+class AuthorizationPlugin(Plugin):
+    key = HeaderKeys.authorization
+
+
 BASE_PLUGGINS: t.Sequence[Plugin] = (
     # Adds an x-request-id header to all responses and makes it available to the request context.
     # plugins.RequestIdPlugin(),
     # # Adds an x-correlation-id header to all responses and makes it available to the request context.
     # plugins.CorrelationIdPlugin(),
-    # # Extracts the user-agent header and makes it available to the request context.
-    # plugins.UserAgentPlugin(),
+    # Extracts the user-agent header and makes it available to the request context.
+    plugins.UserAgentPlugin(),
     # Extracts the x-cloud-trace-context header provided by CloudRun and makes it available to the request context.
     CloudTraceContextPlugin(),
+    # Extracts the authorization header and makes it available to the request context.
+    AuthorizationPlugin(),
 )
 
 
@@ -59,6 +68,17 @@ class TimingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         request_time = time.time() - start_time
         context["request_time"] = request_time
+        return response
+
+
+class HeaderLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: DispatchFunction) -> Response:
+        logger.info("Headers:")
+        h = {}
+        for key in request.headers.keys():
+            h[key] = request.headers[key]
+        logger.info(h)
+        response = await call_next(request)
         return response
 
 
@@ -110,7 +130,11 @@ class CASService(FastAPI):
             _plugins = BASE_PLUGGINS + plugins
         else:
             _plugins = BASE_PLUGGINS
-        middleware = [Middleware(RawContextMiddleware, plugins=_plugins), Middleware(TimingMiddleware)]
+        middleware = [
+            Middleware(RawContextMiddleware, plugins=_plugins),
+            Middleware(TimingMiddleware),
+            Middleware(HeaderLoggingMiddleware),
+        ]
 
         # Perform basic initialization
         super().__init__(

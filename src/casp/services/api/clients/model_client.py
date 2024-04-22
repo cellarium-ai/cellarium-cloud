@@ -60,11 +60,11 @@ class HTTPAsyncClient:
 
         headers = {} if headers is None else headers
         # Forward along the trace id if it exists
-        if HeaderKeys.cloud_trace_context in context:
-            headers[HeaderKeys.cloud_trace_context] = context[HeaderKeys.cloud_trace_context]
+        if HeaderKeys.cloud_trace_context in context and context[HeaderKeys.cloud_trace_context] is not None:
+            headers[HeaderKeys.cloud_trace_context.value] = context[HeaderKeys.cloud_trace_context]
         # Forward along the user auth if it exists
-        if HeaderKeys.authorization in context:
-            headers[HeaderKeys.authorization] = context[HeaderKeys.authorization]
+        if HeaderKeys.authorization in context and context[HeaderKeys.authorization] is not None:
+            headers[HeaderKeys.authorization.value] = context[HeaderKeys.authorization]
 
         async with aiohttp.ClientSession(timeout=timeout) as session:
             try:

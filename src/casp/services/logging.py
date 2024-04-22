@@ -109,6 +109,8 @@ class StreamHandler(logging.StreamHandler):
             )
 
             return json.dumps(entry)
+        else:
+            return super().format(record)
 
 
 class CustomDefaultFormatter(uvicorn.logging.DefaultFormatter):
