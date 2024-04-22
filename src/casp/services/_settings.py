@@ -27,7 +27,7 @@ class AllEnvSettings(BaseSettings):
     MODEL_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
     LOG_LEVEL: str = "info"
     LOG_CONFIG: str = f"{SERVICES_DIR}/log_config.yaml"
-    LOG_AS_JSON: bool = True
+    LOG_AS_JSON: bool = os.environ.get("LOG_AS_JSON", True)
 
     # Sentry
     SENTRY_DSN: str = os.environ.get("SENTRY_DSN")
@@ -105,7 +105,7 @@ class LocalSettings(AllEnvSettings):
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
     SQLALCHEMY_DATABASE_URI = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    LOG_AS_JSON: bool = True
+    LOG_AS_JSON: bool = os.environ.get("LOG_AS_JSON", False)
 
 
 class TestSettings(AllEnvSettings):
