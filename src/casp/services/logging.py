@@ -7,9 +7,10 @@ from copy import copy
 import uvicorn
 from starlette_context import context
 from starlette_context.errors import ContextDoesNotExistError
+from starlette_context.header_keys import HeaderKeys as BaseHeaderKeys
 
 from casp.services import settings
-from casp.services.constants import HeaderKeys
+from casp.services.constants import ContextKeys, HeaderKeys, LogRecordKeys
 
 ANONYMOUS_USER_ID_STR: str = ""
 ANONYMOUS_USER_EMAIL_STR: str = "anonymous"
@@ -152,7 +153,7 @@ class CustomAccessFormatter(uvicorn.logging.AccessFormatter):
     def formatMessage(self, record: logging.LogRecord) -> str:
         recordcopy = copy(record)
         # Add user, user_id and user_email to the log record if they are present in the context.
-        user_obj = context.data["user"] if "user" in context.data else None
+        user_obj = context.data[ContextKeys] if ContextKeys in context.data else None
         if user_obj:
             user_id = user_obj.id
             user_email = user_obj.email
@@ -163,12 +164,13 @@ class CustomAccessFormatter(uvicorn.logging.AccessFormatter):
             user = ANONYMOUS_USER_EMAIL_STR
 
         # Add the user agent to the log record if it is present in the context.
-        if "User-Agent" in context.data:
-            user_agent = context.data["User-Agent"]
+        if BaseHeaderKeys.user_agent in context.data:
+            user_agent = context.data[BaseHeaderKeys.user_agent]
         else:
             user_agent = UNKNOWN_USER_AGENT
 
         # Add the request time to the log record if it is present in the context.
+        # TODO: don't need this....remove
         if "request_time" in context.data:
             request_time = context.data["request_time"]
         else:
@@ -176,11 +178,11 @@ class CustomAccessFormatter(uvicorn.logging.AccessFormatter):
 
         recordcopy.__dict__.update(
             {
-                "user": user,
-                "user_id": user_id,
-                "user_email": user_email,
-                "user_agent": user_agent,
-                "request_time": request_time,
+                LogRecordKeys.user.value: user,
+                LogRecordKeys.user_id.value: user_id,
+                LogRecordKeys.user_email.value: user_email,
+                LogRecordKeys.user_agent.value: user_agent,
+                LogRecordKeys.request_time.value: request_time,
             }
         )
         return super().formatMessage(recordcopy)

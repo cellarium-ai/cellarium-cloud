@@ -16,7 +16,7 @@ from starlette_context.plugins import Plugin
 from casp.services import settings
 from casp.services.api import exception_handlers
 from casp.services.api.services import exceptions
-from casp.services.constants import HeaderKeys
+from casp.services.constants import ContextKeys, HeaderKeys
 
 # from casp.services.logging import setup_logging
 
@@ -68,6 +68,25 @@ class TimingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         request_time = time.time() - start_time
         context["request_time"] = request_time
+        return response
+
+
+class RequestClientMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: DispatchFunction) -> Response:
+        context[ContextKeys.client] = request.client
+        response = await call_next(request)
+        return response
+
+
+class SentryResponseDecoratorMiddleware(BaseHTTPMiddleware):
+    """
+    Adds the sentry traceid to the request response headers for support purposes.
+    """
+
+    async def dispatch(self, request: Request, call_next: DispatchFunction) -> Response:
+        response = await call_next(request)
+        if hasattr(response, "headers"):
+            response.headers["x-trace-id"] = sentry_sdk.get_traceparent()
         return response
 
 
@@ -134,6 +153,8 @@ class CASService(FastAPI):
             Middleware(RawContextMiddleware, plugins=_plugins),
             Middleware(TimingMiddleware),
             Middleware(HeaderLoggingMiddleware),
+            Middleware(RequestClientMiddleware),
+            Middleware(SentryResponseDecoratorMiddleware),
         ]
 
         # Perform basic initialization
