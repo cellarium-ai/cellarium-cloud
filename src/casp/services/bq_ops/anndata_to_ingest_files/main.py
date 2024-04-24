@@ -10,6 +10,7 @@ def main(
     gcs_bucket_name: str,
     gcs_file_path: str,
     cas_cell_index_start: int,
+    dataset: str | None,
     cas_feature_index_start: int,
     gcs_stage_dir: str,
     original_feature_id_lookup: str,
@@ -49,6 +50,8 @@ def main(
     anndata_to_avro(
         input_file=filename,
         project=project_id,
+        credentials=credentials,
+        dataset=dataset,
         cas_cell_index_start=cas_cell_index_start,
         cas_feature_index_start=cas_feature_index_start,
         prefix=prefix,
@@ -86,6 +89,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--uns_meta_keys", type=str, help="Comma separated set of keys to dump in uns metadata", default=None
     )
+    parser.add_argument(
+        "--dataset", type=str, required=False, help="BigQuery dataset for automatic cas_cell_index lookup", default=None
+    )
 
     args = parser.parse_args()
 
@@ -98,4 +104,5 @@ if __name__ == "__main__":
         original_feature_id_lookup=args.original_feature_id_lookup,
         load_uns_data=args.load_uns_data,
         uns_meta_keys=args.uns_meta_keys,
+        dataset=args.dataset,
     )

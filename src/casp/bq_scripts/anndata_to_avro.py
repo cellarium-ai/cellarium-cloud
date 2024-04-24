@@ -364,27 +364,32 @@ def find_max_index(client, project, dataset, table, column):
     Find the current maximum index in the specified table looking at the specified column.
     """
     dataset_id = f"{project}.{dataset}"
-    table_id = f"{dataset_id}.{table}"
-    try:
-        _ = client.get_dataset(dataset_id)
-    except NotFound as exc:
-        raise ValueError(f"Dataset '{dataset_id}' not found, required to find max index in '{table_id}'.") from exc
+    # table_id = f"{dataset_id}.{table}"
+    # try:
+    #     _ = client.get_dataset(dataset_id)
+    # except NotFound as exc:
+    #     raise ValueError(f"Dataset '{dataset_id}' not found, required to find max index in '{table_id}'.") from exc
 
-    try:
-        _ = client.get_table(table_id)
-    except NotFound as exc:
-        raise ValueError(f"Table '{table_id}' not found, required to find max index.") from exc
+    # try:
+    #     _ = client.get_table(table_id)
+    # except NotFound as exc:
+    #     raise ValueError(f"Table '{table_id}' not found, required to find max index.") from exc
+
+    default_return = -1
 
     query = f"""SELECT MAX({column}) AS max_id FROM `{dataset_id}.{table}`"""
 
     max_id = None
-    job = client.query(query)
+    try:
+        job = client.query(query)
+    except NotFound as exc:
+        return default_return
     for row in job.result():
         max_id = row["max_id"]
 
-    # Default to -1 if no max id found. If the table is empty the query above will return a row with a null id.
+    # Default to default_return if no max id found. If the table is empty the query above will return a row with a null id.
     if max_id is None:
-        max_id = -1
+        max_id = default_return
 
     return max_id
 
@@ -396,6 +401,7 @@ def process(
     prefix: str,
     czi_dataset_id: str,
     project: str,
+    credentials,
     load_uns_data: bool,
     original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
     dataset: t.Optional[str] = None,
@@ -415,15 +421,15 @@ def process(
     """
     client = None
     if cas_cell_index_start is None:
-        client = bigquery.Client(project=project)
         print("Looking for max id in `cas_cell_info`...")
+        client = bigquery.Client(project=project, credentials=credentials)
         cas_cell_index_start = find_max_index(client, project, dataset, "cas_cell_info", "cas_cell_index") + 1
         print(f"cas_cell_index_start will be {cas_cell_index_start}")
 
     if cas_feature_index_start is None:
-        if not client:
-            client = bigquery.Client(project=project)
         print("Looking for max id in `cas_feature_info`...")
+        if not client:
+            client = bigquery.Client(project=project, credentials=credentials)
         cas_feature_index_start = find_max_index(client, project, dataset, "cas_feature_info", "cas_feature_index") + 1
         print(f"cas_feature_index_start will be {cas_feature_index_start}")
 
