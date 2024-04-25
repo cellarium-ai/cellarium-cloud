@@ -233,7 +233,7 @@ class TestCellOperationsService:
         metadata_feature_names = ["cell_type", "foo"]
 
         with pytest.raises(
-            exceptions.CellMetadataColumnDoesntExist, match=re.escape("Feature foo is not available for querying.")
+            exceptions.CellMetadataColumnDoesNotExist, match=re.escape("Feature foo is not available for querying.")
         ):
             self.cell_operations_service.get_cells_by_ids_for_user(
                 user=USER_ADMIN,

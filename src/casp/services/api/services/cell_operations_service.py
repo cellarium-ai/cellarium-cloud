@@ -120,8 +120,8 @@ class CellOperationsService:
                     multiplier=settings.GET_MATCHES_RETRY_BACKOFF_MULTIPLIER,
                     min=settings.GET_MATCHES_RETRY_BACKOFF_MIN,
                     max=settings.GET_MATCHES_RETRY_BACKOFF_MAX,
-                ) +
-                wait_random(0, 2),
+                )
+                + wait_random(0, 2),
                 reraise=True,
             )
             matches = await retryer(
@@ -333,9 +333,9 @@ class CellOperationsService:
         self.authorize_model_for_user(user=user, model_name=model_name)
         for feature_name in metadata_feature_names:
             if feature_name not in AVAILABLE_FIELDS_DICT:
-                raise exceptions.CellMetadataColumnDoesntExist(
-                    f"Feature {feature_name} is not available for querying. " +
-                    f"Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}."
+                raise exceptions.CellMetadataColumnDoesNotExist(
+                    f"Feature {feature_name} is not available for querying. "
+                    + f"Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}."
                 )
 
         if "cas_cell_index" not in metadata_feature_names:
