@@ -3,22 +3,29 @@ version: 1
 disable_existing_loggers: false
 formatters:
   default:
-    (): uvicorn.logging.DefaultFormatter
+    (): casp.services.logging.CustomDefaultFormatter
     fmt: '%(levelprefix)s %(message)s'
+    fmt_json: '%(message)s'
     use_colors: null
   access:
-    (): uvicorn.logging.AccessFormatter
-    fmt: '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
+    (): casp.services.logging.CustomAccessFormatter
+    fmt: '%(levelprefix)s %(client_addr)s "%(user)s" "%(request_line)s" %(user_agent)s %(status_code)s'
+    fmt_json: '%(client_addr)s "%(user)s" "%(request_line)s" %(user_agent)s %(status_code)s'
 handlers:
   default:
     formatter: default
-    class: logging.StreamHandler
+    class: casp.services.logging.StreamHandler
     stream: 'ext://sys.stderr'
   access:
     formatter: access
-    class: logging.StreamHandler
+    class: casp.services.logging.StreamHandler
     stream: 'ext://sys.stdout'
 loggers:
+  root:
+    handlers:
+      - default
+    level: INFO
+    propagate: false
   uvicorn:
     handlers:
       - default
