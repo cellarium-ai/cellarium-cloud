@@ -6,6 +6,13 @@ __pycache__/
 # C extensions
 *.so
 
+# local data
+data/
+ingest/
+*.avro
+*.csv
+*.h5ad
+
 # Distribution / packaging
 .Python
 build/
