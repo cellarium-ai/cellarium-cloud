@@ -8,7 +8,7 @@ Requirements
 ------------
 - Python 3.10
 - Database connection
-- `.env` file with secret variables
+- `settings/.env` file with secret variables
 
 
 Building Docker Image
@@ -33,6 +33,8 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     REGION=us-central1 # Region where the service will be deployed
     PORT=8000 # Port on which the service will be running (matches the port in the flask app)
     DB_CONNECTION=example-project:us-region-example:db-cluster-name # Cloud SQL connection name
+    SERVICE_ACCOUNT=sa-user@<project>.iam.gserviceaccount.com # Service account that will be running the service
+    SECRET_REF=secret-name:latest # Reference to secret in the project's google secret manager as <secret name>:<version or latest> (note that the service account must have access to the secret)
 
     gcloud run deploy $SERVICE_NAME \
     --project=$PROJECT_ID \
@@ -40,6 +42,8 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     --region=$REGION \
     --port=$PORT \
     --add-cloudsql-instances=$DB_CONNECTION \
+    --service-account=$SERVICE_ACCOUNT \
+    --set-secrets=/app/casp/services/settings/.env=${SECRET_REF} \
     --command=casp/services/admin/entrypoint.sh \
     --platform managed \
     --allow-unauthenticated

@@ -18,7 +18,12 @@ General Description
 -------------------
 
 
-It is required to have a ``src/casp/services/.env`` with ``GOOGLE_SERVICE_ACCOUNT_CREDENTIALS`` variable which includes service account json credentials dumped as a one-line string to use any services.
+It is required to have a ``src/casp/services/settings/.env`` settings file.
+The service must also be authenticated with Google credentials, either by setting:
+- ``GOOGLE_APPLICATION_CREDENTIALS`` - path to the service account json credentials file
+- Running in a Google environment (e.g. Cloud Run) with the service account attached to the service, in which case the service account is
+used as the identity running the servce.
+
 There are 2 CAS service types:
 
 * Deployable solution: could be used in Cloud Run or deployed anywhere else

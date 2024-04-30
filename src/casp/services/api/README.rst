@@ -12,7 +12,7 @@ Requirements
 - Python 3.10
 - Database connection
 - Vertex Matching Engine connection
-- `.env` file with the secret variables
+- `settings/.env` file with the secret variables
 
 Running Locally
 ---------------
@@ -86,9 +86,11 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     VPC_CONNECTOR=example-vpc-connector-name # Name of the VPC connector (matches the name of the VPC connector for the Vertex Matching Engine)
     DB_CONNECTION=example-project:us-region-example:db-cluster-name # Cloud SQL connection name
     TIMEOUT=1100 # Request timeout in seconds
-    MAX_INSTANCES=500 # Maximum number of instances to scale to
+    MAX_INSTANCES=200 # Maximum number of instances to scale to
     MIN_INSTANCES=0 # Minimum number of instances to scale to. If 0, the service will have a "cold start"
     CONCURRENCY=20 # Maximum number of requests that can be served at the same time per instance
+    SERVICE_ACCOUNT=sa-user@<project>.iam.gserviceaccount.com # Service account that will be running the service
+    SECRET_REF=secret-name:latest # Reference to secret in the project's google secret manager as <secret name>:<version or latest> (note that the service account must have access to the secret)
 
     gcloud run deploy $SERVICE_NAME \
     --project=$PROJECT_ID \
@@ -103,8 +105,10 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     --concurrency=$CONCURRENCY \
     --add-cloudsql-instances=$DB_CONNECTION \
     --vpc-connector=$VPC_CONNECTOR \
-    --command=python --args="casp/services/api/main.py" \
     --platform=$PLATFORM \
+    --service-account=$SERVICE_ACCOUNT \
+    --set-secrets=/app/casp/services/settings/.env=${SECRET_REF} \
+    --command=python --args="casp/services/api/main.py" \
     --allow-unauthenticated
 
 Test your deployment with:
