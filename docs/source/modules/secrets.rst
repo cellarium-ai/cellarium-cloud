@@ -6,14 +6,14 @@ Secret Variables
 Project Secrets
 ---------------
 The following secrets are required for the project to build and deploy. They have to be located in the
-`casp/services/.env` file. The file is not included in the repository for security reasons. The file should be
+`casp/services/settings/.env` file. The file is not included in the repository for security reasons. The file should be
 created manually.
 
 +------------------------------------+-----------------------------------------------------------------------+
 | Secret Name                        | Description                                                           |
 +====================================+=======================================================================+
-| GOOGLE_SERVICE_ACCOUNT_CREDENTIALS | A string dump of credentials for the service account used to access   |
-|                                    | Google Cloud Storage.                                                 |
+| GOOGLE_SERVICE_ACCOUNT_CREDENTIALS | (deprecated) A string dump of credentials for the service account used|
+|                                    | to access Google Cloud Storage.                                       |
 +------------------------------------+-----------------------------------------------------------------------+
 | NEPTUNE_API_KEY                    | API key for Neptune (Needed only for ML pipelines)                    |
 +------------------------------------+-----------------------------------------------------------------------+
@@ -40,6 +40,8 @@ created manually.
 | ENVIRONMENT                        | Environment for the project `development`, `production` or `local`    |
 +------------------------------------+-----------------------------------------------------------------------+
 | PROJECT_BUCKET_NAME                | Name of the bucket for the project                                    |
++------------------------------------+-----------------------------------------------------------------------+
+| MODEL_SERVER_URL                   | Url of the model service                                              |
 +------------------------------------+-----------------------------------------------------------------------+
 
 
