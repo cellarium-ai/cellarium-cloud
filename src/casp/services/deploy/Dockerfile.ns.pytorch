@@ -1,0 +1,29 @@
+FROM anibali/pytorch:2.0.0-nocuda
+
+WORKDIR /app
+USER root
+
+# Install Git to be able to install some Dependencies (such as scvid module)
+RUN apt-get update && \
+    apt-get install -y git gcc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Dependencies
+COPY requirements.txt .
+
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Copy Files
+COPY src .
+
+# Make sure to clear settings (this can be helpful if building locally).  These should be mounted as a volume
+RUN rm -f casp/services/settings/.env
+
+# Create a dockeruser to own the app
+RUN useradd -r dockeruser
+RUN chown dockeruser: /app
+USER dockeruser
+
+ENV PYTHONPATH "${PYTHONPATH}:/app"
