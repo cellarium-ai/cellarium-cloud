@@ -1,4 +1,5 @@
 import typing as t
+from unittest.mock import patch
 
 import pytest
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
@@ -43,8 +44,15 @@ class TestMatchingClient:
         Test the creation of a matching clients from gRPC and REST indexes.
 
         """
-        isinstance(MatchingClient.from_index(GRPC_INDEX), MatchingClientGRPC)
-        isinstance(MatchingClient.from_index(REST_INDEX), MatchingClientREST)
+        with patch.object(MatchingClientGRPC, "__init__", lambda x, index: None):
+            assert isinstance(
+                MatchingClient.from_index(GRPC_INDEX), MatchingClientGRPC
+            ), "MatchingClient.from_index should return a MatchingClientGRPC instance when the index is gRPC."
+
+        with patch.object(MatchingClientREST, "__init__", lambda x, index: None):
+            assert isinstance(
+                MatchingClient.from_index(REST_INDEX), MatchingClientREST
+            ), "MatchingClient.from_index should return a MatchingClientREST instance when the index is not gRPC."
 
     def test_concat_matches(self) -> None:
         """
@@ -146,13 +154,18 @@ class TestMatchingClient:
         """
         Test the REST matching client.
 
-        :param queries: The sent into the match method.
+        :param queries: The ones that are sent into the match method.
         :param client_queries: The queries sent to the REST client (e.g. after translation)
         :param client_response: The response from the REST client (e.g. pre-parsing the response)
         :param expected_response: The expected response from the match method.
 
         """
         rest_client = mock(MatchServiceClient)
+        match_client = mock(MatchingClientREST)
+
+        match_client.index = REST_INDEX
+        match_client.vector_search_client = rest_client
+
         when(rest_client).find_neighbors(
             FindNeighborsRequest(
                 index_endpoint=REST_INDEX.endpoint_id,
@@ -162,8 +175,9 @@ class TestMatchingClient:
             )
         ).thenReturn(async_return(client_response))
 
-        match_client = MatchingClient.from_index(REST_INDEX)
-        when(match_client)._MatchingClientREST__get_match_index_endpoint_client().thenReturn(rest_client)
+        when(match_client)._MatchingClientREST__adapt_result(client_response).thenCallOriginalImplementation()
+        when(match_client).match(queries).thenCallOriginalImplementation()
+
         assert await match_client.match(queries) == expected_response
 
     @parameterized.expand(
@@ -235,18 +249,23 @@ class TestMatchingClient:
         """
         Test the gRPC matching client.
 
-        :param queries: The sent into the match method.
+        :param queries: The ones that are sent into the match method.
         :param client_response: The response from the gRPC client (e.g. pre-parsing the response)
         :param expected_response: The expected response from the match method.
 
         """
         grpc_client = mock(CustomMatchingEngineIndexEndpointClient)
+        match_client = mock(MatchingClientGRPC)
+
+        match_client.index_endpoint_client = grpc_client
+        match_client.index = GRPC_INDEX
+
         when(grpc_client).match(
             deployed_index_id=GRPC_INDEX.deployed_index_id,
             queries=queries,
             num_neighbors=GRPC_INDEX.num_neighbors,
         ).thenReturn(client_response)
 
-        match_client = MatchingClient.from_index(GRPC_INDEX)
-        when(match_client)._MatchingClientGRPC__get_match_index_endpoint_client().thenReturn(grpc_client)
+        when(match_client)._MatchingClientGRPC__adapt_result(client_response).thenCallOriginalImplementation()
+        when(match_client).match(queries).thenCallOriginalImplementation()
         assert await match_client.match(queries) == expected_response
