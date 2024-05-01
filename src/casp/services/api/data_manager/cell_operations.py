@@ -140,7 +140,7 @@ class CellOperationsDataManager(BaseDataManager):
                 sa.Column("cas_cell_index", sa.Integer),
                 prefixes=["temporary"],
             )
-            metadata.create_all(session.bind)
+            cell_info_tmp_table.create(bind=session.bind)
 
             # Insert values into the temp table
             insert_query = cell_info_tmp_table.insert().values([{"cas_cell_index": cell_id} for cell_id in cell_ids])

@@ -221,7 +221,7 @@ class CellOperationsService:
 
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
 
-        annotation_response = await engine.summarize_async(query_ids=query_ids, knn_query=knn_response)
+        annotation_response = engine.summarize(query_ids=query_ids, knn_query=knn_response)
 
         if query_ids:
             self.cellarium_general_dm.log_user_activity(
@@ -260,7 +260,7 @@ class CellOperationsService:
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
 
         try:
-            annotation_response = await engine.summarize_async(query_ids=query_ids, knn_query=knn_response)
+            annotation_response = engine.summarize(query_ids=query_ids, knn_query=knn_response)
         except dm_exc.CellMetadataDatabaseError as e:
             raise exceptions.InvalidInputError(str(e))
 
