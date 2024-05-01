@@ -43,7 +43,7 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     --port=$PORT \
     --add-cloudsql-instances=$DB_CONNECTION \
     --service-account=$SERVICE_ACCOUNT \
-    --set-secrets=/app/casp/services/settings/.env=${SECRET_REF} \
+    --set-secrets=/app/settings/.env=${SECRET_REF} \
     --command=casp/services/admin/entrypoint.sh \
     --platform managed \
     --allow-unauthenticated

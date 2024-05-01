@@ -18,7 +18,7 @@ General Description
 -------------------
 
 
-It is required to have a ``src/casp/services/settings/.env`` settings file.
+It is required to have a ``src/settings/.env`` settings file.
 The service must also be authenticated with Google credentials, either by setting:
 - ``GOOGLE_APPLICATION_CREDENTIALS`` - path to the service account json credentials file
 - Running in a Google environment (e.g. Cloud Run) with the service account attached to the service, in which case the service account is

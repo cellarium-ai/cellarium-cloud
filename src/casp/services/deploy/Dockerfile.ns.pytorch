@@ -19,7 +19,7 @@ RUN pip install -r requirements.txt
 COPY src .
 
 # Make sure to clear settings (this can be helpful if building locally).  These should be mounted as a volume
-RUN rm -f casp/services/settings/.env
+RUN rm -f settings/.env
 
 # Create a dockeruser to own the app
 RUN useradd -r dockeruser

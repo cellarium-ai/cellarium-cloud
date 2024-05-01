@@ -56,7 +56,7 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     --min-instances=$MIN_INSTANCES \
     --concurrency=$CONCURRENCY \
     --service-account=$SERVICE_ACCOUNT \
-    --set-secrets=/app/casp/services/settings/.env=${SECRET_REF} \
+    --set-secrets=/app/settings/.env=${SECRET_REF} \
     --command python --args "casp/services/model_inference/main.py" \
     --allow-unauthenticated \
     --platform=managed

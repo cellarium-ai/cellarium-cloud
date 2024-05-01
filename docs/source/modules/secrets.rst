@@ -6,7 +6,7 @@ Secret Variables
 Project Secrets
 ---------------
 The following secrets are required for the project to build and deploy. They have to be located in the
-`casp/services/settings/.env` file. The file is not included in the repository for security reasons. The file should be
+`settings/.env` file. The file is not included in the repository for security reasons. The file should be
 created manually.
 
 +------------------------------------+-----------------------------------------------------------------------+

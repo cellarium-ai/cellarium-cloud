@@ -5,10 +5,15 @@ import typing as t
 import dotenv
 from pydantic import BaseSettings
 
+# Directory that contains the services package
 SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
+# Directory that contains the CAS package's contents
 CAS_DIR = os.path.dirname(SERVICES_DIR)
+# Directory that contains the CAS package and its settings
+ROOT_DIR = os.path.dirname(CAS_DIR)
 
-dotenv.load_dotenv(dotenv_path=f"{SERVICES_DIR}/settings/.env")
+
+dotenv.load_dotenv(dotenv_path=f"{ROOT_DIR}/settings/.env")
 
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 
