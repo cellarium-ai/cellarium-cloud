@@ -9,6 +9,7 @@ engine = sqlalchemy.create_engine(
     max_overflow=settings.DB_CONNECTION_POOL_MAX_OVERFLOW,
     pool_timeout=settings.DB_CONNECTION_POOL_TIMEOUT,
     pool_recycle=settings.DB_CONNECTION_POOL_RECYCLE,
+    echo=settings.ENVIRONMENT == "local",
 )
 db_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

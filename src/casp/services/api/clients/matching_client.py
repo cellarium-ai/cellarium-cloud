@@ -46,12 +46,13 @@ MatchResult.NearestNeighbors.update_forward_refs()
 MatchResult.Neighbor.update_forward_refs()
 
 
-class MatchingClient(t.NamedTuple):
+class MatchingClient:
     """
     Common interface for querying the matching service regardless of API (e.g. gRPC vs REST)
     """
 
-    index: models.CASMatchingEngineIndex = Field(default=None)
+    def __init__(self, index: models.CASMatchingEngineIndex):
+        self.index = index
 
     async def match(self, queries: t.List[t.List[float]]) -> MatchResult:
         """
@@ -84,18 +85,26 @@ class MatchingClientGRPC(MatchingClient):
     has been deployed in private mode, which happens to use a gRPC client.
     """
 
-    def __get_match_index_endpoint_client(self) -> clients.CustomMatchingEngineIndexEndpointClient:
-        return clients.CustomMatchingEngineIndexEndpointClient(index_endpoint_name=self.index.endpoint_id)
+    def __init__(self, index: models.CASMatchingEngineIndex):
+        super().__init__(index=index)
+        self.index_endpoint_client = clients.CustomMatchingEngineIndexEndpointClient(
+            index_endpoint_name=self.index.endpoint_id
+        )
 
     def __adapt_result(self, result: t.List[t.List[MatchNeighbor]]) -> MatchResult:
         matches = []
         for query_result in result:
             neighbors = []
             for neighbor in query_result:
+                # TODO: We have to make sure that index returns a distance, not a similarity score. All indexes
+                # that we use at the moment (DOT_PRODUCT_DISTANCE with L2_NORM_TYPE) return cosine similarity instead
+                # of cosine distance. We have to develop a more sophisticated handler for index depending on its type.
+                # Also we should get rid of this boilerplate code and comments..
+                distance = round(1 - neighbor.distance, 9)
                 neighbors.append(
                     MatchResult.Neighbor(
                         cas_cell_index=neighbor.id,
-                        distance=neighbor.distance,
+                        distance=distance,
                     )
                 )
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
@@ -109,14 +118,9 @@ class MatchingClientGRPC(MatchingClient):
 
         :return: The match result.
         """
-        index_endpoint_client = self.__get_match_index_endpoint_client()
-
-        matches = index_endpoint_client.match(
-            deployed_index_id=self.index.deployed_index_id,
-            queries=queries,
-            num_neighbors=self.index.num_neighbors,
+        matches = self.index_endpoint_client.match(
+            deployed_index_id=self.index.deployed_index_id, queries=queries, num_neighbors=self.index.num_neighbors
         )
-
         return self.__adapt_result(matches)
 
 
@@ -126,21 +130,25 @@ class MatchingClientREST(MatchingClient):
     has been deployed in public mode, which happens to use a REST client.
     """
 
-    def __get_match_index_endpoint_client(self) -> aiplatform_v1.MatchServiceAsyncClient:
+    def __init__(self, index: models.CASMatchingEngineIndex):
+        super().__init__(index=index)
         client_options = {"api_endpoint": self.index.api_endpoint}
-        return aiplatform_v1.MatchServiceAsyncClient(
-            client_options=client_options,
-        )
+        self.vector_search_client = aiplatform_v1.MatchServiceAsyncClient(client_options=client_options)
 
     def __adapt_result(self, result: aiplatform_v1.FindNeighborsResponse) -> MatchResult:
         matches = []
         for query_reqult in result.nearest_neighbors:
             neighbors = []
             for neighbor in query_reqult.neighbors:
+                # TODO: We have to make sure that index returns a distance, not a similarity score. All indexes
+                # that we use at the moment (DOT_PRODUCT_DISTANCE with L2_NORM_TYPE return cosine similarity instead of
+                # cosine distance. We have to develop a more sophisticated handler for index depending on its type.
+                # Also we should get rid of this boilerplate code and comments.
+                distance = round(1 - neighbor.distance, 9)
                 neighbors.append(
                     MatchResult.Neighbor(
                         cas_cell_index=neighbor.datapoint.datapoint_id,
-                        distance=neighbor.distance,
+                        distance=distance,
                     )
                 )
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
@@ -154,9 +162,6 @@ class MatchingClientREST(MatchingClient):
 
         :return: The match result.
         """
-
-        vector_search_client = self.__get_match_index_endpoint_client()
-
         # Build query objects
         query_objects = [
             aiplatform_v1.FindNeighborsRequest.Query(
@@ -174,5 +179,5 @@ class MatchingClientREST(MatchingClient):
         )
 
         # Send the request
-        matches = await vector_search_client.find_neighbors(request)
+        matches = await self.vector_search_client.find_neighbors(request)
         return self.__adapt_result(matches)

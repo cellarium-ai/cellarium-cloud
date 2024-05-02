@@ -4,3 +4,7 @@ class DataManagerBaseException(Exception):
 
 class NotFound(DataManagerBaseException):
     pass
+
+
+class CellMetadataDatabaseError(DataManagerBaseException):
+    pass

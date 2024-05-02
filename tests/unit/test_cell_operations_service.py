@@ -157,11 +157,11 @@ class TestCellOperationsService:
                 cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
             ).thenReturn(response)
 
-        actual_response = await self.cell_operations_service.annotate_adata_file(
+        actual_response = await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy(
             user=USER_ADMIN,
             file=io.BytesIO(ANNDATA_DATA),
             model_name=MODEL.model_name,
-            include_dev_metadata=include_dev_metadata,
+            include_extended_output=include_dev_metadata,
         )
         assert actual_response == response
 
@@ -172,7 +172,10 @@ class TestCellOperationsService:
             )
         else:
             verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
-                user_id=USER_ADMIN.id, model_name=MODEL.model_name, method="annotate", cell_count=len(query_ids)
+                user_id=USER_ADMIN.id,
+                model_name=MODEL.model_name,
+                method="annotate_cell_type_summary_statistics_strategy",
+                cell_count=len(query_ids),
             )
 
     @parameterized.expand(
@@ -209,7 +212,7 @@ class TestCellOperationsService:
     @pytest.mark.asyncio
     async def test_get_cells_by_ids_for_user(self) -> None:
         self.__mock_apis()
-        cell_ids = ["cell1", "cell2", "cell3"]
+        cell_ids = [1, 2, 3]
         metadata_feature_names = ["cell_type", "assay"]
 
         self.cell_operations_service.get_cells_by_ids_for_user(
@@ -220,14 +223,13 @@ class TestCellOperationsService:
         )
         verify(self.cell_operations_service.cell_operations_dm).get_cell_metadata_by_ids(
             cell_ids=cell_ids,
-            metadata_feature_names=["cell_type", "assay", "cas_cell_index"],
-            model_name=MODEL.model_name,
+            metadata_feature_names=metadata_feature_names,
         )
 
     @pytest.mark.asyncio
     async def test_get_cells_by_ids_for_user_bad_feature_name(self) -> None:
         self.__mock_apis()
-        cell_ids = ["cell1", "cell2", "cell3"]
+        cell_ids = [1, 2, 3]
         metadata_feature_names = ["cell_type", "foo"]
 
         with pytest.raises(
