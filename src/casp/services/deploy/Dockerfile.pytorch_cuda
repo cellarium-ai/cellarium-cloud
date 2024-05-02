@@ -13,7 +13,6 @@ COPY test-requirements.txt .
 RUN pip install Cython numpy
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-RUN pip install -r test-requirements.txt
 
 # Copy Files and Secrets
 COPY src .

@@ -1,0 +1,35 @@
+{
+  "nearestNeighbors": [
+    {
+      "neighbors": [
+        {
+          "datapoint": {
+            "datapointId": "0",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 0.9
+        },
+        {
+          "datapoint": {
+            "datapointId": "1",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 0.8
+        },
+        {
+          "datapoint": {
+            "datapointId": "2",
+            "crowdingTag": {
+              "crowdingAttribute": "0"
+            }
+          },
+          "distance": 0.7
+        }
+      ]
+    }
+  ]
+}

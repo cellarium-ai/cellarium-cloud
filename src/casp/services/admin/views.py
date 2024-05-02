@@ -1,14 +1,20 @@
 import tempfile
 
-from flask import Response, redirect, request, send_file
+from flask import Response, flash, redirect, request, send_file
 from flask_admin import Admin, AdminIndexView, expose
+from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.model.template import EndpointLinkRowAction
+from flask_admin.form import FormOpts
+from flask_admin.helpers import get_redirect_target
+from flask_admin.model.helpers import get_mdict_item_or_list
+from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
 from werkzeug.exceptions import HTTPException
 
 from casp.services import _auth
 from casp.services.admin import basic_auth, flask_app
-from casp.services.db import db_session, models, ops
+from casp.services.db import get_db_session_maker, models, ops
+
+db_session = get_db_session_maker()()
 
 
 class AuthException(HTTPException):
@@ -59,7 +65,53 @@ class CellariumCloudAdminModelView(BasicHTTPAuthMixin, ModelView):
     Inherits a Basic HTTP protection rule from `BasicHTTPAuthMixin`
     """
 
-    pass
+    @expose("/clone/", methods=("GET", "POST"))
+    def clone_view(self):
+        """
+        Clone model view.
+        Derived from flask_admin.model.BaseModelView.create_view and flask_admin.model.BaseModelView.edit_view
+        """
+        return_url = get_redirect_target() or self.get_url(".index_view")
+
+        if not self.can_create:
+            return redirect(return_url)
+
+        id = get_mdict_item_or_list(request.args, "id")
+        if id is None:
+            return redirect(return_url)
+
+        model = self.get_one(id)
+
+        if model is None:
+            flash(gettext("Record does not exist."), "error")
+            return redirect(return_url)
+
+        form = self.create_form(obj=model)
+        if not hasattr(form, "_validated_ruleset") or not form._validated_ruleset:
+            self._validate_form_instance(ruleset=self._form_edit_rules, form=form)
+
+        if self.validate_form(form):
+            if self.create_model(form):
+                flash(gettext("Record was successfully created."), "success")
+                if "_add_another" in request.form:
+                    return redirect(self.get_url(".create_view", url=return_url))
+                elif "_continue_editing" in request.form:
+                    return redirect(self.get_url(".edit_view", id=self.get_pk_value(model)))
+                else:
+                    # save button
+                    return redirect(self.get_save_return_url(model, is_created=False))
+
+        if request.method == "GET" or form.errors:
+            self.on_form_prefill(form, id)
+
+        form_opts = FormOpts(widget_args=self.form_widget_args, form_rules=self._form_edit_rules)
+
+        if self.create_modal and request.args.get("modal"):
+            template = self.create_modal_template
+        else:
+            template = self.create_template
+
+        return self.render(template, model=model, form=form, form_opts=form_opts, return_url=return_url)
 
 
 class UserAdminView(CellariumCloudAdminModelView):
@@ -70,10 +122,11 @@ class UserAdminView(CellariumCloudAdminModelView):
 
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
+        LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
     ]
-    column_list = ("email", "is_admin", "is_active", "requests_processed", "cells_processed")
+    column_list = ("email", "is_admin", "active", "total_requests_processed", "total_cells_processed")
     column_editable_list = ("is_admin",)
-    form_widget_args = {"requests_processed": {"disabled": True}, "cells_processed": {"disabled": True}}
+    form_excluded_columns = ("requests_processed", "cells_processed")
 
     @staticmethod
     def _create_token_file(token) -> tempfile.NamedTemporaryFile:
@@ -103,6 +156,7 @@ class UserAdminView(CellariumCloudAdminModelView):
 class CASModelAdminView(CellariumCloudAdminModelView):
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-chevron-up", ".set_default_model"),
+        LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
     ]
     column_list = (
         "model_name",
@@ -171,6 +225,78 @@ class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
         "deployed_index_id": "Deployed Index ID that is used in GCP in Vertex AI",
         "num_neighbors": "Number of neighbors that is used for an approximate neighbors search",
     }
+    column_extra_row_actions = [
+        LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
+    ]
+
+
+def shorten_value_formatter(view, context, model, name) -> str:
+    """
+    Shorten the value to 20 characters plus ellipsis
+    """
+    value = getattr(model, name)
+    return value[:20] + "..." if len(value) > 20 else value
+
+
+class CellInfoAdminView(CellariumCloudAdminModelView):
+    column_list = (
+        "cas_cell_index",
+        "original_cell_id",
+        "cell_type",
+        "cell_type_ontology_term_id",
+        "assay",
+        "development_stage",
+        "tissue",
+        "disease",
+        "cas_ingest.dataset_id",
+    )
+    column_labels = {"cas_ingest.dataset_id": "Dataset ID"}
+    column_filters = (
+        "cas_cell_index",
+        "cas_ingest_id",
+        "original_cell_id",
+        "cell_type",
+        "cell_type_ontology_term_id",
+        "assay",
+        "development_stage",
+        "tissue",
+        "disease",
+        "cas_ingest.dataset_id",
+    )
+    column_select_related_list = ("cas_ingest",)
+    column_formatters = {"original_cell_id": shorten_value_formatter}
+    # Do not allow to edit or delete the records, neither create new ones. This is a read-only view.
+    can_edit = False
+    can_delete = False
+    can_create = False
+
+    page_size = 50
+
+
+class CellFeatureInfoAdminView(CellariumCloudAdminModelView):
+    column_list = (
+        "cas_feature_index",
+        "original_feature_id",
+        "feature_name",
+        "feature_biotype",
+        "feature_is_filtered",
+        "feature_reference",
+    )
+    column_filters = (
+        "cas_feature_index",
+        "original_feature_id",
+        "feature_name",
+        "feature_biotype",
+        "feature_is_filtered",
+        "feature_reference",
+    )
+    column_formatters = {"original_feature_id": shorten_value_formatter}
+    page_size = 50
+
+
+class CellIngestInfoAdminView(CellariumCloudAdminModelView):
+    column_list = ("cas_ingest_id", "dataset_id", "ingest_timestamp")
+    column_filters = ("cas_ingest_id", "dataset_id", "ingest_timestamp")
 
 
 admin = Admin(
@@ -179,6 +305,17 @@ admin = Admin(
     template_mode="bootstrap3",
     index_view=CellariumCloudAdminIndexView(url="/", template="admin/main_page.html"),
 )
-admin.add_view(UserAdminView(models.User, db_session, name="User"))
-admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel"))
-admin.add_view(CASMatchingEngineAdminView(models.CASMatchingEngineIndex, db_session, name="MatchingEngine"))
+admin.add_view(UserAdminView(models.User, db_session, name="User", category="Users"))
+admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel", category="ML Management"))
+admin.add_view(
+    CASMatchingEngineAdminView(
+        models.CASMatchingEngineIndex, db_session, name="MatchingEngine", category="ML Management"
+    )
+)
+admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category="Cell Data Management"))
+admin.add_view(
+    CellFeatureInfoAdminView(models.FeatureInfo, db_session, name="CellFeature", category="Cell Data Management")
+)
+admin.add_view(
+    CellIngestInfoAdminView(models.CellIngestInfo, db_session, name="CellIngestInfo", category="Cell Data Management")
+)

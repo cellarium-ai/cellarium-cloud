@@ -50,7 +50,7 @@ class HTTPAsyncClient:
         :return: JSON response
         """
         timeout = aiohttp.ClientTimeout(
-            total=settings.AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS, sock_read=settings.AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS
+            total=settings.AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS, sock_read=settings.AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS
         )
 
         async with aiohttp.ClientSession(timeout=timeout) as session:

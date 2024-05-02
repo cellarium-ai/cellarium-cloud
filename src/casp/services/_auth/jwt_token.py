@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from casp.services import settings
 from casp.services._auth import exceptions
-from casp.services.db import models
+from casp.services.db import get_db_session_maker, models
 
 
 def generate_jwt_for_user(user_id: int, token_ttl: int = settings.JWT_DEFAULT_TOKEN_TTL) -> str:
@@ -46,7 +46,8 @@ def authenticate_user_with_jwt(token: str) -> models.User:
     if datetime.now() >= expiration_date:
         raise exceptions.TokenExpired
     try:
-        return models.User.query.get(user_id)
+        with get_db_session_maker()() as session:
+            return session.query(models.User).get(user_id)
     except IntegrityError as e:
         logging.error(e)
         raise exceptions.TokenInvalid

@@ -16,8 +16,8 @@ ENV_TYPE = os.environ.get("ENVIRONMENT")
 class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
-    ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
-    APP_VERSION: str = "1.4.1-alpha.2"
+    ENVIRONMENT: str = ENV_TYPE
+    APP_VERSION: str = "1.4.4"
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR = SERVICES_DIR
@@ -31,8 +31,8 @@ class AllEnvSettings(BaseSettings):
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
-    AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 350  # 350 seconds
-    AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 300  # 300 seconds
+    AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 650  # 650 seconds
+    AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 600  # 600 seconds
     MODEL_SERVER_URL: str = "https://cellarium-cloud-model.cellarium.ai"
     DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
     DEFAULT_MODEL_BQ_DATASET_NAME: str = "cas_50m_dataset"
@@ -45,6 +45,9 @@ class AllEnvSettings(BaseSettings):
     GET_MATCHES_RETRY_BACKOFF_MULTIPLIER: int = 2
     GET_MATCHES_RETRY_BACKOFF_MIN: int = 0
     GET_MATCHES_RETRY_BACKOFF_MAX: int = 30
+    MAX_CELL_IDS_PER_QUERY = 20_000  # Maximum number of cell IDs that can be queried at once
+    # Consensus Engine
+    GCS_CELL_ONTOLOGY_RESOURCE_FILE: str = f"gs://{PROJECT_BUCKET_NAME}/consensus_engine/cell_ontology_resources.json"
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
     JWT_DEFAULT_TOKEN_TTL: int = 60 * 60 * 24 * 180  # 180 days
