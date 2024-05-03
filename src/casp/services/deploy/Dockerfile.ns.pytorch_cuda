@@ -9,16 +9,15 @@ RUN yes | apt-get install git gcc
 
 # Install Dependencies
 COPY requirements.txt .
-COPY test-requirements.txt .
 RUN pip install Cython numpy
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Copy Files and Secrets
 COPY src .
-COPY tests ./tests
-# Looking for b64 encoded secret environment variables
-RUN --mount=type=secret,id=ENV_SECRETS cat /run/secrets/ENV_SECRETS | base64 -d >> ./settings/.env
+
+# Make sure to clear settings.  These should be mounted as a volume
+RUN rm -f settings/.env
 
 # Create a dockeruser to own the app
 RUN useradd -r dockeruser

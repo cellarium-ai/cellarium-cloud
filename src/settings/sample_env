@@ -1,0 +1,13 @@
+# Rename to .env and set values for your environment
+DB_PORT=5432
+DB_NAME=cas
+DB_USER=casuser
+DB_PASSWORD=caspassword
+DB_HOST=localhost
+FLASK_SECRET_KEY=foo
+FLASK_SECURITY_PASSWORD_SALT=bar
+FLASK_BASIC_AUTH_USERNAME=admin
+FLASK_BASIC_AUTH_PASSWORD=admin
+ENVIRONMENT=local
+PROJECT_BUCKET_NAME=cellarium-bucket
+LOG_AS_JSON=False

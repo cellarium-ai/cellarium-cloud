@@ -1,0 +1,75 @@
+name: CAS Repository Docker Build Workflow
+on: 
+  workflow_dispatch:
+    inputs:
+      image-types:
+        description: 'Image types to build. Can be `standard`, `cuda` or `both`. Default is `both`.'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - standard
+          - cuda
+      image-tag:
+        description: 'Docker image tag. Will use the short hash of the last commit in the branch if nothing is passed in.'
+        required: false
+        default: ''
+      add-latest-tag:
+        description: 'Push a `latest` tag to the artifact registry.  Default is `true`.'
+        required: false
+        default: true
+        type: boolean
+      
+jobs:
+
+  update-docker-images:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    strategy:
+      matrix:
+        image-type: [ 'standard', 'cuda' ]
+
+    env:
+      DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
+      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
+      PYTORCH_CUDA_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: get-image-tag
+        name: Get tag
+        run: |
+          if [[ "${{ inputs.image-tag }}" == "" ]]; then
+            echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${{ inputs.image-tag }}" >> $GITHUB_ENV
+          fi
+        shell: bash
+      - id: build-standard
+        uses: ./.github/actions/docker-build
+        if: matrix.image-type == 'standard' && (inputs.image-types == 'standard' || inputs.image-types == 'both')
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          image-type: ${{ matrix.image-type }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          add-latest-tag: ${{ inputs.add-latest-tag }}
+
+      - id: build-cuda
+        uses: ./.github/actions/docker-build
+        if: matrix.image-type == 'cuda' && (inputs.image-types == 'cuda' || inputs.image-types == 'both')
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_CUDA_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          image-type: ${{ matrix.image-type }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          add-latest-tag: ${{ inputs.add-latest-tag }}

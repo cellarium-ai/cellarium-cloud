@@ -1,16 +1,37 @@
+import logging
 import typing as t
 
+from google.auth import default
 from google.cloud import storage
 from google.oauth2.service_account import Credentials
 
 from casp.services import settings
 
+logger = logging.getLogger(__name__)
 
-def get_google_service_credentials() -> t.Tuple["Credentials", str]:
-    credentials = Credentials.from_service_account_info(
-        info=settings.GOOGLE_ACCOUNT_CREDENTIALS, scopes=None, default_scopes=None
-    )
-    return credentials, settings.GOOGLE_ACCOUNT_CREDENTIALS.get("project_id")
+
+def get_google_service_credentials() -> t.Tuple[Credentials, str]:
+    if settings.GOOGLE_ACCOUNT_CREDENTIALS != {}:
+        logger.warning(
+            "Google auth performed using the GOOGLE_ACCOUNT_CREDENTIALS env setting. "
+            + "GOOGLE_APPLICATION_CREDENTIALS env variable or native cloud identity should be used instead."
+        )
+        credentials = Credentials.from_service_account_info(
+            info=settings.GOOGLE_ACCOUNT_CREDENTIALS, scopes=None, default_scopes=None
+        )
+        return credentials, settings.GOOGLE_ACCOUNT_CREDENTIALS.get("project_id")
+
+    credentials, project_id = default()
+    if "get_project_id" in project_id and project_id != credentials.get_project_id():
+        logger.warning(
+            (
+                f"Active project {project_id} is different than the default credential's project {credentials.project_id}.",
+                f"Using {credentials.project_id} to auth to Google service",
+            )
+        )
+        project_id = credentials.project_id
+    logger.info(f"Using Google Cloud project {project_id}")
+    return credentials, project_id
 
 
 def download_file_from_bucket(bucket_name: str, source_blob_name: str, destination_file_name: str) -> None:

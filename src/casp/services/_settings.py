@@ -5,10 +5,15 @@ import typing as t
 import dotenv
 from pydantic import BaseSettings
 
+# Directory that contains the services package
 SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
+# Directory that contains the CAS package's contents
 CAS_DIR = os.path.dirname(SERVICES_DIR)
+# Directory that contains the CAS package and its settings
+ROOT_DIR = os.path.dirname(CAS_DIR)
 
-dotenv.load_dotenv(dotenv_path=f"{SERVICES_DIR}/.env")
+
+dotenv.load_dotenv(dotenv_path=f"{ROOT_DIR}/settings/.env")
 
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 
@@ -23,6 +28,9 @@ class AllEnvSettings(BaseSettings):
     SERVICES_DIR = SERVICES_DIR
     DEFAULT_SERVICE_HOST: str = "0.0.0.0"
     DEFAULT_SERVICE_PORT: int = 8000
+    API_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
+    MODEL_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
+
     # Sentry
     SENTRY_DSN: str = os.environ.get("SENTRY_DSN")
     SENTRY_ENABLE_TRACING: bool = True
@@ -31,9 +39,9 @@ class AllEnvSettings(BaseSettings):
     # Model Training
     NEPTUNE_API_KEY: str = os.environ.get("NEPTUNE_API_KEY")
     # API
-    AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 650  # 650 seconds
-    AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 600  # 600 seconds
-    MODEL_SERVER_URL: str = "https://cellarium-cloud-model.cellarium.ai"
+    AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 650  # 350 seconds
+    AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 600  # 300 seconds
+    MODEL_SERVER_URL: str = os.environ.get("MODEL_SERVER_URL", "https://cellarium-cloud-model.cellarium.ai")
     DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
     DEFAULT_MODEL_BQ_DATASET_NAME: str = "cas_50m_dataset"
     API_REQUEST_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cellarium_api_temp_tables"
@@ -82,7 +90,7 @@ class AllEnvSettings(BaseSettings):
 class DevSettings(AllEnvSettings):
     # General
     debug = True
-    MODEL_SERVER_URL: str = "https://cellarium-cloud-model-dev.cellarium.ai"
+    MODEL_SERVER_URL: str = os.environ.get("MODEL_SERVER_URL", "https://cellarium-cloud-model-dev.cellarium.ai")
 
 
 class ProductionSettings(AllEnvSettings):

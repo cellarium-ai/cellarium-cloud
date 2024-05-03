@@ -1,0 +1,76 @@
+name: Build Docker Image
+description: Build docker image and push to GCP Artifact Registry
+inputs:
+  docker-registry-name:
+    required: true
+    description: GCP Docker Registry name
+  gcp-provider-id:
+    required: true
+    description: CAS GCP Provider ID
+  gcp-service-account-email:
+    required: true
+    description: CAS Deployer Service Account email
+  image-name:
+    required: true
+    description: Image name for the created image
+  image-tag:
+    required: true
+    description: Tag for the created image
+  image-type:
+    required: true
+    description: Image types to build (standard, cuda)
+  add-latest-tag:
+    required: true
+    description: Push a `latest` tag to the artifact registry
+
+runs:
+  using: "composite"
+  steps:
+    - id: checkout
+      name: Checkout
+      uses: actions/checkout@v4
+
+    - id: get-dockerfile
+      name: Get Dockerfile
+      run: |
+        if [[ "${{ inputs.image-type }}" == "standard" ]]; then
+          echo "DOCKERFILE=Dockerfile.ns.pytorch" >> $GITHUB_ENV
+        elif [[ "${{ inputs.image-type }}" == "cuda" ]]; then
+          echo "DOCKERFILE=Dockerfile.ns.pytorch_cuda" >> $GITHUB_ENV
+        fi
+      shell: bash
+    - id: google-login
+      name: Authenticate with Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        token_format: access_token
+        workload_identity_provider: ${{ inputs.gcp-provider-id }}
+        service_account: ${{ inputs.gcp-service-account-email }}
+        access_token_lifetime: 1500s
+
+    - id: docker-google-login
+      name: Login to Artifact Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.docker-registry-name }}
+        username: oauth2accesstoken
+        password: ${{ steps.google-login.outputs.access_token }}
+
+    - id: docker-push
+      name: Create and push CAS images in Google Artifact Registry
+      uses: docker/build-push-action@v5
+      with:
+        push: true
+        file: ./src/casp/services/deploy/${{ env.DOCKERFILE }}
+        tags: |
+          ${{ inputs.image-name }}:${{ inputs.image-tag }}
+          ${{ inputs.add-latest-tag && format('{0}:{1}', inputs.image-name, 'latest') || ''}}
+
+    - id: log-information
+      name: Log image information
+      run: |
+        echo "::notice title=Image type ${{inputs.image-type}}:: Docker image: ${{ inputs.image-name }}:${{ inputs.image-tag }} has been pushed to Google Artifact Registry"
+        if [[ "${{ inputs.add-latest-tag }}" == "true" ]]; then
+          echo "::notice title=Image type ${{inputs.image-type}}:: Docker image: ${{ inputs.image-name }}:latest has been pushed to Google Artifact Registry"
+        fi
+      shell: bash
