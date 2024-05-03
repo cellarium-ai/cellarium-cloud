@@ -58,7 +58,7 @@ class CloudTraceContext(t.NamedTuple):
 
 class StreamHandler(logging.StreamHandler):
     """
-    Custom StreamHandler that logs messages as JSON objects if JSON logging is turned.
+    Custom StreamHandler that logs messages as JSON objects if JSON logging is turned on.
     This will also add the trace header to the log message if it is present in the context
     """
 
