@@ -62,7 +62,7 @@ jobs:
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
           add-latest-tag: ${{ inputs.add-latest-tag }}
 
-      - id: build-cudo
+      - id: build-cuda
         uses: ./.github/actions/docker-build
         if: matrix.image-type == 'cuda' && (inputs.image-types == 'cuda' || inputs.image-types == 'both')
         with:

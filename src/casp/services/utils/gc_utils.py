@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def get_google_service_credentials() -> t.Tuple[Credentials, str]:
     if settings.GOOGLE_ACCOUNT_CREDENTIALS != {}:
-        logger.warn(
+        logger.warning(
             "Google auth performed using the GOOGLE_ACCOUNT_CREDENTIALS env setting. "
             + "GOOGLE_APPLICATION_CREDENTIALS env variable or native cloud identity should be used instead."
         )
