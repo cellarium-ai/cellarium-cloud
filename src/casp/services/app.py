@@ -22,7 +22,7 @@ from casp.services.constants import ContextKeys, HeaderKeys
 logger = logging.getLogger(__name__)
 
 
-class RouterDef(t.NamedTuple):
+class RouterDef:
     """
     Used to define a router to include in the service.
     """
@@ -32,7 +32,7 @@ class RouterDef(t.NamedTuple):
     tags: t.List[str] = []
 
 
-class ExceptionHandlerDef(t.NamedTuple):
+class ExceptionHandlerDef:
     """
     Used to define an exception handler for a specific exception type.
     """
@@ -112,31 +112,33 @@ class CASService(FastAPI):
         plugins: t.Optional[t.Sequence[Plugin]] = None,
         routers: t.List[RouterDef] = None,
         exception_handlers: t.Optional[t.List[ExceptionHandlerDef]] = None,
-        sentry_application_id: str = "",
+        sentry_application_id: t.Optional[str] = None,
         *args,
         **kwargs,
     ):
         """
         Initialize the service with the given configuration.
 
-        @param port: The port to use when running the service.
-        @param plugins: A list of middleware plugins to use for the service.
-        @param routers: A list of routers to include in the service.
-        @param exception_handlers: A list of exception handlers to include in the service in addition to the default ones
+        :param port: The port to use when running the service.
+        :param plugins: A list of middleware plugins to use for the service.
+        :param routers: A list of routers to include in the service.
+        :param exception_handlers: A list of exception handlers to include in the service in addition to the default ones
                                    as defined in BASE_ERROR_HANDLERS
-        @param sentry_application_id: The application ID to use when reporting errors to Sentry.
+        :param sentry_application_id: The application ID to use when reporting errors to Sentry. If left as None, Sentry
+                                      integration will not be enabled.
         """
 
         self.port = port
 
         # Configure Sentry integration
-        sentry_sdk.init(
-            dsn=settings.SENTRY_DSN,
-            server_name=sentry_application_id,
-            enable_tracing=settings.SENTRY_ENABLE_TRACING,
-            profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
-            traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
-        )
+        if sentry_application_id is not None:
+            sentry_sdk.init(
+                dsn=settings.SENTRY_DSN,
+                server_name=sentry_application_id,
+                enable_tracing=settings.SENTRY_ENABLE_TRACING,
+                profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
+                traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+            )
 
         # Configure middleware
         if plugins:

@@ -21,7 +21,7 @@ UNKNOWN_TIMING: float = -1
 logger = logging.getLogger(__name__)
 
 
-class CloudTraceContext(t.NamedTuple):
+class CloudTraceContext:
     """
     Object representing the Cloud Trace context header.  The format is:
     ``

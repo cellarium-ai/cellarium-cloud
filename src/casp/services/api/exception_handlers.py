@@ -51,7 +51,7 @@ async def token_exception_handler(_: Request, exc: TokenException) -> responses.
     )
 
 
-async def global_error_handler(*_: object) -> responses.JSONResponse:
+async def global_error_handler(*args, **kwarg) -> responses.JSONResponse:
     """
     Top level error handler for all exceptions if not caught by more specific handlers.
 

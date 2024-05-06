@@ -267,7 +267,7 @@ class CellOperationsService:
         logger.info("Summarizing query neighbor context using the specified strategy")
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
 
-        logger.info("Performing final sumarization")
+        logger.info("Performing final summarization")
         try:
             annotation_response = engine.summarize(query_ids=query_ids, knn_query=knn_response)
         except dm_exc.CellMetadataDatabaseError as e:

@@ -58,7 +58,7 @@ class HTTPAsyncClient:
             total=settings.AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS, sock_read=settings.AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS
         )
 
-        headers = {} if headers is None else headers
+        headers = headers or {}
         # Forward along the trace id if it exists
         if HeaderKeys.cloud_trace_context in context and context[HeaderKeys.cloud_trace_context] is not None:
             headers[HeaderKeys.cloud_trace_context.value] = context[HeaderKeys.cloud_trace_context]
