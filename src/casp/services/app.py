@@ -27,9 +27,10 @@ class RouterDef:
     Used to define a router to include in the service.
     """
 
-    router: APIRouter
-    prefix: str = "/api"
-    tags: t.List[str] = []
+    def __init__(self, router: APIRouter, prefix: str = "/api", tags: t.List[str] = []):
+        self.router = router
+        self.prefix = prefix
+        self.tags = tags
 
 
 class ExceptionHandlerDef:
@@ -37,8 +38,9 @@ class ExceptionHandlerDef:
     Used to define an exception handler for a specific exception type.
     """
 
-    exception: Exception
-    handler: t.Callable
+    def __init__(self, exception: Exception, handler: t.Callable):
+        self.exception = exception
+        self.handler = handler
 
 
 class CloudTraceContextPlugin(Plugin):
