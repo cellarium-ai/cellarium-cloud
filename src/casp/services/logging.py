@@ -21,7 +21,7 @@ UNKNOWN_TIMING: float = -1
 logger = logging.getLogger(__name__)
 
 
-class CloudTraceContext:
+class CloudTraceContext(t.NamedTuple):
     """
     Object representing the Cloud Trace context header.  The format is:
     ``
@@ -30,15 +30,9 @@ class CloudTraceContext:
     See https://cloud.google.com/trace/docs/trace-context
     """
 
-    def __init__(self, trace_id: str, span_id: str, options: t.Optional[str]) -> None:
-        self.trace_id = trace_id
-        self.span_id = span_id
-        self.options = options
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, CloudTraceContext):
-            return False
-        return self.trace_id == other.trace_id and self.span_id == other.span_id and self.options == other.options
+    trace_id: str
+    span_id: str
+    options: t.Optional[str]
 
     def get_trace(self, project_id: str) -> str:
         """

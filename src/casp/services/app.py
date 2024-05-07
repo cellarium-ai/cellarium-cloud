@@ -22,25 +22,23 @@ from casp.services.constants import ContextKeys, HeaderKeys
 logger = logging.getLogger(__name__)
 
 
-class RouterDef:
+class RouterDef(t.NamedTuple):
     """
     Used to define a router to include in the service.
     """
 
-    def __init__(self, router: APIRouter, prefix: str = "/api", tags: t.List[str] = []):
-        self.router = router
-        self.prefix = prefix
-        self.tags = tags
+    router: APIRouter
+    prefix: str = "/api"
+    tags: t.List[str] = []
 
 
-class ExceptionHandlerDef:
+class ExceptionHandlerDef(t.NamedTuple):
     """
     Used to define an exception handler for a specific exception type.
     """
 
-    def __init__(self, exception: Exception, handler: t.Callable):
-        self.exception = exception
-        self.handler = handler
+    exception: Exception
+    handler: t.Callable
 
 
 class CloudTraceContextPlugin(Plugin):
