@@ -3,6 +3,7 @@ Cellarium Service Controller. It provides methods to communicate with services i
 infrastructure over different protocols in async manner.
 """
 
+import logging
 import math
 import typing as t
 
@@ -19,6 +20,8 @@ from casp.services.db import models
 from casp.services.utils import numpy_utils
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
+
+logger = logging.getLogger(__name__)
 
 
 class CellOperationsService:
@@ -181,12 +184,14 @@ class CellOperationsService:
 
         :return: Matches in a MatchResult object
         """
+        logger.info("Getting embeddings")
         query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
 
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings, return empty match result
             return [], MatchResult()
 
+        logger.info("Getting KNN matches")
         knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model_name=model_name)
 
         return query_ids, knn_response
@@ -248,17 +253,21 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
+        logger.info("Authorizing user")
         _ = self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
 
+        logger.info("Applying CellTypeOntologyAwareConsensusStrategy to the query results")
         strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
             prune_threshold=prune_threshold,
             weighting_prefactor=weighting_prefactor,
         )
 
+        logger.info("Summarizing query neighbor context using the specified strategy")
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
 
+        logger.info("Performing final summarization")
         try:
             annotation_response = engine.summarize(query_ids=query_ids, knn_query=knn_response)
         except dm_exc.CellMetadataDatabaseError as e:
@@ -324,7 +333,7 @@ class CellOperationsService:
         self.authorize_model_for_user(user=user, model_name=model_name)
         for feature_name in metadata_feature_names:
             if feature_name not in AVAILABLE_FIELDS_DICT:
-                raise exceptions.CellMetadataColumnDoesntExist(
+                raise exceptions.CellMetadataColumnDoesNotExist(
                     f"Feature {feature_name} is not available for querying. "
                     + f"Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}."
                 )

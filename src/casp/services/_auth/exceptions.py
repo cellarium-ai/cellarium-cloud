@@ -1,14 +1,23 @@
-class AuthException(Exception):
+from fastapi import status
+
+
+class TokenException(Exception):
+    default_message: str = "Token Error"
     """
-    Base Auth Exception
+    Base Token-based Exception
     """
 
-    pass
+    def __init__(self, *args, **kwargs):
+        if not args:
+            args = (self.default_message,)
+
+        super().__init__(*args, **kwargs)
+        self.http_code = status.HTTP_401_UNAUTHORIZED
 
 
-class TokenExpired(AuthException):
-    pass
+class TokenExpired(TokenException):
+    default_message: str = "Token is Expired"
 
 
-class TokenInvalid(AuthException):
-    pass
+class TokenInvalid(TokenException):
+    default_message: str = "Token is Invalid"

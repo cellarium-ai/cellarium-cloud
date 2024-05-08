@@ -1,14 +1,19 @@
 import asyncio
 import json
+import logging
 import typing as t
 
 import aiohttp
 from aiohttp import client_exceptions
+from starlette_context import context
 
 from casp.services import settings
 from casp.services.api.clients import exceptions
+from casp.services.constants import HeaderKeys
 
 JSON = t.Union[t.Dict[str, t.Any], t.List[t.Any]]
+
+logger = logging.getLogger(__name__)
 
 
 class HTTPAsyncClient:
@@ -53,6 +58,14 @@ class HTTPAsyncClient:
             total=settings.AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS, sock_read=settings.AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS
         )
 
+        headers = headers or {}
+        # Forward along the trace id if it exists
+        if HeaderKeys.cloud_trace_context in context and context[HeaderKeys.cloud_trace_context] is not None:
+            headers[HeaderKeys.cloud_trace_context.value] = context[HeaderKeys.cloud_trace_context]
+        # Forward along the user auth if it exists
+        if HeaderKeys.authorization in context and context[HeaderKeys.authorization] is not None:
+            headers[HeaderKeys.authorization.value] = context[HeaderKeys.authorization]
+
         async with aiohttp.ClientSession(timeout=timeout) as session:
             try:
                 async with session.post(url, data=form_data, headers=headers) as response:
@@ -64,7 +77,7 @@ class HTTPAsyncClient:
                         except (json.decoder.JSONDecodeError, client_exceptions.ClientResponseError):
                             response_detail = await response.text()
                         except KeyError:
-                            print("Response body doesn't have a 'detail' key, returning full response body")
+                            logger.info("Response body doesn't have a 'detail' key, returning full response body")
                             response_detail = str(await response.json())
 
                         cls.raise_response_exception(status_code=status_code, detail=response_detail)
@@ -82,7 +95,11 @@ class HTTPAsyncClient:
 
     @classmethod
     async def post(
-        cls, url: str, data: t.Optional[t.Dict[str, t.Any]] = None, files: t.Optional[t.List[t.Dict[str, t.Any]]] = None
+        cls,
+        url: str,
+        data: t.Optional[t.Dict[str, t.Any]] = None,
+        files: t.Optional[t.List[t.Dict[str, t.Any]]] = None,
+        headers: t.Optional[t.Dict[str, t.Any]] = None,
     ) -> JSON:
         form_data = aiohttp.FormData()
 
@@ -98,7 +115,7 @@ class HTTPAsyncClient:
                 form_data.add_field(key, value)
 
         # Client Session Arguments
-        return await cls._aiohttp_async_post(url=url, form_data=form_data)
+        return await cls._aiohttp_async_post(url=url, form_data=form_data, headers=headers)
 
 
 class ModelInferenceClient(HTTPAsyncClient):
