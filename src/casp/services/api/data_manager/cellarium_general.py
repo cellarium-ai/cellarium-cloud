@@ -1,9 +1,14 @@
+import datetime
 import typing as t
+
+import sqlalchemy as sa
+from starlette_context import context
 
 from casp.data_manager import BaseDataManager, sql
 from casp.services import settings
 from casp.services.api import schemas
 from casp.services.api.data_manager import exceptions
+from casp.services.constants import ContextKeys
 from casp.services.db import models
 
 
@@ -104,7 +109,9 @@ class CellariumGeneralDataManager(BaseDataManager):
 
             return model.cas_matching_engine
 
-    def log_user_activity(self, user_id: int, model_name: str, method: str, cell_count: int) -> None:
+    def log_user_activity(
+        self, user_id: int, model_name: str, method: str, cell_count: int, event: models.UserActivityEvent
+    ) -> None:
         """
         Log the information to the DB about a request from a user
 
@@ -114,7 +121,80 @@ class CellariumGeneralDataManager(BaseDataManager):
         :param cell_count: Number of cells processed in this request
         """
         user_activity = models.UserActivity(
-            user_id=user_id, model_name=model_name, method=method, cell_count=cell_count
+            user_id=user_id,
+            request_id=context[ContextKeys.sentry_trace_id],
+            model_name=model_name,
+            method=method,
+            cell_count=cell_count,
+            event=event,
         )
+
         with self.system_data_db_session_maker.begin() as session:
             session.add(user_activity)
+
+    def get_remaining_quota_for_user(self, user: models.User) -> int:
+        """
+        Get remaining cell processing quota for a specific user (i.e. their quota minus cells processed this week)
+
+        :param user: User object to check quota for
+
+        :return: Remaining cell processing quota
+        """
+        # Return the remaining quota, or 0 if it's negative (which might happen if the user exceeds
+        # their quota, either because we allow them to, or because of any weirdness in the
+        # simultaneous processing of cells)
+        return max(user.cell_quota - self.get_cells_processed_this_week_for_user(user=user), 0)
+
+    def get_cells_processed_this_week_for_user(self, user: models.User) -> int:
+        """
+        Get number of cells processed by a specific user this week
+
+        :param user: User object to check cells processed for
+
+        :return: Number of cells processed this week
+        """
+        # Start of week for a user is based on the day of the week they signed up, so we need to
+        # use the day of the week they signed up to calculate the start of the week
+        current_weekday = datetime.datetime.today().weekday()
+        start_of_the_week_for_user = user.created_at.weekday()
+        days_to_subtract = current_weekday - start_of_the_week_for_user
+        if days_to_subtract < 0:
+            days_to_subtract += 7
+        start_of_week = datetime.datetime.today().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ) - datetime.timedelta(days=days_to_subtract)
+
+        with self.system_data_db_session_maker() as session:
+            cell_count_sum_query = sa.sql.text(
+                """
+                select sum(cells_processed) from(
+                    select coalesce(sum(cell_count), 0) as cells_processed from users_useractivity
+                    where user_id = :id
+                    and finished_time >= :start_of_week
+                    and request_id is null
+                    union all
+                    select coalesce(sum(cell_count), 0) as cells_processed from
+                    (
+                        select distinct cell_count, request_id from users_useractivity
+                        where user_id = :id
+                        and finished_time >= :start_of_week
+                        and request_id is not null
+                    ) ids_and_counts
+                    inner join
+                    (
+                        select distinct request_id from users_useractivity
+                        where user_id = :id
+                        and finished_time >= :start_of_week
+                        and request_id is not null
+                        except
+                        select distinct request_id from users_useractivity
+                        where user_id = :id
+                        and finished_time >= :start_of_week
+                        and request_id is not null
+                        and event = 'FAILED'
+                    ) non_failed_ids
+                    on ids_and_counts.request_id = non_failed_ids.request_id
+                ) total_sums
+                """
+            )
+            return session.execute(cell_count_sum_query, {"id": user.id, "start_of_week": start_of_week}).first()[0]

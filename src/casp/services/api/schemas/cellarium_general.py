@@ -1,3 +1,5 @@
+import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -23,3 +25,8 @@ class ApplicationInfo(BaseModel):
 class UserInfo(BaseModel):
     username: str
     email: str
+class UserQuota(BaseModel):
+    user_id: int
+    quota: int
+    remaining_quota: int
+    quota_reset_date: datetime.datetime

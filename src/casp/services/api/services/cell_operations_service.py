@@ -6,7 +6,9 @@ infrastructure over different protocols in async manner.
 import logging
 import math
 import typing as t
+from multiprocessing import Lock
 
+import anndata
 import numpy as np
 from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_random
 
@@ -22,6 +24,8 @@ from casp.services.utils import numpy_utils
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
 logger = logging.getLogger(__name__)
+
+user_activity_lock = Lock()
 
 
 class CellOperationsService:
@@ -57,6 +61,51 @@ class CellOperationsService:
                 f"{model_name} model is not available. Please reach out to the Cellarium team for more information."
             )
         return model
+
+    def __get_cell_count_from_anndata(self, file: t.BinaryIO) -> int:
+        """
+        Get the number of cells in the anndata file.
+
+        :param file: Anndata file to get the number of cells from.
+
+        :return: Number of cells in the anndata file.
+        """
+        adata = anndata.read_h5ad(file)
+        cell_count = len(adata)
+        # Reset the file pointer to the beginning of the file because we're gonna need to read it
+        # again later.  I don't know if this is the cleanest solution to this problem
+        file.seek(0)
+        return cell_count
+
+    def __verify_quota_and_log_activity(
+        self, user: models.User, file: t.BinaryIO, model_name: str, method: str
+    ) -> None:
+        """
+        Verify that the number of cells in the anndata file does not exceed the user's remaining
+        quota and log the user activity in the database in an atomic transaction.
+
+        :param user: User object to check quota for.
+        :param file: Anndata file to check the number of cells in.
+        :param model_name: Model name to use for annotation.
+        :param method: Method name to log in the database.
+
+        :raises exceptions.QuotaExceededException: If the number of cells in the anndata file exceeds the user's quota.
+        """
+        cell_count = self.__get_cell_count_from_anndata(file=file)
+        with user_activity_lock:
+            user_quota = self.cellarium_general_dm.get_remaining_quota_for_user(user=user)
+            if cell_count > user_quota:
+                raise exceptions.QuotaExceededException(
+                    f"User quota exceeded. You have {user_quota} cells left, "
+                    f"but you are trying to process {cell_count} cells."
+                )
+            self.cellarium_general_dm.log_user_activity(
+                user_id=user.id,
+                model_name=model_name,
+                method=method,
+                cell_count=cell_count,
+                event=models.UserActivityEvent.STARTED,
+            )
 
     @staticmethod
     async def get_embeddings(file_to_embed: t.BinaryIO, model_name: str) -> t.Tuple[t.List[str], np.array]:
@@ -215,6 +264,13 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
+        logger.info(
+            "Verifying quota and logging user activity for annotate_cell_type_summary_statistics_strategy start"
+        )
+        self.__verify_quota_and_log_activity(
+            user=user, file=file, model_name=model_name, method="annotate_cell_type_summary_statistics_strategy"
+        )
+        logger.info("Authorizing user")
         cas_model = self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
 
@@ -234,6 +290,7 @@ class CellOperationsService:
                 model_name=model_name,
                 method="annotate_cell_type_summary_statistics_strategy",
                 cell_count=len(query_ids),
+                event=models.UserActivityEvent.SUCCEEDED,
             )
 
         return annotation_response
@@ -253,6 +310,10 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
+        logger.info("Verifying quota and logging user activity for annotate_cell_type_ontology_aware_strategy start")
+        self.__verify_quota_and_log_activity(
+            user=user, file=file, model_name=model_name, method="annotate_cell_type_ontology_aware_strategy"
+        )
         logger.info("Authorizing user")
         _ = self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
@@ -279,6 +340,7 @@ class CellOperationsService:
                 model_name=model_name,
                 method="annotate_cell_type_ontology_aware_strategy",
                 cell_count=len(query_ids),
+                event=models.UserActivityEvent.SUCCEEDED,
             )
 
         return annotation_response
