@@ -1,20 +1,30 @@
+import logging
 import tempfile
+from uuid import UUID, uuid4
 
 from flask import Response, flash, redirect, request, send_file
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.form import FormOpts
+from flask_admin.contrib.sqla.fields import InlineModelFormList
+from flask_admin.contrib.sqla.form import InlineModelConverter
+from flask_admin.form import FormOpts, RenderTemplateWidget
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
+from sqlalchemy import delete
 from werkzeug.exceptions import HTTPException
 
-from casp.services import _auth
+from casp.services import _auth, settings
 from casp.services.admin import basic_auth, flask_app
 from casp.services.db import get_db_session_maker, models, ops
+from casp.services.utils.email_utils import EmailSender
 
 db_session = get_db_session_maker()()
+
+email_sender = EmailSender(sendgrid_client=settings.SENDGRID_API_KEY, from_address=settings.FROM_ADDRESS)
+
+logger = logging.getLogger(__name__)
 
 
 class AuthException(HTTPException):
@@ -114,6 +124,31 @@ class CellariumCloudAdminModelView(BasicHTTPAuthMixin, ModelView):
         return self.render(template, model=model, form=form, form_opts=form_opts, return_url=return_url)
 
 
+class UserKeyInlineFieldListWidget(RenderTemplateWidget):
+    """
+    Widget that uses a custom template for the user key inline field list
+    """
+
+    def __init__(self):
+        super(UserKeyInlineFieldListWidget, self).__init__("admin/inline_list_user_key.html")
+
+
+class UserKeylineModelFormList(InlineModelFormList):
+    """
+    Used in the chain of classes needed to use a custom template
+    """
+
+    widget = UserKeyInlineFieldListWidget()
+
+
+class UserKeyInlineModelConverter(InlineModelConverter):
+    """
+    Used in the chain of classes needed to use a custom template
+    """
+
+    inline_field_list_type = UserKeylineModelFormList
+
+
 class UserAdminView(CellariumCloudAdminModelView):
     """
     User Admin View. Has a custom method `generate-secret-key` which is used to generate a
@@ -127,6 +162,80 @@ class UserAdminView(CellariumCloudAdminModelView):
     column_list = ("email", "is_admin", "active", "total_requests_processed", "total_cells_processed")
     column_editable_list = ("is_admin",)
     form_excluded_columns = ("requests_processed", "cells_processed")
+
+    inline_models = [
+        (
+            models.UserKey,
+            dict(form_label="User Keys", form_excluded_columns=["created_date", "key_hash", "key_locator"]),
+        )
+    ]
+    inline_model_form_converter = UserKeyInlineModelConverter
+
+    # Use as a mechanism to pass keys from the on_model_change to the after_model_change callbacks since we
+    # do not want to store the actual user key in the database
+    key_cache: dict[str, str] = {}
+
+    def on_model_change(self, form, model, is_created):
+        if is_created and len(model.user_keys) == 0:
+            # Expiration and id are created when inserting into the database
+            key_locator: UUID = uuid4()
+            key: UUID = uuid4()
+            token: _auth.OpaqueToken = _auth.generate_opaque_token_for_user(key_locator, key)
+
+            model.user_keys.append(
+                models.UserKey(
+                    key_locator=str(key_locator),
+                    key_hash=token.key_hash,
+                    active=True,
+                    user=model,
+                )
+            )
+
+            # Cache the key to be shown during the after_model_change invocation
+            self.key_cache[str(key_locator)] = token.key
+        else:
+            # Find which key(s) were created and cache them to be shown during the after_model_change invocation
+            for user_key in model.user_keys:
+                if user_key.key_locator is None:
+                    key_locator: UUID = uuid4()
+                    key: UUID = uuid4()
+                    token: _auth.OpaqueToken = _auth.generate_opaque_token_for_user(key_locator, key)
+
+                    # Set the keylocator and keyhash to store in the database
+                    user_key.key_locator = str(key_locator)
+                    user_key.key_hash = token.key_hash
+
+                    self.key_cache[str(key_locator)] = token.key
+
+    def after_model_change(self, form, model, is_created):
+        if is_created and len(model.user_keys) == 1:
+            # Notifies the user that the key was created.
+            # Note: the brackets are used for the javascript to parse the key out of the message
+            try:
+                key = self.key_cache[model.user_keys[0].key_locator]
+                # Renove the key from the cache
+                del self.key_cache[model.user_keys[0].key_locator]
+                flash(gettext(f"A key was created for {model.username}: [{key}].  It will not be shown again"), "key")
+                email_sender.send_welcome_email(email=model.email, key=key)
+            except Exception:
+                logger.error(f"Error notifying user", exc_info=True)
+                flash(gettext(f"Error notifying user {model.email}. Please contact them manually."), "error")
+        else:
+            # Find which key(s) were created and print the key to the console as a one shot deal
+            for user_key in model.user_keys:
+                if user_key.key_locator in self.key_cache:
+                    try:
+                        key = self.key_cache[user_key.key_locator]
+                        del self.key_cache[user_key.key_locator]
+                        flash(
+                            gettext(f"A key was created for {model.username}: [{key}].  It will not be shown again"),
+                            "key",
+                        )
+                        email_sender.send_new_key_email(email=model.email, key=key)
+                    except Exception:
+                        logger.error(f"Error notifying user", exc_info=True)
+                        flash(gettext(f"Error notifying user {model.email}. Please contact them manually."), "error")
+        return super().after_model_change(form, model, is_created)
 
     @staticmethod
     def _create_token_file(token) -> tempfile.NamedTemporaryFile:
