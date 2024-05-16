@@ -17,15 +17,15 @@ async def application_info():
     return cellarium_general_service.get_application_info()
 
 
-@cellarium_general_router.get("/validate-token")
-async def validate_token(_: models.User = Depends(dependencies.authenticate_user)):
+@cellarium_general_router.get("/validate-token", response_model=schemas.UserInfo)
+async def validate_token(user: models.User = Depends(dependencies.authenticate_user)):
     """
     Validate authorization token from `Bearer` header
 
-    :return: Success message if token is valid, otherwise return 401 Unauthorized status code if token
+    :return: User information if the token is valid, otherwise return 401 Unauthorized status code if token
     is invalid or missing
     """
-    return {"detail": "Success"}
+    return schemas.UserInfo(username=user.username, email=user.email)
 
 
 @cellarium_general_router.get("/feature-schemas", response_model=t.List[schemas.FeatureSchemaInfo])

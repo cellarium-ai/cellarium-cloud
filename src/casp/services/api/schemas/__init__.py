@@ -15,4 +15,4 @@ from casp.services.api.schemas.cell_operations import (  # noqa
     QueryCellNeighborhoodOntologyAware,
     SearchQueryCellResult,
 )
-from casp.services.api.schemas.cellarium_general import ApplicationInfo, CASModel, FeatureSchemaInfo  # noqa
+from casp.services.api.schemas.cellarium_general import ApplicationInfo, CASModel, FeatureSchemaInfo, UserInfo  # noqa
