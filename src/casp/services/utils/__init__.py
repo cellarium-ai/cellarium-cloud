@@ -1,3 +1,4 @@
+from casp.services.utils.email_utils import EmailSender  # noqa
 from casp.services.utils.gc_utils import (  # noqa
     delete_folder_from_bucket,
     download_file_from_bucket,

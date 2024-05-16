@@ -1,0 +1,9 @@
+You've requested a new key
+
+To access the service, please use the following API key:
+
+{key}
+
+Please keep this key secure and do not share it with others.
+
+For questions or if you did not request this key, please email the Cell Annotation team at cas-support@broadinstitute.org.

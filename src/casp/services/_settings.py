@@ -88,6 +88,9 @@ class AllEnvSettings(BaseSettings):
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
+    # Email settings
+    SENDGRID_API_KEY: str = os.environ.get("SENDGRID_API_KEY", "")
+    FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "cas-support@broadinstitute.org")
 
 
 class DevSettings(AllEnvSettings):

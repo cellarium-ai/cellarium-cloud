@@ -1,0 +1,19 @@
+Welcome to the Cellarium Cell Annotation Service!
+
+To access the service, please use the following API key:
+
+{key}
+
+Please keep this key secure and do not share it with others.
+
+For questions or if you did not request this key, please email the Cell Annotation team at cas-support@broadinstitute.org.
+
+Documentation can be found at:	https://cellarium-cas.readthedocs.io/en/latest
+Sample code can be found at:	  https://github.com/cellarium-ai/cellarium-cas/blob/main/README.md
+Python client can be installed via pip:
+$ pip install git+https://github.com/broadinstitute/cell-annotation-service-client.git
+
+Please do not hesitate to reach out with any questions or feedback!
+
+Best,
+The Cell Annotation team
