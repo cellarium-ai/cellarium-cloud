@@ -55,7 +55,7 @@ def authenticate_user_with_jwt(
             user: models.User = session.query(models.User).get(user_id)
             if user is None:
                 raise exceptions.TokenInvalid
-            if user.active != True:
+            if not user.active:
                 raise exceptions.TokenInactive
             return user
     except IntegrityError as e:

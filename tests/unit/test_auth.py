@@ -174,17 +174,7 @@ class TestAuth:
         with pytest.raises(exceptions.TokenInvalid):
             jwt_token.authenticate_user_with_jwt(tampered_jwt, hashing_key=TEST_HASHING_KEY)
 
-    def test_authenticate_user_with_jwt_with_(self) -> None:
-        """
-        Test that bad actors can't authenticate with a key generated with a different hashing key.
-        """
-        user_id: int = 1
-        payload = {"user_id": user_id, "foo": "bar"}
-        token = jwt.encode(payload=payload, key=TEST_HASHING_KEY, algorithm=settings.JWT_HASHING_ALGORITHM)
-        with pytest.raises(exceptions.TokenInvalid):
-            jwt_token.authenticate_user_with_jwt(token, hashing_key=TEST_HASHING_KEY)
-
-    def test_authenticate_user_with_jwt_with_(self) -> None:
+    def test_authenticate_user_with_jwt_with_bad_contents(self) -> None:
         """
         Test that bad actors can't authenticate with a key generated with a different hashing key.
         """

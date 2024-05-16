@@ -12,7 +12,6 @@ from flask_admin.form import FormOpts, RenderTemplateWidget
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
-from sqlalchemy import delete
 from werkzeug.exceptions import HTTPException
 
 from casp.services import _auth, settings
@@ -218,7 +217,7 @@ class UserAdminView(CellariumCloudAdminModelView):
                 flash(gettext(f"A key was created for {model.username}: [{key}].  It will not be shown again"), "key")
                 email_sender.send_welcome_email(email=model.email, key=key)
             except Exception:
-                logger.error(f"Error notifying user", exc_info=True)
+                logger.error("Error notifying user", exc_info=True)
                 flash(gettext(f"Error notifying user {model.email}. Please contact them manually."), "error")
         else:
             # Find which key(s) were created and print the key to the console as a one shot deal
@@ -233,7 +232,7 @@ class UserAdminView(CellariumCloudAdminModelView):
                         )
                         email_sender.send_new_key_email(email=model.email, key=key)
                     except Exception:
-                        logger.error(f"Error notifying user", exc_info=True)
+                        logger.error("Error notifying user", exc_info=True)
                         flash(gettext(f"Error notifying user {model.email}. Please contact them manually."), "error")
         return super().after_model_change(form, model, is_created)
 

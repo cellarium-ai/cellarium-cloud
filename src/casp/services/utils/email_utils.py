@@ -23,7 +23,7 @@ class EmailSender:
         :param sendgrid_client: SendGrid API key or client object. If this value is empty, the class will not send emails.
         :param from_address: Email address to send emails from.
         """
-        if sendgrid_client == None:
+        if sendgrid_client is None:
             logger.warning("No SendGrid key provided.  Emails will not be sent.")
             self.sg = None
             return
