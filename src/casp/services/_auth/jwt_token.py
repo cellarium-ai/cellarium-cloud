@@ -52,7 +52,12 @@ def authenticate_user_with_jwt(
         raise exceptions.TokenExpired
     try:
         with get_db_session_maker()() as session:
-            return session.query(models.User).get(user_id)
+            user: models.User = session.query(models.User).get(user_id)
+            if user is None:
+                raise exceptions.TokenInvalid
+            if user.active != True:
+                raise exceptions.TokenInactive
+            return user
     except IntegrityError as e:
         logging.error(e)
         raise exceptions.TokenInvalid

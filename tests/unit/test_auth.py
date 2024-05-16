@@ -7,11 +7,15 @@ from uuid import UUID, uuid4
 
 import jwt
 import pytest
+from fastapi.security import HTTPAuthorizationCredentials
+from mockito import unstub, when
 from parameterized import parameterized
+from starlette_context import context, request_cycle_context
 
-from casp.services import settings
+from casp.services import _auth, settings
 from casp.services._auth import OpaqueToken, exceptions, jwt_token, opaque_token
-from casp.services.api.dependencies.auth import TokenTypes
+from casp.services.api.dependencies.auth import TokenTypes, authenticate_user
+from casp.services.constants import ContextKeys
 from casp.services.db import models
 from tests.unit.test_utils import mock_sqlalchemy, unmock_sqlalchemy
 
@@ -27,6 +31,7 @@ class TestAuth:
         self.mock_db_session = mock_sqlalchemy()
 
     def teardown_method(self) -> None:
+        unstub()
         unmock_sqlalchemy()
 
     @parameterized.expand(
@@ -34,6 +39,11 @@ class TestAuth:
             # Encoded JWT token with payload {"a": "b"} and hashing key "a"
             ("eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYiJ9.bdAkj_C_GHDuLuFTBxOGTtT8mxPXLFvrIlHGX9sgq7o", TokenTypes.JWT, None),
             ("00000000-0000-0000-0000-000000000000.11111111-1111-1111-1111-111111111111", TokenTypes.OPAQUE, None),
+            (
+                "Bearer 00000000-0000-0000-0000-000000000000.11111111-1111-1111-1111-111111111111",
+                TokenTypes.OPAQUE,
+                None,
+            ),
             ("foo", TokenTypes.OPAQUE, exceptions.TokenInvalid),
             ("a.b.c.d", TokenTypes.OPAQUE, exceptions.TokenInvalid),
             ("", TokenTypes.OPAQUE, exceptions.TokenInvalid),
@@ -48,15 +58,48 @@ class TestAuth:
         else:
             assert TokenTypes.detect_type(token) == expected_type
 
-    def test_authenticate_user_jwt(self) -> None:
+    @parameterized.expand(
+        [
+            (
+                HTTPAuthorizationCredentials(
+                    credentials=jwt_token.generate_jwt_for_user(user_id=1, token_ttl=100, hashing_key=TEST_HASHING_KEY),
+                    scheme="bearer",
+                ),
+                None,
+            ),
+            (
+                HTTPAuthorizationCredentials(
+                    credentials=opaque_token.generate_opaque_token_for_user(key_locator=uuid4(), key=uuid4()).key,
+                    scheme="bearer",
+                ),
+                None,
+            ),
+            (HTTPAuthorizationCredentials(credentials="foo", scheme="bearer"), exceptions.TokenInvalid),
+            (HTTPAuthorizationCredentials(credentials="a.b.c.d", scheme="bearer"), exceptions.TokenInvalid),
+            (None, exceptions.TokenInvalid),
+        ]
+    )
+    @pytest.mark.asyncio
+    async def test_authenticate_user(
+        self, auth_token_scheme: HTTPAuthorizationCredentials, expected_exception: t.Optional[Exception]
+    ):
+        """
+        Test the top level authentication function.
+        """
+
         user_id: int = 1
-        token = jwt_token.generate_jwt_for_user(user_id=user_id, token_ttl=100, hashing_key=TEST_HASHING_KEY)
-
-        # Since we are just doing a primary key lookup we can just mock the object (as opposed to the query)
         user = models.User(id=user_id)
-        self.mock_db_session.add(user)
 
-        assert jwt_token.authenticate_user_with_jwt(token, hashing_key=TEST_HASHING_KEY) == user
+        if expected_exception:
+            with pytest.raises(expected_exception):
+                await authenticate_user(auth_token_scheme)
+        else:
+            when(_auth).authenticate_user_with_opaque_token(...).thenReturn(user)
+            when(_auth).authenticate_user_with_jwt(...).thenReturn(user)
+
+            with request_cycle_context() as _:
+                assert await authenticate_user(auth_token_scheme) == user
+                assert context[ContextKeys.user] == user
 
     def test_generate_jwt_for_user(self) -> None:
         user_id: int = 1
@@ -65,6 +108,45 @@ class TestAuth:
 
         assert parsed_token["user_id"] == user_id
         assert datetime.fromisoformat(parsed_token["expiration"]) > datetime.now()
+
+    def test_authenticate_user_jwt(self) -> None:
+        user_id: int = 1
+        token = jwt_token.generate_jwt_for_user(user_id=user_id, token_ttl=100, hashing_key=TEST_HASHING_KEY)
+
+        # Since we are just doing a primary key lookup we can just mock the object (as opposed to the query)
+        user = models.User(id=user_id, active=True)
+        self.mock_db_session.add(user)
+
+        assert jwt_token.authenticate_user_with_jwt(token, hashing_key=TEST_HASHING_KEY) == user
+
+    def test_authenticate_user_jwt_not_found(self) -> None:
+        user_id: int = 1
+        token = jwt_token.generate_jwt_for_user(user_id=user_id, token_ttl=100, hashing_key=TEST_HASHING_KEY)
+
+        with pytest.raises(exceptions.TokenInvalid):
+            jwt_token.authenticate_user_with_jwt(token, hashing_key=TEST_HASHING_KEY)
+
+    def test_authenticate_user_jwt_not_active(self) -> None:
+        user_id: int = 1
+        token = jwt_token.generate_jwt_for_user(user_id=user_id, token_ttl=100, hashing_key=TEST_HASHING_KEY)
+
+        # Since we are just doing a primary key lookup we can just mock the object (as opposed to the query)
+        user = models.User(id=user_id, active=False)
+        self.mock_db_session.add(user)
+
+        with pytest.raises(exceptions.TokenInactive):
+            jwt_token.authenticate_user_with_jwt(token, hashing_key=TEST_HASHING_KEY)
+
+    def test_authenticate_user_jwt_expired(self) -> None:
+        user_id: int = 1
+        token = jwt_token.generate_jwt_for_user(user_id=user_id, token_ttl=-10, hashing_key=TEST_HASHING_KEY)
+
+        # Since we are just doing a primary key lookup we can just mock the object (as opposed to the query)
+        user = models.User(id=user_id, active=False)
+        self.mock_db_session.add(user)
+
+        with pytest.raises(exceptions.TokenExpired):
+            jwt_token.authenticate_user_with_jwt(token, hashing_key=TEST_HASHING_KEY)
 
     def test_authenticate_user_with_jwt_with_bad_hash_key(self) -> None:
         """
@@ -91,6 +173,26 @@ class TestAuth:
 
         with pytest.raises(exceptions.TokenInvalid):
             jwt_token.authenticate_user_with_jwt(tampered_jwt, hashing_key=TEST_HASHING_KEY)
+
+    def test_authenticate_user_with_jwt_with_(self) -> None:
+        """
+        Test that bad actors can't authenticate with a key generated with a different hashing key.
+        """
+        user_id: int = 1
+        payload = {"user_id": user_id, "foo": "bar"}
+        token = jwt.encode(payload=payload, key=TEST_HASHING_KEY, algorithm=settings.JWT_HASHING_ALGORITHM)
+        with pytest.raises(exceptions.TokenInvalid):
+            jwt_token.authenticate_user_with_jwt(token, hashing_key=TEST_HASHING_KEY)
+
+    def test_authenticate_user_with_jwt_with_(self) -> None:
+        """
+        Test that bad actors can't authenticate with a key generated with a different hashing key.
+        """
+        user_id: int = 1
+        payload = {"user_id": user_id, "foo": "bar"}
+        token = jwt.encode(payload=payload, key=TEST_HASHING_KEY, algorithm=settings.JWT_HASHING_ALGORITHM)
+        with pytest.raises(exceptions.TokenInvalid):
+            jwt_token.authenticate_user_with_jwt(token, hashing_key=TEST_HASHING_KEY)
 
     @parameterized.expand(
         [
