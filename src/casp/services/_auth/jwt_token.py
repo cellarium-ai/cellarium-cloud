@@ -9,7 +9,12 @@ from casp.services._auth import exceptions
 from casp.services.db import get_db_session_maker, models
 
 
-def generate_jwt_for_user(user_id: int, token_ttl: int = settings.JWT_DEFAULT_TOKEN_TTL) -> str:
+def generate_jwt_for_user(
+    user_id: int,
+    token_ttl: int = settings.JWT_DEFAULT_TOKEN_TTL,
+    hashing_key: str = settings.SECURITY_PASSWORD_SALT,
+    algorithm: str = settings.JWT_HASHING_ALGORITHM,
+) -> str:
     """
     Create a JWT token for the user. JWT contains 2 parameters in a payload: `user_id`
     and `expiration`
@@ -18,10 +23,12 @@ def generate_jwt_for_user(user_id: int, token_ttl: int = settings.JWT_DEFAULT_TO
     :return: An JWT token for the further authentication
     """
     payload = {"user_id": user_id, "expiration": str(datetime.now() + timedelta(seconds=token_ttl))}
-    return jwt.encode(payload=payload, key=settings.SECURITY_PASSWORD_SALT, algorithm=settings.JWT_HASHING_ALGORITHM)
+    return jwt.encode(payload=payload, key=hashing_key, algorithm=algorithm)
 
 
-def authenticate_user_with_jwt(token: str) -> models.User:
+def authenticate_user_with_jwt(
+    token: str, hashing_key: str = settings.SECURITY_PASSWORD_SALT, algorithm: str = settings.JWT_HASHING_ALGORITHM
+) -> models.User:
     """
     Authenticate a user with JWT. Throw `TokenInvalid` if token couldn't be parsed
     or `TokenExpired` if it is parsable but expired.
@@ -29,9 +36,7 @@ def authenticate_user_with_jwt(token: str) -> models.User:
     :return: A SQLAlchemy User model from the db
     """
     try:
-        payload = jwt.decode(
-            jwt=token, key=settings.SECURITY_PASSWORD_SALT, algorithms=[settings.JWT_HASHING_ALGORITHM]
-        )
+        payload = jwt.decode(jwt=token, key=hashing_key, algorithms=[algorithm])
     except jwt.PyJWTError as e:
         logging.error(e)
         raise exceptions.TokenInvalid

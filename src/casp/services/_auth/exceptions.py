@@ -21,3 +21,11 @@ class TokenExpired(TokenException):
 
 class TokenInvalid(TokenException):
     default_message: str = "Token is Invalid"
+
+
+class TokenInactive(TokenException):
+    default_message: str = "Token is Invalid"
+
+
+class TokenGenerationError(TokenException):
+    default_message: str = "Could not generate token"
