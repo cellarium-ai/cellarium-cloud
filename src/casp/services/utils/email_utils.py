@@ -4,9 +4,11 @@ import typing as t
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
+from casp.services import settings
+
 logger = logging.getLogger(__name__)
 
-TEMPLATE_DIR = "src/casp/services/admin/templates"
+TEMPLATE_DIR = f"{settings.APP_ROOT}/casp/services/admin/templates"
 
 
 class EmailSender:
