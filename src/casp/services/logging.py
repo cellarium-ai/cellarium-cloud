@@ -12,6 +12,7 @@ from starlette_context.header_keys import HeaderKeys as BaseHeaderKeys
 from casp.services import settings
 from casp.services.api.services.exceptions import InvalidInputError
 from casp.services.constants import ContextKeys, HeaderKeys, LogRecordKeys
+from casp.services.utils import get_google_service_credentials
 
 ANONYMOUS_USER_ID_STR: str = ""
 ANONYMOUS_USER_EMAIL_STR: str = "anonymous"
@@ -65,31 +66,31 @@ class StreamHandler(logging.StreamHandler):
     def __init__(self, stream=None) -> None:
         super().__init__(stream=stream)
         self.log_as_json = settings.LOG_AS_JSON
+        _, self.project_id = get_google_service_credentials()
 
     def format(self, record):
         message = super().format(record)
         if self.log_as_json:
-            PROJECT = settings.GOOGLE_ACCOUNT_CREDENTIALS["project_id"]
 
             # Build structured log messages as an object.
             global_log_fields = {}
 
             # Add log correlation to nest all log messages.
             # This is only relevant in HTTP-based contexts, and is ignored elsewhere.
+            sentry_trace_id = None
             try:
                 google_trace_header = context.get(HeaderKeys.cloud_trace_context)
+                if ContextKeys.sentry_trace_id in context.data:
+                    sentry_trace_id = context.data[ContextKeys.sentry_trace_id]
 
             except ContextDoesNotExistError:
                 # Logging outside of a request context.
                 google_trace_header = None
 
-            if google_trace_header and PROJECT:
+            if google_trace_header and self.project_id:
                 trace = CloudTraceContext.from_header(google_trace_header)
-                global_log_fields["logging.googleapis.com/trace"] = trace.get_trace(PROJECT)
+                global_log_fields["logging.googleapis.com/trace"] = trace.get_trace(self.project_id)
                 global_log_fields["logging.googleapis.com/spanId"] = trace.span_id
-
-            if ContextKeys.sentry_trace_id in context.data:
-                sentry_trace_id = context.data[ContextKeys.sentry_trace_id]
 
             # Complete a structured log entry.
             entry = dict(
