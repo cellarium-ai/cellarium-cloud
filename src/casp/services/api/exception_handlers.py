@@ -1,8 +1,22 @@
 from fastapi import Request, responses, status
+from starlette_context import context
 
 from casp.services._auth.exceptions import TokenException
 from casp.services.api.data_manager.exceptions import NotFound
 from casp.services.api.services.exceptions import APIBaseException
+from casp.services.constants import ContextKeys, HeaderKeys
+
+
+def decorate_response_headers(init_headers: dict[str, str] = None):
+    """
+    Given the global context, return the headers to include in the response.  All exception handlers should call this
+    """
+    headers = init_headers.copy() if init_headers is not None else {}
+
+    if ContextKeys.sentry_trace_id in context:
+        headers[HeaderKeys.trace_id] = context.get(ContextKeys.sentry_trace_id)
+
+    return headers
 
 
 async def api_base_exception_handler(_: Request, exc: APIBaseException) -> responses.JSONResponse:
@@ -17,6 +31,7 @@ async def api_base_exception_handler(_: Request, exc: APIBaseException) -> respo
     return responses.JSONResponse(
         status_code=exc.http_code,
         content={"detail": str(exc)},
+        headers=decorate_response_headers(),
     )
 
 
@@ -32,6 +47,7 @@ async def not_found_error_handler(_: Request, exc: NotFound) -> responses.JSONRe
     return responses.JSONResponse(
         status_code=404,
         content={"detail": str(exc)},
+        headers=decorate_response_headers(),
     )
 
 
@@ -47,7 +63,7 @@ async def token_exception_handler(_: Request, exc: TokenException) -> responses.
     return responses.JSONResponse(
         status_code=exc.http_code,
         content={"detail": str(exc)},
-        headers={"WWW-Authenticate": "Bearer"},
+        headers=decorate_response_headers(init_headers={"WWW-Authenticate": "Bearer"}),
     )
 
 
@@ -63,4 +79,5 @@ async def global_error_handler(*args, **kwarg) -> responses.JSONResponse:
     return responses.JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Error processing request"},
+        headers=decorate_response_headers(),
     )
