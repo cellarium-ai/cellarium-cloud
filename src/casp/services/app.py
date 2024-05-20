@@ -89,15 +89,18 @@ class SentryResponseDecoratorMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: DispatchFunction) -> Response:
+        # Format is [trace_id]-[span_id]-[sampled].  We're only really interested in the trace_id.
+        trace_id = sentry_sdk.get_traceparent()
+        if trace_id:
+            trace_id = trace_id.split("-")[0]
+        context[ContextKeys.sentry_trace_id] = trace_id
+
+        # Process the request
         response = await call_next(request)
+
         # This should always be true but adding check to be safe
         if hasattr(response, "headers"):
-            # Format is [trace_id]-[span_id]-[sampled].  We're only really interested in the trace_id.
-            trace_id = sentry_sdk.get_traceparent()
-            if trace_id:
-                trace_id = trace_id.split("-")[0]
             response.headers[HeaderKeys.trace_id] = trace_id
-            context[ContextKeys.sentry_trace_id] = trace_id
         return response
 
 
