@@ -24,6 +24,10 @@ class TokenTypes(str, Enum):
     def detect_type(token: str) -> "TokenTypes":
         """
         Detect the type of token based on the token string.
+
+        :param token: Token string to detect the type of
+        :raises TokenInvalid: If the token type is not recognized
+        :return: TokenTypes enum value
         """
 
         if token.startswith("Bearer "):

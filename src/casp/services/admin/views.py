@@ -1,5 +1,6 @@
 import logging
 import tempfile
+import typing as t
 from uuid import UUID, uuid4
 
 from flask import Response, flash, redirect, request, send_file
@@ -8,7 +9,7 @@ from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import InlineModelFormList
 from flask_admin.contrib.sqla.form import InlineModelConverter
-from flask_admin.form import FormOpts, RenderTemplateWidget
+from flask_admin.form import BaseForm, FormOpts, RenderTemplateWidget
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
@@ -21,7 +22,7 @@ from casp.services.utils.email_utils import EmailSender
 
 db_session = get_db_session_maker()()
 
-email_sender = EmailSender(sendgrid_client=settings.SENDGRID_API_KEY, from_address=settings.FROM_ADDRESS)
+email_sender = EmailSender(sendgrid_key=settings.SENDGRID_API_KEY, from_address=settings.FROM_ADDRESS)
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +130,7 @@ class UserKeyInlineFieldListWidget(RenderTemplateWidget):
     """
 
     def __init__(self):
-        super(UserKeyInlineFieldListWidget, self).__init__("admin/inline_list_user_key.html")
+        super().__init__("admin/inline_list_user_key.html")
 
 
 class UserKeylineModelFormList(InlineModelFormList):
@@ -174,7 +175,9 @@ class UserAdminView(CellariumCloudAdminModelView):
     # do not want to store the actual user key in the database
     key_cache: dict[str, str] = {}
 
-    def on_model_change(self, form, model, is_created):
+    @t.override
+    def on_model_change(self, _: BaseForm, model: models.User, is_created: bool):
+
         if is_created and len(model.user_keys) == 0:
             # Expiration and id are created when inserting into the database
             key_locator: UUID = uuid4()
@@ -206,7 +209,8 @@ class UserAdminView(CellariumCloudAdminModelView):
 
                     self.key_cache[str(key_locator)] = token.key
 
-    def after_model_change(self, form, model, is_created):
+    @t.override
+    def after_model_change(self, form: BaseForm, model: models.User, is_created: bool):
         if is_created and len(model.user_keys) == 1:
             # Notifies the user that the key was created.
             # Note: the brackets are used for the javascript to parse the key out of the message
@@ -237,7 +241,7 @@ class UserAdminView(CellariumCloudAdminModelView):
         return super().after_model_change(form, model, is_created)
 
     @staticmethod
-    def _create_token_file(token) -> tempfile.NamedTemporaryFile:
+    def _create_token_file(token: str) -> tempfile.NamedTemporaryFile:
         """
         Generate a temporary file with JWT token
         :param token: JWT Token

@@ -14,11 +14,8 @@ def read_resource(resource_path: str) -> str:
     """
     Read a resource file and return its content as a string.
 
-    Args:
-        resource_path: The relative path to the resource file. (e.g. tests/unit/test_query_responses/rest_response_0.json)
-
-    Returns:
-        The content of the resource file as a string.
+    :param resource_path: The relative path to the resource file. (e.g. tests/unit/test_query_responses/rest_response_0.json)
+    :return: The content of the resource file as a string.
 
     """
     with open(resource_path) as file:
@@ -27,30 +24,28 @@ def read_resource(resource_path: str) -> str:
 
 def async_return(result: t.Any) -> asyncio.Future:
     """
-    Return a result from an async function.
+    Return a result from an async function. Useful for mocking client calls.
 
-    Useful for mocking client calls.
-
-    Args:
-        result: The result to return.
-
-    Returns:
-        An asyncio Future that will return the result.
+    :param result: The result to return.
+    :return: An asyncio Future that will return the result.
     """
     f = asyncio.Future()
     f.set_result(result)
     return f
 
 
-def mock_sqlalchemy(data: list = []) -> None:
+def mock_sqlalchemy(data: t.Optional[list[t.Any]] = None) -> UnifiedAlchemyMagicMock:
     """
     Mock the SQLAlchemy session for unit tests.  Be sure to call unmock_sqlalchemy() in the teardown_method of the test to reset mocks.
 
     See documentation for mock_alchemy at https://mock-alchemy.readthedocs.io/en/latest/user_guide/index.html#stub-data
     for more information on how to pass data in.
 
-    Returns: The session mock object.  This can be used in the test to further configure the mock (e.g. to add objects)
+    :param data: The data to pass into the mock session.
+    :returns: The session mock object.  This can be used in the test to further configure the mock (e.g. to add objects)
     """
+    if data is None:
+        data = []
     mock_db_session = UnifiedAlchemyMagicMock(data=data)
     sess_maker = mock(sessionmaker)
     when(sess_maker).__call__().thenReturn(mock_db_session)

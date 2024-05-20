@@ -6,7 +6,7 @@ To access the service, please use the following API key:
 
 Please keep this key secure and do not share it with others.
 
-For questions or if you did not request this key, please email the Cell Annotation team at cas-support@broadinstitute.org.
+For questions or if you did not request this key, please email the Cell Annotation Service team at cas-support@broadinstitute.org.
 
 Documentation can be found at:	https://cellarium-cas.readthedocs.io/en/latest
 Sample code can be found at:	  https://github.com/cellarium-ai/cellarium-cas/blob/main/README.md
