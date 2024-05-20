@@ -48,13 +48,14 @@ async def authenticate_user(auth_token_scheme: HTTPAuthorizationCredentials = De
 
     token = auth_token_scheme.credentials
     token_type = TokenTypes.detect_type(token)
-    if token_type == TokenTypes.OPAQUE:
-        user = _auth.authenticate_user_with_opaque_token(token)
-    elif token_type == TokenTypes.JWT:
-        user = _auth.authenticate_user_with_jwt(token)
-    else:
-        # This should never reach here but is left as protection in case a new token type is added
-        raise _auth.exceptions.TokenInvalid("Token type not recognized")
+    match token_type:
+        case TokenTypes.OPAQUE:
+            user = _auth.authenticate_user_with_opaque_token(token)
+        case TokenTypes.JWT:
+            user = _auth.authenticate_user_with_jwt(token)
+        case _:
+            # This should never reach here but is left as protection in case a new token type is added
+            raise _auth.exceptions.TokenInvalid("Token type not recognized")
 
     # Set the starlette context to know about the user making the request for things like logging
     # and quota enforcement

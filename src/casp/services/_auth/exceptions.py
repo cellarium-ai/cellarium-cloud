@@ -24,7 +24,7 @@ class TokenInvalid(TokenException):
 
 
 class TokenInactive(TokenException):
-    default_message: str = "Token is Invalid"
+    default_message: str = "Token is Inactive"
 
 
 class TokenGenerationError(TokenException):
