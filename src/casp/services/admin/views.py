@@ -1,8 +1,8 @@
 import logging
 import tempfile
-import typing as t
 from uuid import UUID, uuid4
 
+import typing_extensions as tx
 from flask import Response, flash, redirect, request, send_file
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.babel import gettext
@@ -175,7 +175,7 @@ class UserAdminView(CellariumCloudAdminModelView):
     # do not want to store the actual user key in the database
     key_cache: dict[str, str] = {}
 
-    @t.override
+    @tx.override
     def on_model_change(self, _: BaseForm, model: models.User, is_created: bool):
 
         if is_created and len(model.user_keys) == 0:
@@ -209,7 +209,7 @@ class UserAdminView(CellariumCloudAdminModelView):
 
                     self.key_cache[str(key_locator)] = token.key
 
-    @t.override
+    @tx.override
     def after_model_change(self, form: BaseForm, model: models.User, is_created: bool):
         if is_created and len(model.user_keys) == 1:
             # Notifies the user that the key was created.
