@@ -1,3 +1,8 @@
+import os
+
+MACHINE_SPEC_FILE_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../..", "settings/.pipelines-metafiles/machine_specs_tmp_data.json")
+)
 PCA_TRAIN_COMPONENT_NAME: str = "pca_train"
 PCA_EMBED_COMPONENT_NAME: str = "pca_embed"
 PCA_REGISTRY_COMPONENT_NAME: str = "pca_registry"

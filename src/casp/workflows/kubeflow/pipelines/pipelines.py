@@ -78,7 +78,7 @@ def pca_deploy_index_pipeline(pipeline_config_paths: t.List[str]) -> None:
     # :class:`dsl.ParallelFor` requires a list of JSON strings as input
     with dsl.ParallelFor(pipeline_config_paths) as item:
         index_create_op = create_job(
-            dsl_component=job_components.pca_index_create.create_deploy_register_index,
+            dsl_component=job_components.pca_index_create.create_register_index,
             component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
             gcs_config_path=item.pca_index_create_gcs_config_path,
         )
@@ -111,7 +111,7 @@ def pca_full_cycle_pipeline(pipeline_config_paths: t.List[str]) -> None:
             gcs_config_path=item.pca_register_model_gcs_config_path,
         )
         index_create_op = create_job(
-            dsl_component=job_components.pca_index_create.create_deploy_register_index,
+            dsl_component=job_components.pca_index_create.create_register_index,
             component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
             gcs_config_path=item.pca_index_create_gcs_config_path,
         )
@@ -153,7 +153,7 @@ def pca_resize_full_cycle_pipeline(pipeline_config_paths: t.List[str]):
             gcs_config_path=item.pca_register_model_gcs_config_path,
         )
         index_create_op = create_job(
-            dsl_component=job_components.pca_index_create.create_deploy_register_index,
+            dsl_component=job_components.pca_index_create.create_register_index,
             component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
             gcs_config_path=item.pca_index_create_gcs_config_path,
         )
@@ -203,15 +203,15 @@ def summary_stats_train_pipeline(pipeline_config_paths: t.List[str]):
 
 
 @dsl.pipeline(name="logistic_regression_train_parallel", description="Logistic Regression Train Parallel")
-def logistic_regression_train_pipeline(pipeline_config_paths: t.List[str]):
+def logistic_regression_train_pipeline(logistic_regression_config_paths: t.List[str]):
     """
     KFP pipeline to run Logistic Regression train pipeline for multiple models simultaneously.
 
-    :param pipeline_config_paths:  List of JSON strings with train config paths.
+    :param logistic_regression_config_paths:  List of JSON strings with train config paths.
     :rtype: dls.Pipeline
     """
 
-    with dsl.ParallelFor(pipeline_config_paths) as item:
+    with dsl.ParallelFor(logistic_regression_config_paths) as item:
         train_logistic_regression = create_job(
             dsl_component=job_components.logistic_regression.train_component,
             component_name=constants.LOGISTIC_REGRESSION_TRAIN_COMPONENT_NAME,
@@ -240,7 +240,7 @@ def summary_stats_lr_train_pipeline(
 ) -> None:
     summary_stats_train_task = summary_stats_train_pipeline(pipeline_config_paths=summary_stats_config_paths)
     logistic_regression_train_task = logistic_regression_train_pipeline(
-        pipeline_config_paths=logistic_regression_config_paths
+        logistic_regression_config_paths=logistic_regression_config_paths
     )
     logistic_regression_train_task.after(summary_stats_train_task)
 

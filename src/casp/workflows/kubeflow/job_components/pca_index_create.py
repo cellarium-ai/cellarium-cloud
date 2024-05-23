@@ -1,10 +1,8 @@
 from kfp import dsl
 
-from casp.workflows.kubeflow import machine_specs
 
-
-@dsl.component(base_image=machine_specs.DOCKER_IMAGE_NAME_CPU)
-def create_deploy_register_index(gcs_config_path: str) -> None:
+@dsl.component()
+def create_register_index(gcs_config_path: str) -> None:
     """
     Create, deploy, and register Space Vector Search index.
 
@@ -130,25 +128,27 @@ def create_deploy_register_index(gcs_config_path: str) -> None:
     )
 
     index.wait()
-    # Deploying Index
-    index_id = index.resource_name
-    # Deployed Index ID cannot have dashes
-    deployed_index_id = f"deployed_{config_data['display_name']}".replace("-", "_")
-    endpoint = "{}-aiplatform.googleapis.com".format(config_data["location"])
 
-    index_endpoint_client = aiplatform_v1beta1.IndexEndpointServiceClient(
-        client_options={"api_endpoint": endpoint}, credentials=credentials
-    )
-
-    deploy_matching_engine_index = {
-        "id": deployed_index_id,
-        "display_name": deployed_index_id,
-        "index": index_id,
-    }
-
-    index_endpoint_client.deploy_index(
-        index_endpoint=config_data["index_endpoint_id"], deployed_index=deploy_matching_engine_index
-    )
+    #### Deploying Index ###
+    # index_id = index.resource_name
+    # # Deployed Index ID cannot have dashes
+    # deployed_index_id = f"deployed_{config_data['display_name']}".replace("-", "_")
+    # endpoint = "{}-aiplatform.googleapis.com".format(config_data["location"])
+    #
+    # index_endpoint_client = aiplatform_v1beta1.IndexEndpointServiceClient(
+    #     client_options={"api_endpoint": endpoint}, credentials=credentials
+    # )
+    #
+    # deploy_matching_engine_index = {
+    #     "id": deployed_index_id,
+    #     "display_name": deployed_index_id,
+    #     "index": index_id,
+    # }
+    #
+    # index_endpoint_client.deploy_index(
+    #     index_endpoint=config_data["index_endpoint_id"], deployed_index=deploy_matching_engine_index
+    # )
+    ########################
 
     registry_client = clients.RegistryClient()
     registry_client.register_index(

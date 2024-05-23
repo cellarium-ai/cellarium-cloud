@@ -69,7 +69,7 @@ data:
   seed: 0
   drop_last: true
   test_mode: false
-  num_workers: 3
+  num_workers: 4
   batch_keys:
     x_ng:
       attr: X

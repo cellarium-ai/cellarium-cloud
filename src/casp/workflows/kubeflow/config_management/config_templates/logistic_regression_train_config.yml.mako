@@ -1,30 +1,22 @@
 <%
-    from casp.workflows.kubeflow.machine_specs import LogisticRegressionTrainMachineSpec
+    from casp.workflows.kubeflow import machine_specs_utils
 
-    accelerator = "cpu" if LogisticRegressionTrainMachineSpec.accelerator_type is None else "gpu"
-    num_nodes = LogisticRegressionTrainMachineSpec.replica_count
-    devices = 4 if LogisticRegressionTrainMachineSpec.accelerator_count is None else LogisticRegressionTrainMachineSpec.accelerator_count
+    machine_specs_info = machine_specs_utils.read_machine_specs()
+    current_spec_info = machine_specs_info["logistic_regression_train"]
+    accelerator = "cpu" if current_spec_info["accelerator_type"] is None else "gpu"
+    num_nodes = current_spec_info["replica_count"]
+    devices = 4 if current_spec_info["accelerator_count"] is None else current_spec_info["accelerator_count"]
 %>
 # lightning.pytorch==2.0.9
 seed_everything: true
 trainer:
   accelerator: ${accelerator}
-  callbacks:
-    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
-      init_args:
-        filename: 'model'
   strategy: auto
-#  logger:
-#    class_path: lightning.pytorch.loggers.NeptuneLogger
-#    init_args:
-#      api_key: eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJkNjNhOTY3ZS1mOGU2LTQ2ZGItYTFmOS01MGY4ZDdiNGU1YTcifQ==
-#      project: 'cellarium-pipelines/cas'
-#      name: '${curriculum_name}-${model_name}'
   devices: ${devices}
   num_nodes: ${num_nodes}
   precision: 32-true
   fast_dev_run: false
-  max_epochs: 13
+  max_epochs: ${max_epochs}
   max_steps: -1
   overfit_batches: 0.0
   check_val_every_n_epoch: 1
@@ -36,17 +28,30 @@ trainer:
   sync_batchnorm: false
   reload_dataloaders_every_n_epochs: 0
   default_root_dir: /gcs/cellarium-file-system/curriculum/${curriculum_name}/models/${model_name}
+  callbacks:
+  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+    init_args:
+      logging_interval: step
+      log_momentum: false
+  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      every_n_train_steps: 1000
+      save_top_k: -1
 
 model:
   model:
     class_path: cellarium.ml.models.LogisticRegression
     init_args:
-          W_prior_scale: ${W_prior_scale}
-          W_init_scale: 1.0
-          seed: 0
+      W_prior_scale: ${W_prior_scale}
+      W_init_scale: 1.0
+      seed: 0
   optim_fn: torch.optim.Adam
   optim_kwargs:
-    lr: 0.001
+    lr: ${lr}
+  scheduler_fn: cellarium.ml.lr_schedulers.LinearLR
+  scheduler_kwargs:
+    num_warmup_steps: 0
+    num_training_steps: ${scheduler_num_training_steps}
   transforms:
     - class_path: cellarium.ml.transforms.NormalizeTotal
       init_args:
@@ -91,36 +96,11 @@ model:
       init_args:
         filter_list:
           !FileLoader
-          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/shared_meta/${tdigest_model_name}-non-nan-features.csv
+          file_path: ${filter_file_path}
           loader_fn: pandas.read_csv
           attr: original_feature_id
           convert_fn: pandas.Series.to_list
 % endif
-
-data:
-  filenames: gs://cellarium-file-system/curriculum/${curriculum_name}/extract_files/extract_{${extract_start}..${extract_end}}.h5ad
-  shard_size: ${shard_size}
-  last_shard_size: ${last_shard_size}
-  max_cache_size: 2
-  cache_size_strictly_enforced: true
-  indices_strict: true
-  batch_size: 10_000
-  shuffle: false
-  seed: 0
-  drop_last: true
-  test_mode: false
-  num_workers: 4
-  batch_keys:
-    x_ng:
-      attr: X
-      convert_fn: cellarium.ml.utilities.data.densify
-    var_names_g:
-      attr: var_names
-
-    total_mrna_umis_n:
-      attr: obs
-      key: total_mrna_umis
-
 data:
   dadc:
     class_path: cellarium.ml.data.DistributedAnnDataCollection
@@ -132,7 +112,7 @@ data:
       cache_size_strictly_enforced: true
       indices_strict: true
       obs_columns_to_validate: ["total_mrna_umis", "cell_type"]
-  batch_size: 10_000
+  batch_size: ${batch_size}
   shuffle: false
   seed: 0
   drop_last: true

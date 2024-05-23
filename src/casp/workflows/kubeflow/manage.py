@@ -140,11 +140,11 @@ def logistic_regression_train(config_yaml_path: Annotated[str, typer.Option()]) 
 
     :param config_yaml_path: Path to the local YAML config file containing a list of configs for each run.
     """
-    config_paths = config_management.create_configs(config_yaml_path)
+    pipeline_kwargs = config_management.create_configs_pipelines_as_components(config_yaml_path)
     submit_pipeline(
         pipelines.logistic_regression_train_pipeline,
         pipeline_display_name="logistic_regression_train_parallel",
-        pipeline_kwargs={"pipeline_config_paths": config_paths},
+        pipeline_kwargs=pipeline_kwargs,
     )
 
 
@@ -235,11 +235,11 @@ def bq_ops_prepare_extract(config_yaml_path: Annotated[str, typer.Option()]) -> 
 
 @typer_app.command()
 def bq_ops_extract(config_yaml_path: Annotated[str, typer.Option()]) -> None:
-    config_paths = config_management.create_configs(config_yaml_path)
+    config_paths = config_management.create_configs_pipelines_as_components(config_yaml_path)
     submit_pipeline(
         pipelines.bq_ops_extract,
         pipeline_display_name="Extract files from BigQuery",
-        pipeline_kwargs={"pipeline_config_paths": config_paths},
+        pipeline_kwargs=config_paths,
     )
 
 

@@ -1,15 +1,21 @@
 import typing as t
 
-from casp.clients import HTTPClient
-from casp.services import settings
+import requests
+from requests.auth import HTTPBasicAuth
 
 
-class RegistryClient(HTTPClient):
-    BACKEND_URL: str = f"{settings.API_INTERNAL_SERVER_URL}/api"
+class RegistryClient:
 
     def register_model(
-        self, model_name: str, model_file_path: str, embedding_dimension: int, bq_dataset_name: str, schema_name: str
-    ) -> t.Dict[str, t.Any]:
+        self,
+        model_name: str,
+        model_file_path: str,
+        embedding_dimension: int,
+        bq_dataset_name: str,
+        schema_name: str,
+        basic_auth_username: str,
+        basic_auth_password: str,
+    ):
         """
         Register a model in the Cellarium Cloud internal database using the API Internal server.
 
@@ -18,17 +24,24 @@ class RegistryClient(HTTPClient):
         :param embedding_dimension: Model embedding dimension
         :param bq_dataset_name: BigQuery dataset name which was used to train the model
         :param schema_name: Schema name which was used to train the model
-
-        :return: Dictionary with the response from the server
         """
-        data = {
+        url = "https://cellarium-june-release-cas-admin-vi7nxpvk7a-uc.a.run.app/casmodel/new/?url=/casmodel/"
+
+        form_data = {
             "model_name": model_name,
             "model_file_path": model_file_path,
             "embedding_dimension": embedding_dimension,
+            "admin_use_only": "y",
             "bq_dataset_name": bq_dataset_name,
             "schema_name": schema_name,
         }
-        return self.post_json(endpoint="cas-model", data=data)
+
+        headers = {"Content-Type": "multipart/form-data"}
+        basic_auth = HTTPBasicAuth(username=basic_auth_username, password=basic_auth_password)
+        response = requests.post(url=url, files=form_data, headers=headers, auth=basic_auth)
+
+        print(response.status_code)
+        print(response.text)
 
     def register_index(
         self,
@@ -38,6 +51,8 @@ class RegistryClient(HTTPClient):
         deployed_index_id: str,
         endpoint_id: str,
         embedding_dimension: int,
+        basic_auth_username: str,
+        basic_auth_password: str,
     ) -> t.Dict[str, t.Any]:
         """
         Register an index in the Cellarium Cloud internal database using the API Internal server.
@@ -51,12 +66,26 @@ class RegistryClient(HTTPClient):
 
         :return: Dictionary with the response from the server
         """
-        data = {
-            "model_name": model_name,
+        url = (
+            "https://cellarium-june-release-cas-admin-vi7nxpvk7a-uc.a.run.app"
+            "/casmatchingengineindex/new/?url=/casmatchingengineindex/"
+        )
+
+        form_data = {
+            "model": "70",
             "index_name": index_name,
-            "deployed_index_id": deployed_index_id,
+            "embedding_dimension": str(embedding_dimension),
             "endpoint_id": endpoint_id,
-            "embedding_dimension": embedding_dimension,
-            "num_neighbors": num_neighbors,
+            "deployed_index_id": deployed_index_id,
+            "num_neighbors": str(num_neighbors),
+            "is_grpc": "y",
         }
-        return self.post_json(endpoint="cas-index", data=data)
+
+        # Basic authentication credentials
+        basic_auth = HTTPBasicAuth(username=basic_auth_username, password=basic_auth_password)
+        # Make the POST request with Basic Auth
+        response = requests.post(url, files=form_data, auth=basic_auth)
+
+        # Print the response
+        print(response.status_code)
+        print(response.text)

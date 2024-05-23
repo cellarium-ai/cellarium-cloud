@@ -1,10 +1,7 @@
 from kfp import dsl
 
-from casp.workflows.kubeflow import machine_specs
-
 
 @dsl.component(
-    base_image=machine_specs.DOCKER_IMAGE_NAME_CPU,
     packages_to_install=["git+https://github.com/cellarium-ai/cellarium-cas.git@1.4.1-alpha.3"],
 )
 def benchmark_cas(gcs_config_path: str) -> None:

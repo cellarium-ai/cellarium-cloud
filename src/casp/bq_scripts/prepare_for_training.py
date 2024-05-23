@@ -261,7 +261,7 @@ def prepare_extract(
     fq_allowed_original_feature_ids: str,
     extract_bin_size: int,
     filters_json_path: str,
-    obs_columns_to_include: t.List[str],
+    obs_columns_to_include: str,
     bucket_name: str,
     extract_bucket_path: str,
     ci_random_seed_offset: int = 0,
@@ -287,16 +287,16 @@ def prepare_extract(
     :param ci_partition_size: The size for the partitions in cas_cell_info table.
         `Default:` ``10``
     :param filters_json_path: A path to json with filters. Filters that have to be included in a SQL query.
-        :func:`casp.bq_manager.sql.mako_helpers.parse_where_body`
-        Filter format should follow convention described in
-    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
-        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+    :param obs_columns_to_include: Comma separated string of columns from `cas_cell_info` table to include in
+        ``adata.obs``. If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
         Note: It is required to provide the column names along with the aliases for the tables to which they belong.
         However, the output extract table would contain only the column names, without any aliases.
         Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
     with open(filters_json_path) as f:
         filters = json.loads(f.read())
+
+    obs_columns_to_include = obs_columns_to_include.split(",")
 
     prepare_extract_tables(
         project=project_id,

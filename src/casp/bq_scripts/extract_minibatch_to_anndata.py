@@ -394,7 +394,7 @@ def extract_bins_in_parallel_workers(
     end_bin: int,
     output_bucket_name: str,
     extract_bucket_path: str,
-    obs_columns_to_include: t.List[str],
+    obs_columns_to_include: str,
 ) -> None:
     """
     Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
@@ -415,6 +415,7 @@ def extract_bins_in_parallel_workers(
         However, the output extract table would contain only the column names, without any aliases.
         Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
+    obs_columns_to_include = obs_columns_to_include.split(",")
     obs_columns_to_include = [x.split(".")[-1] for x in obs_columns_to_include]
 
     num_of_workers = multiprocessing.cpu_count()

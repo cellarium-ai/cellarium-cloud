@@ -1,12 +1,20 @@
-import argparse
+import math
+import pathlib
+import time
+import typing as t
 
 import fastavro
+from google.api_core.exceptions import Forbidden
 from google.cloud import bigquery
+from smart_open import open
 
+from casp.bq_scripts import create_bigquery_objects
 from casp.services import utils
 
+MAX_RETRY_ATTEMPTS = 5
 
-def ingest_data_to_bq(project, dataset, avro_prefix, gcs_bucket_name, gcs_stage_dir, credentials=None):
+
+def _ingest_data_to_bq(project, dataset, avro_prefix, gcs_bucket_name, gcs_stage_dir, credentials=None):
     """
     Main method that drives the 5 high level steps of BigQuery data loading.
     """
@@ -65,16 +73,91 @@ def ingest_data_to_bq(project, dataset, avro_prefix, gcs_bucket_name, gcs_stage_
     print("Done.")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(allow_abbrev=False, description="Initialize CASP tables")
+def ingest_data_to_bq(
+    project_id: str,
+    gcs_bucket_name: str,
+    dataset: str,
+    gcs_stage_dir: str,
+    gcs_error_file_path: t.Optional[str] = None,
+    max_retry_attempts: int = MAX_RETRY_ATTEMPTS,
+):
+    """
+    Ingest files prepared by `bq_scripts.anndata_to_avro` script. If error happens during ingest, the script would retry
+    ``max_retry_attempts`` times.
 
-    parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
-    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
-    parser.add_argument("--avro_prefix", type=str, help="Prefix with which Avro files are named", required=True)
-    parser.add_argument(
-        "--gcs_path_prefix", type=str, help="GCS prefix to which Avro files should be staged", required=True
-    )
+    :param project_id: The ID of the Google Cloud project where the BigQuery dataset is hosted.
+    :param gcs_bucket_name: GCS Bucket name
+    :param dataset: BigQuery dataset name
+    :param gcs_stage_dir: GCS directory where ingest files are stored
+    :param gcs_error_file_path: GCS file path to save a csv table with error per input file occurred.
+        If None, csv file doesn't get saved. |br|
+        `Default:` ``None``
+    :param max_retry_attempts: Maximum number for retries per ingest |br|
+        `Default:` ``5``
+    """
+    bq_client = bigquery.Client()
+    create_bigquery_objects(client=bq_client, project=project_id, dataset=dataset)
 
-    args = parser.parse_args()
+    ingest_file_blobs = utils.list_blobs(bucket_name=gcs_bucket_name, prefix=gcs_stage_dir)
+    blob_names = [x.name for x in ingest_file_blobs]
+    ingest_avro_prefixes = []
 
-    ingest_data_to_bq(args.project, args.dataset, args.avro_prefix, args.gcs_path_prefix)
+    for blob_name in blob_names:
+        path = pathlib.Path(blob_name)
+        blob_directory = str(path.parent)
+
+        # Getting prefixes (everything before `_cell_info`, `_ingest_info`, `_feature_info` `_raw_counts`)
+        suffixes = ["_cell_info", "_ingest_info", "_feature_info", "_raw_counts"]
+        prefix = path.name
+
+        for suffix in suffixes:
+            prefix = prefix.split(suffix)[0]
+
+        if blob_directory != gcs_stage_dir:
+            continue
+
+        ingest_avro_prefixes.append(prefix)
+
+    ingest_avro_prefixes = list(set(ingest_avro_prefixes))
+
+    for avro_prefix in ingest_avro_prefixes:
+        need_retry = True
+        attempt_counter = 1
+
+        while need_retry and attempt_counter <= max_retry_attempts:
+            try:
+                print(f"Ingesting files with prefix: {avro_prefix}")
+                _ingest_data_to_bq(
+                    project=project_id,
+                    dataset=dataset,
+                    gcs_bucket_name=gcs_bucket_name,
+                    avro_prefix=avro_prefix,
+                    gcs_stage_dir=gcs_stage_dir,
+                )
+            except Forbidden as e:
+                # It can happen when limit of number of table update operations is exceeded
+                # Retrying the operation 5 times with an exponential backoff as suggested in the docs:
+                # https://cloud.google.com/bigquery/quotas#standard_tables
+                print("Was not able to ingest data", e)
+                time_to_wait = math.exp(attempt_counter)
+                time.sleep(time_to_wait)
+                if attempt_counter <= 5:
+                    print("Retrying another attempt...")
+            except Exception as e:
+                import pandas as pd
+
+                bad_prefixes_name = f"gs://{gcs_bucket_name}/{gcs_error_file_path}"
+                try:
+                    df = pd.read_csv(bad_prefixes_name)
+                except FileNotFoundError:
+                    df = pd.DataFrame(columns=("name_prefix", "exception_text"))
+
+                new_row = pd.DataFrame({"name_prefix": [avro_prefix], "exception_text": [str(e)]})
+                df = pd.concat([df, new_row], ignore_index=True)
+                df.to_csv(bad_prefixes_name, index=False)
+                need_retry = False
+
+            else:
+                need_retry = False
+
+            attempt_counter += 1

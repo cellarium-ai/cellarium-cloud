@@ -1,3 +1,4 @@
+from casp.bq_scripts.anndata_to_avro import create_ingest_files
 from casp.bq_scripts.anndata_to_avro import process as anndata_to_avro  # noqa
 from casp.bq_scripts.create_bq_tables import create_bigquery_objects  # noqa
 from casp.bq_scripts.extract_minibatch_to_anndata import extract_bin, extract_bins_in_parallel_workers  # noqa

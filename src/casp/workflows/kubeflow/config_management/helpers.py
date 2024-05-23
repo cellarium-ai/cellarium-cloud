@@ -8,6 +8,7 @@ from mako.template import Template
 from smart_open import open
 
 from casp.services import settings, utils
+from casp.workflows.kubeflow import constants, machine_specs_utils
 
 PIPELINE_CONFIGS_TEMPLATE_PATH = f"{settings.CAS_DIR}/workflows/kubeflow/config_management/config_templates"
 AUTO_GENERATED_CONFIG_PREFIX = "ml-configs/auto-generated-new"
@@ -104,8 +105,6 @@ def create_configs(config_yaml: str | t.Dict[str, t.Any]) -> t.List[str]:
     with tempfile.TemporaryDirectory() as temp_dir:
         config_file_names = []
         for pipeline_config in pipeline_configs:
-            # curriculum_name = pipeline_config["curriculum_name"]
-
             component_names = get_component_names_from_config_data(pipeline_config)
             config_object = {}
             for component_name in component_names:
@@ -151,6 +150,8 @@ def create_configs_pipelines_as_components(config_yaml: str | t.Dict[str, t.Any]
     pipeline_config_dict = {}
 
     for pipeline_name in pipeline_names:
+        machine_specs = data[pipeline_name]["machine_specs"]
+        machine_specs_utils.update_machine_specs(update_with=machine_specs)
         pipeline_config_dict[f"{pipeline_name}_config_paths"] = create_configs(data[pipeline_name])
 
     return pipeline_config_dict

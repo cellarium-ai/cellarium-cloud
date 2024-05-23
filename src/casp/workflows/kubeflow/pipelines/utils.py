@@ -6,7 +6,7 @@ from kfp import compiler
 from kfp.dsl.base_component import BaseComponent
 
 from casp.services import utils
-from casp.workflows.kubeflow import constants
+from casp.workflows.kubeflow import constants, machine_specs_utils
 
 
 def submit_pipeline(
@@ -38,5 +38,5 @@ def submit_pipeline(
     )
 
     job.submit(network=constants.NETWORK_NAME)
-
+    # machine_specs_utils.destroy_machine_specs_file()
     temp_file.close()

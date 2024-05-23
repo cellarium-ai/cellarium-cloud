@@ -2,7 +2,7 @@
 
 from setuptools import find_packages, setup
 
-with open("requirements.txt") as fh:
+with open("requirements/base.txt") as fh:
     install_requires = fh.readlines()
 
 with open("README.rst") as fh:

@@ -14,6 +14,7 @@ import json
 import math
 import multiprocessing
 import os
+import tempfile
 import time
 import typing as t
 
@@ -26,6 +27,8 @@ from fastavro import parse_schema, writer
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 from scipy import sparse
+
+from casp.services import utils
 
 
 def current_milli_time():
@@ -421,10 +424,6 @@ def process(
     High level entry point, reads the input AnnData file and generates Avro files
     for ingest, cells, features, and raw / core data.
 
-    :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
-    In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
-    an index column of var dataframe would be used.
-
     :param input_file: Input file that has to be ingested
     :param prefix: Prefix for filenames
     :param czi_dataset_id: Dataset id from cellxgene census
@@ -438,6 +437,9 @@ def process(
         used. ``None`` requires ``dataset`` to be set as it will use dataset to get the maximum index in the cell_info
         table
     :param included_adata_uns_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
+    :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
+        In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
+        an index column of var dataframe would be used.
     :param count_matrix_multiprocessing_batch_size: Size of count matrix csv files batches that are used in ingest
     :param save_directory: Directory where to save local. If ``None`` current local directory will be used.
         It is recommended to use a temporary folder for this processing.
@@ -576,3 +578,70 @@ def optimized_read_raw_X(input_file, row_offset, end):
     del adata
     gc.collect()
     return coord
+
+
+def create_ingest_files(
+    gcs_bucket_name: str,
+    gcs_file_path: str,
+    load_uns_data: bool,
+    cas_cell_index_start: int,
+    cas_feature_index_start: int,
+    uns_meta_keys: t.Optional[t.Iterable[str]],
+    original_feature_id_lookup: str,
+    dataset_id: str,
+    dataset_version_id: str,
+    gcs_stage_dir: str,
+):
+    """
+    Create ingest files and upload them in a stage GCS bucket directory.
+
+    :param gcs_bucket_name: GCS Bucket name
+    :param gcs_file_path: GCS Bucket input file path to process
+    :param load_uns_data: Whether to load uns (unstructured) metadata
+    :param cas_cell_index_start: Starting number for cell index. If ``None``, increment of maximum index would be used.
+        ``None`` requires ``dataset`` to be set as it will use dataset to get the maximum index in the cell_info table
+    :param cas_feature_index_start: Starting number for feature index. If ``None``, increment of maximum index would be
+        used. ``None`` requires ``dataset`` to be set as it will use dataset to get the maximum index in the cell_info
+        table
+    :param uns_meta_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
+    :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
+        In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
+        an index column of var dataframe would be used.
+    :param dataset_id: CZI Dataset ID
+    :param dataset_version_id: CZI Dataset version ID
+    :param gcs_stage_dir: Stage directory in GCS Bucket where to upload the files
+    """
+    temp_dir = tempfile.TemporaryDirectory()
+
+    file_name = gcs_file_path.split("/")[-1]
+
+    utils.download_file_from_bucket(
+        bucket_name=gcs_bucket_name, source_blob_name=gcs_file_path, destination_file_name=file_name
+    )
+    _, project_id = utils.get_google_service_credentials()
+
+    prefix = file_name.split(".")[0]
+
+    process(
+        input_file=file_name,
+        project=project_id,
+        cas_cell_index_start=cas_cell_index_start,
+        cas_feature_index_start=cas_feature_index_start,
+        prefix=prefix,
+        czi_dataset_id=dataset_id,
+        czi_dataset_version_id=dataset_version_id,
+        load_uns_data=load_uns_data,
+        original_feature_id_lookup=original_feature_id_lookup,
+        included_adata_uns_keys=uns_meta_keys,
+        save_directory=temp_dir.name,
+    )
+    ingest_files = [x for x in os.listdir(temp_dir.name) if x.startswith(prefix) and not x.endswith(".h5ad")]
+
+    for ingest_file_name in ingest_files:
+        utils.upload_file_to_bucket(
+            local_file_name=f"{temp_dir.name}/{ingest_file_name}",
+            bucket=gcs_bucket_name,
+            blob_name=f"{gcs_stage_dir}/{ingest_file_name}",
+        )
+
+    temp_dir.cleanup()

@@ -135,3 +135,5 @@ src/data/
 .DS_Store
 .idea/
 .vscode/
+configs/
+src/settings/.pipelines-metafiles
