@@ -11,3 +11,4 @@ termcolor>=2.4.0
 pygments>=2.17.2
 scikit-learn>=1.4.0
 torch>=2.2.2
+mock-alchemy==0.2.4 # Can't upgrade until we upgrade to SQLAlchemy 2+

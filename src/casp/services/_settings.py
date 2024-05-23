@@ -23,6 +23,7 @@ class AllEnvSettings(BaseSettings):
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = ENV_TYPE
     APP_VERSION: str = "1.4.4"
+    APP_ROOT: str = ROOT_DIR
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR = SERVICES_DIR
@@ -88,6 +89,9 @@ class AllEnvSettings(BaseSettings):
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
     DEBUG: bool = False
+    # Email settings
+    SENDGRID_API_KEY: str = os.environ.get("SENDGRID_API_KEY", "")
+    FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "cas-support@broadinstitute.org")
 
 
 class DevSettings(AllEnvSettings):

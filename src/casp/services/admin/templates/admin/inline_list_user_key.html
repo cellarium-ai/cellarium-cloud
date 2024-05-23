@@ -1,0 +1,22 @@
+{% import 'admin/model/inline_list_base.html' as base with context %}
+
+<!-- Override inline model rendering for user keys -->
+{% macro render_field(field) %}
+  {% set model = field.object_data %}
+  {% if model %}
+    <div class="inline-form-field inline">
+      <input type="hidden" id="{{ field.id }}-id" name="{{ field.id }}-id" value="{{ model.id }}">
+      <div style="width:60px" class="key-id">Id: {{ model.id }}</div>
+      <div style="flex:1" class="key-locator">Locator: {{ model.key_locator }}</div>
+      <div style="width:150px" class="form-group key-active">Is Active: {{ field.active }}</div>
+      <div style="flex:1" class="key-expires">Expires: {{ model.expires }}</div>
+    </div>
+  {% else %}
+    {# For new objects, render the field as usual #}
+    {{ field }}
+  {% endif %}
+{% endmacro %}
+
+<div class="inline-wrapper">
+  {{ base.render_inline_fields(field, template, render_field) }}
+</div>
