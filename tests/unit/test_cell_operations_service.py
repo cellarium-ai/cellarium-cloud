@@ -166,7 +166,7 @@ class TestCellOperationsService:
             user=USER_ADMIN
         ).thenReturn(10000)
 
-        actual_response = await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy(
+        actual_response = await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
             user=USER_ADMIN,
             file=adata_file,
             model_name=MODEL.model_name,
@@ -182,23 +182,14 @@ class TestCellOperationsService:
             event=models.UserActivityEvent.STARTED,
         )
 
-        # if there are no embeddings, then we should not increment the number of cells processed
-        if len(embeddings) == 0:
-            verify(self.cell_operations_service.cellarium_general_dm, times=0).log_user_activity(
-                user=ANY,
-                model_name=ANY,
-                method=ANY,
-                cell_count=ANY,
-                event=models.UserActivityEvent.SUCCEEDED,
-            )
-        else:
-            verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
-                user_id=USER_ADMIN.id,
-                model_name=MODEL.model_name,
-                method="annotate_cell_type_summary_statistics_strategy",
-                cell_count=len(query_ids),
-                event=models.UserActivityEvent.SUCCEEDED,
-            )
+        verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
+            user_id=USER_ADMIN.id,
+            model_name=MODEL.model_name,
+            method="annotate_cell_type_summary_statistics_strategy",
+            cell_count=len(query_ids),
+            event=models.UserActivityEvent.SUCCEEDED,
+        )
+
 
     @pytest.mark.asyncio
     async def test_annotate_adata_file_quota_exceeded(self) -> None:
@@ -217,7 +208,7 @@ class TestCellOperationsService:
         ).thenReturn(10)
 
         with pytest.raises(exceptions.QuotaExceededException):
-            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy(
+            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
                 user=USER_ADMIN,
                 file=adata_file,
                 model_name=MODEL.model_name,

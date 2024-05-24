@@ -167,34 +167,19 @@ class CellariumGeneralDataManager(BaseDataManager):
         with self.system_data_db_session_maker() as session:
             cell_count_sum_query = sa.sql.text(
                 """
-                select sum(cells_processed) from(
-                    select coalesce(sum(cell_count), 0) as cells_processed from users_useractivity
+                select
+                coalesce(sum(cells_processed), 0)
+                from (select distinct
+                        request_id,
+                        array_agg(event) events, -- aggregates all of the requests ids into an array
+                        max(cell_count) cells_processed -- presuming the start or end is 0 and the other is the cell count
+                    from users_useractivity ua
                     where user_id = :id
-                    and finished_time >= :start_of_week
-                    and request_id is null
-                    union all
-                    select coalesce(sum(cell_count), 0) as cells_processed from
-                    (
-                        select distinct cell_count, request_id from users_useractivity
-                        where user_id = :id
                         and finished_time >= :start_of_week
                         and request_id is not null
-                    ) ids_and_counts
-                    inner join
-                    (
-                        select distinct request_id from users_useractivity
-                        where user_id = :id
-                        and finished_time >= :start_of_week
-                        and request_id is not null
-                        except
-                        select distinct request_id from users_useractivity
-                        where user_id = :id
-                        and finished_time >= :start_of_week
-                        and request_id is not null
-                        and event = 'FAILED'
-                    ) non_failed_ids
-                    on ids_and_counts.request_id = non_failed_ids.request_id
-                ) total_sums
+                    group by request_id
+                    ) requests
+                where not 'FAILED' = ANY(events);
                 """
             )
             return session.execute(cell_count_sum_query, {"id": user.id, "start_of_week": start_of_week}).first()[0]

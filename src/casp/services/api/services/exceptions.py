@@ -28,4 +28,4 @@ class CellMetadataColumnDoesNotExist(InvalidInputError):
 
 
 class QuotaExceededException(APIBaseException):
-    http_code: int = status.HTTP_403_FORBIDDEN
+    http_code: int = status.HTTP_429_TOO_MANY_REQUESTS

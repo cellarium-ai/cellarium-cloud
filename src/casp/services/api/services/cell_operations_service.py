@@ -79,7 +79,7 @@ class CellOperationsService:
 
     def __verify_quota_and_log_activity(
         self, user: models.User, file: t.BinaryIO, model_name: str, method: str
-    ) -> None:
+    ) -> int:
         """
         Verify that the number of cells in the anndata file does not exceed the user's remaining
         quota and log the user activity in the database in an atomic transaction.
@@ -88,6 +88,8 @@ class CellOperationsService:
         :param file: Anndata file to check the number of cells in.
         :param model_name: Model name to use for annotation.
         :param method: Method name to log in the database.
+
+        :return: Number of cells in the anndata file.
 
         :raises exceptions.QuotaExceededException: If the number of cells in the anndata file exceeds the user's quota.
         """
@@ -106,6 +108,8 @@ class CellOperationsService:
                 cell_count=cell_count,
                 event=models.UserActivityEvent.STARTED,
             )
+        
+        return cell_count
 
     @staticmethod
     async def get_embeddings(file_to_embed: t.BinaryIO, model_name: str) -> t.Tuple[t.List[str], np.array]:
@@ -244,6 +248,62 @@ class CellOperationsService:
         knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model_name=model_name)
 
         return query_ids, knn_response
+    
+    
+    async def annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+        self,
+        user: models.User,
+        file: t.BinaryIO,
+        model_name: str,
+        include_extended_output: t.Optional[bool] = None,
+    ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
+        """
+        Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
+        model schema. Increment user cells processed counter after successful annotation.  This is a wrapper method
+        for annotate_cell_type_summary_statistics_strategy that logs to the user activity table and verifies the input
+        file doesn't exceed the user's remaining quota
+
+        :param user: User object used to increment user cells processed counter.
+        :param file: Byte object of :class:`anndata.AnnData` file to annotate.
+        :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
+        :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
+            in `cell_type_count` method.
+
+        :return: JSON response with annotations.
+        """
+        # Make sure the user has enough quota to process the file
+        cell_count = self.__verify_quota_and_log_activity(
+            user=user, file=file, model_name=model_name, method="annotate_cell_type_summary_statistics_strategy"
+        )
+
+        # Annotate the file and log successful activity (or log failure if an exception is raised)
+        try:
+            annotation_response = await self.annotate_cell_type_summary_statistics_strategy(
+                user=user, file=file, model_name=model_name, include_extended_output=include_extended_output
+            )
+
+            self.cellarium_general_dm.log_user_activity(
+                user_id=user.id,
+                model_name=model_name,
+                method="annotate_cell_type_summary_statistics_strategy",
+                cell_count=cell_count,
+                event=models.UserActivityEvent.SUCCEEDED,
+            )
+
+            return annotation_response
+        except Exception as e:
+            try:
+                self.cellarium_general_dm.log_user_activity(
+                    user_id=user.id,
+                    model_name=model_name,
+                    method="annotate_cell_type_summary_statistics_strategy",
+                    cell_count=cell_count,
+                    event=models.UserActivityEvent.FAILED,
+                )
+            except Exception as e2:
+                logger.error(f"Failed to log user activity: {e2}")
+            raise e
+            
 
     async def annotate_cell_type_summary_statistics_strategy(
         self,
@@ -254,7 +314,7 @@ class CellOperationsService:
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
-        model schema. Increment user cells processed counter after successful annotation.
+        model schema. Increment user cells processed counter after successful annotation.  
 
         :param user: User object used to increment user cells processed counter.
         :param file: Byte object of :class:`anndata.AnnData` file to annotate.
@@ -264,13 +324,6 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
-        logger.info(
-            "Verifying quota and logging user activity for annotate_cell_type_summary_statistics_strategy start"
-        )
-        self.__verify_quota_and_log_activity(
-            user=user, file=file, model_name=model_name, method="annotate_cell_type_summary_statistics_strategy"
-        )
-        logger.info("Authorizing user")
         cas_model = self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
 
@@ -282,18 +335,59 @@ class CellOperationsService:
 
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
 
-        annotation_response = engine.summarize(query_ids=query_ids, knn_query=knn_response)
+        return engine.summarize(query_ids=query_ids, knn_query=knn_response)
+    
 
-        if query_ids:
+    async def annotate_cell_type_ontology_aware_strategy_with_activity_logging(
+        self, user: models.User, file: t.BinaryIO, model_name: str, prune_threshold: float, weighting_prefactor: float
+    ) -> schemas.QueryAnnotationOntologyAwareType:
+        """
+        Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
+        model schema. Increment user cells processed counter after successful annotation. This is a wrapper method
+        for annotate_cell_type_ontology_aware_strategy that logs to the user activity table and verifies the input
+        file doesn't exceed the user's remaining quota
+
+        :param user: User object used to increment user cells processed counter.
+        :param file: Byte object of :class:`anndata.AnnData` file to annotate.
+        :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
+        :param prune_threshold: Prune threshold for the ontology-aware annotation strategy.
+        :param weighting_prefactor: Distance exponential weighting prefactor.
+
+        :return: JSON response with annotations.
+        """
+        # Make sure the user has enough quota to process the file
+        cell_count = self.__verify_quota_and_log_activity(
+            user=user, file=file, model_name=model_name, method="annotate_cell_type_ontology_aware_strategy"
+        )
+
+        # Annotate the file and log successful activity (or log failure if an exception is raised)
+        try:
+            annotation_response = await self.annotate_cell_type_ontology_aware_strategy(
+                user=user, file=file, model_name=model_name, prune_threshold=prune_threshold, weighting_prefactor=weighting_prefactor
+            )
+
             self.cellarium_general_dm.log_user_activity(
                 user_id=user.id,
                 model_name=model_name,
-                method="annotate_cell_type_summary_statistics_strategy",
-                cell_count=len(query_ids),
+                method="annotate_cell_type_ontology_aware_strategy",
+                cell_count=cell_count,
                 event=models.UserActivityEvent.SUCCEEDED,
             )
 
-        return annotation_response
+            return annotation_response
+        except Exception as e:
+            try:
+                self.cellarium_general_dm.log_user_activity(
+                    user_id=user.id,
+                    model_name=model_name,
+                    method="annotate_cell_type_ontology_aware_strategy",
+                    cell_count=cell_count,
+                    event=models.UserActivityEvent.FAILED,
+                )
+            except Exception as e2:
+                logger.error(f"Failed to log user activity: {e2}")
+            raise e
+
 
     async def annotate_cell_type_ontology_aware_strategy(
         self, user: models.User, file: t.BinaryIO, model_name: str, prune_threshold: float, weighting_prefactor: float
@@ -310,11 +404,6 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
-        logger.info("Verifying quota and logging user activity for annotate_cell_type_ontology_aware_strategy start")
-        self.__verify_quota_and_log_activity(
-            user=user, file=file, model_name=model_name, method="annotate_cell_type_ontology_aware_strategy"
-        )
-        logger.info("Authorizing user")
         _ = self.authorize_model_for_user(user=user, model_name=model_name)
         query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
 
@@ -330,20 +419,9 @@ class CellOperationsService:
 
         logger.info("Performing final summarization")
         try:
-            annotation_response = engine.summarize(query_ids=query_ids, knn_query=knn_response)
+            return engine.summarize(query_ids=query_ids, knn_query=knn_response)
         except dm_exc.CellMetadataDatabaseError as e:
             raise exceptions.InvalidInputError(str(e))
-
-        if query_ids:
-            self.cellarium_general_dm.log_user_activity(
-                user_id=user.id,
-                model_name=model_name,
-                method="annotate_cell_type_ontology_aware_strategy",
-                cell_count=len(query_ids),
-                event=models.UserActivityEvent.SUCCEEDED,
-            )
-
-        return annotation_response
 
     async def search_adata_file(
         self, user: models.User, file: t.BinaryIO, model_name: str

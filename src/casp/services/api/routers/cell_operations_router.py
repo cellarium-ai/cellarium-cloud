@@ -36,25 +36,12 @@ async def annotate(
 
     :return: JSON response with annotations.
     """
-    try:
-        return await cell_operations_service.annotate_cell_type_summary_statistics_strategy(
-            user=request_user,
-            file=file.file,
-            model_name=model_name,
-            include_extended_output=include_dev_metadata,
-        )
-    except Exception as e:
-        try:
-            cell_operations_service.cellarium_general_dm.log_user_activity(
-                user_id=request_user.id,
-                model_name=model_name,
-                method="annotate_cell_type_summary_statistics",
-                cell_count=0,
-                event=models.UserActivityEvent.FAILED,
-            )
-        except Exception as e2:
-            logger.error(f"Failed to log user activity: {e2}")
-        raise e
+    return await cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+        user=request_user,
+        file=file.file,
+        model_name=model_name,
+        include_extended_output=include_dev_metadata,
+    )
 
 
 @cell_operations_router.post(
@@ -79,25 +66,13 @@ async def annotate_cell_type_summary_statistics(
 
     :return: JSON response with annotations.
     """
-    try:
-        return await cell_operations_service.annotate_cell_type_summary_statistics_strategy(
-            user=request_user,
-            file=file.file,
-            model_name=model_name,
-            include_extended_output=include_extended_output,
-        )
-    except Exception as e:
-        try:
-            cell_operations_service.cellarium_general_dm.log_user_activity(
-                user_id=request_user.id,
-                model_name=model_name,
-                method="annotate_cell_type_summary_statistics",
-                cell_count=0,
-                event=models.UserActivityEvent.FAILED,
-            )
-        except Exception as e2:
-            logger.error(f"Failed to log user activity: {e2}")
-        raise e
+    return await cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+        user=request_user,
+        file=file.file,
+        model_name=model_name,
+        include_extended_output=include_extended_output,
+    )
+
 
 
 @cell_operations_router.post(
@@ -122,26 +97,15 @@ async def annotate_cell_type_ontology_aware_strategy(
 
     :return: JSON response with annotations.
     """
-    try:
-        return await cell_operations_service.annotate_cell_type_ontology_aware_strategy(
-            user=request_user,
-            file=file.file,
-            model_name=model_name,
-            prune_threshold=prune_threshold,
-            weighting_prefactor=weighting_prefactor,
-        )
-    except Exception as e:
-        try:
-            cell_operations_service.cellarium_general_dm.log_user_activity(
-                user_id=request_user.id,
-                model_name=model_name,
-                method="annotate_cell_type_ontology_aware_strategy",
-                cell_count=0,
-                event=models.UserActivityEvent.FAILED,
-            )
-        except Exception as e2:
-            logger.error(f"Failed to log user activity: {e2}")
-        raise e
+
+    return await cell_operations_service.annotate_cell_type_ontology_aware_strategy_with_activity_logging(
+        user=request_user,
+        file=file.file,
+        model_name=model_name,
+        prune_threshold=prune_threshold,
+        weighting_prefactor=weighting_prefactor,
+    )
+
 
 
 @cell_operations_router.post(path="/nearest-neighbor-search", response_model=t.List[schemas.SearchQueryCellResult])
