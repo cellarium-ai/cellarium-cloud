@@ -27,7 +27,6 @@ def create_engine() -> sqlalchemy.engine.base.Engine:
         return sqlalchemy.create_engine(
             url="postgresql+pg8000://",
             creator=get_private_connection,
-            # pool_pre_ping=True,
             pool_size=settings.DB_CONNECTION_POOL_SIZE,
             max_overflow=settings.DB_CONNECTION_POOL_MAX_OVERFLOW,
             pool_timeout=settings.DB_CONNECTION_POOL_TIMEOUT,

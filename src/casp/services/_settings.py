@@ -74,7 +74,7 @@ class AllEnvSettings(BaseSettings):
     DB_USER: str = os.environ.get("DB_USER")
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
     DB_PORT: str = os.environ.get("DB_PORT")
-    # If this is value is specified, if will be usedd isntead of the unix socket
+    # If this is value is specified, it will be used instead of the unix socket
     DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP")
     # BigQuery
     BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/datastore_manager/sql/templates"
