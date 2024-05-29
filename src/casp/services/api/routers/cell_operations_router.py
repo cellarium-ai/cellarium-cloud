@@ -74,7 +74,6 @@ async def annotate_cell_type_summary_statistics(
     )
 
 
-
 @cell_operations_router.post(
     "/annotate-cell-type-ontology-aware-strategy", response_model=schemas.QueryAnnotationOntologyAwareType
 )
@@ -105,7 +104,6 @@ async def annotate_cell_type_ontology_aware_strategy(
         prune_threshold=prune_threshold,
         weighting_prefactor=weighting_prefactor,
     )
-
 
 
 @cell_operations_router.post(path="/nearest-neighbor-search", response_model=t.List[schemas.SearchQueryCellResult])

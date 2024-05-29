@@ -166,11 +166,13 @@ class TestCellOperationsService:
             user=USER_ADMIN
         ).thenReturn(10000)
 
-        actual_response = await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
-            user=USER_ADMIN,
-            file=adata_file,
-            model_name=MODEL.model_name,
-            include_extended_output=include_dev_metadata,
+        actual_response = (
+            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+                user=USER_ADMIN,
+                file=adata_file,
+                model_name=MODEL.model_name,
+                include_extended_output=include_dev_metadata,
+            )
         )
         assert actual_response == response
 
@@ -189,7 +191,6 @@ class TestCellOperationsService:
             cell_count=len(query_ids),
             event=models.UserActivityEvent.SUCCEEDED,
         )
-
 
     @pytest.mark.asyncio
     async def test_annotate_adata_file_quota_exceeded(self) -> None:

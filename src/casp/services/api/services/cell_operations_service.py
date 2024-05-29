@@ -77,9 +77,7 @@ class CellOperationsService:
         file.seek(0)
         return cell_count
 
-    def __verify_quota_and_log_activity(
-        self, user: models.User, file: t.BinaryIO, model_name: str, method: str
-    ) -> int:
+    def __verify_quota_and_log_activity(self, user: models.User, file: t.BinaryIO, model_name: str, method: str) -> int:
         """
         Verify that the number of cells in the anndata file does not exceed the user's remaining
         quota and log the user activity in the database in an atomic transaction.
@@ -108,7 +106,7 @@ class CellOperationsService:
                 cell_count=cell_count,
                 event=models.UserActivityEvent.STARTED,
             )
-        
+
         return cell_count
 
     @staticmethod
@@ -248,8 +246,7 @@ class CellOperationsService:
         knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model_name=model_name)
 
         return query_ids, knn_response
-    
-    
+
     async def annotate_cell_type_summary_statistics_strategy_with_activity_logging(
         self,
         user: models.User,
@@ -303,7 +300,6 @@ class CellOperationsService:
             except Exception as e2:
                 logger.error(f"Failed to log user activity: {e2}")
             raise e
-            
 
     async def annotate_cell_type_summary_statistics_strategy(
         self,
@@ -314,7 +310,7 @@ class CellOperationsService:
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
-        model schema. Increment user cells processed counter after successful annotation.  
+        model schema. Increment user cells processed counter after successful annotation.
 
         :param user: User object used to increment user cells processed counter.
         :param file: Byte object of :class:`anndata.AnnData` file to annotate.
@@ -336,7 +332,6 @@ class CellOperationsService:
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
 
         return engine.summarize(query_ids=query_ids, knn_query=knn_response)
-    
 
     async def annotate_cell_type_ontology_aware_strategy_with_activity_logging(
         self, user: models.User, file: t.BinaryIO, model_name: str, prune_threshold: float, weighting_prefactor: float
@@ -363,7 +358,11 @@ class CellOperationsService:
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
             annotation_response = await self.annotate_cell_type_ontology_aware_strategy(
-                user=user, file=file, model_name=model_name, prune_threshold=prune_threshold, weighting_prefactor=weighting_prefactor
+                user=user,
+                file=file,
+                model_name=model_name,
+                prune_threshold=prune_threshold,
+                weighting_prefactor=weighting_prefactor,
             )
 
             self.cellarium_general_dm.log_user_activity(
@@ -387,7 +386,6 @@ class CellOperationsService:
             except Exception as e2:
                 logger.error(f"Failed to log user activity: {e2}")
             raise e
-
 
     async def annotate_cell_type_ontology_aware_strategy(
         self, user: models.User, file: t.BinaryIO, model_name: str, prune_threshold: float, weighting_prefactor: float
