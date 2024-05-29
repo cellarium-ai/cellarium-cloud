@@ -111,6 +111,8 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     --command=python --args="casp/services/api/main.py" \
     --allow-unauthenticated
 
+You can also deploy the services using the deploy-workflow.yml GitHub action.
+
 Test your deployment with:
 
 .. code-block:: bash

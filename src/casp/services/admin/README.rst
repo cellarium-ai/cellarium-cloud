@@ -46,7 +46,10 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     --set-secrets=/app/settings/.env=${SECRET_REF} \
     --command=casp/services/admin/entrypoint.sh \
     --platform managed \
+    --ingress internal \
     --allow-unauthenticated
+
+You can also deploy the services using the deploy-workflow.yml GitHub action.
 
 Accessing the Service
 ---------------------
