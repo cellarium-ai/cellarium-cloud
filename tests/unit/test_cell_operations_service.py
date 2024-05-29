@@ -9,7 +9,7 @@ import typing as t
 import numpy
 import numpy as np
 import pytest
-from mockito import ANY, matchers, mock, unstub, verify, when
+from mockito import matchers, mock, unstub, verify, when
 from parameterized import parameterized
 
 from casp.services import utils
