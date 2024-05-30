@@ -31,8 +31,6 @@ class CellariumGeneralDataManager(BaseDataManager):
     with open(f"{SQL_QUERY_DIR}/get_cells_processed_this_week_for_user.sql", "r") as f:
         SQL_GET_CELLS_PROCESSED_THIS_WEEK = f.read()
 
-
-
     @staticmethod
     def get_application_info() -> schemas.ApplicationInfo:
         """
