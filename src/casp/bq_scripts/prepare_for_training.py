@@ -7,6 +7,7 @@ import time
 import typing as t
 
 from google.cloud import bigquery
+import numpy as np
 
 from casp.bq_scripts import constants
 from casp.data_manager import sql
@@ -149,7 +150,7 @@ def prepare_cell_info(
 
 
 def prepare_extract_matrix(
-    client, project, dataset, extract_table_prefix, partition_bin_count=40000, partition_size=10
+    client, project, dataset, extract_table_prefix, partition_bin_count=10000, partition_size=1
 ):
     """
     Create extract table of count data -- remapping feature identifiers, and including batch identifier
@@ -160,20 +161,47 @@ def prepare_extract_matrix(
     For more info on BigQuery partitioning refer to
     https://cloud.google.com/bigquery/docs/partitioned-tables
     """
+    # sql_query = f"""
+    #     CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_raw_count_matrix`
+    #     PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
+    #     CLUSTER BY extract_bin
+    #     AS
+    #     SELECT  b.extract_bin,
+    #             b.cas_cell_index,
+    #             ef.cas_feature_index, 
+    #             m.raw_counts
+    #     FROM `{project}.{dataset}.cas_raw_count_matrix` m
+    #     JOIN `{project}.{dataset}.cas_feature_info` fi ON (m.cas_feature_index = fi.cas_feature_index)
+    #     JOIN `{project}.{dataset}.{extract_table_prefix}__extract_feature_info` ef ON (fi.original_feature_id = ef.original_feature_id)
+    #     JOIN `{project}.{dataset}.{extract_table_prefix}__extract_cell_info` b ON (m.cas_cell_index = b.cas_cell_index)
+    #     GROUP BY 1,2,3
+    # """
+
     sql_query = f"""
         CREATE OR REPLACE TABLE `{project}.{dataset}.{extract_table_prefix}__extract_raw_count_matrix`
         PARTITION BY RANGE_BUCKET(extract_bin, GENERATE_ARRAY(0,{partition_bin_count},{partition_size}))
         CLUSTER BY extract_bin
         AS
-        SELECT  b.extract_bin,
-                m.cas_cell_index,
-                ARRAY_AGG(STRUCT<feature_index int64, raw_counts int64>(ef.cas_feature_index, m.raw_counts)) as feature_data
-        FROM `{project}.{dataset}.cas_raw_count_matrix` m
-        JOIN `{project}.{dataset}.cas_feature_info` fi ON (m.cas_feature_index = fi.cas_feature_index)
-        JOIN `{project}.{dataset}.{extract_table_prefix}__extract_feature_info` ef ON (fi.original_feature_id = ef.original_feature_id)
-        JOIN `{project}.{dataset}.{extract_table_prefix}__extract_cell_info` b ON (m.cas_cell_index = b.cas_cell_index)
-        GROUP BY 1,2
-    """
+        SELECT
+            extracted_cells.extract_bin,
+            counts.raw_counts,
+            extracted_cells.cas_cell_index,
+            feature_definitions.cas_feature_index
+        FROM
+            `{project}.{dataset}.cas_raw_count_matrix` counts
+        INNER JOIN
+            `{project}.{dataset}.cas_feature_info` feature_definitions
+        ON
+            counts.cas_feature_index = feature_definitions.cas_feature_index
+        INNER JOIN
+            `{project}.{dataset}.{extract_table_prefix}__extract_cell_info` extracted_cells
+        ON
+            counts.cas_cell_index = extracted_cells.cas_cell_index
+        INNER JOIN
+            `{project}.{dataset}.{extract_table_prefix}__extract_feature_info` extracted_features
+        ON
+            feature_definitions.original_feature_id = extracted_features.original_feature_id;
+        """
 
     print("Creating extract matrix...")
     query = execute_query(client, sql_query)
@@ -222,7 +250,9 @@ def prepare_extract(
     else:
         client = bigquery.Client(project=project, credentials=credentials)
 
-    prepare_feature_summary(client, project, dataset, extract_table_prefix, filters=filters)
+    # TODO: can I skip this?  it scans the entire count matrix table again and takes a long time / costs money
+    # prepare_feature_summary(client, project, dataset, extract_table_prefix, filters=filters)
+
     prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allowed_original_feature_ids)
     prepare_cell_info(
         client,
@@ -236,7 +266,23 @@ def prepare_extract(
         filters=filters,
         obs_columns_to_include=obs_columns_to_include,
     )
-    prepare_extract_matrix(client, project, dataset, extract_table_prefix)
+
+    # get the number of unique extract_bins from the cell_info table
+    sql_get_num_extract_bins = f"""
+        SELECT COUNT(DISTINCT(extract_bin)) as num_extract_bins
+        FROM `{project}.{dataset}.{extract_table_prefix}__extract_cell_info`
+    """
+    result = client.query(sql_get_num_extract_bins).result()
+    num_extract_bins = next(iter(result))["num_extract_bins"]
+
+    if num_extract_bins == 0:
+        raise ValueError("The chosen filters resulted in zero cells being selected.")
+
+    bigquery_max_partitions = 10_000
+    extract_bins_per_partition = int(np.ceil(num_extract_bins / bigquery_max_partitions).item())
+    partitions = int(np.ceil(num_extract_bins / extract_bins_per_partition).item())
+
+    prepare_extract_matrix(client, project, dataset, extract_table_prefix, partition_bin_count=partitions, partition_size=extract_bins_per_partition)
 
 
 if __name__ == "__main__":

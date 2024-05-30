@@ -2,6 +2,7 @@ import argparse
 import concurrent.futures as concurrency
 import logging
 import multiprocessing
+import tempfile
 import os
 import typing as t
 
@@ -17,7 +18,7 @@ def extract_task(
     output_bucket_name: str,
     extract_bucket_path: str,
     obs_columns_to_include: t.List[str],
-) -> None:
+) -> bool:
     """
     Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
     one bin at a time and saves the output anndata file to a GCS bucket.
@@ -38,25 +39,30 @@ def extract_task(
     """
     credentials, project_id = utils.get_google_service_credentials()
     try:
-        bq_scripts.extract_minibatch_to_anndata(
+        adata = bq_scripts.extract_minibatch_to_anndata(
             project=project_id,
             dataset=dataset,
             extract_table_prefix=extract_table_prefix,
             start_bin=bin_number,
             end_bin=bin_number,
-            output=file_name,
             credentials=credentials,
             bucket_name=output_bucket_name,
             extract_bucket_path=extract_bucket_path,
             obs_columns_to_include=obs_columns_to_include,
         )
-        blob_name = f"{extract_bucket_path}/extract_files/{file_name}"
-        utils.upload_file_to_bucket(local_file_name=file_name, blob_name=blob_name, bucket=output_bucket_name)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, file_name)
+            print(f"Writing AnnData Matrix for bin {bin_number}")
+            adata.write(file_path, compression="gzip")
+            blob_name = f"{extract_bucket_path}/extract_files/{file_name}"
+            utils.upload_file_to_bucket(local_file_name=file_path, blob_name=blob_name, bucket=output_bucket_name)
+        print(f"Uploaded {file_name} to gs://{output_bucket_name}/{blob_name}")
     except Exception as e:
         print("ERROR!", str(e))
+        return False
 
-    os.remove(file_name)
     logging.info(msg=f"Processed bin {bin_number}")
+    return True
 
 
 def main(
@@ -67,6 +73,7 @@ def main(
     output_bucket_name: str,
     extract_bucket_path: str,
     obs_columns_to_include: str,
+    max_processes: int = 4,
 ) -> None:
     """
     Extract anndatafiles from bigquery extract tables. Run extract tasks concurrently: 1 task per CPU core
@@ -88,9 +95,11 @@ def main(
         Note: It is required to provide the column names along with the aliases for the tables to which they belong.
         However, the output extract table would contain only the column names, without any aliases.
         Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
+    :param max_processes: Maximum number of concurrent processes to run
     """
     obs_columns_to_include_list = obs_columns_to_include.split(",")
-    num_of_workers = multiprocessing.cpu_count()
+
+    num_of_workers = min(max_processes, multiprocessing.cpu_count())
     with concurrency.ProcessPoolExecutor(max_workers=num_of_workers) as executor:
         futures = []
         for bin_number in range(start_bin, end_bin + 1, 1):
@@ -126,6 +135,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--obs_columns_to_include", type=str, help="Obs columns to include in extract adata file", required=True
+    )
+    parser.add_argument(
+        "--max_processes",
+        type=int,
+        help="Maximum number of concurrent processes to run. Default is 4.",
+        default=4,
     )
     args = parser.parse_args()
     main(

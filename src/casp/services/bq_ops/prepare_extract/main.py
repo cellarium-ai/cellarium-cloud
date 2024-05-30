@@ -68,23 +68,23 @@ def main(
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
         credentials=credentials,
     )
-    all_cell_types_df = prepare_all_cell_types(project=project_id, dataset=dataset, credentials=credentials)
+    # all_cell_types_df = prepare_all_cell_types(project=project_id, dataset=dataset, credentials=credentials)
     measured_genes_file_name = "measured_genes_info.csv"
     measured_genes_info_df.to_csv(measured_genes_file_name)
 
-    all_cell_types_file_name = "all_cell_types.csv"
-    all_cell_types_df.to_csv(all_cell_types_file_name, index=False)
+    # all_cell_types_file_name = "all_cell_types.csv"
+    # all_cell_types_df.to_csv(all_cell_types_file_name, index=False)
 
     utils.upload_file_to_bucket(
         local_file_name=measured_genes_file_name,
         bucket=bucket_name,
         blob_name=f"{extract_bucket_path}/shared_meta/{measured_genes_file_name}",
     )
-    utils.upload_file_to_bucket(
-        local_file_name=all_cell_types_file_name,
-        bucket=bucket_name,
-        blob_name=f"{extract_bucket_path}/shared_meta/{all_cell_types_file_name}",
-    )
+    # utils.upload_file_to_bucket(
+    #     local_file_name=all_cell_types_file_name,
+    #     bucket=bucket_name,
+    #     blob_name=f"{extract_bucket_path}/shared_meta/{all_cell_types_file_name}",
+    # )
 
 
 if __name__ == "__main__":
