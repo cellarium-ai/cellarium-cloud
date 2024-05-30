@@ -70,7 +70,7 @@ class CellOperationsService:
         adata = anndata.read_h5ad(file)
         cell_count = len(adata)
         # Reset the file pointer to the beginning of the file because we're gonna need to read it
-        # again later.  I don't know if this is the cleanest solution to this problem
+        # again later.
         file.seek(0)
         return cell_count
 

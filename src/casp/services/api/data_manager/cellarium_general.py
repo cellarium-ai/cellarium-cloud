@@ -24,6 +24,15 @@ class CellariumGeneralDataManager(BaseDataManager):
     SQL_GET_ALL_GENE_SCHEMAS = f"{SQL_TEMPLATE_DIR}/get_all_gene_schemas.sql.mako"
     SQL_GET_SCHEMA_BY_NAME = f"{SQL_TEMPLATE_DIR}/get_schema_by_name.sql.mako"
 
+    # SQL query directory
+    SQL_QUERY_DIR = f"{settings.SERVICES_DIR}/api/data_manager/sql_queries"
+
+    # SQL queries from files
+    with open(f"{SQL_QUERY_DIR}/get_cells_processed_this_week_for_user.sql", "r") as f:
+        SQL_GET_CELLS_PROCESSED_THIS_WEEK = f.read()
+
+
+
     @staticmethod
     def get_application_info() -> schemas.ApplicationInfo:
         """
@@ -165,21 +174,5 @@ class CellariumGeneralDataManager(BaseDataManager):
         ) - datetime.timedelta(days=days_to_subtract)
 
         with self.system_data_db_session_maker() as session:
-            cell_count_sum_query = sa.sql.text(
-                """
-                select
-                coalesce(sum(cells_processed), 0)
-                from (select distinct
-                        request_id,
-                        array_agg(event) events, -- aggregates all of the requests ids into an array
-                        max(cell_count) cells_processed -- presuming the start or end is 0 and the other is the cell count
-                    from users_useractivity ua
-                    where user_id = :id
-                        and finished_time >= :start_of_week
-                        and request_id is not null
-                    group by request_id
-                    ) requests
-                where not 'FAILED' = ANY(events);
-                """
-            )
+            cell_count_sum_query = sa.sql.text(self.SQL_GET_CELLS_PROCESSED_THIS_WEEK)
             return session.execute(cell_count_sum_query, {"id": user.id, "start_of_week": start_of_week}).first()[0]
