@@ -6,7 +6,6 @@ infrastructure over different protocols in async manner.
 import logging
 import math
 import typing as t
-from multiprocessing import Lock
 
 import anndata
 import numpy as np
@@ -24,8 +23,6 @@ from casp.services.utils import numpy_utils
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
 logger = logging.getLogger(__name__)
-
-user_activity_lock = Lock()
 
 
 class CellOperationsService:
@@ -92,20 +89,19 @@ class CellOperationsService:
         :raises exceptions.QuotaExceededException: If the number of cells in the anndata file exceeds the user's quota.
         """
         cell_count = self.__get_cell_count_from_anndata(file=file)
-        with user_activity_lock:
-            user_quota = self.cellarium_general_dm.get_remaining_quota_for_user(user=user)
-            if cell_count > user_quota:
-                raise exceptions.QuotaExceededException(
-                    f"User quota exceeded. You have {user_quota} cells left, "
-                    f"but you are trying to process {cell_count} cells."
-                )
-            self.cellarium_general_dm.log_user_activity(
-                user_id=user.id,
-                model_name=model_name,
-                method=method,
-                cell_count=cell_count,
-                event=models.UserActivityEvent.STARTED,
+        user_quota = self.cellarium_general_dm.get_remaining_quota_for_user(user=user)
+        if cell_count > user_quota:
+            raise exceptions.QuotaExceededException(
+                f"User quota exceeded. You have {user_quota} cells left, "
+                f"but you are trying to process {cell_count} cells."
             )
+        self.cellarium_general_dm.log_user_activity(
+            user_id=user.id,
+            model_name=model_name,
+            method=method,
+            cell_count=cell_count,
+            event=models.UserActivityEvent.STARTED,
+        )
 
         return cell_count
 
