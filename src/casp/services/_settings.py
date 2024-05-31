@@ -68,16 +68,25 @@ class AllEnvSettings(BaseSettings):
     DB_CONNECTION_POOL_MAX_OVERFLOW: int = 10  # 10 connections
     DB_CONNECTION_POOL_TIMEOUT: int = 40  # 40 seconds
     DB_CONNECTION_POOL_RECYCLE: int = 1800  # 30 minutes
+    DB_CONNECTION_NAME: str = os.environ.get("DB_CONNECTION_NAME")
     DB_NAME: str = os.environ.get("DB_NAME")
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
+    DB_PORT: str = os.environ.get("DB_PORT")
+    # If this is value is specified, it will be used instead of the unix socket
+    DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP")
     # BigQuery
     BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/datastore_manager/sql/templates"
-    # Stage db connector through unix socket
-    SQLALCHEMY_DATABASE_URI: str = (
-        f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_sock={DB_INSTANCE_UNIX_SOCKET}/.s.PGSQL.5432"
-    )
+    # Stage db connector through unix socket or private IP
+    if DB_PRIVATE_IP is None:
+        SQLALCHEMY_DATABASE_URI: str = (
+            f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_sock={DB_INSTANCE_UNIX_SOCKET}/.s.PGSQL.5432"
+        )
+    else:
+        SQLALCHEMY_DATABASE_URI: str = (
+            f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_PRIVATE_IP}:{DB_PORT}/{DB_NAME}"
+        )
     # Admin
     SECRET_KEY: str = os.environ.get("FLASK_SECRET_KEY")
     SECURITY_PASSWORD_SALT: str = os.environ.get("FLASK_SECURITY_PASSWORD_SALT")

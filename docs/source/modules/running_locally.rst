@@ -28,7 +28,6 @@ Once the Admin service is running, you can visit `Admin Dashboard <http://127.0.
 
 To run commands that require accessing the vector search API using gRPC, you will need to create a tunnel.  To do this you
 must:
-- log into the Broad non-split VPN
 - log into the gcloud cli with the command ``gcloud auth login``
 
 You can then run the following command to create a tunnel:

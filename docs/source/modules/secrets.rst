@@ -25,6 +25,8 @@ created manually.
 +------------------------------------+-----------------------------------------------------------------------+
 | DB_PASSWORD                        | Password for the database                                             |
 +------------------------------------+-----------------------------------------------------------------------+
+| DB_PRIVATE_IP                      | Private IP for the Cloud SQL DB                                       |
++------------------------------------+-----------------------------------------------------------------------+
 | DB_CONNECTION_NAME                 | Connection name for the database (Not needed for local env)           |
 +------------------------------------+-----------------------------------------------------------------------+
 | DB_INSTANCE_UNIX_SOCKET            | Unix socket for the database (Not needed for local env)               |

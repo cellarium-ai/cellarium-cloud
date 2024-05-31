@@ -47,3 +47,23 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     --command=casp/services/admin/entrypoint.sh \
     --platform managed \
     --allow-unauthenticated
+
+Accessing the Service
+---------------------
+The service is behind a firewall and not exposed to the public internet.  It can only be accessed by the internal or if you create 
+a tunnel through the bastion host. To create a tunnel:
+
+log into the gcloud cli with the command:
+.. code-block:: bash
+
+    gcloud auth login
+
+then run the following command:
+
+.. code-block:: bash
+
+    gcloud compute ssh --zone "us-central1-a" "bastion" --project "dsp-cell-annotation-service" --ssh-flag="-D 9090" --ssh-flag="-N"
+
+To use the proxy, you can configure your browser to use the SOCKS proxy at localhost:9090 (or whatever port you specified in the command above).
+
+When you are done, you can close the tunnel by stopping the ssh command in the terminal.
