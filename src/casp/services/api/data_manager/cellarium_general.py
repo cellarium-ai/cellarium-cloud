@@ -28,7 +28,7 @@ class CellariumGeneralDataManager(BaseDataManager):
     SQL_QUERY_DIR = f"{settings.SERVICES_DIR}/api/data_manager/sql_queries"
 
     # SQL queries from files
-    with open(f"{SQL_QUERY_DIR}/get_cells_processed_this_week_for_user.sql", "r") as f:
+    with open(f"{SQL_QUERY_DIR}/get_cells_processed_this_week_for_user.sql.sa", "r") as f:
         SQL_GET_CELLS_PROCESSED_THIS_WEEK = f.read()
 
     @staticmethod
