@@ -201,8 +201,11 @@ def make_obs_categories_comprehensive(adata: ad.AnnData, obs_column: str, projec
     dtype = adata.obs[obs_column].dtype
     if (dtype.name == "category") or (dtype.name == "object") or (dtype.name == "string"):
         print(f"Making '{obs_column}' ({dtype.name}) categories into a comprehensive categorical...")
-        df = distinct_obs_column_values(obs_column=obs_column, project=project, dataset=dataset, credentials=credentials)
-        adata.obs[obs_column] = pd.Categorical(adata.obs[obs_column].values, categories=df[obs_column].values)
+        try:
+            df = distinct_obs_column_values(obs_column=obs_column, project=project, dataset=dataset, credentials=credentials)
+            adata.obs[obs_column] = pd.Categorical(adata.obs[obs_column].values, categories=df[obs_column].values)
+        except Exception as e:
+            print(f"WARNING!: Failed to make '{obs_column}' ({dtype.name}) categories comprehensive:\n{str(e)}")
     else:
         print(f"Skipping adata.obs['{obs_column}'] as it is a {dtype.name} type")
 
