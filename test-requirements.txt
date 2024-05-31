@@ -9,3 +9,4 @@ requests
 pygments
 scikit-learn
 torch
+pandas-gbq
