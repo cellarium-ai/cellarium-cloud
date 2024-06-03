@@ -160,7 +160,7 @@ class CustomAccessFormatter(uvicorn.logging.AccessFormatter):
     def formatMessage(self, record: logging.LogRecord) -> str:
         recordcopy = copy(record)
         # Add user, user_id and user_email to the log record if they are present in the context.
-        user_obj = context.data[ContextKeys] if ContextKeys in context.data else None
+        user_obj = context.data[ContextKeys.user] if ContextKeys.user in context.data else None
         if user_obj:
             user_id = user_obj.id
             user_email = user_obj.email
