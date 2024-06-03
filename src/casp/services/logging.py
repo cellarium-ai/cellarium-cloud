@@ -92,12 +92,21 @@ class StreamHandler(logging.StreamHandler):
                 global_log_fields["logging.googleapis.com/trace"] = trace.get_trace(self.project_id)
                 global_log_fields["logging.googleapis.com/spanId"] = trace.span_id
 
+            locator = {
+                "filename": record.filename,
+                "lineno": record.lineno,
+                "funcname": record.funcName,
+                "module": record.pathname,
+                "process": record.process,
+            }
             # Complete a structured log entry.
             entry = dict(
                 severity=record.levelname,
                 message=message,
                 # Add ability to filter logs on sentry trace id
                 sentry_trace_id=sentry_trace_id,
+                # Add python debugging information
+                locator=locator,
                 **global_log_fields,
             )
 
