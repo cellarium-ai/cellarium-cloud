@@ -78,7 +78,7 @@ class EmailSender:
             subject="Welcome to the Cellarium Cell Annotation Service",
             content_path_html="welcome.html",
             content_path_plain="welcome.txt",
-            sub_values={key: key},
+            sub_values={"key": key},
         )
 
     def send_new_key_email(self, email: str, key: str) -> None:
@@ -93,5 +93,5 @@ class EmailSender:
             subject="New Cellarium Cell Annotation Service Key you Requested",
             content_path_html="new_key.html",
             content_path_plain="new_key.txt",
-            sub_values={key: key},
+            sub_values={"key": key},
         )
