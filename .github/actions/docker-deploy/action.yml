@@ -134,6 +134,9 @@ runs:
           /app/settings/.env=${{ inputs.deployment-config-secret }}
         secrets_update_strategy: overwrite
         skip_default_labels: true
+        labels: |
+          deployment-prefix=${{ inputs.deployment-prefix }}
+          deployed-by=${{ github.actor }}
         env_vars: |
           MODEL_SERVER_URL=${{ env.MODEL_SERVER_URL }}
         flags: |
