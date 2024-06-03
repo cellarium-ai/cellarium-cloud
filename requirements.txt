@@ -7,7 +7,7 @@ google-cloud-bigquery-storage==2.19.1
 google-cloud-storage
 scipy
 fastapi==0.96.0
-uvicorn[standard]
+uvicorn[standard]==0.29.0
 python-dotenv
 pyarrow
 python-multipart
