@@ -25,6 +25,8 @@ class ApplicationInfo(BaseModel):
 class UserInfo(BaseModel):
     username: str
     email: str
+
+
 class UserQuota(BaseModel):
     user_id: int
     quota: int
