@@ -177,8 +177,8 @@ class CASService(FastAPI):
         """
         Launch the service using Uvicorn.
         """
-        num_workers = 2 if settings.ENVIRONMENT == "local" else multiprocessing.cpu_count() * 2 + 1
-
+        # num_workers = 2 if settings.ENVIRONMENT == "local" else multiprocessing.cpu_count() * 2 + 1
+        num_workers = 1
         uvicorn.run(
             "main:application",
             host=settings.DEFAULT_SERVICE_HOST,
