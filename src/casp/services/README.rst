@@ -66,9 +66,42 @@ Or by running with the Github client using the following command:
 
     gh workflow run docker-workflow.yml --repo cellarium-ai/cellarium-cloud \
             --ref $GIT_REF \
-            -f image-types=$IMAGE_TYPES
-            -f image-tag=$IMAGE_TAG
+            -f image-types=$IMAGE_TYPES \
+            -f image-tag=$IMAGE_TAG \
             -f add-latest-tag=$ADD_LATEST_TAG
+
+Deploying Docker Images Remotely
+...............................
+
+This can be done by running the CAS Repository Deploy workflow. This will deploy the docker image to Cloud Run.
+
+This can be done via the github UI from:
+
+https://github.com/cellarium-ai/cellarium-cloud/actions/workflows/deploy-workflow.yml
+
+Or by running with the Github client using the following command:
+
+.. code-block:: bash
+
+    GIT_REF=<branch, git commit, tag, etc.> # Git reference to deploy the image from (helpful if modifying the deploy scripts or configuration files)
+    IMAGE_TAG=<docker tag> # Tag to deploy the docker image from.
+    SERVICE_ACCOUNT=sa-user@<project>.iam.gserviceaccount.com # Service account that will be running the service
+    SECRET_REF=secret-name:latest # Reference to secret in the project's google secret manager as <secret name>:<version or latest> (note that the service account must have access to the secret)
+    DB_CONNECTION=example-project:us-region-example:db-cluster-name # Cloud SQL connection name
+    VPC_CONNECTOR=projects/<project>/locations/<region>/connectors/<connector> # VPC connector to use for the service
+    DEPLOYMENT_PREFIX=example # Prefix to use for the deployment names
+    DEPLOYMENT_FLAVOR=default # Flavor of the deployment to use. Must match a config file in the casp/services/deploy/configs directory
+
+    gh workflow run deploy-workflow.yml repo cellarium-ai/cellarium-cloud \
+            --ref $GIT_REF \
+            -f image-tag=$IMAGE_TAG \
+            -f service-account-email=$SERVICE_ACCOUNT \
+            -f sql-instance=$DB_CONNECTION \
+            -f vpc-connector=$VPC_CONNECTOR \
+            -f config-secret=$SECRET_REF \
+            -f deployment-prefix=$DEPLOYMENT_PREFIX \
+            -f flavor=$DEPLOYMENT_FLAVOR
+
 
 Service Architecture
 ....................

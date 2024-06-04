@@ -1,0 +1,117 @@
+name: CAS Repository Deploy Workflow
+on: 
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Docker image tag. If empty, the latest version will be used.'
+        required: false
+        default: ''
+      deployment-prefix:
+        description: 'The prefix to add to the deployment names'
+        required: true
+        default: ''
+      service-account-email:
+        description: 'Service account email used as the identity for the deployment.'
+        required: true
+        default: ''
+      sql-instance:
+        description: 'The SQL instance to connect to in the form [project]:[region]:[instance]'
+        required: true
+        default: ''
+      vpc-connector:
+        description: 'The VPC connector to use for the deployment in the form projects/[project]/locations/[region]/connectors/[connector]'
+        required: true
+        default: ''
+      config-secret:
+        description: 'The Google secret to use for the deployment configuration in the form [secret-name]:[version (or "latest")]'
+        required: true
+        default: ''
+      region:
+        description: 'The region to deploy the image to'
+        required: false
+        default: 'us-central1'
+      flavor:
+        description: 'The nature of the deployment set.  E.g. is it a default or large deployment.  Configurations are set based on this value and the values can be configured in the src/casp/services/deploy/cloudrun/{flavor}.json files.'
+        required: true
+        default: 'default'
+jobs:
+
+  deploy-services:
+    name: Deploy CAS Services
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    env:
+      DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
+      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: get-image-tag
+        name: Get tag
+        run: |
+          if [[ "${{ inputs.image-tag }}" == "" ]]; then
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${{ inputs.image-tag }}" >> $GITHUB_ENV
+          fi
+        shell: bash
+      - id: deploy-admin
+        name: Deploy the CAS Admin Service
+        uses: ./.github/actions/docker-deploy
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          deployment-type: cas-admin
+          deployment-prefix: ${{ inputs.deployment-prefix }}
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
+          deployment-sql-instance: ${{ inputs.sql-instance }}
+          deployment-vpc-connector: ${{ inputs.vpc-connector }}
+          deployment-config-secret: ${{ inputs.config-secret }}
+          deployment-region: ${{ inputs.region }}
+          deployment-flavor: ${{ inputs.flavor }}
+
+      - id: deploy-model
+        name: Deploy the CAS Model Inference Service
+        uses: ./.github/actions/docker-deploy
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          deployment-type: cas-model
+          deployment-prefix: ${{ inputs.deployment-prefix }}
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
+          deployment-sql-instance: ${{ inputs.sql-instance }}
+          deployment-vpc-connector: ${{ inputs.vpc-connector }}
+          deployment-config-secret: ${{ inputs.config-secret }}
+          deployment-region: ${{ inputs.region }}
+          deployment-flavor: ${{ inputs.flavor }}
+
+      - id: deploy-api
+        name: Deploy the CAS API Service
+        uses: ./.github/actions/docker-deploy
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          deployment-type: cas-api
+          deployment-prefix: ${{ inputs.deployment-prefix }}
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
+          deployment-sql-instance: ${{ inputs.sql-instance }}
+          deployment-vpc-connector: ${{ inputs.vpc-connector }}
+          deployment-config-secret: ${{ inputs.config-secret }}
+          deployment-region: ${{ inputs.region }}
+          deployment-flavor: ${{ inputs.flavor }}

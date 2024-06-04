@@ -1,0 +1,174 @@
+name: Deploy Docker Image to Cloud Run
+description: Deploy a docker image using Cloud Run.  This will override any deployment with the same prefix.  Returns the URL of the deployed image as `deployed-url`.
+inputs:
+  docker-registry-name:
+    required: true
+    description: GCP Docker Registry name
+  gcp-provider-id:
+    required: true
+    description: CAS GCP Provider ID
+  gcp-service-account-email:
+    required: true
+    description: CAS Deployer Service Account email
+  image-name:
+    required: true
+    description: Name of the image to deploy
+  image-tag:
+    required: true
+    description: Tag of the image to deploy
+  deployment-type:
+    required: true
+    description: The type of deployment to create (cas-model, cas-admin, cas-api)
+  deployment-prefix:
+    required: true
+    description: The prefix to add to the deployment name
+  deployment-flavor:
+    required: true
+    description: |
+      The nature of the deployment set.  E.g. is is a default or large deployment.  Configurations are set based on this value and
+      the values can be configured in the src/casp/services/deploy/cloudrun/{flavor}.json files.
+  deployment-project:
+    required: true
+    description: The project to deploy the image to
+  deployment-service-account-email:
+    required: true
+    description: |
+      The service account used as the identity for the deployment.  This is the account that must be granted access to Google cloud
+      resources that CAS services will be using (e.g. buckets)
+  deployment-sql-instance:
+    required: true
+    description: The SQL instance to connect to in the form [project]:[region]:[instance]
+  deployment-vpc-connector:
+    required: true
+    description: The VPC connector to use for the deployment in the form projects/[project]/locations/[region]/connectors/[connector]
+  deployment-config-secret:
+    required: true
+    description: The secret to use for the deployment configuration in the form [secret-name]:[version (or "latest")]
+  deployment-region:
+    required: false
+    description: The region to deploy the image to
+    default: us-central1
+
+runs:
+  using: "composite"
+  steps:
+    - id: checkout
+      name: Checkout
+      uses: actions/checkout@v4
+
+    - id: google-login
+      name: Authenticate with Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        token_format: access_token
+        workload_identity_provider: ${{ inputs.gcp-provider-id }}
+        service_account: ${{ inputs.gcp-service-account-email }}
+        access_token_lifetime: 1500s
+
+    - id: docker-google-login
+      name: Login to Artifact Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.docker-registry-name }}
+        username: oauth2accesstoken
+        password: ${{ steps.google-login.outputs.access_token }}
+
+    - id: get-fixed-deloyment-specific-config
+      name: Get fixed deployment specific configuration
+      run: |
+        case "${{ inputs.deployment-type }}" in
+          cas-admin)
+            echo "COMMAMD=casp/services/admin/entrypoint.sh" >> $GITHUB_ENV
+            echo "ARGS=" >> $GITHUB_ENV
+            echo "INGRESS=internal" >> $GITHUB_ENV
+            ;;
+          cas-model)
+            echo "COMMAMD=python" >> $GITHUB_ENV
+            echo "ARGS=casp/services/model_inference/main.py" >> $GITHUB_ENV
+            echo "INGRESS=internal" >> $GITHUB_ENV
+            ;;
+          cas-api)
+            echo "COMMAMD=python" >> $GITHUB_ENV
+            echo "ARGS=casp/services/api/main.py" >> $GITHUB_ENV
+            echo "INGRESS=all" >> $GITHUB_ENV
+            ;;
+          *)
+            echo "Invalid deployment type `${{ inputs.deployment-type }}`"
+            exit 1
+            ;;
+        esac
+      shell: bash
+    
+    - id: get-dynamic-deloyment-specific-config
+      name: Get dynamic deployment specific configuration
+      run: |
+        import json, os
+        def get_strict(json: dict, key: str) -> str:
+          value = json.get(key)
+          if value is None:
+            raise ValueError(f"Key {key} not found in json.")
+          return value
+
+        try:
+          with open("src/casp/services/deploy/cloudrun/${{ inputs.deployment-flavor }}.json", "r") as file:
+            data = json.load(file)
+            deployment_type = get_strict(data, "${{ inputs.deployment-type }}")
+          with open(os.getenv("GITHUB_ENV"), "a") as file_env:
+            file_env.write(f"""MEMORY={get_strict(deployment_type, "memory")}\n""")
+            file_env.write(f"""CPU={get_strict(deployment_type, "cpu")}\n""")
+            file_env.write(f"""MIN_INSTANCES={get_strict(deployment_type, "min-instances")}\n""")
+            file_env.write(f"""MAX_INSTANCES={get_strict(deployment_type, "max-instances")}\n""")
+            file_env.write(f"""CONCURRENCY={get_strict(deployment_type, "concurrency")}\n""")
+        except FileNotFoundError:
+          raise Exception("File not found for flavor ${{ inputs.deployment-flavor }}.")
+
+      shell: python
+    
+    - id: deploy
+      name: Deploy to Cloud Run
+      uses: google-github-actions/deploy-cloudrun@v2
+      with:
+        service: ${{ inputs.deployment-prefix }}-${{ inputs.deployment-type }}
+        image: ${{ inputs.image-name }}:${{ inputs.image-tag }}
+        region: ${{ inputs.deployment-region }}
+        project_id: ${{ inputs.deployment-project }}
+        secrets: |-
+          /app/settings/.env=${{ inputs.deployment-config-secret }}
+        secrets_update_strategy: overwrite
+        skip_default_labels: true
+        labels: |
+          deployment-prefix=${{ inputs.deployment-prefix }}
+          deployed-by=${{ github.actor }}
+        env_vars: |
+          MODEL_SERVER_URL=${{ env.MODEL_SERVER_URL }}
+        flags: |
+          --add-cloudsql-instances ${{ inputs.deployment-sql-instance }}
+          --vpc-connector ${{ inputs.deployment-vpc-connector }}
+          --vpc-egress all
+          --allow-unauthenticated
+          --memory ${{ env.MEMORY }}
+          --cpu ${{ env.CPU }}
+          --cpu-boost
+          --timeout 500s
+          --max-instances ${{ env.MAX_INSTANCES }}
+          --min-instances ${{ env.MIN_INSTANCES }}
+          --concurrency ${{ env.CONCURRENCY }}
+          --port 8000
+          --service-account ${{ inputs.deployment-service-account-email }}
+          --ingress ${{ env.INGRESS }}
+          --command ${{ env.COMMAMD }}
+          --args "${{ env.ARGS }}"
+
+    - id: log-information-summary
+      name: Log URL
+      run: |
+        echo "Deployed [${{ inputs.deployment-prefix }}-${{ inputs.deployment-type }}](${{ steps.deploy.outputs.url }})" >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - id: set-model-url
+      name: We need to stash the URL for the model server for downstream deployments
+      run: |
+        if [[ "${{ inputs.deployment-type }}" == "cas-model" ]]; then
+          echo "MODEL_SERVER_URL=${{ steps.deploy.outputs.url }}" >> $GITHUB_ENV
+        fi
+      shell: bash
