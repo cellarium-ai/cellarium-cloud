@@ -11,8 +11,6 @@ cell_operations_router = APIRouter(prefix="/cellarium-cell-operations")
 cell_operations_service = services.CellOperationsService()
 cellarium_general_service = services.CellariumGeneralService()
 
-logger = logging.getLogger(__name__)
-
 
 @cell_operations_router.post(
     "/annotate", response_model=schemas.QueryAnnotationCellTypeSummaryStatisticsType, deprecated=True
