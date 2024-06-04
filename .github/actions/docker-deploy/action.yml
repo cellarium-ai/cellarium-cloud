@@ -30,9 +30,11 @@ inputs:
   deployment-project:
     required: true
     description: The project to deploy the image to
-  deployment-service-account:
+  deployment-service-account-email:
     required: true
-    description: The service account used as the identity for the deployment
+    description: |
+      The service account used as the identity for the deployment.  This is the account that must be granted access to Google cloud
+      resources that CAS services will be using (e.g. buckets)
   deployment-sql-instance:
     required: true
     description: The SQL instance to connect to in the form [project]:[region]:[instance]
@@ -152,7 +154,7 @@ runs:
           --min-instances ${{ env.MIN_INSTANCES }}
           --concurrency ${{ env.CONCURRENCY }}
           --port 8000
-          --service-account ${{ inputs.deployment-service-account }}
+          --service-account ${{ inputs.deployment-service-account-email }}
           --ingress ${{ env.INGRESS }}
           --command ${{ env.COMMAMD }}
           --args "${{ env.ARGS }}"

@@ -31,7 +31,7 @@ on:
         required: false
         default: 'us-central1'
       flavor:
-        description: 'The nature of the deployment set.  E.g. is is a default or large deployment.  Configurations are set based on this value and the values can be configured in the src/casp/services/deploy/cloudrun/{flavor}.json files.'
+        description: 'The nature of the deployment set.  E.g. is it a default or large deployment.  Configurations are set based on this value and the values can be configured in the src/casp/services/deploy/cloudrun/{flavor}.json files.'
         required: true
         default: 'default'
 jobs:
@@ -71,7 +71,7 @@ jobs:
           deployment-type: cas-admin
           deployment-prefix: ${{ inputs.deployment-prefix }}
           deployment-project: ${{ secrets.GCP_PROJECT_ID }}
-          deployment-service-account: ${{ inputs.service-account-email }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
           deployment-sql-instance: ${{ inputs.sql-instance }}
           deployment-vpc-connector: ${{ inputs.vpc-connector }}
           deployment-config-secret: ${{ inputs.config-secret }}
@@ -90,7 +90,7 @@ jobs:
           deployment-type: cas-model
           deployment-prefix: ${{ inputs.deployment-prefix }}
           deployment-project: ${{ secrets.GCP_PROJECT_ID }}
-          deployment-service-account: ${{ inputs.service-account-email }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
           deployment-sql-instance: ${{ inputs.sql-instance }}
           deployment-vpc-connector: ${{ inputs.vpc-connector }}
           deployment-config-secret: ${{ inputs.config-secret }}
@@ -109,7 +109,7 @@ jobs:
           deployment-type: cas-api
           deployment-prefix: ${{ inputs.deployment-prefix }}
           deployment-project: ${{ secrets.GCP_PROJECT_ID }}
-          deployment-service-account: ${{ inputs.service-account-email }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
           deployment-sql-instance: ${{ inputs.sql-instance }}
           deployment-vpc-connector: ${{ inputs.vpc-connector }}
           deployment-config-secret: ${{ inputs.config-secret }}
