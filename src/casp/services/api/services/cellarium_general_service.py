@@ -1,3 +1,4 @@
+import datetime
 import typing as t
 
 from casp.services.api import schemas
@@ -69,3 +70,26 @@ class CellariumGeneralService:
                 f"{model_name} model is not available. Please reach out to the Cellarium team for more information."
             )
         return model
+
+    def get_quota_for_user(self, user: models.User) -> schemas.UserQuota:
+        """
+        Get user quota information
+
+        :param user: User object to check quota for
+
+        :return: User quota information
+        """
+
+        days_to_add = datetime.datetime.now().weekday() - user.created_at.weekday()
+        if days_to_add <= 0:
+            days_to_add += 7
+        quota_reset_date = datetime.datetime.today().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ) + datetime.timedelta(days=days_to_add)
+
+        return schemas.UserQuota(
+            user_id=user.id,
+            quota=user.cell_quota,
+            remaining_quota=self.cellarium_general_dm.get_remaining_quota_for_user(user=user),
+            quota_reset_date=quota_reset_date,
+        )

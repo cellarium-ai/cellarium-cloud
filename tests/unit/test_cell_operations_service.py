@@ -9,7 +9,7 @@ import typing as t
 import numpy
 import numpy as np
 import pytest
-from mockito import ANY, matchers, mock, unstub, verify, when
+from mockito import matchers, mock, unstub, verify, when
 from parameterized import parameterized
 
 from casp.services import utils
@@ -157,25 +157,63 @@ class TestCellOperationsService:
                 cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
             ).thenReturn(response)
 
-        actual_response = await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy(
-            user=USER_ADMIN,
-            file=io.BytesIO(ANNDATA_DATA),
-            model_name=MODEL.model_name,
-            include_extended_output=include_dev_metadata,
+        adata_file = io.BytesIO(ANNDATA_DATA)
+
+        when(self.cell_operations_service)._CellOperationsService__get_cell_count_from_anndata(
+            file=adata_file
+        ).thenReturn(len(query_ids))
+        when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
+            user=USER_ADMIN
+        ).thenReturn(10000)
+
+        actual_response = (
+            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+                user=USER_ADMIN,
+                file=adata_file,
+                model_name=MODEL.model_name,
+                include_extended_output=include_dev_metadata,
+            )
         )
         assert actual_response == response
 
-        # if there are no embeddings, then we should not increment the number of cells processed
-        if len(embeddings) == 0:
-            verify(self.cell_operations_service.cellarium_general_dm, times=0).log_user_activity(
-                user=ANY, model_name=ANY, method=ANY, cell_count=ANY
-            )
-        else:
-            verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
-                user_id=USER_ADMIN.id,
+        verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
+            user_id=USER_ADMIN.id,
+            model_name=MODEL.model_name,
+            method="annotate_cell_type_summary_statistics_strategy",
+            cell_count=len(query_ids),
+            event=models.UserActivityEvent.STARTED,
+        )
+
+        verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
+            user_id=USER_ADMIN.id,
+            model_name=MODEL.model_name,
+            method="annotate_cell_type_summary_statistics_strategy",
+            cell_count=len(query_ids),
+            event=models.UserActivityEvent.SUCCEEDED,
+        )
+
+    @pytest.mark.asyncio
+    async def test_annotate_adata_file_quota_exceeded(self) -> None:
+        """
+        Test the annotate_adata_file method returns the correct error in the case of an exceeded
+        quota.
+        """
+
+        adata_file = io.BytesIO(ANNDATA_DATA)
+
+        when(self.cell_operations_service)._CellOperationsService__get_cell_count_from_anndata(
+            file=adata_file
+        ).thenReturn(20)
+        when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
+            user=USER_ADMIN
+        ).thenReturn(10)
+
+        with pytest.raises(exceptions.QuotaExceededException):
+            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+                user=USER_ADMIN,
+                file=adata_file,
                 model_name=MODEL.model_name,
-                method="annotate_cell_type_summary_statistics_strategy",
-                cell_count=len(query_ids),
+                include_extended_output=False,
             )
 
     @parameterized.expand(

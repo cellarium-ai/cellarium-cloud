@@ -33,8 +33,7 @@ async def annotate(
 
     :return: JSON response with annotations.
     """
-
-    return await cell_operations_service.annotate_cell_type_summary_statistics_strategy(
+    return await cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
         user=request_user,
         file=file.file,
         model_name=model_name,
@@ -64,8 +63,7 @@ async def annotate_cell_type_summary_statistics(
 
     :return: JSON response with annotations.
     """
-
-    return await cell_operations_service.annotate_cell_type_summary_statistics_strategy(
+    return await cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
         user=request_user,
         file=file.file,
         model_name=model_name,
@@ -96,7 +94,7 @@ async def annotate_cell_type_ontology_aware_strategy(
     :return: JSON response with annotations.
     """
 
-    return await cell_operations_service.annotate_cell_type_ontology_aware_strategy(
+    return await cell_operations_service.annotate_cell_type_ontology_aware_strategy_with_activity_logging(
         user=request_user,
         file=file.file,
         model_name=model_name,

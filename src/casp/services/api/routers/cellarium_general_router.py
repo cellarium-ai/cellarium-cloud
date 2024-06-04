@@ -58,3 +58,13 @@ async def get_model_list(user: models.User = Depends(dependencies.authenticate_u
     :return: List of CAS models
     """
     return cellarium_general_service.get_model_list_for_user(user=user)
+
+
+@cellarium_general_router.get("/quota", response_model=schemas.UserQuota)
+async def get_user_quota(user: models.User = Depends(dependencies.authenticate_user)):
+    """
+    Get user quota information
+
+    :return: User quota information
+    """
+    return cellarium_general_service.get_quota_for_user(user=user)

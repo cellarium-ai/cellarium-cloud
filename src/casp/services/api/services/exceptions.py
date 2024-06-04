@@ -25,3 +25,7 @@ class VectorSearchResponseError(APIInternalError):
 
 class CellMetadataColumnDoesNotExist(InvalidInputError):
     http_code: int = status.HTTP_400_BAD_REQUEST
+
+
+class QuotaExceededException(APIBaseException):
+    http_code: int = status.HTTP_429_TOO_MANY_REQUESTS
