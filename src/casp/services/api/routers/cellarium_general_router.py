@@ -1,7 +1,9 @@
 import typing as t
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import RedirectResponse
 
+from casp.services import settings
 from casp.services.api import dependencies, schemas, services
 from casp.services.db import models
 
@@ -25,7 +27,31 @@ async def validate_token(user: models.User = Depends(dependencies.authenticate_u
     :return: User information if the token is valid, otherwise return 401 Unauthorized status code if token
     is invalid or missing
     """
-    return schemas.UserInfo(username=user.username, email=user.email)
+    return schemas.UserInfo(username=user.username, email=user.email, should_ask_for_feedback=user.ask_for_feedback)
+
+
+@cellarium_general_router.get("/feedback/answer")
+async def feedback_answer(client_session_id: str, client_action_id: str):
+    """
+    Redirect to the feedback form with the client session ID
+
+    """
+    return RedirectResponse(
+        settings.FEEDBACK_FORM_BASE_URL.format(client_session_id=client_session_id, client_action_id=client_action_id)
+    )
+
+
+@cellarium_general_router.post("/feedback/opt-out", response_model=schemas.UserInfo)
+async def feedback_opt_out(user: models.User = Depends(dependencies.authenticate_user)):
+    """
+    Allow user to opt out of feedback requests
+
+    :return: User information if reflecting the updated feedback preference
+    """
+    updated_user = cellarium_general_service.feedback_opt_out(user=user)
+    return schemas.UserInfo(
+        username=updated_user.username, email=updated_user.email, should_ask_for_feedback=updated_user.ask_for_feedback
+    )
 
 
 @cellarium_general_router.get("/feature-schemas", response_model=t.List[schemas.FeatureSchemaInfo])

@@ -25,6 +25,7 @@ class ApplicationInfo(BaseModel):
 class UserInfo(BaseModel):
     username: str
     email: str
+    should_ask_for_feedback: bool = Field(example=True)
 
 
 class UserQuota(BaseModel):

@@ -21,6 +21,7 @@ class User(db.Base):
     is_admin = sa.Column(sa.Boolean(), default=True, nullable=False)
     cell_quota = sa.Column(sa.Integer(), default=50000, nullable=False)
     created_at = sa.Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.timezone.utc))
+    ask_for_feedback = sa.Column(sa.Boolean(), default=True, nullable=False)
 
     __tablename__ = "users_user"
 
@@ -52,18 +53,14 @@ sa.inspect(User).add_property(
     key="total_cells_processed",
     prop=column_property(
         User.cells_processed
-        + sa.select(sa.func.sum(UserActivity.cell_count))
-        .where((UserActivity.user_id == User.id) & (UserActivity.event == UserActivityEvent.SUCCEEDED))
-        .scalar_subquery()
+        + sa.select(sa.func.sum(UserActivity.cell_count)).where(UserActivity.user_id == User.id).scalar_subquery()
     ),
 )
 sa.inspect(User).add_property(
     key="total_requests_processed",
     prop=column_property(
         User.requests_processed
-        + sa.select(sa.func.count(UserActivity.id))
-        .where((UserActivity.user_id == User.id) & (UserActivity.event == UserActivityEvent.SUCCEEDED))
-        .scalar_subquery()
+        + sa.select(sa.func.count(UserActivity.id)).where(UserActivity.user_id == User.id).scalar_subquery()
     ),
 )
 

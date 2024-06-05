@@ -40,6 +40,18 @@ class CellariumGeneralDataManager(BaseDataManager):
             default_feature_schema=settings.DEFAULT_FEATURE_SCHEMA, application_version=settings.APP_VERSION
         )
 
+    def feedback_opt_out(self, user: models.User) -> None:
+        """
+        Opt out user from feedback requests
+
+        :param user: User object to opt out
+        """
+        user.feedback_opt_out = True
+        with self.system_data_db_session_maker() as session:
+            session.execute(sa.update(models.User).where(models.User.id == user.id).values(ask_for_feedback=False))
+            session.commit()
+            return session.query(models.User).get(user.id)
+
     def get_feature_schemas(self) -> t.List[schemas.FeatureSchemaInfo]:
         """
         :return: List of gene schema objects
