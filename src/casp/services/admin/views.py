@@ -16,11 +16,9 @@ from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
 from werkzeug.exceptions import HTTPException
 
 from casp.services import _auth, settings
-from casp.services.admin import basic_auth, flask_app
-from casp.services.db import get_db_session_maker, models, ops
+from casp.services.admin import basic_auth, db_session, flask_app
+from casp.services.db import models, ops
 from casp.services.utils.email_utils import EmailSender
-
-db_session = get_db_session_maker()()
 
 email_sender = EmailSender(sendgrid_key=settings.SENDGRID_API_KEY, from_address=settings.FROM_ADDRESS)
 
