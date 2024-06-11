@@ -1,0 +1,46 @@
+name: Undeploy vector search index
+description: Undeploys the specified vector search index deployment
+inputs:
+  gcp-provider-id:
+    required: true
+    description: CAS GCP Provider ID
+  gcp-service-account-email:
+    required: true
+    description: CAS Deployer Service Account email
+  index-endpoint-id:
+    required: true
+    description: The ID of the vector search index endpoint
+  deployed-index-id:
+    required: true
+    description: An ID string to identify the deployed index
+  deployment-region:
+    required: true
+    description: The region to which the index endpoint is deployed
+    default: us-central1
+  deployment-project:
+    required: true
+    description: The project to which the index belongs
+runs:
+  using: "composite"
+  steps:
+    - id: checkout
+      name: Checkout
+      uses: actions/checkout@v4
+
+    - id: google-login
+      name: Authenticate with Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        token_format: access_token
+        workload_identity_provider: ${{ inputs.gcp-provider-id }}
+        service_account: ${{ inputs.gcp-service-account-email }}
+        access_token_lifetime: 1500s
+
+    - id: undeploy-index
+      name: Undeploy vector search index
+      shell: bash
+      run: |
+        gcloud ai index-endpoints undeploy-index ${{ inputs.index-endpoint-id }} \
+        --deployed-index-id=${{ inputs.deployed-index-id }} \
+        --region=${{ inputs.deployment-region }} \
+        --project=${{ inputs.deployment-project }}

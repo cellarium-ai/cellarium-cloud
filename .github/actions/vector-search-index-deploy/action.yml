@@ -1,0 +1,74 @@
+name: Deploy vector search index
+description: Creates a deployment of the specified vector search index
+inputs:
+  gcp-provider-id:
+    required: true
+    description: CAS GCP Provider ID
+  gcp-service-account-email:
+    required: true
+    description: CAS Deployer Service Account email
+  index-endpoint-id:
+    required: true
+    description: The ID of the vector search index endpoint
+  deployed-index-id:
+    required: true
+    description: An ID string to identify the deployed index
+  deployed-index-endpoint-name:
+    required: true
+    description: Display name of the deployed index endpoint
+  index-id:
+    required: true
+    description: The ID of the vector search index
+  deployment-region:
+    required: false
+    description: The region to which to deploy the index endpoint
+    default: us-central1
+  deployment-project:
+    required: true
+    description: The project to which the index belongs
+runs:
+  using: "composite"
+  steps:
+    - id: checkout
+      name: Checkout
+      uses: actions/checkout@v4
+
+    - id: google-login
+      name: Authenticate with Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        token_format: access_token
+        workload_identity_provider: ${{ inputs.gcp-provider-id }}
+        service_account: ${{ inputs.gcp-service-account-email }}
+        access_token_lifetime: 1500s
+
+    - id: deploy-index
+      name: Deploy vector search index
+      shell: bash
+      run: |
+        set -e
+
+        DEPLOYMENT_OP=$(gcloud ai index-endpoints deploy-index ${{ inputs.index-endpoint-id }} \
+          --deployed-index-id=${{ inputs.deployed-index-id }} \
+          --display-name=${{ inputs.deployed-index-endpoint-name }} \
+          --index=${{ inputs.index-id }} \
+          --region=${{ inputs.deployment-region }} \
+          --project=${{ inputs.deployment-project }} \
+          --format="value(name)")
+
+        DEPLOYMENT_OP_ID=$(basename $DEPLOYMENT_OP)
+
+        DEPLOYMENT_DONE=false
+
+        while [ "$DEPLOYMENT_DONE" = false ]; do
+          DEPLOYMENT_DONE_VAL=$(gcloud ai operations describe $DEPLOYMENT_OP_ID \
+            --region=${{ inputs.deployment-region }} \
+            --format="value(done)")
+          if [ "$DEPLOYMENT_DONE_VAL" = "True" ]; then
+            DEPLOYMENT_DONE=true
+            echo "Deployment done?: $DEPLOYMENT_DONE"
+          else
+            echo "Deployment done?: $DEPLOYMENT_DONE"
+            sleep 60
+          fi
+        done
