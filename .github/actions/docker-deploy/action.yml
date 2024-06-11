@@ -123,12 +123,21 @@ runs:
           raise Exception("File not found for flavor ${{ inputs.deployment-flavor }}.")
 
       shell: python
+
+    - id: clean-up-inputs
+      name: Sanitize inputs
+      run: |
+        import os
+        with open(os.getenv("GITHUB_ENV"), "a") as file_env:
+          file_env.write(f"""DEPLOYMENT_PREFIX={"${{ inputs.deployment-prefix }}".lower()}\n""")
+          file_env.write(f"""DEPLOYED_BY={"${{ github.actor }}".lower()}\n""")
+      shell: python
     
     - id: deploy
       name: Deploy to Cloud Run
       uses: google-github-actions/deploy-cloudrun@v2
       with:
-        service: ${{ inputs.deployment-prefix }}-${{ inputs.deployment-type }}
+        service: ${{ env.DEPLOYMENT_PREFIX }}-${{ inputs.deployment-type }}
         image: ${{ inputs.image-name }}:${{ inputs.image-tag }}
         region: ${{ inputs.deployment-region }}
         project_id: ${{ inputs.deployment-project }}
@@ -137,8 +146,8 @@ runs:
         secrets_update_strategy: overwrite
         skip_default_labels: true
         labels: |
-          deployment-prefix=${{ inputs.deployment-prefix }}
-          deployed-by=${{ github.actor }}
+          deployment-prefix=${{ env.DEPLOYMENT_PREFIX }}
+          deployed-by=${{ env.DEPLOYED_BY }}
         env_vars: |
           MODEL_SERVER_URL=${{ env.MODEL_SERVER_URL }}
         flags: |
@@ -162,7 +171,7 @@ runs:
     - id: log-information-summary
       name: Log URL
       run: |
-        echo "Deployed [${{ inputs.deployment-prefix }}-${{ inputs.deployment-type }}](${{ steps.deploy.outputs.url }})" >> $GITHUB_STEP_SUMMARY
+        echo "Deployed [${{ env.DEPLOYMENT_PREFIX }}-${{ inputs.deployment-type }}](${{ steps.deploy.outputs.url }})" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
     - id: set-model-url
