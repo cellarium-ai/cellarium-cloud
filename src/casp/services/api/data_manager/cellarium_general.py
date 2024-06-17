@@ -40,7 +40,7 @@ class CellariumGeneralDataManager(BaseDataManager):
             default_feature_schema=settings.DEFAULT_FEATURE_SCHEMA, application_version=settings.APP_VERSION
         )
 
-    def feedback_opt_out(self, user: models.User) -> None:
+    def feedback_opt_out(self, user: models.User) -> models.User:
         """
         Opt out user from feedback requests
 

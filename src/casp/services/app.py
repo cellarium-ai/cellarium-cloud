@@ -97,7 +97,7 @@ class RequestClientMiddleware(BaseHTTPMiddleware):
 
 class ContextToSentryMiddleware(BaseHTTPMiddleware):
     """
-    Adds the a value from the request context to the Sentry context.
+    Adds the value from the request context to the Sentry context.
     """
 
     def __init__(self, context_key: HeaderKeys, sentry_tag: SentryTags, *args, **kwargs):
@@ -132,7 +132,7 @@ class ClientSessionIdMiddleware(ContextToSentryMiddleware):
 
 class ClientActionIdMiddleware(ContextToSentryMiddleware):
     """
-    Adds the request's session id to the Sentry context.
+    Adds the request's action id to the Sentry context.
     """
 
     def __init__(self, *args, **kwargs):

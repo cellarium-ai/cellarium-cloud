@@ -39,8 +39,8 @@ class SentryTags(str, Enum):
 
     # The client session id that is used to track a user's CAS client session.
     client_session_id = "client-session-id"
-    # The action id that is used to group calls from a given client intraction together
-    # (e.g. all parallel chunks from an annotation call woud have the action id).
+    # The action id that is used to group calls from a given client interaction together
+    # (e.g. all parallel chunks from an annotation call woud have the same action id).
     client_action_id = "client-action-id"
 
 

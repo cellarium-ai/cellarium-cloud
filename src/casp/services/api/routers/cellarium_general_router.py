@@ -34,7 +34,6 @@ async def validate_token(user: models.User = Depends(dependencies.authenticate_u
 async def feedback_answer(client_session_id: str, client_action_id: str):
     """
     Redirect to the feedback form with the client session ID
-
     """
     return RedirectResponse(
         settings.FEEDBACK_FORM_BASE_URL.format(client_session_id=client_session_id, client_action_id=client_action_id)
