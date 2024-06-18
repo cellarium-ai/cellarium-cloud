@@ -32,12 +32,13 @@ jobs:
 
     strategy:
       matrix:
-        image-type: [ 'standard', 'cuda' ]
+        image-type: [ 'deployable-standard', 'pipeline-standard', 'pipeline-cuda' ]
 
     env:
       DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
-      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
-      PYTORCH_CUDA_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda
+      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-deployable
+      PYTORCH_PIPELINE_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-pipeline
+      PYTORCH_PIPELINE_CUDA_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-pipeline-cuda
     steps:
       - uses: actions/checkout@v4
 

@@ -1,3 +1,5 @@
+import typing as t
+
 from sqlalchemy.exc import IntegrityError
 
 from casp.data_manager import BaseDataManager
@@ -18,30 +20,31 @@ class EmbeddingModelRegistryDataManager(BaseDataManager):
         :param bq_dataset_name: BigQuery dataset name which was used to make data extract for training the model
         :param schema_name: Schema name which was used to make data extract for training the model
         """
+        new_model = models.CASModel(
+            model_name=model_name,
+            embedding_dimension=embedding_dimension,
+            model_file_path=model_file_path,
+            bq_dataset_name=bq_dataset_name,
+            schema_name=schema_name,
+        )
         try:
-            new_model = models.CASModel(
-                model_name=model_name,
-                embedding_dimension=embedding_dimension,
-                model_file_path=model_file_path,
-                bq_dataset_name=bq_dataset_name,
-                schema_name=schema_name,
-            )
-            self.postgres_db_session.add(new_model)
-            self.postgres_db_session.commit()
+            with self.system_data_db_session_maker.begin() as session:
+                session.add(new_model)
+
         except IntegrityError as e:
             raise exceptions.ModelUniqueConstraintError(
                 f"{model_name} or {model_file_path} already present in the database"
             ) from e
-        return models.CASModel.query.filter_by(model_name=model_name).first()
+        return session.query(models.CASModel).filter_by(model_name=model_name).first()
 
     def create_space_vector_search_index(
         self,
         model_name: str,
         index_name: str,
-        deployed_index_id: str,
         endpoint_id: str,
         embedding_dimension: int,
         num_neighbors: int,
+        deployed_index_id: t.Optional[str] = None,
     ) -> models.CASMatchingEngineIndex:
         """
         Create a new space vector search index in the database
@@ -53,23 +56,25 @@ class EmbeddingModelRegistryDataManager(BaseDataManager):
         :param embedding_dimension: Embedding dimension of the index and the model
         :param num_neighbors: Number of neighbors that will be returned by the index
         """
-        model = models.CASModel.query.filter_by(model_name=model_name).first()
-
-        if model is None:
-            raise exceptions.ModelNotFoundError(f"Model `{model_name}` not found in the database")
 
         try:
-            new_index = models.CASMatchingEngineIndex(
-                index_name=index_name,
-                deployed_index_id=deployed_index_id,
-                endpoint_id=endpoint_id,
-                embedding_dimension=embedding_dimension,
-                num_neighbors=num_neighbors,
-                model_id=model.id,
-            )
-            self.postgres_db_session.add(new_index)
-            self.postgres_db_session.commit()
+            with self.system_data_db_session_maker.begin() as session:
+                model = session.query(models.CASModel).filter_by(model_name=model_name).first()
+
+                if model is None:
+                    raise exceptions.ModelNotFoundError(f"Model `{model_name}` not found in the database")
+
+                new_index = models.CASMatchingEngineIndex(
+                    index_name=index_name,
+                    deployed_index_id=deployed_index_id,
+                    endpoint_id=endpoint_id,
+                    embedding_dimension=embedding_dimension,
+                    num_neighbors=num_neighbors,
+                    model_id=model.id,
+                )
+                session.add(new_index)
+
         except IntegrityError as e:
             raise exceptions.IndexUniqueConstraintError(f"`{index_name}` already present in the database") from e
 
-        return models.CASMatchingEngineIndex.query.filter_by(index_name=index_name).first()
+        return session.query(models.CASMatchingEngineIndex).filter_by(index_name=index_name).first()

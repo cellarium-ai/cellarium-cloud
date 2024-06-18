@@ -1,3 +1,5 @@
+import typing as t
+
 from pydantic import BaseModel, Field
 
 from casp.services import settings
@@ -28,9 +30,9 @@ class CASModelOut(CASModelIn):
 class CASIndexOut(BaseModel):
     index_name: str = Field(example="my_index")
     num_neighbors: int = Field(example=10)
-    deployed_index_id: str = Field(example="my_deployed_index_id")
     endpoint_id: str = Field(example="projects/1111111/locations/us-somewhere/indexEndpoints/11123212")
     embedding_dimension: int = Field(example=256)
+    deployed_index_id: t.Optional[str] = Field(example="my_deployed_index_id")
 
     class Config:
         orm_mode = True

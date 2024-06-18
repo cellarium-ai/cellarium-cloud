@@ -30,6 +30,7 @@ class AllEnvSettings(BaseSettings):
     DEFAULT_SERVICE_PORT: int = 8000
     CAS_DIR = CAS_DIR
     API_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
+    API_INTERNAL_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
     MODEL_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
     LOG_LEVEL: str = "info"
     LOG_CONFIG: str = f"{SERVICES_DIR}/log_config.yaml"
