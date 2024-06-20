@@ -120,7 +120,7 @@ def create_configs(config_yaml: str | t.Dict[str, t.Any]) -> t.List[str]:
                 )
 
                 local_config_file_path = f"{temp_dir}/{component_config_filename}"
-
+                context["gcs_config_path"] = f"{CONFIG_BUCKET_PATH}/{component_config_filename}"
                 render_and_save_template(
                     template_path=template_path, context=context, output_path=local_config_file_path
                 )

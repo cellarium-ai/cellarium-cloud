@@ -65,7 +65,9 @@ def resize_and_save(gcs_config_path: str) -> None:
         f"pipeline.{model_pipeline_number}.S_k"
     ][:new_embedding_dimension].clone()
 
-    model_ckpt["hyper_parameters"]["model"]["init_args"]["n_components"] = new_embedding_dimension
+    # Feels like it was updated in newer version of Cellarium ML
+    # model_ckpt["hyper_parameters"]["model"]["init_args"]["n_components"] = new_embedding_dimension
+    model_ckpt["hyper_parameters"]["model"].n_components = new_embedding_dimension
 
     with open(config_data["new_model_path"], "wb") as file:
         torch.save(model_ckpt, file)

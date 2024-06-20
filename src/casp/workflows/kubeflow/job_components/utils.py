@@ -26,7 +26,6 @@ def create_job(
     machine_spec = machine_specs_info.get(component_name, machine_specs_utils.DUMMY_SPEC)
 
     dsl_component.component_spec.implementation.container.image = machine_spec["base_image"]
-
     job = create_custom_training_job_from_component(
         dsl_component,
         display_name=machine_spec["display_name"],
@@ -35,5 +34,6 @@ def create_job(
         accelerator_type=machine_spec["accelerator_type"],
         accelerator_count=machine_spec["accelerator_count"],
         boot_disk_size_gb=100,
+        env=machine_spec.get("env", None)
     )
     return lambda: job(gcs_config_path=gcs_config_path)

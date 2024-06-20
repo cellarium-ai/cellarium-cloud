@@ -1,18 +1,41 @@
 <%
-    from casp.workflows.kubeflow.machine_specs import PCATrainMachineSpec
+    from casp.workflows.kubeflow import machine_specs_utils
 
-    accelerator = "cpu" if PCATrainMachineSpec.accelerator_type is None else "gpu"
-    num_nodes = PCATrainMachineSpec.replica_count
-    devices = 4 if PCATrainMachineSpec.accelerator_count is None else PCATrainMachineSpec.accelerator_count
+    machine_specs_info = machine_specs_utils.read_machine_specs()
+    current_spec_info = machine_specs_info["pca_train"]
+    accelerator = "cpu" if current_spec_info["accelerator_type"] is None else "gpu"
+    num_nodes = current_spec_info["replica_count"]
+    devices = 4 if current_spec_info["accelerator_count"] is None else current_spec_info["accelerator_count"]
 %>
 # lightning.pytorch==2.0.9
 seed_everything: true
 trainer:
   accelerator: ${accelerator}
   callbacks:
-    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      every_n_epochs: 1
+      save_top_k: -1
+      save_last: true
+  logger:
+    - class_path: lightning.pytorch.loggers.TensorBoardLogger
       init_args:
-        filename: 'model'
+        save_dir: /gcs/cellarium-file-system/curriculum/${curriculum_name}/models/${model_name}/lightning_logs
+        name: null
+        version: null
+        log_graph: false
+        default_hp_metric: true
+        prefix: ''
+        flush_secs: 30
+% if use_wandb:
+    - class_path: lightning.pytorch.loggers.WandbLogger
+      init_args:
+        name: ${model_name}
+        project: ${wandb_project_name}
+        config:
+          cli_config_path: ${gcs_config_path}
+        log_model: true
+% endif
   strategy:
     class_path: lightning.pytorch.strategies.DDPStrategy
     init_args:
