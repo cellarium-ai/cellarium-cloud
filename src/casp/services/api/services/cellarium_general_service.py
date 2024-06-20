@@ -23,6 +23,14 @@ class CellariumGeneralService:
         """
         return self.cellarium_general_dm.get_application_info()
 
+    def feedback_opt_out(self, user: models.User) -> models.User:
+        """
+        Opt out user from feedback requests
+
+        :param user: User object to opt out
+        """
+        return self.cellarium_general_dm.feedback_opt_out(user=user)
+
     def get_feature_schemas(self) -> t.List[schemas.FeatureSchemaInfo]:
         """
         Get all available feature schemas

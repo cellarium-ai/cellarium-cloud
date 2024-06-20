@@ -6,7 +6,7 @@ from casp.services import db, settings
 flask_app = Flask(__name__)
 flask_app.config.from_object(settings)
 basic_auth = HTTPBasicAuth()
-db_session = db.get_db_session_maker()
+db_session = db.get_db_session_maker()()
 
 
 @basic_auth.verify_password
@@ -21,6 +21,12 @@ def verify_password(username: str, password: str) -> str:
         "password"
     ):
         return username
+
+
+@flask_app.teardown_appcontext
+def shutdown_session(exception=None):
+    # Ensure that the session is closed at the end of each request
+    db_session.close()
 
 
 import casp.services.admin.views  # noqa

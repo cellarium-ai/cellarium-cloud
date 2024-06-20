@@ -25,6 +25,23 @@ class HeaderKeys(str, Enum):
     authorization = "Authorization"
     # The trace id to return to users as a header.  Can be used for debugging.
     trace_id = "x-trace-id"
+    # The client session id that is used to track a user's CAS client session.
+    client_session_id = "x-client-session-id"
+    # The action id that is used to group calls from a given client intraction together
+    # (e.g. all parallel chunks from an annotation call woud have the action id).
+    client_action_id = "x-client-action-id"
+
+
+class SentryTags(str, Enum):
+    """
+    Tags used in the Sentry context.
+    """
+
+    # The client session id that is used to track a user's CAS client session.
+    client_session_id = "client-session-id"
+    # The action id that is used to group calls from a given client interaction together
+    # (e.g. all parallel chunks from an annotation call woud have the same action id).
+    client_action_id = "client-action-id"
 
 
 class LogRecordKeys(str, Enum):

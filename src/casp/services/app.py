@@ -17,7 +17,7 @@ from casp.services._auth.exceptions import TokenException
 from casp.services.api import exception_handlers
 from casp.services.api.data_manager.exceptions import NotFound
 from casp.services.api.services.exceptions import APIBaseException
-from casp.services.constants import ContextKeys, HeaderKeys
+from casp.services.constants import ContextKeys, HeaderKeys, SentryTags
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,14 @@ class AuthorizationPlugin(Plugin):
     key = HeaderKeys.authorization
 
 
+class ClientSessionPlugin(Plugin):
+    key = HeaderKeys.client_session_id
+
+
+class ClientActionPlugin(Plugin):
+    key = HeaderKeys.client_action_id
+
+
 BASE_PLUGGINS: t.Sequence[Plugin] = (
     # Extracts the user-agent header and makes it available to the request context.
     plugins.UserAgentPlugin(),
@@ -56,6 +64,10 @@ BASE_PLUGGINS: t.Sequence[Plugin] = (
     CloudTraceContextPlugin(),
     # Extracts the authorization header and makes it available to the request context.
     AuthorizationPlugin(),
+    # Extracts the x-client-session-id header and makes it available to the request context.
+    ClientSessionPlugin(),
+    # Extracts the x-client-action-id header and makes it available to the request context.
+    ClientActionPlugin(),
 )
 
 
@@ -81,6 +93,55 @@ class RequestClientMiddleware(BaseHTTPMiddleware):
         context[ContextKeys.client] = request.client
         response = await call_next(request)
         return response
+
+
+class ContextToSentryMiddleware(BaseHTTPMiddleware):
+    """
+    Adds the value from the request context to the Sentry context.
+    """
+
+    def __init__(self, context_key: HeaderKeys, sentry_tag: SentryTags, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.context_key = context_key
+        self.sentry_tag_name = sentry_tag
+
+    async def dispatch(self, request: Request, call_next: DispatchFunction) -> Response:
+        value = None
+        if self.context_key in context:
+            value = context[self.context_key]
+            sentry_sdk.set_tag(self.sentry_tag_name, value)
+        response = await call_next(request)
+        if hasattr(response, "headers") and value is not None:
+            response.headers[self.context_key] = value
+        return response
+
+
+class ClientSessionIdMiddleware(ContextToSentryMiddleware):
+    """
+    Adds the request's session id to the Sentry context.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            context_key=HeaderKeys.client_session_id,
+            sentry_tag=SentryTags.client_session_id,
+            *args,
+            **kwargs,
+        )
+
+
+class ClientActionIdMiddleware(ContextToSentryMiddleware):
+    """
+    Adds the request's action id to the Sentry context.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            context_key=HeaderKeys.client_action_id,
+            sentry_tag=SentryTags.client_action_id,
+            *args,
+            **kwargs,
+        )
 
 
 class SentryResponseDecoratorMiddleware(BaseHTTPMiddleware):
@@ -134,7 +195,7 @@ class CASService(FastAPI):
         self.port = port
 
         # Configure Sentry integration
-        if sentry_application_id is not None:
+        if sentry_application_id is not None and settings.SENTRY_DSN is not None:
             sentry_sdk.init(
                 dsn=settings.SENTRY_DSN,
                 server_name=sentry_application_id,
@@ -152,6 +213,8 @@ class CASService(FastAPI):
             Middleware(RawContextMiddleware, plugins=_plugins),
             Middleware(RequestClientMiddleware),
             Middleware(SentryResponseDecoratorMiddleware),
+            Middleware(ClientSessionIdMiddleware),
+            Middleware(ClientActionIdMiddleware),
         ]
 
         # Perform basic initialization

@@ -78,10 +78,14 @@ class StreamHandler(logging.StreamHandler):
             # Add log correlation to nest all log messages.
             # This is only relevant in HTTP-based contexts, and is ignored elsewhere.
             sentry_trace_id = None
+            client_session_id = None
+            client_action_id = None
             try:
                 google_trace_header = context.get(HeaderKeys.cloud_trace_context)
                 if ContextKeys.sentry_trace_id in context.data:
                     sentry_trace_id = context.data[ContextKeys.sentry_trace_id]
+                    client_session_id = context.data[HeaderKeys.client_session_id]
+                    client_action_id = context.data[HeaderKeys.client_action_id]
 
             except ContextDoesNotExistError:
                 # Logging outside of a request context.
@@ -105,6 +109,10 @@ class StreamHandler(logging.StreamHandler):
                 message=message,
                 # Add ability to filter logs on sentry trace id
                 sentry_trace_id=sentry_trace_id,
+                # Add ability to filter logs on session id
+                client_session_id=client_session_id,
+                # Add ability to filter logs on action id
+                client_action_id=client_action_id,
                 # Add python debugging information
                 locator=locator,
                 **global_log_fields,
@@ -152,7 +160,7 @@ class CustomAccessFormatter(uvicorn.logging.AccessFormatter):
     def formatMessage(self, record: logging.LogRecord) -> str:
         recordcopy = copy(record)
         # Add user, user_id and user_email to the log record if they are present in the context.
-        user_obj = context.data[ContextKeys] if ContextKeys in context.data else None
+        user_obj = context.data[ContextKeys.user] if ContextKeys.user in context.data else None
         if user_obj:
             user_id = user_obj.id
             user_email = user_obj.email

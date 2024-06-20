@@ -21,6 +21,7 @@ class User(db.Base):
     is_admin = sa.Column(sa.Boolean(), default=True, nullable=False)
     cell_quota = sa.Column(sa.Integer(), default=50000, nullable=False)
     created_at = sa.Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.timezone.utc))
+    ask_for_feedback = sa.Column(sa.Boolean(), default=True, nullable=False)
 
     __tablename__ = "users_user"
 

@@ -65,6 +65,12 @@ class HTTPAsyncClient:
         # Forward along the user auth if it exists
         if HeaderKeys.authorization in context and context[HeaderKeys.authorization] is not None:
             headers[HeaderKeys.authorization.value] = context[HeaderKeys.authorization]
+        # Forward along the client session id if it exists
+        if HeaderKeys.client_session_id in context and context[HeaderKeys.client_session_id] is not None:
+            headers[HeaderKeys.client_session_id.value] = context[HeaderKeys.client_session_id]
+        # Forward along the client action id if it exists
+        if HeaderKeys.client_action_id in context and context[HeaderKeys.client_action_id] is not None:
+            headers[HeaderKeys.client_action_id.value] = context[HeaderKeys.client_action_id]
 
         async with aiohttp.ClientSession(timeout=timeout) as session:
             try:
