@@ -9,11 +9,17 @@ def train(gcs_config_path: str):
     :param gcs_config_path: Config file path on GCS.
     """
     import os
+    import yaml
 
     from cellarium.ml.cli import main as cellarium_ml_cli
 
     if os.environ.get("RANK") is not None:
         os.environ["NODE_RANK"] = os.environ.get("RANK")
+
+    with open(gcs_config_path, "r") as file:
+        config_data = yaml.safe_load(file)
+
+    os.environ["WANDB_API_KEY"] = config_data["wandb_api_key"]
 
     cellarium_ml_cli(args=["incremental_pca", "fit", "--config", gcs_config_path])
 
@@ -65,7 +71,9 @@ def resize_and_save(gcs_config_path: str) -> None:
         f"pipeline.{model_pipeline_number}.S_k"
     ][:new_embedding_dimension].clone()
 
-    model_ckpt["hyper_parameters"]["model"]["init_args"]["n_components"] = new_embedding_dimension
+    # Feels like it was updated in newer version of Cellarium ML
+    # model_ckpt["hyper_parameters"]["model"]["init_args"]["n_components"] = new_embedding_dimension
+    model_ckpt["hyper_parameters"]["model"].n_components = new_embedding_dimension
 
     with open(config_data["new_model_path"], "wb") as file:
         torch.save(model_ckpt, file)

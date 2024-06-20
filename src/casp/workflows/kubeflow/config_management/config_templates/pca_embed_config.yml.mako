@@ -1,9 +1,11 @@
 <%
-    from casp.workflows.kubeflow.machine_specs import PCAEmbedMachineSpec
+    from casp.workflows.kubeflow import machine_specs_utils
 
-    accelerator = "cpu" if PCAEmbedMachineSpec.accelerator_type is None else "gpu"
-    num_nodes = PCAEmbedMachineSpec.replica_count
-    devices = 4 if PCAEmbedMachineSpec.accelerator_count is None else PCAEmbedMachineSpec.accelerator_count
+    machine_specs_info = machine_specs_utils.read_machine_specs()
+    current_spec_info = machine_specs_info["pca_embed"]
+    accelerator = "cpu" if current_spec_info["accelerator_type"] is None else "gpu"
+    num_nodes = current_spec_info["replica_count"]
+    devices = 4 if current_spec_info["accelerator_count"] is None else current_spec_info["accelerator_count"]
 %>
 # lightning.pytorch==2.0.9
 seed_everything: true
