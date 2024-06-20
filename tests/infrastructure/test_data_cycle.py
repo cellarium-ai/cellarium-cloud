@@ -51,12 +51,9 @@ def get_anndata_or_raw(adata: "anndata.AnnData") -> "anndata.AnnData":
         return adata
 
 
-def clean_up_cloud_from_test_case(bucket_name: str, extract_table_prefix: str):
+def clean_up_cloud_from_test_case(bucket_name: str, extract_bucket_path: str):
     """Clean up GCS from files that were produced by a particular test case."""
-    test_extract_data_dir = f"{extract_table_prefix}__data"
-    dataset_info_dir = f"{constants.DATASET_NAME}_{extract_table_prefix}_info"
-    utils.delete_folder_from_bucket(bucket_name=bucket_name, folder_name=test_extract_data_dir)
-    utils.delete_folder_from_bucket(bucket_name=bucket_name, folder_name=dataset_info_dir)
+    utils.delete_folder_from_bucket(bucket_name=bucket_name, folder_name=extract_bucket_path)
 
 
 def clean_up_bq_database_and_gcs():
@@ -264,7 +261,7 @@ def test_extract_filtered_by_homo_sapiens():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.HOMO_SAPIENS_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = f"{constants.HOMO_SAPIENS_EXTRACT_BUCKET_PATH}/extract_files"
     num_extract_chunks_to_check = 9
 
     logger.info("Preparing extract tables...")
@@ -275,6 +272,7 @@ def test_extract_filtered_by_homo_sapiens():
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
         filters_json_path=constants.FILTER_HOMO_SAP_JSON_PATH,
+        extract_bucket_path=constants.HOMO_SAPIENS_EXTRACT_BUCKET_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
@@ -284,7 +282,7 @@ def test_extract_filtered_by_homo_sapiens():
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=constants.HOMO_SAPIENS_EXTRACT_BUCKET_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
@@ -301,8 +299,7 @@ def test_extract_filtered_by_homo_sapiens():
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
-        bucket_name=constants.GCS_BUCKET_NAME,
-        extract_table_prefix=constants.HOMO_SAPIENS_EXTRACT_TABLE_PREFIX,
+        bucket_name=constants.GCS_BUCKET_NAME, extract_bucket_path=constants.HOMO_SAPIENS_EXTRACT_BUCKET_PATH
     )
 
 
@@ -313,7 +310,7 @@ def test_extract_filtered_by_mus_mus():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.MUS_MUS_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = f"{constants.MUS_MUS_EXTRACT_BUCKET_PATH}/extract_files"
     num_extract_chunks_to_check = 3
     logger.info("Preparing extract tables...")
     prepare_extract(
@@ -323,6 +320,7 @@ def test_extract_filtered_by_mus_mus():
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
         filters_json_path=constants.FILTER_MUS_MUS_JSON_PATH,
+        extract_bucket_path=constants.MUS_MUS_EXTRACT_BUCKET_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
@@ -332,7 +330,7 @@ def test_extract_filtered_by_mus_mus():
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=constants.MUS_MUS_EXTRACT_BUCKET_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
@@ -349,8 +347,7 @@ def test_extract_filtered_by_mus_mus():
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
-        bucket_name=constants.GCS_BUCKET_NAME,
-        extract_table_prefix=constants.MUS_MUS_EXTRACT_TABLE_PREFIX,
+        bucket_name=constants.GCS_BUCKET_NAME, extract_bucket_path=constants.MUS_MUS_EXTRACT_BUCKET_PATH
     )
 
 
@@ -362,7 +359,7 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.HOMO_SAPIENS_5k_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = f"{constants.HOMO_SAPIENS_5k_EXTRACT_BUCKET_PATH}/extract_files"
     num_extract_chunks_to_check = 18
     logger.info("Preparing extract tables...")
     prepare_extract(
@@ -371,6 +368,7 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=5000,
         bucket_name=constants.GCS_BUCKET_NAME,
+        extract_bucket_path=constants.HOMO_SAPIENS_5k_EXTRACT_BUCKET_PATH,
         filters_json_path=constants.FILTER_HOMO_SAP_JSON_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
@@ -381,7 +379,7 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=constants.HOMO_SAPIENS_5k_EXTRACT_BUCKET_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
@@ -399,7 +397,7 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
         bucket_name=constants.GCS_BUCKET_NAME,
-        extract_table_prefix=constants.HOMO_SAPIENS_5k_EXTRACT_TABLE_PREFIX,
+        extract_bucket_path=constants.HOMO_SAPIENS_5k_EXTRACT_BUCKET_PATH,
     )
 
 
@@ -411,7 +409,7 @@ def test_extract_filtered_by_datasets():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.FILTER_BY_DATASET_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = f"{constants.FILTER_BY_DATASET_EXTRACT_BUCKET_PATH}/extract_files"
     num_extract_chunks_to_check = 6
     logger.info("Preparing extract tables...")
     prepare_extract(
@@ -420,6 +418,7 @@ def test_extract_filtered_by_datasets():
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
+        extract_bucket_path=constants.FILTER_BY_DATASET_EXTRACT_BUCKET_PATH,
         filters_json_path=constants.FILTER_DATASET_FILENAME_JSON_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
@@ -430,7 +429,7 @@ def test_extract_filtered_by_datasets():
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=constants.FILTER_BY_DATASET_EXTRACT_BUCKET_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
@@ -447,8 +446,7 @@ def test_extract_filtered_by_datasets():
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
-        bucket_name=constants.GCS_BUCKET_NAME,
-        extract_table_prefix=constants.FILTER_BY_DATASET_EXTRACT_TABLE_PREFIX,
+        bucket_name=constants.GCS_BUCKET_NAME, extract_bucket_path=constants.FILTER_BY_DATASET_EXTRACT_BUCKET_PATH
     )
 
 
@@ -459,7 +457,7 @@ def test_extract_filtered_by_homo_sapiens_and_diseases():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.FILTER_BY_DISEASES_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = f"{constants.FILTER_BY_DISEASES_EXTRACT_BUCKET_PATH}/extract_files"
     num_extract_chunks_to_check = 8
     logger.info("Preparing extract tables...")
     prepare_extract(
@@ -468,6 +466,7 @@ def test_extract_filtered_by_homo_sapiens_and_diseases():
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
+        extract_bucket_path=constants.FILTER_BY_DISEASES_EXTRACT_BUCKET_PATH,
         filters_json_path=constants.FILTER_HOMO_SAP_NO_CANCER_JSON_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
@@ -478,7 +477,7 @@ def test_extract_filtered_by_homo_sapiens_and_diseases():
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=constants.FILTER_BY_DISEASES_EXTRACT_BUCKET_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
@@ -495,6 +494,5 @@ def test_extract_filtered_by_homo_sapiens_and_diseases():
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
-        bucket_name=constants.GCS_BUCKET_NAME,
-        extract_table_prefix=constants.FILTER_BY_DISEASES_EXTRACT_TABLE_PREFIX,
+        bucket_name=constants.GCS_BUCKET_NAME, extract_bucket_path=constants.FILTER_BY_DISEASES_EXTRACT_BUCKET_PATH
     )

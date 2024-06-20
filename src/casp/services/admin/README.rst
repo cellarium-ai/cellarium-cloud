@@ -8,7 +8,7 @@ Requirements
 ------------
 - Python 3.10
 - Database connection
-- `.env` file with secret variables
+- `settings/.env` file with secret variables
 
 
 Building Docker Image
@@ -33,6 +33,8 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     REGION=us-central1 # Region where the service will be deployed
     PORT=8000 # Port on which the service will be running (matches the port in the flask app)
     DB_CONNECTION=example-project:us-region-example:db-cluster-name # Cloud SQL connection name
+    SERVICE_ACCOUNT=sa-user@<project>.iam.gserviceaccount.com # Service account that will be running the service
+    SECRET_REF=secret-name:latest # Reference to secret in the project's google secret manager as <secret name>:<version or latest> (note that the service account must have access to the secret)
 
     gcloud run deploy $SERVICE_NAME \
     --project=$PROJECT_ID \
@@ -40,6 +42,31 @@ To deploy the Docker image using Cloud Run run (see `Cloud Run Documentation <ht
     --region=$REGION \
     --port=$PORT \
     --add-cloudsql-instances=$DB_CONNECTION \
+    --service-account=$SERVICE_ACCOUNT \
+    --set-secrets=/app/settings/.env=${SECRET_REF} \
     --command=casp/services/admin/entrypoint.sh \
     --platform managed \
+    --ingress internal \
     --allow-unauthenticated
+
+You can also deploy the services using the deploy-workflow.yml GitHub action.
+
+Accessing the Service
+---------------------
+The service is behind a firewall and not exposed to the public internet.  It can only be accessed by the internal or if you create 
+a tunnel through the bastion host. To create a tunnel:
+
+log into the gcloud cli with the command:
+.. code-block:: bash
+
+    gcloud auth login
+
+then run the following command:
+
+.. code-block:: bash
+
+    gcloud compute ssh --zone "us-central1-a" "bastion" --project "dsp-cell-annotation-service" --ssh-flag="-D 9090" --ssh-flag="-N"
+
+To use the proxy, you can configure your browser to use the SOCKS proxy at localhost:9090 (or whatever port you specified in the command above).
+
+When you are done, you can close the tunnel by stopping the ssh command in the terminal.

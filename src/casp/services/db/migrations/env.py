@@ -1,10 +1,9 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
 
 from casp.services import settings
-from casp.services.db import Base, get_db_session_maker
+from casp.services.db import Base, create_engine, get_db_session_maker
 
 get_db_session_maker()
 
@@ -61,12 +60,8 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
 
+    connectable = create_engine()
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
 

@@ -1,3 +1,5 @@
+import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -18,3 +20,15 @@ class FeatureSchemaInfo(BaseModel):
 class ApplicationInfo(BaseModel):
     application_version: str
     default_feature_schema: str = Field(example="refdata-gex-GRCh38-2020-A")
+
+
+class UserInfo(BaseModel):
+    username: str
+    email: str
+
+
+class UserQuota(BaseModel):
+    user_id: int
+    quota: int
+    remaining_quota: int
+    quota_reset_date: datetime.datetime

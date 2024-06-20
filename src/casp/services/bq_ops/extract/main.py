@@ -15,7 +15,7 @@ def extract_task(
     bin_number: int,
     file_name: str,
     output_bucket_name: str,
-    output_bucket_directory: str,
+    extract_bucket_path: str,
     obs_columns_to_include: t.List[str],
 ) -> None:
     """
@@ -27,7 +27,9 @@ def extract_task(
     :param bin_number: Bin to extract
     :param file_name: Name for a local file (.h5ad anndata) to save the output
     :param output_bucket_name: Name of GCS bucket
-    :param output_bucket_directory: Directory in the bucket to save outputs
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
         If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
         Note: It is required to provide the column names along with the aliases for the tables to which they belong.
@@ -45,9 +47,10 @@ def extract_task(
             output=file_name,
             credentials=credentials,
             bucket_name=output_bucket_name,
+            extract_bucket_path=extract_bucket_path,
             obs_columns_to_include=obs_columns_to_include,
         )
-        blob_name = f"{output_bucket_directory}/{file_name}"
+        blob_name = f"{extract_bucket_path}/extract_files/{file_name}"
         utils.upload_file_to_bucket(local_file_name=file_name, blob_name=blob_name, bucket=output_bucket_name)
     except Exception as e:
         print("ERROR!", str(e))
@@ -62,7 +65,7 @@ def main(
     start_bin: int,
     end_bin: int,
     output_bucket_name: str,
-    output_bucket_directory: str,
+    extract_bucket_path: str,
     obs_columns_to_include: str,
 ) -> None:
     """
@@ -77,9 +80,14 @@ def main(
     :param start_bin: Starting (inclusive) integer bin to extract
     :param end_bin: Ending (inclusive) integer bin to extract
     :param output_bucket_name: Name of GCS bucket
-    :param output_bucket_directory: Directory in the bucket to save outputs
-    :param obs_columns_to_include:  Columns to include in `obs` data frame in extracted `anndata.AnnData` file
-        Mapped from extract query output. Comma separated string
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
     obs_columns_to_include_list = obs_columns_to_include.split(",")
     num_of_workers = multiprocessing.cpu_count()
@@ -93,7 +101,7 @@ def main(
                 "bin_number": bin_number,
                 "file_name": file_name,
                 "output_bucket_name": output_bucket_name,
-                "output_bucket_directory": output_bucket_directory,
+                "extract_bucket_path": extract_bucket_path,
                 "obs_columns_to_include": obs_columns_to_include_list,
             }
 
@@ -114,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument("--end_bin", type=int, help="Ending (inclusive) integer bin to extract", required=True)
     parser.add_argument("--output_bucket_name", type=str, help="Bucket where to save script results", required=True)
     parser.add_argument(
-        "--output_bucket_directory", type=str, help="A specific location in a bucket for the results", required=True
+        "--extract_bucket_path", type=str, help="A specific location in a bucket for the results", required=True
     )
     parser.add_argument(
         "--obs_columns_to_include", type=str, help="Obs columns to include in extract adata file", required=True
@@ -126,6 +134,6 @@ if __name__ == "__main__":
         start_bin=args.start_bin,
         end_bin=args.end_bin,
         output_bucket_name=args.output_bucket_name,
-        output_bucket_directory=args.output_bucket_directory,
+        extract_bucket_path=args.extract_bucket_path,
         obs_columns_to_include=args.obs_columns_to_include,
     )

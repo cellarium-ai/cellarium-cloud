@@ -1,0 +1,8 @@
+isort==4.3.21
+tox
+wheel
+black
+flake8
+pylint
+cython
+requests

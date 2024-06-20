@@ -1,0 +1,1 @@
+{"logistic_regression_train": {"display_name": "Logistic Regression Training", "replica_count": 1, "machine_type": "n1-highmem-16", "accelerator_type": "NVIDIA_TESLA_T4", "accelerator_count": 2, "base_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline-dev:1.4.5-alpha.1"}}

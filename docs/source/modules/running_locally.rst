@@ -4,7 +4,7 @@ To run Cellarium Cloud services locally, you will need to have the following ins
 
 - Python 3.10
 - `Local Postgres Database cluster <https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image>`_
-- Project Environment variables in a `src/casp/services/.env` file. :ref:`More info <Project Secrets>`.
+- Project Environment variables in a `src/settings/.env` file. :ref:`More info <Project Secrets>`.
 - Project dependencies installed. ``pip install -r requirements.txt``
 - `src` directory added to your ``PYTHONPATH`` environment variable. E.g. ``export PYTHONPATH=$PYTHONPATH:/path/to/cellarium-cloud/src``
 
@@ -28,7 +28,6 @@ Once the Admin service is running, you can visit `Admin Dashboard <http://127.0.
 
 To run commands that require accessing the vector search API using gRPC, you will need to create a tunnel.  To do this you
 must:
-- log into the Broad non-split VPN
 - log into the gcloud cli with the command ``gcloud auth login``
 
 You can then run the following command to create a tunnel:
