@@ -1,6 +1,6 @@
 [
   {
-    "bigquery_table": "cas_cell_info",
+    "bigquery_table": "cas_cell_info_sml",
     "postgres_table": "cells_cellinfo",
     "chunk_size": 10000,
     "cols": [
