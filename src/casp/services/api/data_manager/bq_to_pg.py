@@ -95,7 +95,7 @@ class BQToPG(BaseDataManager):
     def ingest(self, blueprint: str = settings.COPY_BLUEPRINT, concurrency: int = settings.COPY_NUM_STREAMS):
         blueprint = blueprint or settings.COPY_BLUEPRINT
         concurrency = concurrency or settings.COPY_NUM_STREAMS
-        logger.info(f"Starting ingest blueprint {blueprint}...")
+        logger.info(f"Starting ingest blueprint {blueprint} with max conurrency {concurrency}...")
         start = time.time()
         json_file_path = f"{settings.APP_ROOT}/casp/services/api/data_manager/bq_to_pg_blueprints/{blueprint}.json"
 

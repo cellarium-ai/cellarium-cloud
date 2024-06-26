@@ -104,8 +104,8 @@ class AllEnvSettings(BaseSettings):
     FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "cas-support@broadinstitute.org")
     FEEDBACK_FORM_BASE_URL: str = os.environ.get("FEEDBACK_FORM_BASE_URL")
     # Data copy settings
-    COPY_NUM_STREAMS: int = 10
-    COPY_BLUEPRINT: str = "cellinfo_v1"
+    COPY_NUM_STREAMS: int = int(os.environ.get("COPY_NUM_STREAMS", "10"))
+    COPY_BLUEPRINT: str = os.environ.get("COPY_BLUEPRINT", "cellinfo_v1")
 
 
 class DevSettings(AllEnvSettings):
