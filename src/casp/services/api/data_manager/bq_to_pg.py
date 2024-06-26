@@ -55,11 +55,15 @@ class BQToPG(BaseDataManager):
     ) -> None:
         logger.info(f"Processing stream {stream_num}:{stream_name} with chunk size of {chunk_size}")
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
+            # This really will only ever have one future at any given time
             futures = []
             data = []
             try:
                 for i, row in enumerate(reader.rows()):
                     if i % chunk_size == 0 and i != 0:
+                        # See if any previous writes failed
+                        for future in futures:
+                            future.result()
                         futures.append(executor.submit(self._write_chunk, table=table, data=data))
                         logger.info(f"Stream {stream_num}:{stream_name}: Wrote {i} records")
                         data = []
@@ -72,11 +76,14 @@ class BQToPG(BaseDataManager):
                     data.append(data_dict)
 
                 if len(data) > 0:
+                    # See if any previous writes failed
+                    for future in futures:
+                        future.result()
                     futures.append(executor.submit(self._write_chunk, table=table, data=data))
                     logger.info(f"Stream {stream_num}:{stream_name}: Wrote {i} records")
                 concurrent.futures.wait(futures, return_when=concurrent.futures.ALL_COMPLETED)
 
-                # See if any writes failed
+                # See if any previous writes failed
                 for future in futures:
                     future.result()
             except Exception as e:
