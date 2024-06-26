@@ -74,6 +74,7 @@ class AllEnvSettings(BaseSettings):
     DB_USER: str = os.environ.get("DB_USER")
     DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
     DB_PORT: str = os.environ.get("DB_PORT")
+    DB_LOG_QUERIES: bool = os.environ.get("DB_LOG_QUERIES", False)
     # If this is value is specified, it will be used instead of the unix socket
     DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP")
     # BigQuery
@@ -102,6 +103,9 @@ class AllEnvSettings(BaseSettings):
     SENDGRID_API_KEY: str = os.environ.get("SENDGRID_API_KEY", "")
     FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "cas-support@broadinstitute.org")
     FEEDBACK_FORM_BASE_URL: str = os.environ.get("FEEDBACK_FORM_BASE_URL")
+    # Data copy settings
+    COPY_NUM_STREAMS: int = 10
+    COPY_BLUEPRINT: str = "cellinfo_v1"
 
 
 class DevSettings(AllEnvSettings):

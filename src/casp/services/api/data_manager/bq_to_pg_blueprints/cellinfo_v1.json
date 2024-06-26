@@ -1,0 +1,25 @@
+[
+  {
+    "bigquery_table": "cas_cell_info",
+    "postgres_table": "cells_cellinfo",
+    "chunk_size": 3000,
+    "cols": [
+      {
+        "source_column": "cas_cell_index",
+        "destination_column": "cas_cell_index"
+      },
+      {
+        "source_column": "original_cell_id",
+        "custom_hook": "original_cell_id"
+      },
+      {
+        "source_column": "cell_type",
+        "destination_column": "cell_type"
+      },
+      {
+        "source_column": "cell_type_ontology_term_id",
+        "destination_column": "cell_type_ontology_term_id"
+      }
+    ]
+  }
+]
