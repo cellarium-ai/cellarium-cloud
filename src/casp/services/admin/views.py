@@ -266,6 +266,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
     ]
     column_list = (
         "model_name",
+        "description",
         "model_file_path",
         "embedding_dimension",
         "admin_use_only",
@@ -279,6 +280,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
             "A name that is used, must be unique, lowercase. "
             "No spaces, must end with a character or number. \nExample: cas-pca-001."
         ),
+        "description": "A more verbose description of the model, since the name is not always self-explanatory.",
         "model_file_path": "Filepath in the GCS storage bucket with the dumped model.",
         "embedding_dimension": "Model embedding output dimension.",
         "admin_use_only": (
@@ -298,6 +300,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
     column_editable_list = ("admin_use_only",)
     form_columns = (
         "model_name",
+        "description",
         "model_file_path",
         "embedding_dimension",
         "schema_name",
@@ -321,12 +324,21 @@ class CASModelAdminView(CellariumCloudAdminModelView):
 
 
 class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
-    column_list = ("index_name", "embedding_dimension", "endpoint_id", "deployed_index_id", "num_neighbors", "model")
+    column_list = (
+        "index_name",
+        "description",
+        "embedding_dimension",
+        "endpoint_id",
+        "deployed_index_id",
+        "num_neighbors",
+        "model",
+    )
     column_descriptions = {
         "index_name": (
             "A name that is used to identify the index, must be unique, lowercase. "
             "No spaces, must end with a character or number. \nExample: cas-pca-001-matching-engine-index."
         ),
+        "description": "A more verbose description of the index, since the name is not always self-explanatory.",
         "endpoint_id": "Endpoint ID that is used in GCP in Vertex AI",
         "deployed_index_id": "Deployed Index ID that is used in GCP in Vertex AI",
         "num_neighbors": "Number of neighbors that is used for an approximate neighbors search",

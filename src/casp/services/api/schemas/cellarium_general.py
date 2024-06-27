@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class CASModel(BaseModel):
     model_name: str = Field(example="human-pca-001")
+    description: str = Field(example="1st version of PCA model for human data")
     schema_name: str = Field(example="refdata-gex-mm10-2020-A")
     is_default_model: bool = Field(example=False)
     embedding_dimension: int = Field(example=512)
