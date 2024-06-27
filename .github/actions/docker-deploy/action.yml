@@ -181,3 +181,11 @@ runs:
           echo "MODEL_SERVER_URL=${{ steps.deploy.outputs.url }}" >> $GITHUB_ENV
         fi
       shell: bash
+
+    - id: set-api-url
+      name: We need to stash the URL for the api server in case it's needed by other jobs
+      run: |
+        if [[ "${{ inputs.deployment-type }}" == "cas-api" ]]; then
+          echo "API_SERVER_URL=${{ steps.deploy.outputs.url }}" >> $GITHUB_ENV
+        fi
+      shell: bash

@@ -1,0 +1,156 @@
+name: CAS Repository Integration Test Workflow
+on:
+  workflow_dispatch:
+    inputs:
+      cellarium-cloud-image-tag:
+        description: 'Docker image tag for the Cellarium Cloud image. Will use the short hash of the last commit in the branch if nothing is passed in.'
+        required: false
+        default: ''
+      cellarium-cas-revision:
+        description: 'Tag or commit hash for the version of the client repo we want to run tests for.  Defaults to latest commit in main if not specified.'
+        required: false
+        default: ''
+      service-account-email:
+        description: 'Service account email used as the identity for the deployment of the Cellarium Cloud test images.'
+        required: true
+        default: ''
+      sql-instance:
+        description: 'The SQL instance to connect to in the form [project]:[region]:[instance]'
+        required: true
+        default: ''
+      vpc-connector:
+        description: 'The VPC connector to use for the test deployment in the form projects/[project]/locations/[region]/connectors/[connector]'
+        required: true
+        default: ''
+      config-secret:
+        description: 'The Google secret to use for the test deployment configuration in the form [secret-name]:[version (or "latest")]'
+        required: true
+        default: ''
+      region:
+        description: 'The region to deploy the test image to'
+        required: false
+        default: 'us-central1'
+      deploy-index:
+        description: 'Whether to deploy and undeploy the vector search index'
+        required: false
+        default: 'false'
+      index-endpoint-id:
+        required: false
+        description: The ID of the vector search index endpoint
+      index-id:
+        required: false
+        description: The ID of the vector search index
+
+jobs:
+  run-integration-tests:
+    name: Set up and run integration tests
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+    
+    env:
+      DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
+      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
+    
+    steps:
+      - id: checkout
+        name: Checkout
+        uses: actions/checkout@v4
+
+      - id: get-image-tag
+        name: Get tag
+        run: |
+          if [[ "${{ inputs.cellarium-cloud-image-tag }}" == "" ]]; then
+            echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${{ inputs.cellarium-cloud-image-tag }}" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - id: build-image
+        name: Build CAS cloud image
+        uses: ./.github/actions/docker-build
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          image-type: 'standard'
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          add-latest-tag: false
+      
+      - id: deploy-model
+        name: Deploy the CAS Model Inference Service
+        uses: ./.github/actions/docker-deploy
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          deployment-type: cas-model
+          deployment-prefix: integration-test
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
+          deployment-sql-instance: ${{ inputs.sql-instance }}
+          deployment-vpc-connector: ${{ inputs.vpc-connector }}
+          deployment-config-secret: ${{ inputs.config-secret }}
+          deployment-region: ${{ inputs.region }}
+          deployment-flavor: default
+
+      - id: deploy-api
+        name: Deploy the CAS API Service
+        uses: ./.github/actions/docker-deploy
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          deployment-type: cas-api
+          deployment-prefix: integration-test
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
+          deployment-sql-instance: ${{ inputs.sql-instance }}
+          deployment-vpc-connector: ${{ inputs.vpc-connector }}
+          deployment-config-secret: ${{ inputs.config-secret }}
+          deployment-region: ${{ inputs.region }}
+          deployment-flavor: default
+      
+      - id: deploy-index
+        name: Deploy vector search index
+        if: ${{ inputs.deploy-index == 'true' }}
+        uses: ./.github/actions/vector-search-index-deploy
+        with:
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          index-endpoint-id: ${{ inputs.index-endpoint-id }}
+          deployed-index-id: integration_test_deployed_index
+          deployed-index-endpoint-name: integration_test_deployed_index
+          index-id: ${{ inputs.index-id }}
+          deployment-region: ${{ inputs.region }}
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+
+      - id: run-tests
+        name: Run tests
+        uses: ./.github/actions/integration-tests
+        with:
+          revision: ${{ inputs.cellarium-cas-revision }}
+          api-key: ${{ secrets.TEST_API_KEY }}
+          api-url: ${{ env.API_SERVER_URL }}
+
+      - id: undeploy-index
+        name: Undeploy vector search index
+        if: ${{ inputs.deploy-index == 'true' }} && (success() || failure())
+        uses: ./.github/actions/vector-search-index-undeploy
+        with:
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          index-endpoint-id: ${{ inputs.index-endpoint-id }}
+          deployed-index-id: integration_test_deployed_index
+          deployed-region: ${{ inputs.region }}
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+      
+          
