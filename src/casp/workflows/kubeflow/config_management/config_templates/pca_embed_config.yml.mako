@@ -10,7 +10,7 @@
 # lightning.pytorch==2.0.9
 seed_everything: true
 trainer:
-  accelerator: gpu
+  accelerator: ${accelerator}
   strategy: auto
   devices: ${devices}
   num_nodes: ${num_nodes}
@@ -67,12 +67,34 @@ model:
           attr: model.var_names_g
           convert_fn: numpy.ndarray.tolist
 % endif
-% if use_filter:
+% if use_divide_by_scale:
+    - class_path: cellarium.ml.transforms.DivideByScale
+      init_args:
+        scale_g:
+          !CheckpointLoader
+          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/${tdigest_model_name}/lightning_logs/version_0/checkpoints/model.ckpt
+          attr: model.median_g
+          convert_fn: torch.Tensor.float
+        var_names_g:
+          !CheckpointLoader
+          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/${tdigest_model_name}/lightning_logs/version_0/checkpoints/model.ckpt
+          attr: model.var_names_g
+          convert_fn: numpy.ndarray.tolist
     - class_path: cellarium.ml.transforms.Filter
       init_args:
         filter_list:
           !FileLoader
-          file_path: ${filter_file_path}
+          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/shared_meta/filters/${filter_file_name}
+          loader_fn: pandas.read_csv
+          attr: original_feature_id
+          convert_fn: pandas.Series.to_list
+% endif
+% if use_filter and not use_divide_by_scale:
+    - class_path: cellarium.ml.transforms.Filter
+      init_args:
+        filter_list:
+          !FileLoader
+          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/shared_meta/filters/${filter_file_name}
           loader_fn: pandas.read_csv
           attr: original_feature_id
           convert_fn: pandas.Series.to_list
@@ -93,7 +115,7 @@ data:
   seed: 0
   drop_last: true
   test_mode: false
-  num_workers: 4
+  num_workers: 3
   batch_keys:
     x_ng:
       attr: X
@@ -103,7 +125,7 @@ data:
     total_mrna_umis_n:
       attr: obs
       key: total_mrna_umis
-    obs_names:
+    obs_names_n:
       attr: obs_names
 return_predictions: false
 ckpt_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/${model_name}/lightning_logs/version_0/checkpoints/model.ckpt

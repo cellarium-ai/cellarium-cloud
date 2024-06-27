@@ -14,14 +14,19 @@ def create_register_index(gcs_config_path: str) -> None:
     import requests
     from google.cloud import aiplatform, aiplatform_v1beta1
     from smart_open import open
+    from google.oauth2.service_account import Credentials
 
-    from casp.services import utils
+    from casp.services import utils, settings
     from casp.workflows.kubeflow.job_components_library import clients
 
     with open(gcs_config_path, "r") as file:
         config_data = yaml.safe_load(file)
 
-    credentials, project_id = utils.get_google_service_credentials()
+    credentials = Credentials.from_service_account_info(
+        info=settings.GOOGLE_ACCOUNT_CREDENTIALS, scopes=None, default_scopes=None
+    )
+    project_id = settings.GOOGLE_ACCOUNT_CREDENTIALS.get("project_id")
+
     from typing import Dict, List, Optional, Sequence, Tuple
 
     from google.auth import credentials as auth_credentials
@@ -130,7 +135,7 @@ def create_register_index(gcs_config_path: str) -> None:
         sync=False,
     )
 
-    index.wait()
+    # index.wait()
 
     #### Deploying Index ###
     # index_id = index.resource_name

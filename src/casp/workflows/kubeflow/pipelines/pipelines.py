@@ -15,7 +15,7 @@ def train_pipeline(pipeline_config_paths: t.List[str]):
 
     :rtype: dsl.Pipeline
     """
-    with dsl.ParallelFor(pipeline_config_paths) as item:
+    with dsl.ParallelFor(pipeline_config_paths, parallelism=3) as item:
         train_job_task_op = create_job(
             dsl_component=job_components.pca.train,
             component_name=constants.PCA_TRAIN_COMPONENT_NAME,
@@ -136,7 +136,7 @@ def pca_resize_full_cycle_pipeline(pipeline_config_paths: t.List[str]):
 
     :rtype: dsl.Pipeline
     """
-    with dsl.ParallelFor(pipeline_config_paths) as item:
+    with dsl.ParallelFor(pipeline_config_paths, parallelism=3) as item:
         resize_and_save_op = create_job(
             dsl_component=job_components.pca.resize_and_save,
             component_name=constants.PCA_RESIZE_AND_SAVE_COMPONENT_NAME,

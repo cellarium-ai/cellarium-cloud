@@ -57,6 +57,10 @@ def resize_and_save(gcs_config_path: str) -> None:
         model_pipeline_number = 2
     elif "pipeline.3.V_kg" in state_dict_keys:
         model_pipeline_number = 3
+    elif "pipeline.4.V_kg" in state_dict_keys:
+        model_pipeline_number = 4
+    elif "pipeline.5.V_kg" in state_dict_keys:
+        model_pipeline_number = 5
 
     model_ckpt["state_dict"][f"pipeline.{model_pipeline_number}.V_kg"] = model_ckpt["state_dict"][
         f"pipeline.{model_pipeline_number}.V_kg"

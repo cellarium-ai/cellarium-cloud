@@ -11,7 +11,7 @@ def benchmark_cas(gcs_config_path: str) -> None:
     :param gcs_config_path: Config file path on GCS.
     """
     import anndata
-    import neptune
+    import wandb
     import pandas as pd
     import yaml
     from cellarium.cas import CASClient
@@ -20,19 +20,12 @@ def benchmark_cas(gcs_config_path: str) -> None:
     with open(gcs_config_path, "r") as file:
         config_data = yaml.safe_load(file)
 
-    neptune_project = config_data["neptune_project"]
-    neptune_api_token = config_data["neptune_api_token"]
+    wandb_project = config_data["wandb_project"]
     benchmarking_data_paths = config_data["benchmark_data_paths"].split(",")
     model_name = config_data["model_name"]
     cas_api_token = config_data["cas_api_token"]
 
-    run = neptune.init_run(
-        project=neptune_project,
-        api_token=neptune_api_token,
-        name=f"benchmark-{model_name}",
-        tags=["benchmarking", model_name],
-    )
-    run["parameters"]
+
     cas_client = CASClient(api_token=cas_api_token)
 
     result_df = pd.DataFrame(columns=["top_1", "top_3", "top_5"])
@@ -51,8 +44,8 @@ def benchmark_cas(gcs_config_path: str) -> None:
             for i, match in enumerate(matches):
                 predicted_cell_types.append(match["cell_type"])
 
-            top_1 = 1 if ground_truth in predicted_cell_types[:1] else 0
             top_3 = 1 if ground_truth in predicted_cell_types[:3] else 0
+            top_1 = 1 if ground_truth in predicted_cell_types[:1] else 0
             top_5 = 1 if ground_truth in predicted_cell_types[:5] else 0
 
             new_row = pd.DataFrame(

@@ -17,6 +17,7 @@ trainer:
       every_n_epochs: 1
       save_top_k: -1
       save_last: true
+      filename: model
   logger:
     - class_path: lightning.pytorch.loggers.TensorBoardLogger
       init_args:
@@ -99,12 +100,34 @@ model:
           attr: model.var_names_g
           convert_fn: numpy.ndarray.tolist
 % endif
-% if use_filter:
+% if use_divide_by_scale:
+    - class_path: cellarium.ml.transforms.DivideByScale
+      init_args:
+        scale_g:
+          !CheckpointLoader
+          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/${tdigest_model_name}/lightning_logs/version_0/checkpoints/model.ckpt
+          attr: model.median_g
+          convert_fn: torch.Tensor.float
+        var_names_g:
+          !CheckpointLoader
+          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/${tdigest_model_name}/lightning_logs/version_0/checkpoints/model.ckpt
+          attr: model.var_names_g
+          convert_fn: numpy.ndarray.tolist
     - class_path: cellarium.ml.transforms.Filter
       init_args:
         filter_list:
           !FileLoader
-          file_path: ${filter_file_path}
+          file_path: gs://cellarium-file-system/curriculum/human_10x_only_exclude_benchmarking_2024_05_16_ingest/models/shared_meta/filters/${filter_file_name}
+          loader_fn: pandas.read_csv
+          attr: original_feature_id
+          convert_fn: pandas.Series.to_list
+% endif
+% if use_filter and not use_divide_by_scale:
+    - class_path: cellarium.ml.transforms.Filter
+      init_args:
+        filter_list:
+          !FileLoader
+          file_path: gs://cellarium-file-system/curriculum/human_10x_only_exclude_benchmarking_2024_05_16_ingest/models/shared_meta/filters/${filter_file_name}
           loader_fn: pandas.read_csv
           attr: original_feature_id
           convert_fn: pandas.Series.to_list
