@@ -10,6 +10,7 @@ from casp.services import db
 class CellIngestInfo(db.Base):
     cas_ingest_id = sa.Column(sa.String(255), unique=True, nullable=False, primary_key=True)
     dataset_id = sa.Column(sa.String(255), nullable=False)
+    dataset_version_id = sa.Column(sa.String(255), nullable=True)
     uns_metadata = sa.Column(JSONB, nullable=False, default={})
     ingest_timestamp = sa.Column(sa.DateTime, default=datetime.datetime.utcnow)
 
@@ -44,8 +45,8 @@ class CellInfo(db.Base):
         sa.String(255), sa.ForeignKey(f"{CellIngestInfo.__tablename__}.cas_ingest_id"), nullable=False, index=True
     )
     cas_ingest = relationship("CellIngestInfo", backref=backref("cell_info", uselist=False))
-    original_cell_id = sa.Column(sa.String(255), nullable=False)
-    obs_metadata_extra = sa.Column(JSONB, nullable=False, default={})
+    original_cell_id = sa.Column(sa.String(255), nullable=True)
+    obs_metadata_extra = sa.Column(JSONB, nullable=True, default={})
     is_primary_data = sa.Column(sa.Boolean(), default=True, nullable=True, index=True)
     donor_id = sa.Column(sa.String(255), nullable=True)
     # Cell Features
