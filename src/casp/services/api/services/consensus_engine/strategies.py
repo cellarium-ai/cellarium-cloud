@@ -179,18 +179,18 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyProtocol):
             total_weight += weight
             total_neighbors += 1
 
-            # Add weight to the neighbor's ontology ID
-            scores_dict[neighbor_cell_type_ontology_id] += weight
-
             try:
-                ancestor_ontology_ids = self.cell_ontology_resource.ancestors_dictionary[neighbor_cell_type_ontology_id]
+                # Add weight to the neighbor's ontology ID
+                scores_dict[neighbor_cell_type_ontology_id] += weight
             except KeyError:
                 total_neighbors_unrecognized += 1
                 continue
+            else:
+                ancestor_ontology_ids = self.cell_ontology_resource.ancestors_dictionary[neighbor_cell_type_ontology_id]
 
-            # Propagate the weight to all ancestors (consistent subgraph of the cell type ontology)
-            for ancestor in ancestor_ontology_ids:
-                scores_dict[ancestor] += weight
+                # Propagate the weight to all ancestors (consistent subgraph of the cell type ontology)
+                for ancestor in ancestor_ontology_ids:
+                    scores_dict[ancestor] += weight
 
         # Normalize the weights
         scores_dict = {k: v / total_weight for k, v in scores_dict.items()}
