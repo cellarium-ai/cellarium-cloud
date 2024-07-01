@@ -5,28 +5,32 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from casp.services import settings
 
-# initialize Cloud SQL Python Connector object
-connector = Connector()
 
+class PrivateConnectionProvider:
+    def __init__(self, connector: Connector):
+        self.connector = connector
 
-def get_private_connection() -> pg8000.dbapi.Connection:
-    conn: pg8000.dbapi.Connection = connector.connect(
-        instance_connection_string=settings.DB_CONNECTION_NAME,
-        driver="pg8000",
-        user=settings.DB_USER,
-        password=settings.DB_PASSWORD,
-        db=settings.DB_NAME,
-        enable_iam_auth=False,
-        ip_type=IPTypes.PRIVATE,
-    )
-    return conn
+    def get_private_connection(self) -> pg8000.dbapi.Connection:
+        conn: pg8000.dbapi.Connection = self.connector.connect(
+            instance_connection_string=settings.DB_CONNECTION_NAME,
+            driver="pg8000",
+            user=settings.DB_USER,
+            password=settings.DB_PASSWORD,
+            db=settings.DB_NAME,
+            enable_iam_auth=False,
+            ip_type=IPTypes.PRIVATE,
+        )
+        return conn
 
 
 def create_engine() -> sqlalchemy.engine.base.Engine:
     if settings.DB_PRIVATE_IP is not None:
+        # initialize Cloud SQL Python Connector object
+        connector = Connector()
+
         return sqlalchemy.create_engine(
             url="postgresql+pg8000://",
-            creator=get_private_connection,
+            creator=PrivateConnectionProvider(connector=connector).get_private_connection,
             pool_size=settings.DB_CONNECTION_POOL_SIZE,
             max_overflow=settings.DB_CONNECTION_POOL_MAX_OVERFLOW,
             pool_timeout=settings.DB_CONNECTION_POOL_TIMEOUT,
