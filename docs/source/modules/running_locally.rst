@@ -17,7 +17,7 @@ Once you have the above installed, you can run the services locally using the fo
 
 To check the API methods that exist and their documentation, you can visit `API docs page <http://localhost:8000/api/docs>`_
 
-Most of the methods will reuqire you to be authenticated. To do this, you'd need to deploy Admin service:
+Most of the methods will require you to be authenticated. To do this, you'd need to deploy Admin service:
 
 .. code-block:: bash
 
