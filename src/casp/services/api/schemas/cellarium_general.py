@@ -11,7 +11,7 @@ class CASModel(BaseModel):
     embedding_dimension: int = Field(example=512)
 
     # Set the default value for description if it is provided as None
-    @validator('description', pre=True, always=True)
+    @validator("description", pre=True, always=True)
     def set_description_default(cls, v):
         return v or ""
 
