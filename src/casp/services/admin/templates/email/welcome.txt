@@ -11,7 +11,7 @@ For questions or if you did not request this key, please email the Cell Annotati
 Documentation can be found at:	https://cellarium-cas.readthedocs.io/en/latest
 Sample code can be found at:	  https://github.com/cellarium-ai/cellarium-cas/blob/main/README.md
 Python client can be installed via pip:
-$ pip install git+https://github.com/broadinstitute/cell-annotation-service-client.git
+$ pip install cellarium-cas
 
 Please do not hesitate to reach out with any questions or feedback!
 
