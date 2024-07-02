@@ -1,6 +1,9 @@
 import datetime
 import typing as t
 
+from packaging.version import Version
+
+from casp.services import settings
 from casp.services.api import schemas
 from casp.services.api.data_manager import CellariumGeneralDataManager
 from casp.services.api.services import exceptions
@@ -22,6 +25,18 @@ class CellariumGeneralService:
         :return: Object with CAS application information
         """
         return self.cellarium_general_dm.get_application_info()
+
+    def validate_client_version(client_version: str):
+        """
+        Check whether the client version is new enough to work with the server
+
+        :param client_version: Client version string
+        """
+        try:
+            if Version(client_version) < Version(settings.MIN_CLIENT_VERSION):
+                raise exceptions.ClientVersionTooOldException(client_version=client_version)
+        except ValueError:
+            raise exceptions.InvalidClientVersionException(client_version=client_version)
 
     def feedback_opt_out(self, user: models.User) -> models.User:
         """

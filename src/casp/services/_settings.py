@@ -34,6 +34,7 @@ class AllEnvSettings(BaseSettings):
     LOG_LEVEL: str = "info"
     LOG_CONFIG: str = f"{SERVICES_DIR}/log_config.yaml"
     LOG_AS_JSON: bool = os.environ.get("LOG_AS_JSON", True)
+    MIN_CLIENT_VERSION: str = "1.4.0"
 
     # Sentry
     SENTRY_DSN: str = os.environ.get("SENTRY_DSN")

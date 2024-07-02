@@ -1,5 +1,7 @@
 from fastapi import status
 
+from casp.services import settings
+
 
 class APIBaseException(Exception):
     """Base class for all API service exceptions"""
@@ -29,3 +31,20 @@ class CellMetadataColumnDoesNotExist(InvalidInputError):
 
 class QuotaExceededException(APIBaseException):
     http_code: int = status.HTTP_429_TOO_MANY_REQUESTS
+
+
+class InvalidClientVersionException(APIBaseException):
+    http_code: int = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, client_version: str):
+        super().__init__(f"Client version {client_version} is not a valid version string")
+
+
+class ClientVersionTooOldException(APIBaseException):
+    http_code: int = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, client_version: str):
+        super().__init__(
+            f"Client version {client_version} is older than the minimum version for this server ({settings.MIN_CLIENT_VERSION}). "
+            f"Please update to the latest version using 'pip install cellarium-cas --upgrade'."
+        )
