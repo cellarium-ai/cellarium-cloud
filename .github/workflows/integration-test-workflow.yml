@@ -81,6 +81,25 @@ jobs:
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
           add-latest-tag: false
       
+      - id: deploy-admin
+        name: Deploy the CAS Admin Service
+        uses: ./.github/actions/docker-deploy
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-tag: ${{ env.IMAGE_TAG }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          deployment-type: cas-admin
+          deployment-prefix: integration-test
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
+          deployment-sql-instance: ${{ inputs.sql-instance }}
+          deployment-vpc-connector: ${{ inputs.vpc-connector }}
+          deployment-config-secret: ${{ inputs.config-secret }}
+          deployment-region: ${{ inputs.region }}
+          deployment-flavor: default
+
       - id: deploy-model
         name: Deploy the CAS Model Inference Service
         uses: ./.github/actions/docker-deploy
