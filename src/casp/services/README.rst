@@ -3,6 +3,10 @@ Cellarium Cloud Services
 
 This section provides an overview of the various services within the Cellarium Cloud platform.
 
+..
+    Should the db service be in this list?  Is it a service in the same way that the other three are?
+    I know we still need a section for db-specific info, but I don't know if we have a db service so
+    much as we have a database and a bunch of shared code for accessing it.
 
 Below is the list of individual services:
 
@@ -23,6 +27,9 @@ The service must also be authenticated with Google credentials, either by settin
 - ``GOOGLE_APPLICATION_CREDENTIALS`` - path to the service account json credentials file
 - Running in a Google environment (e.g. Cloud Run) with the service account attached to the service, in which case the service account is
 used as the identity running the servce.
+
+..
+    Maybe a dumb question, but which services are Cromwell executable tasks?  Also, is that technically a service?
 
 There are 2 CAS service types:
 

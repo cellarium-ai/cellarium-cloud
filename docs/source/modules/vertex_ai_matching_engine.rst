@@ -1,18 +1,26 @@
 Vertex AI Matching Engine
 =========================
 
+..
+    I'm not 100% sure this is entirely accurate, but I made my best attempt
+
+Vertex AI is a Google Cloud service that provides a variety of machine learning tools. One of these tools is the Matching Engine, 
+which is a vector similarity search service. The Matching Engine is used in CAS to search for cells types that are close to
+the user's submitted cells.
+
 Summary - The good, the bad and the ugly
 ----------------------------------------
 
 Good
 ^^^^
-- Autoscaling (min/max nodes) is a nice feature (assuming it works)
+- Autoscaling (min/max nodes) is a nice feature (when it works)
 - Has the ability to restrict matches based on user-defined labels on the vectors
 - Potentially supports incremental updates
 
 Bad
 ^^^
 - Index creation, even for 500 cells, took quite a long time (like 30 minutes!)
+- Performance and reliability with just one node is a bit inconsistent
 
 Ugly
 ^^^^
