@@ -102,6 +102,7 @@ class AllEnvSettings(BaseSettings):
     SENDGRID_API_KEY: str = os.environ.get("SENDGRID_API_KEY", "")
     FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "cas-support@broadinstitute.org")
     FEEDBACK_FORM_BASE_URL: str = os.environ.get("FEEDBACK_FORM_BASE_URL")
+    DB_LOG_QUERIES: bool = os.environ.get("DB_LOG_QUERIES", False)
 
 
 class DevSettings(AllEnvSettings):

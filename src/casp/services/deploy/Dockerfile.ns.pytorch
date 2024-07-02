@@ -1,4 +1,4 @@
-FROM anibali/pytorch:2.0.0-nocuda
+FROM anibali/pytorch:2.0.1-nocuda
 
 WORKDIR /app
 USER root
