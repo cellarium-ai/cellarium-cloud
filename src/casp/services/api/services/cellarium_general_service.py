@@ -26,7 +26,7 @@ class CellariumGeneralService:
         """
         return self.cellarium_general_dm.get_application_info()
 
-    def validate_client_version(client_version: str):
+    def validate_client_version(self, client_version: str):
         """
         Check whether the client version is new enough to work with the server
 

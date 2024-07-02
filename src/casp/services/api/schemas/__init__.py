@@ -18,6 +18,7 @@ from casp.services.api.schemas.cell_operations import (  # noqa
 from casp.services.api.schemas.cellarium_general import (  # noqa
     ApplicationInfo,
     CASModel,
+    ClientVersionInput,
     FeatureSchemaInfo,
     UserInfo,
     UserQuota,

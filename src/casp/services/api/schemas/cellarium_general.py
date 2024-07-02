@@ -39,3 +39,7 @@ class UserQuota(BaseModel):
     quota: int
     remaining_quota: int
     quota_reset_date: datetime.datetime
+
+
+class ClientVersionInput(BaseModel):
+    client_version: str
