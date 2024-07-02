@@ -10,6 +10,7 @@ class CASModel(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     model_name = sa.Column(sa.String(255), unique=True, nullable=False)
     model_file_path = sa.Column(sa.String(255), unique=False, nullable=False)
+    description = sa.Column(sa.String(511), nullable=True)
     embedding_dimension = sa.Column(sa.Integer, nullable=False)
     admin_use_only = sa.Column(sa.Boolean(), default=True, nullable=False)
     schema_name = sa.Column(sa.String(255), default=settings.DEFAULT_SCHEMA_NAME, nullable=False)
@@ -26,6 +27,7 @@ class CASModel(db.Base):
 class CASMatchingEngineIndex(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     index_name = sa.Column(sa.String(255), unique=True, nullable=False)
+    description = sa.Column(sa.String(511), nullable=True)
     embedding_dimension = sa.Column(sa.Integer, nullable=False)
     endpoint_id = sa.Column(sa.String(255), unique=False, nullable=False)
     deployed_index_id = sa.Column(sa.String(255), unique=True, nullable=True)
