@@ -26,7 +26,7 @@ matplotlib
 pandas
 google-cloud-run==0.7.1
 scikit-learn
-cellarium-ml @ git+https://github.com/cellarium-ai/cellarium-ml.git@0.0.7
+cellarium-ml==0.0.7
 lightning==2.2.0
 db-dtypes==1.1.1
 Mako==1.2.4

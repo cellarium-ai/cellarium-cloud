@@ -1,7 +1,7 @@
 """Update cell related models before new ingest
 
 Revision ID: 51a4ad2bb22d
-Revises: 0045d3785268
+Revises: 05b03bfc2e69
 Create Date: 2024-06-27 21:00:54.062701
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "51a4ad2bb22d"
-down_revision = "0045d3785268"
+down_revision = "05b03bfc2e69"
 branch_labels = None
 depends_on = None
 
@@ -23,7 +23,6 @@ def upgrade() -> None:
         "cells_cellinfo", "obs_metadata_extra", existing_type=postgresql.JSONB(astext_type=sa.Text()), nullable=True
     )
     op.add_column("cells_ingestinfo", sa.Column("dataset_version_id", sa.String(length=255), nullable=True))
-    # ### end Alembic commands ###
 
 
 def downgrade() -> None:

@@ -350,12 +350,12 @@ class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
 
 def shorten_value_formatter(view, context, model, name) -> str:
     """
-    Shorten the value to 20 characters plus ellipsis or return `NULL` if None
+    Shorten the value to 20 characters plus ellipsis or return empty string if None
     """
     value = getattr(model, name)
 
     if value is None:
-        return "NULL"
+        return ""
 
     return value[:20] + "..." if len(value) > 20 else value
 
