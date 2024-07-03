@@ -100,7 +100,7 @@ class AllEnvSettings(BaseSettings):
     DEBUG: bool = False
     # Email settings
     SENDGRID_API_KEY: str = os.environ.get("SENDGRID_API_KEY", "")
-    FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "cas-support@broadinstitute.org")
+    FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "Cellarium CAS <no-reply@cellarium.ai>")
     FEEDBACK_FORM_BASE_URL: str = os.environ.get("FEEDBACK_FORM_BASE_URL")
     DB_LOG_QUERIES: bool = os.environ.get("DB_LOG_QUERIES", False)
 
