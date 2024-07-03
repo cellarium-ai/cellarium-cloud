@@ -61,8 +61,8 @@ class ModelInferenceService:
         cellarium_data_module = CellariumAnnDataDataModule.load_from_checkpoint(
             cellarium_checkpoint_file, dadc=adata, batch_size=adata.n_obs, num_workers=0
         )
-        cellarium_data_module.setup()
-        batch = next(iter(cellarium_data_module.train_dataloader()))
+        cellarium_data_module.setup(stage="predict")
+        batch = next(iter(cellarium_data_module.predict_dataloader()))
 
         cellarium_output_dict = cellarium_module(batch)
 
