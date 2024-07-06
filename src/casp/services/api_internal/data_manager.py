@@ -3,11 +3,14 @@ import typing as t
 from sqlalchemy.exc import IntegrityError
 
 from casp.data_manager import BaseDataManager
-from casp.services.api_internal import exceptions
+from casp.services.api_internal import exceptions, schemas
 from casp.services.db import models
 
 
 class EmbeddingModelRegistryDataManager(BaseDataManager):
+    class DoesNotExist(Exception):
+        pass
+
     def create_embedding_model(
         self, model_name: str, model_file_path: str, embedding_dimension: int, bq_dataset_name: str, schema_name: str
     ) -> models.CASModel:
@@ -56,7 +59,6 @@ class EmbeddingModelRegistryDataManager(BaseDataManager):
         :param embedding_dimension: Embedding dimension of the index and the model
         :param num_neighbors: Number of neighbors that will be returned by the index
         """
-
         try:
             with self.system_data_db_session_maker.begin() as session:
                 model = session.query(models.CASModel).filter_by(model_name=model_name).first()
@@ -78,3 +80,18 @@ class EmbeddingModelRegistryDataManager(BaseDataManager):
             raise exceptions.IndexUniqueConstraintError(f"`{index_name}` already present in the database") from e
 
         return session.query(models.CASMatchingEngineIndex).filter_by(index_name=index_name).first()
+
+    def update_space_vector_search_index(self, index_name, index_update_schema_item: schemas.CASIndexInUpdate):
+        with self.system_data_db_session_maker.begin() as session:
+            db_item = (
+                session.query(models.CASMatchingEngineIndex)
+                .filter(models.CASMatchingEngineIndex.index_name == index_name)
+                .first()
+            )
+            if db_item is None:
+                raise self.DoesNotExist()
+
+            for key, value in index_update_schema_item.dict(exclude_unset=True).items():
+                setattr(db_item, key, value)
+
+            return schemas.CASIndexOut.from_orm(db_item)

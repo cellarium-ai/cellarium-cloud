@@ -11,8 +11,8 @@ from google.cloud import bigquery
 from google.oauth2.service_account import Credentials
 from smart_open import open
 
-from casp.bq_scripts import constants, prepare_all_cell_types, prepare_measured_genes_info
 from casp.data_manager import sql
+from casp.scripts.bq_ops import constants, prepare_all_cell_types, prepare_measured_genes_info
 from casp.services import utils
 
 

@@ -2,7 +2,7 @@ import typing as t
 
 from google.cloud import bigquery
 
-from casp.bq_scripts import constants
+from casp.scripts.bq_ops import constants
 
 SQL_PRECALCULATE_TOTAL_MRNA_UMIS_FORMAT = f"""
     UPDATE `{{project}}.{{dataset}}.cas_cell_info` ci

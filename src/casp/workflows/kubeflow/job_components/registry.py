@@ -9,10 +9,11 @@ def register_embedding_model(gcs_config_path: str) -> None:
 
     :param gcs_config_path: GCS path to the config file with the model information
     """
-    import yaml
     import json
     import typing as t
+
     import requests
+    import yaml
     from smart_open import open
 
     # from casp.workflows.kubeflow.job_components_library.clients import RegistryClient

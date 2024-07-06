@@ -6,7 +6,7 @@ import unittest
 
 import numpy
 
-from casp.bq_scripts import random_bq_to_anndata as rand_bq
+from casp.scripts.bq_ops import random_bq_to_anndata as rand_bq
 
 
 class Expected:

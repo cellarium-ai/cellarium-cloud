@@ -3,13 +3,10 @@ from kfp import dsl
 
 @dsl.component()
 def create_avro_files(gcs_config_path: str):
-    import os
-    import tempfile
-
     import yaml
     from smart_open import open
 
-    from casp.bq_scripts.anndata_to_avro import create_ingest_files
+    from casp.scripts.bq_ops.anndata_to_avro import create_ingest_files
 
     with open(gcs_config_path, mode="r") as file:
         config_data = yaml.safe_load(file)
@@ -49,7 +46,7 @@ def ingest_data(gcs_config_path: str):
     import yaml
     from smart_open import open
 
-    from casp.bq_scripts import ingest_data_to_bq
+    from casp.scripts.bq_ops import ingest_data_to_bq
 
     with open(gcs_config_path, mode="r") as file:
         config_data = yaml.safe_load(file)
@@ -74,7 +71,7 @@ def precalculate_fields(gcs_config_path: str):
     import yaml
     from smart_open import open
 
-    from casp.bq_scripts import precalculate_fields
+    from casp.scripts.bq_ops import precalculate_fields
 
     with open(gcs_config_path, mode="r") as file:
         config_data = yaml.safe_load(file)
@@ -92,7 +89,7 @@ def prepare_extract(gcs_config_path: str):
     import yaml
     from smart_open import open
 
-    from casp.bq_scripts import prepare_extract
+    from casp.scripts.bq_ops import prepare_extract
 
     with open(gcs_config_path, mode="r") as file:
         config_data = yaml.safe_load(file)
@@ -125,7 +122,7 @@ def extract(gcs_config_path: str):
     import yaml
     from smart_open import open
 
-    from casp.bq_scripts import extract_bins_in_parallel_workers
+    from casp.scripts.bq_ops import extract_bins_in_parallel_workers
 
     with open(gcs_config_path, mode="r") as file:
         config_data = yaml.safe_load(file)

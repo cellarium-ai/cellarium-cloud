@@ -7,8 +7,8 @@ api_internal_router = APIRouter()
 service = services.EmbeddingModelRegistryService()
 
 
-@api_internal_router.post("/cas-model", response_model=schemas.CASModelOut, status_code=201)
-async def create_embedding_model(model: schemas.CASModelIn):
+@api_internal_router.post(path="/cas-model", response_model=schemas.CASModelOut, status_code=201)
+async def create_embedding_model(model: schemas.CASModelInCreate):
     return service.create_embedding_model(
         model_name=model.model_name,
         model_file_path=model.model_file_path,
@@ -18,8 +18,8 @@ async def create_embedding_model(model: schemas.CASModelIn):
     )
 
 
-@api_internal_router.post("/cas-index", response_model=schemas.CASIndexOut, status_code=201)
-async def create_index(index: schemas.CASIndexIn):
+@api_internal_router.post(path="/cas-index", response_model=schemas.CASIndexOut, status_code=201)
+async def create_index(index: schemas.CASIndexInCreate):
     return service.create_index(
         model_name=index.model_name,
         index_name=index.index_name,
@@ -28,3 +28,8 @@ async def create_index(index: schemas.CASIndexIn):
         endpoint_id=index.endpoint_id,
         embedding_dimension=index.embedding_dimension,
     )
+
+
+@api_internal_router.patch(path="cas-index/{index_name}", response_model=schemas.CASIndexOut, status_code=200)
+async def update_index(index_name, item: schemas.CASIndexInUpdate):
+    return service.update_index(index_name=index_name, index_schema_item=item)

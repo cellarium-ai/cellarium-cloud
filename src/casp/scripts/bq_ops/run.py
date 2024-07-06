@@ -1,7 +1,7 @@
 import typer
 from typing_extensions import Annotated
 
-from casp import bq_scripts
+from casp.scripts import bq_ops
 
 typer_app = typer.Typer()
 
@@ -44,7 +44,7 @@ def bq_ops_create_ingest_files(
 
         .. code-block:: console
 
-            python casp/bq_scripts/run.py bq-ops-create-ingest-files \\
+            python casp/scripts/bq_ops/run.py bq-ops-create-ingest-files \\
                 --gcs-bucket-name my-bucket \\
                 --gcs-file-path path/to/input/file \\
                 --uns-meta-keys key1,key2,key3 \\
@@ -61,7 +61,7 @@ def bq_ops_create_ingest_files(
     else:
         uns_meta_keys = None
 
-    bq_scripts.create_ingest_files(
+    bq_ops.create_ingest_files(
         gcs_bucket_name=gcs_bucket_name,
         gcs_file_path=gcs_file_path,
         uns_meta_keys=uns_meta_keys,
@@ -85,7 +85,7 @@ def bq_ops_ingest_data_to_bq(
     max_retry_attempts: Annotated[int, typer.Option()] = 5,
 ):
     """
-    Ingest files prepared by `bq_scripts.anndata_to_avro` script. If error happens during ingest, the script would retry
+    Ingest files prepared by `bq_ops.anndata_to_avro` script. If error happens during ingest, the script would retry
     ``max_retry_attempts`` times.
 
     :param project_id: The ID of the Google Cloud project where the BigQuery dataset is hosted.
@@ -103,7 +103,7 @@ def bq_ops_ingest_data_to_bq(
 
         .. code-block:: console
 
-            python casp/bq_scripts/run.py bq-ops-ingest-data-to-bq \\
+            python casp/scripts/bq_ops/run.py bq-ops-ingest-data-to-bq \\
                 --project-id my-gcp-project \\
                 --gcs-bucket-name my_bucket \\
                 --dataset my_dataset \\
@@ -111,7 +111,7 @@ def bq_ops_ingest_data_to_bq(
                 --gcs-error-file-path path/to/error/file.csv \\
                 --max-retry-attempts 5
     """
-    bq_scripts.ingest_data_to_bq(
+    bq_ops.ingest_data_to_bq(
         project_id=project_id,
         gcs_bucket_name=gcs_bucket_name,
         dataset=dataset,
@@ -129,7 +129,7 @@ def bq_ops_precalculate_fields(
 ) -> None:
     """
     Precalculate fields in BigQuery. You can find more details on which particular fields can be precalculated in
-    ``casp/bq_scripts/precalculate_fields.py``.
+    ``casp/scripts/bq_ops/precalculate_fields.py``.
 
     :param project_id: The ID of the Google Cloud project where the BigQuery dataset is hosted.
     :param dataset: The ID of the dataset in BigQuery where the data is hosted.
@@ -140,13 +140,13 @@ def bq_ops_precalculate_fields(
 
         .. code-block:: console
 
-            python casp/bq_scripts/run.py bq-ops-precalculate-fields \\
+            python casp/scripts/bq_ops/run.py bq-ops-precalculate-fields \\
                 --project-id my-gcp-project \\
                 --dataset my_dataset \\
                 --fields total_mrna_umis
     """
     fields = fields.split(",")
-    bq_scripts.precalculate_fields(project=project_id, dataset=dataset, fields=fields)
+    bq_ops.precalculate_fields(project=project_id, dataset=dataset, fields=fields)
 
 
 @typer_app.command()
@@ -242,7 +242,7 @@ def bq_ops_prepare_extract(
 
         .. code-block:: console
 
-            python casp/bq_scripts/run.py bq-ops-prepare-extract \\
+            python casp/scripts/bq_ops/run.py bq-ops-prepare-extract \\
                 --project-id my-gcp-project \\
                 --dataset my_dataset \\
                 --extract-table-prefix my_prefix \\
@@ -256,7 +256,7 @@ def bq_ops_prepare_extract(
                 --ci-partition-bin-count 40000 \\
                 --ci-partition-size 10
     """
-    bq_scripts.prepare_extract(
+    bq_ops.prepare_extract(
         project_id=project_id,
         dataset=dataset,
         extract_table_prefix=extract_table_prefix,
@@ -305,7 +305,7 @@ def bq_ops_extract_bins_in_parallel_workers(
 
         .. code-block:: console
 
-            python casp/bq_scripts/run.py bq-ops-extract-bins-in-parallel-workers \\
+            python casp/scripts/bq_ops/run.py bq-ops-extract-bins-in-parallel-workers \\
                 --project-id my-gcp-project \\
                 --dataset my_dataset \\
                 --extract-table-prefix my_prefix \\
@@ -315,7 +315,7 @@ def bq_ops_extract_bins_in_parallel_workers(
                 --extract-bucket-path path/to/extract \\
                 --obs-columns-to-include "c.cell_type,c.donor_id,c.sex,i.dataset_id"
     """
-    bq_scripts.extract_bins_in_parallel_workers(
+    bq_ops.extract_bins_in_parallel_workers(
         project_id=project_id,
         dataset=dataset,
         extract_table_prefix=extract_table_prefix,

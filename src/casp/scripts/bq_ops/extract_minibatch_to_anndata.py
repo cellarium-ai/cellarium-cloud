@@ -15,14 +15,13 @@ from pathlib import Path
 import anndata as ad
 import numpy as np
 import pandas as pd
-import typer
 from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
 from google.oauth2.service_account import Credentials
 from scipy.sparse import coo_matrix
 
-from casp.bq_scripts import constants
 from casp.data_manager import sql
+from casp.scripts.bq_ops import constants
 from casp.services import utils
 
 
@@ -347,7 +346,7 @@ def extract_bin(
     obs_columns_to_include: t.List[str],
 ) -> None:
     """
-    Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
+    Wrapper task `casp.bq_ops.extract_minibatch_to_anndata` which processes exactly
     one bin at a time and saves the output anndata file to a GCS bucket.
 
     :param project_id: Google Cloud Project id
@@ -397,7 +396,7 @@ def extract_bins_in_parallel_workers(
     obs_columns_to_include: str,
 ) -> None:
     """
-    Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
+    Wrapper task `casp.bq_ops.extract_minibatch_to_anndata` which processes exactly
     one bin at a time and saves the output anndata file to a GCS bucket.
 
     :param project_id: Google Cloud Project id

@@ -5,7 +5,6 @@ import multiprocessing
 import os
 import typing as t
 
-from casp import bq_scripts
 from casp.services import utils
 
 
@@ -19,7 +18,7 @@ def extract_task(
     obs_columns_to_include: t.List[str],
 ) -> None:
     """
-    Wrapper task `casp.bq_scripts.extract_minibatch_to_anndata` which processes exactly
+    Wrapper task `casp.bq_ops.extract_minibatch_to_anndata` which processes exactly
     one bin at a time and saves the output anndata file to a GCS bucket.
 
     :param dataset: BigQuery Dataset
@@ -38,7 +37,7 @@ def extract_task(
     """
     credentials, project_id = utils.get_google_service_credentials()
     try:
-        bq_scripts.extract_minibatch_to_anndata(
+        casp.scripts.bq_scripts.extract_minibatch_to_anndata(
             project=project_id,
             dataset=dataset,
             extract_table_prefix=extract_table_prefix,
@@ -70,9 +69,9 @@ def main(
 ) -> None:
     """
     Extract anndatafiles from bigquery extract tables. Run extract tasks concurrently: 1 task per CPU core
-    This is a wrapper around `casp.bq_scripts.extract_minibatch_to_anndata`
+    This is a wrapper around `casp.bq_ops.extract_minibatch_to_anndata`
     Features:
-    1. Concurrently activate `casp.bq_scripts.extract_minibatch_to_anndata` multiple times (wrapped script)
+    1. Concurrently activate `casp.bq_ops.extract_minibatch_to_anndata` multiple times (wrapped script)
     2. Upload script output to the bucket (wrapper after)
 
     :param dataset: BigQuery Dataset

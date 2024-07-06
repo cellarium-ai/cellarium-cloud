@@ -8,7 +8,7 @@ from google.api_core.exceptions import Forbidden
 from google.cloud import bigquery
 from smart_open import open
 
-from casp.bq_scripts import create_bigquery_objects
+from casp.scripts.bq_ops import create_bigquery_objects
 from casp.services import utils
 
 MAX_RETRY_ATTEMPTS = 5
@@ -82,7 +82,7 @@ def ingest_data_to_bq(
     max_retry_attempts: int = MAX_RETRY_ATTEMPTS,
 ):
     """
-    Ingest files prepared by `bq_scripts.anndata_to_avro` script. If error happens during ingest, the script would retry
+    Ingest files prepared by `bq_ops.anndata_to_avro` script. If error happens during ingest, the script would retry
     ``max_retry_attempts`` times.
 
     :param project_id: The ID of the Google Cloud project where the BigQuery dataset is hosted.

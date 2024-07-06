@@ -6,7 +6,7 @@ import time
 from google.api_core.exceptions import Forbidden
 from google.cloud import bigquery
 
-from casp.bq_scripts import create_bigquery_objects, ingest_data_to_bq
+from casp.scripts.bq_ops import create_bigquery_objects, ingest_data_to_bq
 from casp.services import utils
 
 
@@ -34,10 +34,10 @@ def get_avro_prefixes(bucket_name, gcs_stage_dir):
 def main(dataset: str, gcs_bucket_name: str, gcs_stage_dir: str, delete_ingest_files: bool = False):
     """
     Ingest previously create ingest files to BigQuery.
-    This is a wrapper around `casp.bq_scripts.ingest_data_to_bq`
+    This is a wrapper around `casp.bq_ops.ingest_data_to_bq`
     Features:
     1. Create BQ table if it doesn't exist yet (wrapper before)
-    2. Activate `casp.bq_scripts.ingest_data_to_bq` with up to 5 attempts with delays
+    2. Activate `casp.bq_ops.ingest_data_to_bq` with up to 5 attempts with delays
         if unsuccessful (wrapped script)
     3. Optionally remove ingest file directory from the bucket (wrapper after)
 

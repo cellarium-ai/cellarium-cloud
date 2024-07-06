@@ -42,6 +42,6 @@ def create_job(
         # service_account=machine_spec.get("service_account", ""),
         service_account=service_account,
         boot_disk_size_gb=machine_spec.get("boot_disk_size_gb", 100),
-        env=machine_spec.get("env", None)
+        env=machine_spec.get("env", None),
     )
     return lambda: job(gcs_config_path=gcs_config_path)

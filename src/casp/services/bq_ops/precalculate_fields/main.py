@@ -1,6 +1,6 @@
 import argparse
 
-from casp.bq_scripts import precalculate_fields
+from casp.scripts.bq_ops import precalculate_fields
 
 
 def main(dataset: str, fields_str: str):

@@ -2,7 +2,7 @@ import argparse
 import os
 import typing as t
 
-from casp.bq_scripts import anndata_to_avro
+from casp.scripts.bq_ops import anndata_to_avro
 from casp.services import utils
 
 
@@ -18,10 +18,10 @@ def main(
 ) -> None:
     """
     Create ingest files that can be read by BigQuery for data ingestion.
-    This is a wrapper around `casp.bq_scripts.anndata_to_avro`
+    This is a wrapper around `casp.bq_ops.anndata_to_avro`
     Features:
     1. Download anndata file from the specified bucket location (wrapper before logic)
-    2. Activate `casp.bq_scripts.anndata_to_avro` script (wrapped script)
+    2. Activate `casp.bq_ops.anndata_to_avro` script (wrapped script)
     3. Upload all outputs from the script to the specified bucket (wrapper after logic)
 
     :param gcs_bucket_name: Working bucket name

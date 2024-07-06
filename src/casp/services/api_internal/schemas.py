@@ -5,7 +5,11 @@ from pydantic import BaseModel, Field
 from casp.services import settings
 
 
-class CASModelIn(BaseModel):
+def convert_to_optional(schema):
+    return {k: t.Optional[v] for k, v in schema.__annotations__.items()}
+
+
+class CASModelInCreate(BaseModel):
     model_name: str = Field(example="my_model")
     model_file_path: str = Field(example="gs://my_bucket/my_model")
     embedding_dimension: int = Field(example=512)
@@ -18,7 +22,7 @@ class CASModelIn(BaseModel):
         orm_mode = True
 
 
-class CASModelOut(CASModelIn):
+class CASModelOut(CASModelInCreate):
     id: int = Field(example=1)
     bq_dataset_name: str = Field(example="my_dataset")
     schema_name: str = Field(example="my_schema_name")
@@ -38,5 +42,15 @@ class CASIndexOut(BaseModel):
         orm_mode = True
 
 
-class CASIndexIn(CASIndexOut):
+class CASIndexInCreate(CASIndexOut):
     model_name: str = Field(example="my_model")
+
+
+class CASIndexInUpdate(BaseModel):
+    num_neighbors: t.Optional[int] = Field(example=10)
+    endpoint_id: t.Optional[str] = Field(example="projects/1111111/locations/us-somewhere/indexEndpoints/11123212")
+    embedding_dimension: t.Optional[int] = Field(example=256)
+    deployed_index_id: t.Optional[str] = Field(example="my_deployed_index_id")
+
+    class Config:
+        orm_mode = True

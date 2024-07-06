@@ -1,11 +1,12 @@
-import requests
 import json
+import typing as t
+
+import requests
 
 
-class RegistryClient:
-
+class CellariumCloudInternalServiceClient:
+    @staticmethod
     def register_model(
-        self,
         model_name: str,
         model_file_path: str,
         embedding_dimension: int,
@@ -38,14 +39,14 @@ class RegistryClient:
         print(f"Status Code: {response.status_code}")
         print(f"Response Text: {response.text}")
 
+    @staticmethod
     def register_index(
-        self,
         model_name: str,
         index_name: str,
         num_neighbors: int,
-        deployed_index_id: str,
         endpoint_id: str,
         embedding_dimension: int,
+        deployed_index_id: t.Optional[str] = None,
     ):
         """
         Register an index in the Cellarium Cloud internal database using the API Internal server.
@@ -71,8 +72,27 @@ class RegistryClient:
             "is_grpc": True,
         }
         headers = {"Content-Type": "application/json"}
-        # Make the POST request with Basic Auth
         response = requests.post(url, data=json.dumps(data), headers=headers)
+
+        # Print the response
+        print(response.status_code)
+        print(response.text)
+
+    @staticmethod
+    def update_index_deployed_id(index_name: str, deployed_index_id: t.Optional[str]):
+        """
+        Update matching engine index deployed id in the admin db
+
+        :param index_name: Index name
+        :param deployed_index_id: Deployed index ID. If ``None``, db NULL will be applied.
+
+        :return: Dictionary with the response from the server
+        """
+        url = f"https://cas-api-internal-1-4-2-dev-vi7nxpvk7a-uc.a.run.app/api/cas-index/{index_name}"
+
+        data = {"deployed_index_id": deployed_index_id}
+        headers = {"Content-Type": "application/json"}
+        response = requests.patch(url, data=json.dumps(data), headers=headers)
 
         # Print the response
         print(response.status_code)

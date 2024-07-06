@@ -4,7 +4,7 @@ import typing as t
 
 from smart_open import open
 
-from casp.bq_scripts import prepare_all_cell_types, prepare_extract, prepare_measured_genes_info
+from casp.scripts.bq_ops import prepare_all_cell_types, prepare_extract, prepare_measured_genes_info
 from casp.services import utils
 
 
@@ -20,7 +20,7 @@ def main(
 ):
     """
     Prepare extract tables in BigQuery data repository.
-    This is just a straight wrapper around `casp.bq_scripts.prepare_extract` with only passing
+    This is just a straight wrapper around `casp.bq_ops.prepare_extract` with only passing
     credentials from the project settings.
 
     :param dataset: Working BigQuery Dataset

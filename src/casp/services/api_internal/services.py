@@ -1,3 +1,4 @@
+from casp.services.api_internal import schemas
 from casp.services.api_internal.data_manager import EmbeddingModelRegistryDataManager
 from casp.services.db import models
 
@@ -33,4 +34,11 @@ class EmbeddingModelRegistryService:
             endpoint_id=endpoint_id,
             embedding_dimension=embedding_dimension,
             num_neighbors=num_neighbors,
+        )
+
+    def update_index(
+        self, index_name: str, index_schema_item: schemas.CASIndexInUpdate
+    ) -> models.CASMatchingEngineIndex:
+        return self.data_manager.update_space_vector_search_index(
+            index_name=index_name, index_update_schema_item=index_schema_item
         )
