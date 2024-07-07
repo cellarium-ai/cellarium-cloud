@@ -11,7 +11,7 @@ from casp.services import settings, utils
 from casp.workflows.kubeflow import constants, machine_specs_utils
 
 PIPELINE_CONFIGS_TEMPLATE_PATH = f"{settings.CAS_DIR}/workflows/kubeflow/config_management/config_templates"
-AUTO_GENERATED_CONFIG_PREFIX = "ml-configs/auto-generated-pca-variations-3"
+AUTO_GENERATED_CONFIG_PREFIX = "ml-configs/auto-generated-benchmarking"
 CONFIG_BUCKET_PATH = f"gs://{settings.PROJECT_BUCKET_NAME}/{AUTO_GENERATED_CONFIG_PREFIX}"
 
 

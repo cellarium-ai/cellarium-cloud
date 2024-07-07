@@ -30,6 +30,6 @@ async def create_index(index: schemas.CASIndexInCreate):
     )
 
 
-@api_internal_router.patch(path="cas-index/{index_name}", response_model=schemas.CASIndexOut, status_code=200)
+@api_internal_router.patch(path="/cas-index/{index_name}", response_model=schemas.CASIndexOut, status_code=200)
 async def update_index(index_name, item: schemas.CASIndexInUpdate):
     return service.update_index(index_name=index_name, index_schema_item=item)

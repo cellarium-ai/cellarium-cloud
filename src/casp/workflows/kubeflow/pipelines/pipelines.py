@@ -245,15 +245,26 @@ def summary_stats_lr_train_pipeline(
     logistic_regression_train_task.after(summary_stats_train_task)
 
 
-@dsl.pipeline(name="benchmark_cas_parallel", description="Benchmarking CAS Parallel")
-def benchmark_cas_pipeline(pipeline_config_paths: t.List[str]):
-    with dsl.ParallelFor(pipeline_config_paths) as item:
-        benchmark_cas_op = create_job(
-            dsl_component=job_components.benchmarking.benchmark_cas,
-            component_name=constants.BENCHMARKING_COMPONENT_NAME,
-            gcs_config_path=item.benchmarking_gcs_config_path,
+@dsl.pipeline(name="generate_cas_outputs", description="Generate outputs from CAS by running on the set of datasets")
+def generate_cas_outputs_pipeline(generate_cas_outputs_config_paths: t.List[str]):
+    with dsl.ParallelFor(generate_cas_outputs_config_paths, parallelism=18) as item:
+        generate_cas_outputs_op = create_job(
+            dsl_component=job_components.benchmarking.generate_cas_outputs,
+            component_name=constants.GENERATE_CAS_OUTPUTS_COMPONENT_NAME,
+            gcs_config_path=item.generate_cas_outputs_gcs_config_path,
         )
-        _ = benchmark_cas_op()
+        _ = generate_cas_outputs_op()
+
+
+@dsl.pipeline(name="calculate_metrics", description="Calculate metrics for cas outputs")
+def calculate_metrics_pipeline(calculate_metrics_config_paths: t.List[str]):
+    with dsl.ParallelFor(calculate_metrics_config_paths) as item:
+        calculate_metrics_op = create_job(
+            dsl_component=job_components.benchmarking.calculate_metrics,
+            component_name=constants.CALCULATE_METRICS_COMPONENT_NAME,
+            gcs_config_path=item.calculate_metrics_gcs_config_path,
+        )
+        _ = calculate_metrics_op()
 
 
 @dsl.pipeline(name="bq_ops_create_avro_files", description="Create avro files for BigQuery ingest")

@@ -79,20 +79,19 @@ class CellariumCloudInternalServiceClient:
         print(response.text)
 
     @staticmethod
-    def update_index_deployed_id(index_name: str, deployed_index_id: t.Optional[str]):
+    def update_index_with_deployment_info(index_name: str, update_kwargs: t.Dict[str, t.Any]):
         """
         Update matching engine index deployed id in the admin db
 
         :param index_name: Index name
-        :param deployed_index_id: Deployed index ID. If ``None``, db NULL will be applied.
+        :param update_kwargs: Fields that need to be updated
 
         :return: Dictionary with the response from the server
         """
         url = f"https://cas-api-internal-1-4-2-dev-vi7nxpvk7a-uc.a.run.app/api/cas-index/{index_name}"
 
-        data = {"deployed_index_id": deployed_index_id}
         headers = {"Content-Type": "application/json"}
-        response = requests.patch(url, data=json.dumps(data), headers=headers)
+        response = requests.patch(url, data=json.dumps(update_kwargs), headers=headers)
 
         # Print the response
         print(response.status_code)

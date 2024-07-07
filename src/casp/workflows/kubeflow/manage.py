@@ -169,17 +169,32 @@ def summary_stats_and_logistic_regression_train(config_yaml_path: Annotated[str,
 
 
 @typer_app.command()
-def benchmark_cas(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+def generate_cas_outputs(config_yaml_path: Annotated[str, typer.Option()]) -> None:
     """
-    Run the benchmarking for CAS.
+    Run Generate CAS Outputs
 
     :param config_yaml_path: Path to the local YAML config file containing a list of configs for each run.
     """
-    config_paths = config_management.create_configs(config_yaml_path)
+    pipeline_as_components_kwargs = config_management.create_configs_pipelines_as_components(config_yaml_path)
     submit_pipeline(
-        pipelines.benchmark_cas_pipeline,
-        pipeline_display_name="benchmark_cas_parallel",
-        pipeline_kwargs={"pipeline_config_paths": config_paths},
+        pipelines.generate_cas_outputs_pipeline,
+        pipeline_display_name="generate_cas_outputs",
+        pipeline_kwargs=pipeline_as_components_kwargs,
+    )
+
+
+@typer_app.command()
+def calculate_metrics(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+    """
+    Run Calculate Metrics
+
+    :param config_yaml_path: Path to the local YAML config file containing a list of configs for each run.
+    """
+    pipeline_as_components_kwargs = config_management.create_configs_pipelines_as_components(config_yaml_path)
+    submit_pipeline(
+        pipelines.calculate_metrics_pipeline,
+        pipeline_display_name="calculate_metrics",
+        pipeline_kwargs=pipeline_as_components_kwargs,
     )
 
 

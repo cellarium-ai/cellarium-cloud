@@ -41,5 +41,3 @@ DUMMY_SPEC = {
     "accelerator_count": 4,
     "base_image": "dummy-docker.pkg.dev/dummy/dummy/dummy-image:dummy-tag",
 }
-
-from kfp.dsl.python_component import PythonComponent

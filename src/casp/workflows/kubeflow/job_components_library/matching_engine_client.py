@@ -114,7 +114,7 @@ class CustomMatchingEngineIndex(aiplatform.MatchingEngineIndex):
             id=deployed_index_id,
             index=index_name,
             display_name=display_name,
-            automatic_resources={"min_replica_count": 1, "max_replica_count": 4},
+            automatic_resources={"min_replica_count": 1, "max_replica_count": 1},
         )
 
         # Prepare deployment request
