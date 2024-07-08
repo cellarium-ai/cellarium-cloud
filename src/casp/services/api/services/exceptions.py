@@ -1,6 +1,6 @@
 from fastapi import status
 
-from casp.services import settings
+from casp.services import constants
 
 
 class APIBaseException(Exception):
@@ -45,6 +45,6 @@ class ClientVersionTooOldException(APIBaseException):
 
     def __init__(self, client_version: str):
         super().__init__(
-            f"Client version {client_version} is older than the minimum version for this server ({settings.MIN_CLIENT_VERSION}). "
+            f"Client version {client_version} is older than the minimum version for this server ({constants.MIN_CLIENT_VERSION}). "
             f"Please update to the latest version using 'pip install cellarium-cas --upgrade'."
         )

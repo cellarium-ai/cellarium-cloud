@@ -3,7 +3,7 @@ import typing as t
 
 from packaging.version import Version
 
-from casp.services import settings
+from casp.services import constants
 from casp.services.api import schemas
 from casp.services.api.data_manager import CellariumGeneralDataManager
 from casp.services.api.services import exceptions
@@ -15,8 +15,8 @@ class CellariumGeneralService:
     Cellarium General Service. Service for managing data and access to general Cellarium Cloud information.
     """
 
-    def __init__(self):
-        self.cellarium_general_dm = CellariumGeneralDataManager()
+    def __init__(self, cellarium_general_dm: CellariumGeneralDataManager = None):
+        self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
 
     def get_application_info(self) -> schemas.ApplicationInfo:
         """
@@ -33,7 +33,7 @@ class CellariumGeneralService:
         :param client_version: Client version string
         """
         try:
-            if Version(client_version) < Version(settings.MIN_CLIENT_VERSION):
+            if Version(client_version) < Version(constants.MIN_CLIENT_VERSION):
                 raise exceptions.ClientVersionTooOldException(client_version=client_version)
         except ValueError:
             raise exceptions.InvalidClientVersionException(client_version=client_version)
