@@ -26,15 +26,14 @@ class CellariumGeneralService:
         """
         return self.cellarium_general_dm.get_application_info()
 
-    def validate_client_version(self, client_version: str):
+    def validate_client_version(self, client_version: str) -> bool:
         """
         Check whether the client version is new enough to work with the server
 
         :param client_version: Client version string
         """
         try:
-            if Version(client_version) < Version(constants.MIN_CLIENT_VERSION):
-                raise exceptions.ClientVersionTooOldException(client_version=client_version)
+            return Version(client_version) >= Version(constants.MIN_CLIENT_VERSION)
         except ValueError:
             raise exceptions.InvalidClientVersionException(client_version=client_version)
 

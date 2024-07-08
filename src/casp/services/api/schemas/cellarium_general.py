@@ -43,3 +43,8 @@ class UserQuota(BaseModel):
 
 class ClientVersionInput(BaseModel):
     client_version: str
+
+
+class ClientVersionOutput(BaseModel):
+    is_valid: bool
+    min_version: str
