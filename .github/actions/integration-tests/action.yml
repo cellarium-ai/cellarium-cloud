@@ -28,7 +28,6 @@ runs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
-        pip install -e .
       shell: bash
       working-directory: ./cellarium-cas
     
@@ -37,6 +36,7 @@ runs:
       env:
         TEST_API_TOKEN: ${{ inputs.api-key }}
         TEST_API_URL: ${{ inputs.api-url }}
+        CAS_VERSION: "1.4.5"
       run: |
         tox -e integration 
       shell: bash
