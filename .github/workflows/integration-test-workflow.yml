@@ -162,7 +162,7 @@ jobs:
 
       - id: undeploy-index
         name: Undeploy vector search index
-        if: ${{ inputs.deploy-index == 'true' }} && (success() || failure())
+        if: ${{ inputs.deploy-index == 'true' }} && ${{ always() }}
         uses: ./.github/actions/vector-search-index-undeploy
         with:
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
