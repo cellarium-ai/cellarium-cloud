@@ -18,6 +18,7 @@ runs:
     - id: checkout
       name: Checkout
       uses: actions/checkout@v4
+      fetch-depth: 0
       with:
         repository: "cellarium-ai/cellarium-cas"
         ref: ${{ inputs.revision }}
