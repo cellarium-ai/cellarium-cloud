@@ -33,9 +33,21 @@ def generate_cas_outputs(
     _dataset_file_paths = utils.get_paths(paths=dataset_paths)
     delay = 30
     num_attempts = 5
-
+    gcs_output_path = cas_results_output_path.replace("gs://", "")
+    gcs_bucket_name = gcs_output_path.split("/")[0]
+    gcs_output_path = "/".join(gcs_output_path.split("/")[1:])
+    existing_output_files = set(
+        f"gs://{gcs_bucket_name}/{x}"
+        for x in utils.list_files_in_bucket(bucket_name=gcs_bucket_name, prefix=gcs_output_path)
+    )
     for dataset_file_path in _dataset_file_paths:
         print(f"Running CAS over {dataset_file_path} dataset...")
+        dataset_file_name = dataset_file_path.split("/")[-1].split(".")[0]
+        output_path = f"{cas_results_output_path}/{model_name}/cas_output_{dataset_file_name}.pickle"
+
+        if output_path in existing_output_files:
+            print(f"Skipping dataset {dataset_file_name} as its output already exists")
+            continue
 
         cas_client = CASClient(api_token=cas_api_token, api_url=cas_api_url)
 
@@ -44,6 +56,7 @@ def generate_cas_outputs(
 
         curr_attempt = 0
         done = False
+
         while curr_attempt <= num_attempts and not done:
             try:
                 cas_result = cas_client.annotate_matrix_cell_type_ontology_aware_strategy(
@@ -51,7 +64,7 @@ def generate_cas_outputs(
                     cas_model_name=model_name,
                     chunk_size=1000,
                 )
-            except cas_exceptions.DataProcessingError:
+            except cas_exceptions.DatasetProcessingError:
                 time.sleep(delay)
                 curr_attempt += 1
                 if curr_attempt < num_attempts:
@@ -64,8 +77,6 @@ def generate_cas_outputs(
                 print("Successfully finished annotation.")
 
         print("Uploading output to bucket...")
-        dataset_file_name = dataset_file_path.split("/")[-1].split(".")[0]
-        output_path = f"{cas_results_output_path}/{model_name}/cas_output_{dataset_file_name}.pickle"
 
         with open(output_path, "wb") as f:
             pickle.dump(cas_result, f)

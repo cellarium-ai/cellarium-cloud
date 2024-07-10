@@ -1,7 +1,7 @@
 from kfp import dsl
 
 
-@dsl.component(packages_to_install=["git+https://github.com/cellarium-ai/cellarium-cas.git@0.0.6", "owlready2"])
+@dsl.component(packages_to_install=["git+https://github.com/cellarium-ai/cellarium-cas.git@0.0.7", "owlready2"])
 def generate_cas_outputs(gcs_config_path: str):
     import yaml
     from smart_open import open
@@ -63,7 +63,7 @@ def generate_cas_outputs(gcs_config_path: str):
     )
 
 
-@dsl.component(packages_to_install=["git+https://github.com/cellarium-ai/cellarium-cas.git@0.0.4", "owlready2"])
+@dsl.component(packages_to_install=["git+https://github.com/cellarium-ai/cellarium-cas.git@0.0.7", "owlready2"])
 def calculate_metrics(gcs_config_path: str) -> None:
     """
     Run the benchmarking for CAS.

@@ -1,6 +1,7 @@
 import typing as t
 
 from smart_open import open
+from google.cloud import storage
 
 
 def get_paths(paths: t.Union[str, t.List[str]]) -> t.List[str]:
@@ -16,3 +17,21 @@ def get_paths(paths: t.Union[str, t.List[str]]) -> t.List[str]:
 
     with open(paths, "r") as f:
         return f.read().splitlines()
+
+
+def list_files_in_bucket(bucket_name, prefix=""):
+    """
+    List all files in a given GCS bucket directory.
+
+    :param bucket_name: Name of the GCS bucket
+    :param prefix: Directory path within the bucket (optional)
+    :return: List of file names
+    """
+    # Initialize a client
+    client = storage.Client()
+
+    bucket = client.get_bucket(bucket_name)
+    blobs = bucket.list_blobs(prefix=prefix)
+    file_names = [blob.name for blob in blobs]
+
+    return file_names
