@@ -22,6 +22,7 @@ runs:
         repository: "cellarium-ai/cellarium-cas"
         ref: ${{ inputs.revision }}
         path: "./cellarium-cas"
+        fetch-depth: 0
     
     - id: install-dependencies
       name: Install dependencies

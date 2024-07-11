@@ -3,7 +3,7 @@ import typing as t
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 
-from casp.services import settings
+from casp.services import constants, settings
 from casp.services.api import dependencies, schemas, services
 from casp.services.db import models
 
@@ -17,6 +17,17 @@ async def application_info():
     Get Cellarium CAS application info such as version, default feature schema name.
     """
     return cellarium_general_service.get_application_info()
+
+
+@cellarium_general_router.post("/validate-client-version", response_model=schemas.ClientVersionOutput)
+async def validate_client_version(client_version_info: schemas.ClientVersionInput):
+    """
+    Check whether the client version is new enough to work with the server
+    """
+    return schemas.ClientVersionOutput(
+        is_valid=cellarium_general_service.validate_client_version(client_version=client_version_info.client_version),
+        min_version=constants.MIN_CLIENT_VERSION,
+    )
 
 
 @cellarium_general_router.get("/validate-token", response_model=schemas.UserInfo)
