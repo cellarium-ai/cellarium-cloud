@@ -50,6 +50,7 @@ def generate_cas_outputs(gcs_config_path: str):
         )
     except Exception as e:
         print(f"Smth went wrong: {e}")
+        raise ValueError(f"Smth went wrong: {e}")
 
     matching_engine_client.CustomMatchingEngineIndex.undeploy_index(
         region=index_region,
