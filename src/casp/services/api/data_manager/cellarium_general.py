@@ -2,6 +2,7 @@ import datetime
 import typing as t
 
 import sqlalchemy as sa
+import sqlalchemy.orm as orm
 from starlette_context import context
 
 from casp.data_manager import BaseDataManager, sql
@@ -104,7 +105,13 @@ class CellariumGeneralDataManager(BaseDataManager):
         :return: CAS ML model object from the database
         """
         with self.system_data_db_session_maker() as session:
-            model = session.query(models.CASModel).filter_by(model_name=model_name).first()
+            model = (
+                session.query(models.CASModel)
+                # Load the matching engine eagerly to be able to access outside of a session
+                .options(orm.joinedload(models.CASModel.cas_matching_engine))
+                .filter_by(model_name=model_name)
+                .first()
+            )
 
             if model is None:
                 raise exceptions.NotFound(f"Model {model_name} not found in the database")
