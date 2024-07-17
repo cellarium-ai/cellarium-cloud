@@ -111,23 +111,6 @@ class CellariumGeneralDataManager(BaseDataManager):
 
             return model
 
-    def get_index_for_model(self, model_name: str) -> models.CASMatchingEngineIndex:
-        """
-        Retrieve CAS model index by its system name
-
-        :param model_name: ML Model name
-
-        :return: CAS ML model index object from the database
-        """
-
-        with self.system_data_db_session_maker() as session:
-            model = session.query(models.CASModel).filter_by(model_name=model_name).first()
-
-            if model is None:
-                raise exceptions.NotFound(f"Model {model_name} not found in the database")
-
-            return model.cas_matching_engine
-
     def log_user_activity(
         self, user_id: int, model_name: str, method: str, cell_count: int, event: models.UserActivityEvent
     ) -> None:
@@ -135,8 +118,8 @@ class CellariumGeneralDataManager(BaseDataManager):
         Log the information to the DB about a request from a user
 
         :param user_id: The id for a user
-        :param model_name: Model name that user is using
-        :param method: Method that user is using
+        :param model_name: Model name that the user is using
+        :param method: Method that theuser is using
         :param cell_count: Number of cells processed in this request
         """
         user_activity = models.UserActivity(

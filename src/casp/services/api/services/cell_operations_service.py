@@ -16,10 +16,9 @@ from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
-from casp.services.api.services import consensus_engine, exceptions
+from casp.services.api.services import Authorizer, consensus_engine, exceptions
 from casp.services.db import models
 from casp.services.model_inference import services
-from casp.services.model_inference.data_managers import ModelInferenceDataManager
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
@@ -37,30 +36,11 @@ class CellOperationsService:
         self,
         cell_operations_dm: t.Optional[CellOperationsDataManager] = None,
         cellarium_general_dm: t.Optional[CellariumGeneralDataManager] = None,
-        model_inference_dm: t.Optional[ModelInferenceDataManager] = None,
     ):
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
-        self.model_service = services.ModelInferenceService(model_inference_dm=model_inference_dm)
-
-    def authorize_model_for_user(self, user: models.User, model_name: str) -> models.CASModel:
-        """
-        Authorize user to use a specific model. If user is not authorized, raise an exception.
-
-        :param user: User object to check permissions for.
-        :param model_name: Model name to check permissions for.
-
-        :return: Model object if user is authorized.
-        """
-        try:
-            model = self.cellarium_general_dm.get_model_by_name(model_name=model_name)
-        except dm_exc.NotFound as e:
-            raise exceptions.InvalidInputError(str(e))
-        if model.admin_use_only and not user.is_admin:
-            raise exceptions.AccessDeniedError(
-                f"{model_name} model is not available. Please reach out to the Cellarium team for more information."
-            )
-        return model
+        self.model_service = services.ModelInferenceService()
+        self.authorizer = Authorizer(cellarium_general_dm=self.cellarium_general_dm)
 
     def __get_cell_count_from_anndata(self, file: t.BinaryIO) -> int:
         """
@@ -84,7 +64,7 @@ class CellOperationsService:
 
         :param user: User object to check quota for.
         :param file: Anndata file to check the number of cells in.
-        :param model_name: Model name to use for annotation.
+        :param model_name: Model name to log in the database.
         :param method: Method name to log in the database.
 
         :return: Number of cells in the anndata file.
@@ -108,21 +88,18 @@ class CellOperationsService:
 
         return cell_count
 
-    async def get_embeddings(self, file_to_embed: t.BinaryIO, model_name: str) -> t.Tuple[t.List[str], np.array]:
+    async def get_embeddings(self, file_to_embed: t.BinaryIO, model: models.CASModel) -> t.Tuple[t.List[str], np.array]:
         """
         Get embeddings from the specified model.
 
         :param file_to_embed: File object of :class:`anndata.AnnData` object to embed.
-        :param model_name: Model name to use for embedding.
+        :param model: Model to use for embedding.
 
         :return: Query ids (original cell ids from the input file) and embeddings.
         """
 
-        query_ids, embeddings = self.model_service.embed_adata_file(file_to_embed=file_to_embed, model_name=model_name)
+        query_ids, embeddings = self.model_service.embed_adata_file(file_to_embed=file_to_embed, model=model)
         return query_ids, embeddings
-
-    def __get_match_index_endpoint_for_model(self, model_name: str) -> models.CASMatchingEngineIndex:
-        return self.cellarium_general_dm.get_index_for_model(model_name=model_name)
 
     @staticmethod
     def __validate_knn_response(embeddings: np.array, knn_response: MatchResult) -> None:
@@ -137,17 +114,17 @@ class CellOperationsService:
                 raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
     async def __get_knn_matches_from_embeddings_with_retry(
-        self, embeddings: np.array, model_name: str, chunk_matches_function: t.Callable
+        self, embeddings: np.array, model: models.CASModel, chunk_matches_function: t.Callable
     ) -> MatchResult:
         """
         Get KNN matches for embeddings broken into chunks with retry logic
 
         :param embeddings: Embeddings to match.
-        :param model_name: Model name to use for matching.
+        :param model: Model to use for matching.
 
         :return: List of lists of MatchNeighbor objects.
         """
-        index = self.__get_match_index_endpoint_for_model(model_name=model_name)
+        index = model.cas_matching_engine
 
         matching_client = MatchingClient.from_index(index)
 
@@ -191,19 +168,19 @@ class CellOperationsService:
         CellOperationsService.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
 
-    async def get_knn_matches_from_embeddings(self, embeddings: np.array, model_name: str) -> MatchResult:
+    async def get_knn_matches_from_embeddings(self, embeddings: np.array, model: models.CASModel) -> MatchResult:
         """
         Run KNN matching synchronously using Matching Engine client over gRPC.
 
         :param embeddings: Embeddings from the model.
-        :param model_name: Model name to use for matching.
+        :param model: Model to use for matching.
 
         :return: Matches in a MatchResult object
         """
 
         return await self.__get_knn_matches_from_embeddings_with_retry(
             embeddings=embeddings,
-            model_name=model_name,
+            model=model,
             chunk_matches_function=self.__get_knn_matches_for_chunk,
         )
 
@@ -220,24 +197,24 @@ class CellOperationsService:
         num_chunks: int = math.ceil(len(embeddings) / chunk_size)
         return np.array_split(embeddings, num_chunks)
 
-    async def get_knn_matches(self, file: t.Any, model_name: str) -> t.Tuple[t.List[str], MatchResult]:
+    async def get_knn_matches(self, file: t.Any, model: models.CASModel) -> t.Tuple[t.List[str], MatchResult]:
         """
         Get KNN matches for anndata object.
 
         :param file: Anndata object to get KNN matches for.
-        :param model_name: Model name to use for matching.
+        :param model: Model to use for matching.
 
         :return: Matches in a MatchResult object
         """
         logger.info("Getting embeddings")
-        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
+        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model=model)
 
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings, return empty match result
             return [], MatchResult()
 
         logger.info("Getting KNN matches")
-        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model_name=model_name)
+        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)
 
         return query_ids, knn_response
 
@@ -262,6 +239,7 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
+        model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
         # Make sure the user has enough quota to process the file
         cell_count = self.__verify_quota_and_log_activity(
             user=user, file=file, model_name=model_name, method="annotate_cell_type_summary_statistics_strategy"
@@ -270,7 +248,7 @@ class CellOperationsService:
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
             annotation_response = await self.annotate_cell_type_summary_statistics_strategy(
-                user=user, file=file, model_name=model_name, include_extended_output=include_extended_output
+                file=file, model=model, include_extended_output=include_extended_output
             )
 
             self.cellarium_general_dm.log_user_activity(
@@ -297,9 +275,8 @@ class CellOperationsService:
 
     async def annotate_cell_type_summary_statistics_strategy(
         self,
-        user: models.User,
         file: t.BinaryIO,
-        model_name: str,
+        model: models.CASModel,
         include_extended_output: t.Optional[bool] = None,
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
@@ -308,18 +285,17 @@ class CellOperationsService:
 
         :param user: User object used to increment user cells processed counter.
         :param file: Byte object of :class:`anndata.AnnData` file to annotate.
-        :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
+        :param model: Model to use for annotation. See `/list-models` endpoint for available models.
         :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
             in `cell_type_count` method.
 
         :return: JSON response with annotations.
         """
-        cas_model = self.authorize_model_for_user(user=user, model_name=model_name)
-        query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
+        query_ids, knn_response = await self.get_knn_matches(file=file, model=model)
 
         strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
-            cas_model=cas_model,
+            cas_model=model,
             include_extended_output=include_extended_output,
         )
 
@@ -343,7 +319,10 @@ class CellOperationsService:
         :param weighting_prefactor: Distance exponential weighting prefactor.
 
         :return: JSON response with annotations.
+
         """
+        model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
+
         # Make sure the user has enough quota to process the file
         cell_count = self.__verify_quota_and_log_activity(
             user=user, file=file, model_name=model_name, method="annotate_cell_type_ontology_aware_strategy"
@@ -351,10 +330,9 @@ class CellOperationsService:
 
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
-            annotation_response = await self.annotate_cell_type_ontology_aware_strategy(
-                user=user,
+            annotation_response = await self.__annotate_cell_type_ontology_aware_strategy(
                 file=file,
-                model_name=model_name,
+                model=model,
                 prune_threshold=prune_threshold,
                 weighting_prefactor=weighting_prefactor,
             )
@@ -381,8 +359,8 @@ class CellOperationsService:
                 logger.error(f"Failed to log user activity: {e2}")
             raise e
 
-    async def annotate_cell_type_ontology_aware_strategy(
-        self, user: models.User, file: t.BinaryIO, model_name: str, prune_threshold: float, weighting_prefactor: float
+    async def __annotate_cell_type_ontology_aware_strategy(
+        self, file: t.BinaryIO, model: models.CASModel, prune_threshold: float, weighting_prefactor: float
     ) -> schemas.QueryAnnotationOntologyAwareType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -390,14 +368,13 @@ class CellOperationsService:
 
         :param user: User object used to increment user cells processed counter.
         :param file: Byte object of :class:`anndata.AnnData` file to annotate.
-        :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
+        :param model: Model to use for annotation. See `/list-models` endpoint for available models.
         :param prune_threshold: Prune threshold for the ontology-aware annotation strategy.
         :param weighting_prefactor: Distance exponential weighting prefactor.
 
         :return: JSON response with annotations.
         """
-        _ = self.authorize_model_for_user(user=user, model_name=model_name)
-        query_ids, knn_response = await self.get_knn_matches(file=file, model_name=model_name)
+        query_ids, knn_response = await self.get_knn_matches(file=file, model=model)
 
         logger.info("Applying CellTypeOntologyAwareConsensusStrategy to the query results")
         strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
@@ -428,12 +405,12 @@ class CellOperationsService:
 
         :return: JSON response with search results.
         """
-        self.authorize_model_for_user(user=user, model_name=model_name)
-        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
+        model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
+        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model=model)
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
-        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model_name=model_name)
+        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)
 
         return [
             {
@@ -450,7 +427,7 @@ class CellOperationsService:
         ]
 
     def get_cells_by_ids_for_user(
-        self, user: models.User, cell_ids: t.List[int], metadata_feature_names: t.List[str], model_name: str
+        self, cell_ids: t.List[int], metadata_feature_names: t.List[str]
     ) -> t.List[schemas.CellariumCellMetadata]:
         """
         Get cells by their ids from BigQuery `cas_cell_info` table.
@@ -458,11 +435,9 @@ class CellOperationsService:
         :param user: User object to check permissions for
         :param cell_ids: Cas cell indexes from BigQuery
         :param metadata_feature_names: Metadata features to return from BigQuery `cas_cell_info` table
-        :param model_name: Name of the model to query. Used to get the dataset name where to get the cells from
 
         :return: List of dictionaries representing the query results.
         """
-        self.authorize_model_for_user(user=user, model_name=model_name)
         for feature_name in metadata_feature_names:
             if feature_name not in AVAILABLE_FIELDS_DICT:
                 raise exceptions.CellMetadataColumnDoesNotExist(

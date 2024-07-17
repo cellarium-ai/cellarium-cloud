@@ -8,14 +8,10 @@ from smart_open import open
 from casp.services import settings
 from casp.services.db import models
 from casp.services.model_inference import exceptions
-from casp.services.model_inference.data_managers import ModelInferenceDataManager
 
 
 class ModelInferenceService:
     """Service for model inference."""
-
-    def __init__(self, model_inference_dm: t.Optional[ModelInferenceDataManager] = None):
-        self.model_inference_dm = model_inference_dm or ModelInferenceDataManager()
 
     @staticmethod
     def _get_model_checkpoint_path(model_checkpoint_file_path: str) -> str:
@@ -96,20 +92,16 @@ class ModelInferenceService:
                 f"Ensure that the model is configured to produce embeddings of the correct dimensionality."
             )
 
-    def embed_adata_file(self, file_to_embed: t.BinaryIO, model_name: str) -> t.Tuple[np.ndarray, t.List[str]]:
+    def embed_adata_file(self, file_to_embed: t.BinaryIO, model: models.CASModel) -> t.Tuple[np.ndarray, t.List[str]]:
         """
         Embed adata file using a specific model using Cellarium-ML model and pytorch.
 
-        # TODO: accept a model object so we don't need to keep querying the db
-
         :param file_to_embed: File object of :class:`anndata.AnnData` object to embed.
-        :param model_name: Model name to use for embedding.
+        :param model: Model object that contains relevant information to use for obtaining embedding.
 
         :return: ModelEmbeddings schema object.
         """
-        model_info = self.model_inference_dm.get_model_by(model_name=model_name)
-
-        embeddings, obs_ids = self._get_output_from_model(model=model_info, adata_file=file_to_embed)
-        self._validate_model_output(embeddings=embeddings, obs_ids=obs_ids, model_info=model_info)
+        embeddings, obs_ids = self._get_output_from_model(model=model, adata_file=file_to_embed)
+        self._validate_model_output(embeddings=embeddings, obs_ids=obs_ids, model_info=model)
 
         return obs_ids, embeddings
