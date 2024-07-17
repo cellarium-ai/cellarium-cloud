@@ -12,13 +12,14 @@ import numpy as np
 from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_random
 
 from casp.services import settings
-from casp.services.api import clients, schemas
+from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import consensus_engine, exceptions
 from casp.services.db import models
-from casp.services.utils import numpy_utils
+from casp.services.model_inference import services
+from casp.services.model_inference.data_managers import ModelInferenceDataManager
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
@@ -34,11 +35,13 @@ class CellOperationsService:
 
     def __init__(
         self,
-        cell_operations_dm: CellOperationsDataManager = None,
-        cellarium_general_dm: CellariumGeneralDataManager = None,
+        cell_operations_dm: t.Optional[CellOperationsDataManager] = None,
+        cellarium_general_dm: t.Optional[CellariumGeneralDataManager] = None,
+        model_inference_dm: t.Optional[ModelInferenceDataManager] = None,
     ):
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
+        self.model_service = services.ModelInferenceService(model_inference_dm=model_inference_dm)
 
     def authorize_model_for_user(self, user: models.User, model_name: str) -> models.CASModel:
         """
@@ -105,22 +108,17 @@ class CellOperationsService:
 
         return cell_count
 
-    @staticmethod
-    async def get_embeddings(file_to_embed: t.BinaryIO, model_name: str) -> t.Tuple[t.List[str], np.array]:
+    async def get_embeddings(self, file_to_embed: t.BinaryIO, model_name: str) -> t.Tuple[t.List[str], np.array]:
         """
-        Get embeddings from model inference service. Unwrap response and return query ids and embeddings.
-        Since model embedding service returns embeddings in base64 format, we need to convert it to numpy array.
+        Get embeddings from the specified model.
 
         :param file_to_embed: File object of :class:`anndata.AnnData` object to embed.
         :param model_name: Model name to use for embedding.
 
         :return: Query ids (original cell ids from the input file) and embeddings.
         """
-        embeddings_response_json = await clients.ModelInferenceClient.call_model_embed(
-            file_to_embed=file_to_embed.read(), model_name=model_name
-        )
-        query_ids = embeddings_response_json["obs_ids"]
-        embeddings = numpy_utils.base64_to_numpy(embeddings_response_json["embeddings_b64"])
+
+        query_ids, embeddings = self.model_service.embed_adata_file(file_to_embed=file_to_embed, model_name=model_name)
         return query_ids, embeddings
 
     def __get_match_index_endpoint_for_model(self, model_name: str) -> models.CASMatchingEngineIndex:
@@ -232,7 +230,7 @@ class CellOperationsService:
         :return: Matches in a MatchResult object
         """
         logger.info("Getting embeddings")
-        query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
+        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
 
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings, return empty match result
@@ -431,7 +429,7 @@ class CellOperationsService:
         :return: JSON response with search results.
         """
         self.authorize_model_for_user(user=user, model_name=model_name)
-        query_ids, embeddings = await CellOperationsService.get_embeddings(file_to_embed=file, model_name=model_name)
+        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model_name=model_name)
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []

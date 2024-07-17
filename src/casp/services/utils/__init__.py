@@ -7,4 +7,3 @@ from casp.services.utils.gc_utils import (  # noqa
     upload_file_to_bucket,
     write_to_file_from_bucket,
 )
-from casp.services.utils.numpy_utils import base64_to_numpy, numpy_to_base64  # noqa

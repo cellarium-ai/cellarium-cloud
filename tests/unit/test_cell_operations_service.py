@@ -12,8 +12,6 @@ import pytest
 from mockito import matchers, mock, unstub, verify, when
 from parameterized import parameterized
 
-from casp.services import utils
-from casp.services.api import clients
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import exceptions
@@ -33,6 +31,7 @@ INDEX = models.CASMatchingEngineIndex(
     model_id=1,
 )
 ANNDATA_DATA = b"testdata"
+ANNDATA_FILE = io.BytesIO(ANNDATA_DATA)
 
 
 class TestCellOperationsService:
@@ -42,7 +41,9 @@ class TestCellOperationsService:
     """
 
     def setup_method(self) -> None:
-        self.cell_operations_service = CellOperationsService(cell_operations_dm=mock(), cellarium_general_dm=mock())
+        self.cell_operations_service = CellOperationsService(
+            cell_operations_dm=mock(), cellarium_general_dm=mock(), model_inference_dm=mock()
+        )
 
     def teardown_method(self) -> None:
         unstub()
@@ -157,10 +158,8 @@ class TestCellOperationsService:
                 cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
             ).thenReturn(response)
 
-        adata_file = io.BytesIO(ANNDATA_DATA)
-
         when(self.cell_operations_service)._CellOperationsService__get_cell_count_from_anndata(
-            file=adata_file
+            file=ANNDATA_FILE
         ).thenReturn(len(query_ids))
         when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
             user=USER_ADMIN
@@ -169,7 +168,7 @@ class TestCellOperationsService:
         actual_response = (
             await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
                 user=USER_ADMIN,
-                file=adata_file,
+                file=ANNDATA_FILE,
                 model_name=MODEL.model_name,
                 include_extended_output=include_dev_metadata,
             )
@@ -199,10 +198,8 @@ class TestCellOperationsService:
         quota.
         """
 
-        adata_file = io.BytesIO(ANNDATA_DATA)
-
         when(self.cell_operations_service)._CellOperationsService__get_cell_count_from_anndata(
-            file=adata_file
+            file=ANNDATA_FILE
         ).thenReturn(20)
         when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
             user=USER_ADMIN
@@ -211,7 +208,7 @@ class TestCellOperationsService:
         with pytest.raises(exceptions.QuotaExceededException):
             await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
                 user=USER_ADMIN,
-                file=adata_file,
+                file=ANNDATA_FILE,
                 model_name=MODEL.model_name,
                 include_extended_output=False,
             )
@@ -243,7 +240,7 @@ class TestCellOperationsService:
         self.__mock_apis(model=MODEL, index=INDEX, anndata_data=ANNDATA_DATA, embeddings=embeddings)
 
         actual_response = await self.cell_operations_service.search_adata_file(
-            user=USER_ADMIN, file=io.BytesIO(ANNDATA_DATA), model_name=MODEL.model_name
+            user=USER_ADMIN, file=ANNDATA_FILE, model_name=MODEL.model_name
         )
         assert actual_response == expected_response
 
@@ -307,9 +304,9 @@ class TestCellOperationsService:
         embeddings = np.array(embeddings, dtype=np.float32)
         query_ids = [f"q{i}" for i in range(len(embeddings))]
         when(self.cell_operations_service.cellarium_general_dm).get_model_by_name(model_name).thenReturn(model)
-        when(clients.ModelInferenceClient).call_model_embed(
-            file_to_embed=anndata_data, model_name=model_name
-        ).thenReturn(async_return({"obs_ids": query_ids, "embeddings_b64": utils.numpy_to_base64(embeddings)}))
+        when(self.cell_operations_service.model_service).embed_adata_file(
+            file_to_embed=ANNDATA_FILE, model_name=model_name
+        ).thenReturn((query_ids, embeddings))
 
         when(self.cell_operations_service.cellarium_general_dm).get_model_by_name(model_name=model_name).thenReturn(
             model
