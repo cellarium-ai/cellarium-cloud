@@ -1,4 +1,5 @@
 import typing as t
+from functools import cache
 
 import anndata
 import numpy as np
@@ -25,7 +26,9 @@ class ModelInferenceService:
         """
         return f"gs://{settings.PROJECT_BUCKET_NAME}/{model_checkpoint_file_path}"
 
-    def _get_model_checkpoint_file(self, model: models.CASModel) -> t.BinaryIO:
+    @staticmethod
+    @cache
+    def _get_model_checkpoint_file(model: models.CASModel) -> t.BinaryIO:
         """
         Get model checkpoint from either local or GCS and load it using CellariumModule.
 
@@ -33,9 +36,21 @@ class ModelInferenceService:
 
         :return: CellariumModule object
         """
-        model_checkpoint_path = self._get_model_checkpoint_path(model.model_file_path)
+        model_checkpoint_path = ModelInferenceService._get_model_checkpoint_path(model.model_file_path)
 
         return open(model_checkpoint_path, "rb")
+
+    @staticmethod
+    @cache
+    def _load_module_from_checkpoint(checkpoint_file: t.BinaryIO) -> CellariumModule:
+        """
+        Load CellariumModule from checkpoint file.
+
+        :param checkpoint_file: Checkpoint file object
+
+        :return: CellariumModule object
+        """
+        return CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
 
     def _get_output_from_model(
         self, model: models.CASModel, adata_file: t.BinaryIO
@@ -50,8 +65,8 @@ class ModelInferenceService:
         """
         adata = anndata.read_h5ad(adata_file)
 
-        cellarium_checkpoint_file = self._get_model_checkpoint_file(model)
-        cellarium_module = CellariumModule.load_from_checkpoint(cellarium_checkpoint_file, map_location="cpu")
+        cellarium_checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model)
+        cellarium_module = ModelInferenceService._load_module_from_checkpoint(cellarium_checkpoint_file)
         cellarium_checkpoint_file.seek(0)
 
         cellarium_data_module = CellariumAnnDataDataModule.load_from_checkpoint(
