@@ -31,3 +31,9 @@ runs:
       # Run tox using the version of Python in `PATH`
       run: tox -e unit
       shell: bash
+
+    - name: Run pip-audit command through GHA
+      # Check dependencies for security vulnerabilities
+      uses: pypa/gh-action-pip-audit@v1.0.8
+      with:
+        inputs: requirements.txt
