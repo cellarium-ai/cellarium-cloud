@@ -37,3 +37,7 @@ runs:
       uses: pypa/gh-action-pip-audit@v1.0.8
       with:
         inputs: requirements.txt
+        # GHSA-mr7h-w2qc-ffc2 is ignored because it is a false positive. 
+        # The vulnerability was patched in lightning 2.3.3 but the CVE database has not been updated yet
+        ignore-vulns: |
+          GHSA-mr7h-w2qc-ffc2
