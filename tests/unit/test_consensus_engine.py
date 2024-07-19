@@ -104,8 +104,8 @@ def knn_query_result_mock() -> MatchResult:
         matches=[
             MatchResult.NearestNeighbors(
                 neighbors=[
-                    MatchResult.Neighbor(cas_cell_index=48033450, distance=0.9),
-                    MatchResult.Neighbor(cas_cell_index=1384010152, distance=0.87),
+                    MatchResult.Neighbor(cas_cell_index="48033450", distance=0.9),
+                    MatchResult.Neighbor(cas_cell_index="1384010152", distance=0.87),
                 ]
             ),
         ]

@@ -8,7 +8,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
 
@@ -31,3 +31,13 @@ runs:
       # Run tox using the version of Python in `PATH`
       run: tox -e unit
       shell: bash
+
+    - name: Run pip-audit command through GHA
+      # Check dependencies for security vulnerabilities
+      uses: pypa/gh-action-pip-audit@v1.0.8
+      with:
+        inputs: requirements.txt
+        # GHSA-mr7h-w2qc-ffc2 is ignored because it is a false positive. 
+        # The vulnerability was patched in lightning 2.3.3 but the CVE database has not been updated yet
+        ignore-vulns: |
+          GHSA-mr7h-w2qc-ffc2

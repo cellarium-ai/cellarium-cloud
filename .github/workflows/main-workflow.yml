@@ -7,7 +7,7 @@ jobs:
       matrix:
         python-version: [ '3.10' ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/unit-tests
         with:
           python-version: ${{ matrix.python-version }}
@@ -28,7 +28,7 @@ jobs:
       PYTORCH_CUDA_IMAGE_NAME_DEV: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda-dev
       PYTORCH_CUDA_IMAGE_NAME_PROD: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda-prod
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - id: get-tag
         name: Get tag
         run: echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
