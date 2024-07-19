@@ -126,7 +126,7 @@ class CellariumGeneralDataManager(BaseDataManager):
 
         :param user_id: The id for a user
         :param model_name: Model name that the user is using
-        :param method: Method that theuser is using
+        :param method: Method that the user is using
         :param cell_count: Number of cells processed in this request
         """
         user_activity = models.UserActivity(

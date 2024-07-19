@@ -124,9 +124,7 @@ class CellOperationsService:
 
         :return: List of lists of MatchNeighbor objects.
         """
-        index = model.cas_matching_engine
-
-        matching_client = MatchingClient.from_index(index)
+        matching_client = MatchingClient.from_index(model.cas_matching_engine)
 
         # Break embeddings into chunks so we don't overload the matching engine
         embeddings_chunks = CellOperationsService.__split_embeddings_into_chunks(
@@ -247,7 +245,7 @@ class CellOperationsService:
 
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
-            annotation_response = await self.annotate_cell_type_summary_statistics_strategy(
+            annotation_response = await self.__annotate_cell_type_summary_statistics_strategy(
                 file=file, model=model, include_extended_output=include_extended_output
             )
 
@@ -273,7 +271,7 @@ class CellOperationsService:
                 logger.error(f"Failed to log user activity: {e2}")
             raise e
 
-    async def annotate_cell_type_summary_statistics_strategy(
+    async def __annotate_cell_type_summary_statistics_strategy(
         self,
         file: t.BinaryIO,
         model: models.CASModel,
