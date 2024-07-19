@@ -28,28 +28,30 @@ class ModelInferenceService:
 
     @staticmethod
     @cache
-    def _get_model_checkpoint_file(model: models.CASModel) -> t.BinaryIO:
+    def _get_model_checkpoint_file(model_file_path: str) -> t.BinaryIO:
         """
         Get model checkpoint from either local or GCS and load it using CellariumModule.
 
-        :param model: Cellarium Cloud model db object
+        :param model_file_path: Model checkpoint file path (from model db object)
 
         :return: CellariumModule object
         """
-        model_checkpoint_path = ModelInferenceService._get_model_checkpoint_path(model.model_file_path)
+        model_checkpoint_path = ModelInferenceService._get_model_checkpoint_path(model_file_path)
 
         return open(model_checkpoint_path, "rb")
 
     @staticmethod
     @cache
-    def _load_module_from_checkpoint(checkpoint_file: t.BinaryIO) -> CellariumModule:
+    def _load_module_from_checkpoint(model_file_path: str) -> CellariumModule:
         """
         Load CellariumModule from checkpoint file.
 
-        :param checkpoint_file: Checkpoint file object
+        :param model_file_path: Model checkpoint file path (from model db object)
 
         :return: CellariumModule object
         """
+        checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model_file_path)
+
         return CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
 
     def _get_output_from_model(
@@ -65,10 +67,10 @@ class ModelInferenceService:
         """
         adata = anndata.read_h5ad(adata_file)
 
-        cellarium_checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model)
-        cellarium_module = ModelInferenceService._load_module_from_checkpoint(cellarium_checkpoint_file)
-        cellarium_checkpoint_file.seek(0)
+        cellarium_module = ModelInferenceService._load_module_from_checkpoint(model.model_file_path)
 
+        cellarium_checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model.model_file_path)
+        cellarium_checkpoint_file.seek(0)
         cellarium_data_module = CellariumAnnDataDataModule.load_from_checkpoint(
             cellarium_checkpoint_file, dadc=adata, batch_size=adata.n_obs, num_workers=0
         )
