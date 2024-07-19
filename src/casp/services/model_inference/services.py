@@ -5,17 +5,13 @@ import numpy as np
 from cellarium.ml import CellariumAnnDataDataModule, CellariumModule
 from smart_open import open
 
-from casp.services import settings, utils
+from casp.services import settings
 from casp.services.db import models
-from casp.services.model_inference import exceptions, schemas
-from casp.services.model_inference.data_managers import ModelInferenceDataManager
+from casp.services.model_inference import exceptions
 
 
 class ModelInferenceService:
     """Service for model inference."""
-
-    def __init__(self):
-        self.model_inference_dm = ModelInferenceDataManager()
 
     @staticmethod
     def _get_model_checkpoint_path(model_checkpoint_file_path: str) -> str:
@@ -96,20 +92,16 @@ class ModelInferenceService:
                 f"Ensure that the model is configured to produce embeddings of the correct dimensionality."
             )
 
-    def embed_adata_file(self, file_to_embed: t.BinaryIO, model_name: str) -> schemas.ModelEmbeddings:
+    def embed_adata_file(self, file_to_embed: t.BinaryIO, model: models.CASModel) -> t.Tuple[np.ndarray, t.List[str]]:
         """
-        Embed adata file using a specific model using Cellarium-ML model and pytorch
+        Embed adata file using a specific model using Cellarium-ML model and pytorch.
 
         :param file_to_embed: File object of :class:`anndata.AnnData` object to embed.
-        :param model_name: Model name to use for embedding.
+        :param model: Model object that contains relevant information to use for obtaining embedding.
 
         :return: ModelEmbeddings schema object.
         """
-        model_info = self.model_inference_dm.get_model_by(model_name=model_name)
+        embeddings, obs_ids = self._get_output_from_model(model=model, adata_file=file_to_embed)
+        self._validate_model_output(embeddings=embeddings, obs_ids=obs_ids, model_info=model)
 
-        embeddings, obs_ids = self._get_output_from_model(model=model_info, adata_file=file_to_embed)
-        self._validate_model_output(embeddings=embeddings, obs_ids=obs_ids, model_info=model_info)
-
-        embeddings_b64 = utils.numpy_to_base64(embeddings)
-
-        return schemas.ModelEmbeddings(obs_ids=obs_ids, embeddings_b64=embeddings_b64)
+        return obs_ids, embeddings

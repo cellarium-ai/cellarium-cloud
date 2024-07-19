@@ -12,10 +12,7 @@ import pytest
 from mockito import matchers, mock, unstub, verify, when
 from parameterized import parameterized
 
-from casp.services import utils
-from casp.services.api import clients
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
-from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import exceptions
 from casp.services.api.services.cell_operations_service import CellOperationsService
 from casp.services.db import models
@@ -30,9 +27,11 @@ INDEX = models.CASMatchingEngineIndex(
     endpoint_id="endpoint_id_grpc",
     deployed_index_id="deployed_index_id_grpc",
     num_neighbors=3,
-    model_id=1,
+    model_id=MODEL.id,
+    model=MODEL,
 )
 ANNDATA_DATA = b"testdata"
+ANNDATA_FILE = io.BytesIO(ANNDATA_DATA)
 
 
 class TestCellOperationsService:
@@ -67,27 +66,13 @@ class TestCellOperationsService:
         assert len(chunks) == 12
         assert sum(len(chunk) for chunk in chunks) == 100
 
-    def test_non_admin_can_not_access_admin_model(self) -> None:
-        self.__mock_apis(
-            model=MODEL_ADMIN_ONLY,
-        )
-        with pytest.raises(exceptions.AccessDeniedError, match=re.escape("admin_only_model model is not available.")):
-            self.cell_operations_service.authorize_model_for_user(user=USER_NON_ADMIN, model_name="admin_only_model")
-
-    def test_model_does_not_exist(self) -> None:
-        when(self.cell_operations_service.cellarium_general_dm).get_model_by_name(
-            model_name="non_existent_model"
-        ).thenRaise(dm_exc.NotFound())
-        with pytest.raises(exceptions.InvalidInputError):
-            self.cell_operations_service.authorize_model_for_user(user=USER_NON_ADMIN, model_name="non_existent_model")
-
     def test_mismatched_embeddings_and_queries(self) -> None:
         embeddings = [[0, 1, 2]]
         knn_response = MatchResult(matches=[])
         self.__mock_apis(
             model=MODEL,
             index=INDEX,
-            anndata_data=ANNDATA_DATA,
+            anndata_file=ANNDATA_FILE,
             embeddings=embeddings,
             matching_client_response=knn_response,
         )
@@ -105,7 +90,7 @@ class TestCellOperationsService:
         self.__mock_apis(
             model=MODEL,
             index=INDEX,
-            anndata_data=ANNDATA_DATA,
+            anndata_file=ANNDATA_FILE,
             embeddings=embeddings,
             matching_client_response=knn_response,
         )
@@ -135,7 +120,7 @@ class TestCellOperationsService:
         :param include_dev_metadata: Whether or not to set the include_dev_metadata flag when calling the method.
         """
         matching_client_response = self.__mock_apis(
-            model=MODEL, index=INDEX, anndata_data=ANNDATA_DATA, embeddings=embeddings
+            model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=embeddings
         )
 
         # mock calls to get cell distribution
@@ -157,10 +142,8 @@ class TestCellOperationsService:
                 cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
             ).thenReturn(response)
 
-        adata_file = io.BytesIO(ANNDATA_DATA)
-
         when(self.cell_operations_service)._CellOperationsService__get_cell_count_from_anndata(
-            file=adata_file
+            file=ANNDATA_FILE
         ).thenReturn(len(query_ids))
         when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
             user=USER_ADMIN
@@ -169,7 +152,7 @@ class TestCellOperationsService:
         actual_response = (
             await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
                 user=USER_ADMIN,
-                file=adata_file,
+                file=ANNDATA_FILE,
                 model_name=MODEL.model_name,
                 include_extended_output=include_dev_metadata,
             )
@@ -198,11 +181,10 @@ class TestCellOperationsService:
         Test the annotate_adata_file method returns the correct error in the case of an exceeded
         quota.
         """
-
-        adata_file = io.BytesIO(ANNDATA_DATA)
+        self.__mock_apis(model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=[])
 
         when(self.cell_operations_service)._CellOperationsService__get_cell_count_from_anndata(
-            file=adata_file
+            file=ANNDATA_FILE
         ).thenReturn(20)
         when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
             user=USER_ADMIN
@@ -211,7 +193,7 @@ class TestCellOperationsService:
         with pytest.raises(exceptions.QuotaExceededException):
             await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
                 user=USER_ADMIN,
-                file=adata_file,
+                file=ANNDATA_FILE,
                 model_name=MODEL.model_name,
                 include_extended_output=False,
             )
@@ -240,10 +222,10 @@ class TestCellOperationsService:
         :param expected_response: The expected response from the method.
 
         """
-        self.__mock_apis(model=MODEL, index=INDEX, anndata_data=ANNDATA_DATA, embeddings=embeddings)
+        self.__mock_apis(model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=embeddings)
 
         actual_response = await self.cell_operations_service.search_adata_file(
-            user=USER_ADMIN, file=io.BytesIO(ANNDATA_DATA), model_name=MODEL.model_name
+            user=USER_ADMIN, file=ANNDATA_FILE, model_name=MODEL.model_name
         )
         assert actual_response == expected_response
 
@@ -254,9 +236,7 @@ class TestCellOperationsService:
         metadata_feature_names = ["cell_type", "assay"]
 
         self.cell_operations_service.get_cells_by_ids_for_user(
-            user=USER_ADMIN,
             cell_ids=cell_ids,
-            model_name=MODEL.model_name,
             metadata_feature_names=metadata_feature_names,
         )
         verify(self.cell_operations_service.cell_operations_dm).get_cell_metadata_by_ids(
@@ -274,9 +254,7 @@ class TestCellOperationsService:
             exceptions.CellMetadataColumnDoesNotExist, match=re.escape("Feature foo is not available for querying.")
         ):
             self.cell_operations_service.get_cells_by_ids_for_user(
-                user=USER_ADMIN,
                 cell_ids=cell_ids,
-                model_name=MODEL.model_name,
                 metadata_feature_names=metadata_feature_names,
             )
 
@@ -284,12 +262,11 @@ class TestCellOperationsService:
         self,
         model: models.CASModel = MODEL,
         index: models.CASMatchingEngineIndex = INDEX,
-        anndata_data: bytes = ANNDATA_DATA,
+        anndata_file: io.BytesIO = ANNDATA_FILE,
         embeddings: t.List[t.List[float]] = [],
         matching_client_response: t.Optional[MatchResult] = None,
     ) -> MatchResult:
         """
-
         Mock call to the model embedding service and the matching client.
 
         :param model: The model to mock.
@@ -306,16 +283,12 @@ class TestCellOperationsService:
         model_name = model.model_name
         embeddings = np.array(embeddings, dtype=np.float32)
         query_ids = [f"q{i}" for i in range(len(embeddings))]
-        when(self.cell_operations_service.cellarium_general_dm).get_model_by_name(model_name).thenReturn(model)
-        when(clients.ModelInferenceClient).call_model_embed(
-            file_to_embed=anndata_data, model_name=model_name
-        ).thenReturn(async_return({"obs_ids": query_ids, "embeddings_b64": utils.numpy_to_base64(embeddings)}))
+        when(self.cell_operations_service.model_service).embed_adata_file(
+            file_to_embed=anndata_file, model=model
+        ).thenReturn((query_ids, embeddings))
 
         when(self.cell_operations_service.cellarium_general_dm).get_model_by_name(model_name=model_name).thenReturn(
             model
-        )
-        when(self.cell_operations_service.cellarium_general_dm).get_index_for_model(model_name=model_name).thenReturn(
-            index
         )
 
         # mock calls to the matching client

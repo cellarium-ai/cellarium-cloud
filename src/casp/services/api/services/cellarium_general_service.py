@@ -76,23 +76,6 @@ class CellariumGeneralService:
 
         return self.cellarium_general_dm.get_models_non_admin()
 
-    def get_model_for_user(self, model_name: str, user: models.User) -> models.CASModel:
-        """
-        Get CAS model by its system name for a specific user based on their permissions.
-
-        :param model_name: Name of the model
-        :param user: User object to check permissions for
-
-        :return: CAS ML model object from the database
-        """
-        model = self.cellarium_general_dm.get_model_by_name(model_name=model_name)
-
-        if model.admin_use_only and not user.is_admin:
-            raise exceptions.AccessDeniedError(
-                f"{model_name} model is not available. Please reach out to the Cellarium team for more information."
-            )
-        return model
-
     def get_quota_for_user(self, user: models.User) -> schemas.UserQuota:
         """
         Get user quota information
