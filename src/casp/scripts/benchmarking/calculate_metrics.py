@@ -123,8 +123,11 @@ def calculate_metrics_for_query_cell(
 
     :return: A dictionary containing sensitivity, specificity, and F1 score for each hop level.
     """
-    if ground_truth == "unknown":
-        metrics_na = {"query_cell_id": query_cell_obj["query_cell_id"]}
+    if ground_truth not in co_resource:
+        metrics_na = {
+            "query_cell_id": query_cell_obj["query_cell_id"],
+            "detail": f"Couldn't find cell type {ground_truth} in Cell Ontology resource"
+        }
         for i in range(num_hops):
             metrics_na[f"hop_{i}_sensitivity"] = None
             metrics_na[f"hop_{i}_specificity"] = None
@@ -149,7 +152,7 @@ def calculate_metrics_for_query_cell(
         for precision, sensitivity in zip(precisions, sensitivities)
     ]
 
-    query_cell_metrics = {"query_cell_id": query_cell_obj["query_cell_id"]}
+    query_cell_metrics = {"query_cell_id": query_cell_obj["query_cell_id"], "detail": ""}
 
     for i, (sensitivity, specificity, f1_score) in enumerate(zip(sensitivities, specificities, f1_scores)):
         query_cell_metrics[f"hop_{i}_sensitivity"] = sensitivity
@@ -318,7 +321,11 @@ def calculate_metrics_for_cas_responses(
 
     metrics_dir = f"{output_path}/{model_name}"
     results = []
+
     for dataset_file_path, cas_result_path in zip(_dataset_paths, _cas_result_paths):
+        dataset_file_name = dataset_file_path.split("/")[-1].split(".")[0]
+        metrics_output_filepath = f"{metrics_dir}/metrics_{dataset_file_name}.csv"
+
         with open(dataset_file_path, "rb") as f:
             adata = anndata.read_h5ad(f)
 
@@ -343,8 +350,8 @@ def calculate_metrics_for_cas_responses(
             num_hops=num_hops,
             batch_size=batch_size,
         )
-        dataset_file_name = dataset_file_path.split("/")[-1].split(".")[0]
-        df_metrics.to_csv(f"{metrics_dir}/metrics_{dataset_file_name}.csv")
+
+        df_metrics.to_csv(metrics_output_filepath)
         results.append(df_metrics)
 
     means_list = [df.mean() for df in results]

@@ -50,18 +50,18 @@ def generate_cas_outputs(gcs_config_path: str):
         )
     except Exception as e:
         print(f"Smth went wrong: {e}")
-        raise ValueError(f"Smth went wrong: {e}")
-
-    matching_engine_client.CustomMatchingEngineIndex.undeploy_index(
-        region=index_region,
-        project_id=project_id,
-        index_endpoint_id=index_endpoint_id,
-        deployed_index_id=deployed_index_id,
-    )
-    clients.CellariumCloudInternalServiceClient.update_index_with_deployment_info(
-        index_name=index_name,
-        update_kwargs={"deployed_index_id": deployed_index_id},
-    )
+        raise e
+    finally:
+        matching_engine_client.CustomMatchingEngineIndex.undeploy_index(
+            region=index_region,
+            project_id=project_id,
+            index_endpoint_id=index_endpoint_id,
+            deployed_index_id=deployed_index_id,
+        )
+        clients.CellariumCloudInternalServiceClient.update_index_with_deployment_info(
+            index_name=index_name,
+            update_kwargs={"deployed_index_id": deployed_index_id},
+        )
 
 
 @dsl.component(packages_to_install=["git+https://github.com/cellarium-ai/cellarium-cas.git@0.0.7", "owlready2"])
