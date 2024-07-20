@@ -74,7 +74,9 @@ def calculate_metrics(gcs_config_path: str) -> None:
     import yaml
     from smart_open import open
 
+
     from casp.scripts import benchmarking
+    from casp.scripts.benchmarking import utils
 
     with open(gcs_config_path, "r") as file:
         config_data = yaml.safe_load(file)
@@ -89,14 +91,30 @@ def calculate_metrics(gcs_config_path: str) -> None:
     metrics_metadata_path = config_data["metrics_metadata_path"]
     batch_size = config_data["batch_size"]
 
-    benchmarking.calculate_metrics_for_cas_responses(
-        dataset_paths=dataset_paths,
-        cas_result_paths=cas_result_paths,
-        model_name=model_name,
-        co_resource_path=cell_ontology_resource_path,
-        cl_labels_to_names_map_path=cl_labels_to_names_map_path,
-        output_path=metrics_metadata_path,
-        wandb_project=wandb_project,
-        batch_size=batch_size,
-        num_hops=num_hops,
-    )
+    import wandb
+    import pandas as pd
+
+    run = wandb.init(project=wandb_project, name=f"benchmarking_model_{model_name}")
+
+    _dataset_paths = utils.get_paths(paths=dataset_paths)
+    _cas_result_paths = utils.get_paths(paths=cas_result_paths)
+
+    metrics_dir = f"{metrics_metadata_path}/{model_name}"
+    results = []
+
+    for dataset_file_path, cas_result_path in zip(_dataset_paths, _cas_result_paths):
+        dataset_file_name = dataset_file_path.split("/")[-1].split(".")[0]
+        metrics_output_filepath = f"{metrics_dir}/metrics_{dataset_file_name}.csv"
+        df = pd.read_csv(metrics_output_filepath)
+
+    # benchmarking.calculate_metrics_for_cas_responses(
+    #     dataset_paths=dataset_paths,
+    #     cas_result_paths=cas_result_paths,
+    #     model_name=model_name,
+    #     co_resource_path=cell_ontology_resource_path,
+    #     cl_labels_to_names_map_path=cl_labels_to_names_map_path,
+    #     output_path=metrics_metadata_path,
+    #     wandb_project=wandb_project,
+    #     batch_size=batch_size,
+    #     num_hops=num_hops,
+    # )

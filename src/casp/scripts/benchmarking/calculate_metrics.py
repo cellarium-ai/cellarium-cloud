@@ -12,29 +12,6 @@ from smart_open import open
 from casp.scripts.benchmarking import utils
 
 
-def create_hop_data(node_cl_name, level, co_resource) -> t.Dict[str, t.Any]:
-    """
-    Create Hop cell ontology data based on `co_resource`. The output is a dictionary with the following keys:
-
-    * `nodes` – A set of all nodes in the current hop.
-    * `all_ancestors` – A set of all the ancestors of all the nodes in the current hop.
-    * `all_descendants` – A set of all the descendants of all the nodes in the current hop.
-
-    :param node_cl_name: The current node used as the starting point for the hops. This node will always be the only
-        node in `nodes` if the level is 0.
-    :param level: The level defines the distance used to determine how far we want to traverse in the Cell Ontology
-        graph from `node_cl_name`.
-    :param co_resource: Cell Ontology helper resource which has already precalculated top_n_level descendants and
-        ancestors.
-    """
-    current_node_co_data = co_resource[node_cl_name]
-    nodes = current_node_co_data[f"top_{level}_ancestors"].union(current_node_co_data[f"top_{level}_descendants"])
-    all_ancestors = set().union(*[co_resource[hop_cl_name]["all_ancestors"] for hop_cl_name in nodes])
-    all_descendants = set().union(*[co_resource[hop_cl_name]["all_descendants"] for hop_cl_name in nodes])
-
-    return {"nodes": nodes, "all_ancestors": all_ancestors, "all_descendants": all_descendants}
-
-
 def calculate_precision(tp: float, fp: float) -> float:
     """
     Calculate precision.
@@ -78,10 +55,7 @@ def calculate_tps_and_fps(
 
     :return: A tuple of lists containing true positive and false positive scores for each hop level.
     """
-    hops = [
-        create_hop_data(node_cl_name=ground_truth_cl_name, level=i, co_resource=co_resource)
-        for i in range(num_hops + 1)
-    ]
+    hops = [co_resource[ground_truth_cl_name][f"hop_{i}"] for i in range(num_hops + 1)]
     true_positives = [0.0] * len(hops)
     false_positives = [0.0] * len(hops)
 
@@ -107,8 +81,10 @@ def calculate_tps_and_fps(
 def calculate_metrics_for_query_cell(
     query_cell_obj: t.Dict[str, t.Any],
     ground_truth: str,
-    co_resource: t.Dict[str, t.Set],
-    cl_labels_to_names_map: t.Dict[str, str],
+    co_resource_schema_3: t.Dict[str, t.Any],
+    cl_labels_to_names_map_schema_3: t.Dict[str, str],
+    co_resource_schema_5: t.Dict[str, t.Any],
+    cl_labels_to_names_map_schema_5: t.Dict[str, str],
     num_hops=4,
 ):
     """
@@ -116,32 +92,39 @@ def calculate_metrics_for_query_cell(
 
     :param query_cell_obj: The query cell object containing ontology aware scores for.
     :param ground_truth: The ground truth cell type label.
-    :param co_resource: Cell Ontology helper resource which has already precalculated top_n_level descendants and
-        ancestors.
-    :param cl_labels_to_names_map: A dictionary resource that maps cell type names to cl labels
+    :param co_resource_schema_3: Cell ontology precalculated resource used for Schema 3 in CZI.
+    :param cl_labels_to_names_map_schema_3: Mapping from class labels to cell ontology names from Cell ontology used in
+        Schema 3 in CZI.
+    :param co_resource_schema_5: Cell ontology precalculated resource used for Schema 5 in CZI.
+    :param cl_labels_to_names_map_schema_5: Mapping from class labels to cell ontology names from Cell ontology used in
+        Schema 5 in CZI.
     :param num_hops: Number of hops to consider.
 
     :return: A dictionary containing sensitivity, specificity, and F1 score for each hop level.
     """
-    if ground_truth not in co_resource:
+    if ground_truth not in cl_labels_to_names_map_schema_3 and ground_truth not in cl_labels_to_names_map_schema_5:
         metrics_na = {
             "query_cell_id": query_cell_obj["query_cell_id"],
-            "detail": f"Couldn't find cell type {ground_truth} in Cell Ontology resource"
+            "detail": f"Couldn't find cell type {ground_truth} in Cell Ontology resource",
         }
-        for i in range(num_hops):
-            metrics_na[f"hop_{i}_sensitivity"] = None
-            metrics_na[f"hop_{i}_specificity"] = None
-            metrics_na[f"hop_{i}_f1_score"] = None
+        for hop in range(num_hops + 1):
+            for metric in ["sensitivity", "specificity", "f1_score"]:
+                metrics_na[f"hop_{hop}_{metric}"] = None
 
         return metrics_na
 
-    ground_truth_cl_name = cl_labels_to_names_map[ground_truth]
+    try:
+        ground_truth_cl_name = cl_labels_to_names_map_schema_3[ground_truth]
+        _co_resource = co_resource_schema_3
+    except KeyError:
+        ground_truth_cl_name = cl_labels_to_names_map_schema_5[ground_truth]
+        _co_resource = co_resource_schema_5
 
     true_positives, false_positives = calculate_tps_and_fps(
         query_cell_obj=query_cell_obj,
         ground_truth_cl_name=ground_truth_cl_name,
         num_hops=num_hops,
-        co_resource=co_resource,
+        co_resource=_co_resource,
     )
 
     sensitivities = [tp for tp in true_positives]
@@ -165,8 +148,10 @@ def calculate_metrics_for_query_cell(
 def calculate_metrics_for_cas_output(
     ground_truths: t.Iterable[str],
     cas_result: t.List[t.Dict[str, t.Any]],
-    co_resource: t.Dict[str, t.Any],
-    cl_labels_to_names_map: t.Dict[str, str],
+    co_resource_schema_3: t.Dict[str, t.Any],
+    cl_labels_to_names_map_schema_3: t.Dict[str, str],
+    co_resource_schema_5: t.Dict[str, t.Any],
+    cl_labels_to_names_map_schema_5: t.Dict[str, str],
     num_hops: int,
 ) -> pd.DataFrame:
     """
@@ -178,9 +163,12 @@ def calculate_metrics_for_cas_output(
 
     :param ground_truths: Iterable containing ground truths to benchmark against
     :param cas_result: The result from the CAS annotation, containing query results and matches for each cell.
-    :param co_resource: Cell Ontology helper resource which has already precalculated top_n_level descendants and
-        ancestors.
-    :param cl_labels_to_names_map: A dictionary resource that maps cell type names to cl labels
+    :param co_resource_schema_3: Cell ontology precalculated resource used for Schema 3 in CZI.
+    :param cl_labels_to_names_map_schema_3: Mapping from class labels to cell ontology names from Cell ontology used in
+        Schema 3 in CZI.
+    :param co_resource_schema_5: Cell ontology precalculated resource used for Schema 5 in CZI.
+    :param cl_labels_to_names_map_schema_5: Mapping from class labels to cell ontology names from Cell ontology used in
+        Schema 5 in CZI.
     :param num_hops: Number of hops to consider.
 
     :return: A pandas DataFrame with query cell IDs as the index and sensitivity, specificity, and F1 score
@@ -192,8 +180,10 @@ def calculate_metrics_for_cas_output(
         query_cell_metrics = calculate_metrics_for_query_cell(
             query_cell_obj=query_res_obj,
             ground_truth=ground_truth,
-            co_resource=co_resource,
-            cl_labels_to_names_map=cl_labels_to_names_map,
+            co_resource_schema_3=co_resource_schema_3,
+            cl_labels_to_names_map_schema_3=cl_labels_to_names_map_schema_3,
+            co_resource_schema_5=co_resource_schema_5,
+            cl_labels_to_names_map_schema_5=cl_labels_to_names_map_schema_5,
             num_hops=num_hops,
         )
 
@@ -218,8 +208,10 @@ def split_into_batches(data_list, batch_size):
 def calculate_metrics_for_cas_output_in_batches(
     ground_truths: t.List[str],
     cas_result: t.List[t.Dict[str, t.Any]],
-    co_resource: t.Dict[str, t.Any],
-    cl_labels_to_names_map: t.Dict[str, str],
+    co_resource_schema_3: t.Dict[str, t.Any],
+    cl_labels_to_names_map_schema_3: t.Dict[str, str],
+    co_resource_schema_5: t.Dict[str, t.Any],
+    cl_labels_to_names_map_schema_5: t.Dict[str, str],
     num_hops: int,
     batch_size: int = 20000,
 ) -> pd.DataFrame:
@@ -228,8 +220,12 @@ def calculate_metrics_for_cas_output_in_batches(
 
     :param ground_truths: List of ground truth labels.
     :param cas_result: List of CAS result dictionaries.
-    :param co_resource: Cell Ontology precalculated resource dictionary.
-    :param cl_labels_to_names_map: Mapping from class labels to cell ontology names.
+    :param co_resource_schema_3: Cell ontology precalculated resource used for Schema 3 in CZI.
+    :param cl_labels_to_names_map_schema_3: Mapping from class labels to cell ontology names from Cell ontology used in
+        Schema 3 in CZI.
+    :param co_resource_schema_5: Cell ontology precalculated resource used for Schema 5 in CZI.
+    :param cl_labels_to_names_map_schema_5: Mapping from class labels to cell ontology names from Cell ontology used in
+        Schema 5 in CZI.
     :param num_hops: Number of hops for evaluation.
     :param batch_size: Size of each batch. Default is 5000.
 
@@ -254,8 +250,10 @@ def calculate_metrics_for_cas_output_in_batches(
             calculate_metrics_kwargs = {
                 "cas_result": cas_result_batch,
                 "ground_truths": ground_truths_batch,
-                "co_resource": co_resource,
-                "cl_labels_to_names_map": cl_labels_to_names_map,
+                "co_resource_schema_3": co_resource_schema_3,
+                "cl_labels_to_names_map_schema_3": cl_labels_to_names_map_schema_3,
+                "co_resource_schema_5": co_resource_schema_5,
+                "cl_labels_to_names_map_schema_5": cl_labels_to_names_map_schema_5,
                 "num_hops": num_hops,
             }
             print(f"Submitting batch {i}. Length: {len(cas_result_batch)}...")
@@ -289,8 +287,10 @@ def calculate_metrics_for_cas_responses(
     cas_result_paths: t.Union[str, t.List[str]],
     model_name: str,
     num_hops: int,
-    co_resource_path: str,
-    cl_labels_to_names_map_path: str,
+    co_resource_schema_3_path: str,
+    cl_labels_to_names_map_schema_3_path: str,
+    co_resource_schema_5_path: str,
+    cl_labels_to_names_map_schema_5_path: str,
     output_path: str,
     wandb_project: str,
     batch_size: int,
@@ -302,17 +302,31 @@ def calculate_metrics_for_cas_responses(
     :param cas_result_paths: Paths to the CAS result files. Can be a list of paths or a path to txt file with paths.
     :param model_name: Name of the model being evaluated.
     :param num_hops: Number of hops for evaluation.
-    :param co_resource_path: Path to the co-resource file.
-    :param cl_labels_to_names_map_path: Path to the class labels to names map file.
+    :param co_resource_schema_3_path: Path to the co-resource file for Cell ontology used for Schema 3 in CZI.
+    :param cl_labels_to_names_map_schema_3_path: Path to the class labels to names map file for Cell ontology used for
+        Schema 3 in CZI.
+    :param co_resource_schema_5_path: Path to the co-resource file for Cell ontology used for Schema 5 in CZI.
+    :param cl_labels_to_names_map_schema_5_path: Path to the class labels to names map file for Cell ontology used for
+        Schema 5 in CZI.
     :param output_path: Path to save the output metrics.
     :param wandb_project: Weights and Biases project name.
     :param batch_size: Batch size for processing cas results in parallel processes.
     """
-    with open(co_resource_path, "rb") as f:
-        co_resource = pickle.load(f)
+    with open(co_resource_schema_3_path, "rb") as f:
+        co_resource_schema_3 = pickle.load(f)
 
-    with open(cl_labels_to_names_map_path, "rb") as f:
-        cl_labels_to_names_map = pickle.load(f)
+    with open(cl_labels_to_names_map_schema_3_path, "rb") as f:
+        cl_labels_to_names_map_schema_3 = pickle.load(f)
+
+    with open(co_resource_schema_5_path, "rb") as f:
+        co_resource_schema_5 = pickle.load(f)
+
+    with open(cl_labels_to_names_map_schema_5_path, "rb") as f:
+        cl_labels_to_names_map_schema_5 = pickle.load(f)
+
+    # Get all columns list for the final result
+    metrics = ["sensitivity", "specificity", "f1_score"]
+    metric_column_list = [f"hop_{hop}_{metric}" for hop in range(num_hops + 1) for metric in metrics]
 
     _dataset_paths = utils.get_paths(paths=dataset_paths)
     _cas_result_paths = utils.get_paths(paths=cas_result_paths)
@@ -345,8 +359,10 @@ def calculate_metrics_for_cas_responses(
         df_metrics = calculate_metrics_for_cas_output_in_batches(
             ground_truths=ground_truths,
             cas_result=cas_result,
-            co_resource=co_resource,
-            cl_labels_to_names_map=cl_labels_to_names_map,
+            co_resource_schema_3=co_resource_schema_3,
+            cl_labels_to_names_map_schema_3=cl_labels_to_names_map_schema_3,
+            co_resource_schema_5=co_resource_schema_5,
+            cl_labels_to_names_map_schema_5=cl_labels_to_names_map_schema_5,
             num_hops=num_hops,
             batch_size=batch_size,
         )
@@ -354,7 +370,7 @@ def calculate_metrics_for_cas_responses(
         df_metrics.to_csv(metrics_output_filepath)
         results.append(df_metrics)
 
-    means_list = [df.mean() for df in results]
+    means_list = [df[metric_column_list].mean() for df in results]
     means_df = pd.DataFrame(means_list)
     aggregated_means = means_df.mean()
     run.log(aggregated_means.to_dict())
