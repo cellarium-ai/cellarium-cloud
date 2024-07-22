@@ -216,7 +216,6 @@ class UserAdminView(CellariumCloudAdminModelView):
                 key = self.key_cache[model.user_keys[0].key_locator]
                 # Renove the key from the cache
                 del self.key_cache[model.user_keys[0].key_locator]
-                flash(gettext(f"A key was created for {model.username}: [{key}].  It will not be shown again"), "key")
                 email_sender.send_welcome_email(email=model.email, key=key)
             except Exception:
                 logger.error("Error notifying user", exc_info=True)
