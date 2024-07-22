@@ -56,6 +56,20 @@ class ModelInferenceService:
 
         return CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
 
+    @staticmethod
+    def _get_cache_info() -> t.Dict[str, t.Any]:
+        """
+        I'm just using this to get cache info while I'm developing.
+        TODO: Remove this before merging
+        """
+        file_cache_info = ModelInferenceService._get_model_checkpoint_file.cache_info()
+        module_cache_info = ModelInferenceService._load_module_from_checkpoint.cache_info()
+
+        return {
+            "file_cache_info": file_cache_info,
+            "module_cache_info": module_cache_info,
+        }
+
     def _get_output_from_model(
         self, model: models.CASModel, adata_file: t.BinaryIO
     ) -> t.Tuple[np.ndarray, t.List[str]]:
