@@ -1,5 +1,6 @@
 import typing as t
 from functools import cache
+from io import BytesIO
 
 import anndata
 import numpy as np
@@ -38,7 +39,8 @@ class ModelInferenceService:
         """
         model_checkpoint_path = ModelInferenceService._get_model_checkpoint_path(model_file_path)
 
-        return open(model_checkpoint_path, "rb")
+        with open(model_checkpoint_path, "rb") as model_checkpoint_file:
+            return BytesIO(model_checkpoint_file.read())
 
     @staticmethod
     @cache
