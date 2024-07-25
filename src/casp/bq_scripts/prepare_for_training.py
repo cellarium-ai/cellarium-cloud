@@ -293,6 +293,8 @@ def prepare_extract(
         However, the output extract table would contain only the column names, without any aliases.
         Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
+    credentials, _ = utils.get_google_service_credentials()
+
     with open(filters_json_path) as f:
         filters = json.loads(f.read())
 
@@ -317,7 +319,7 @@ def prepare_extract(
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
     )
     print("Preparing cell type categorical variable info")
-    all_cell_types_df = prepare_all_cell_types(project=project_id, dataset=dataset)
+    all_cell_types_df = prepare_all_cell_types(project=project_id, dataset=dataset, credentials=credentials)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         measured_genes_file_name = f"measured_genes_info.csv"
