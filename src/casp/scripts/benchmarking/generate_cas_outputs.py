@@ -1,12 +1,15 @@
 import pickle
 import typing as t
 import time
+import logging
 
 import anndata
 from cellarium.cas import CASClient, exceptions as cas_exceptions
 from smart_open import open
 
 from casp.scripts.benchmarking import utils
+
+logger = logging.getLogger(__name__)
 
 
 class AnnotationError(Exception):
@@ -41,12 +44,12 @@ def generate_cas_outputs(
         for x in utils.list_files_in_bucket(bucket_name=gcs_bucket_name, prefix=gcs_output_path)
     )
     for dataset_file_path in _dataset_file_paths:
-        print(f"Running CAS over {dataset_file_path} dataset...")
+        logger.info(f"Running CAS over {dataset_file_path} dataset...")
         dataset_file_name = dataset_file_path.split("/")[-1].split(".")[0]
         output_path = f"{cas_results_output_path}/{model_name}/cas_output_{dataset_file_name}.pickle"
 
         if output_path in existing_output_files:
-            print(f"Skipping dataset {dataset_file_name} as its output already exists")
+            logger.info(f"Skipping dataset {dataset_file_name} as its output already exists")
             continue
 
         cas_client = CASClient(api_token=cas_api_token, api_url=cas_api_url)
@@ -68,15 +71,15 @@ def generate_cas_outputs(
                 time.sleep(delay)
                 curr_attempt += 1
                 if curr_attempt < num_attempts:
-                    print(f"Retrying annotation, number of current retry: {curr_attempt}...")
+                    logger.info(f"Retrying annotation, number of current retry: {curr_attempt}...")
                     continue
 
                 raise AnnotationError("Exceeded number of allowed retries. Exiting.")
             else:
                 done = True
-                print("Successfully finished annotation.")
+                logger.info("Successfully finished annotation.")
 
-        print("Uploading output to bucket...")
+        logger.info("Uploading output to bucket...")
 
         with open(output_path, "wb") as f:
             pickle.dump(cas_result, f)
