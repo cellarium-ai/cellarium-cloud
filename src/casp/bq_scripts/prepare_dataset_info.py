@@ -45,11 +45,11 @@ def prepare_measured_genes_info(
     )
 
 
-def prepare_all_cell_types(project: str, dataset: str, credentials) -> pd.DataFrame:
+def prepare_all_cell_types(project: str, dataset: str, credentials: t.Optional[Credentials] = None) -> pd.DataFrame:
     return distinct_obs_column_values(obs_column="cell_type", project=project, dataset=dataset, credentials=credentials)
 
 
-def distinct_obs_column_values(obs_column: str, project: str, dataset: str, credentials) -> pd.DataFrame:
+def distinct_obs_column_values(obs_column: str, project: str, dataset: str, credentials: t.Optional[Credentials] = None) -> pd.DataFrame:
     if credentials is not None:
         client = bigquery.Client(project=project, credentials=credentials)
     else:
