@@ -20,7 +20,7 @@ PyJWT==2.6.0
 alembic==1.9.2
 gunicorn==22.0.0
 pg8000==1.31.2
-cloud-sql-python-connector==1.10.0
+cloud-sql-python-connector==1.11.0
 neptune==1.1.1
 matplotlib
 pandas
