@@ -22,6 +22,7 @@ from google.oauth2.service_account import Credentials
 from scipy.sparse import coo_matrix
 
 from casp.bq_scripts import constants
+from casp.bq_scripts.prepare_dataset_info import distinct_obs_column_values
 from casp.data_manager import sql
 from casp.services import utils
 
@@ -280,10 +281,21 @@ def extract_minibatch_to_anndata(
     print("Adding Other Obs Columns...")
     for obs_column in obs_columns_values:
         adata.obs[obs_column] = obs_columns_values[obs_column]
+        make_obs_categories_comprehensive(adata, obs_column, project, dataset, credentials)
 
     print("Writing AnnData Matrix")
     adata.write(Path(output), compression="gzip")
     print("Done.")
+
+
+def make_obs_categories_comprehensive(adata: ad.AnnData, obs_column: str, project: str, dataset: str, credentials):
+    dtype = adata.obs[obs_column].dtype
+    if (dtype.name == "category") or (dtype.name == "object") or (dtype.name == "string"):
+        print(f"Making '{obs_column}' ({dtype.name}) categories into a comprehensive categorical...")
+        df = distinct_obs_column_values(obs_column=obs_column, project=project, dataset=dataset, credentials=credentials)
+        adata.obs[obs_column] = pd.Categorical(adata.obs[obs_column].values, categories=df[obs_column].values)
+    else:
+        print(f"Skipping adata.obs['{obs_column}'] as it is a {dtype.name} type")
 
 
 def convert_matrix_data_to_coo_matrix_input_format(

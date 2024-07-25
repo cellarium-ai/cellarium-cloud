@@ -45,14 +45,18 @@ def prepare_measured_genes_info(
     )
 
 
-def prepare_all_cell_types(project: str, dataset: str, credentials: t.Optional[Credentials] = None) -> pd.DataFrame:
+def prepare_all_cell_types(project: str, dataset: str, credentials) -> pd.DataFrame:
+    return distinct_obs_column_values(obs_column="cell_type", project=project, dataset=dataset, credentials=credentials)
+
+
+def distinct_obs_column_values(obs_column: str, project: str, dataset: str, credentials) -> pd.DataFrame:
     if credentials is not None:
         client = bigquery.Client(project=project, credentials=credentials)
     else:
         client = bigquery.Client(project=project)
 
-    sql_get_all_cel_types = f"""
-        SELECT DISTINCT(cell_type)
+    sql_get_all_obs_values = f"""
+        SELECT DISTINCT({obs_column})
         FROM `{project}.{dataset}.cas_cell_info`
     """
-    return client.query(sql_get_all_cel_types).to_dataframe()
+    return client.query(sql_get_all_obs_values).to_dataframe()
