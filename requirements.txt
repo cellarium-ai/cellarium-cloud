@@ -42,3 +42,4 @@ sendgrid==6.11.0
 packaging==24.1
 pydantic==2.8.2
 pydantic-settings==2.3.4
+numpy==1.26.4
