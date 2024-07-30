@@ -195,13 +195,18 @@ class CASService(FastAPI):
         self.port = port
 
         # Configure Sentry integration
-        if sentry_application_id is not None and settings.SENTRY_DSN is not None:
+        if (
+            sentry_application_id is not None
+            and settings.SENTRY_DSN is not None
+            and settings.SENTRY_ENVIRONMENT is not None
+        ):
             sentry_sdk.init(
                 dsn=settings.SENTRY_DSN,
+                environment=settings.SENTRY_ENVIRONMENT,
                 server_name=sentry_application_id,
                 enable_tracing=settings.SENTRY_ENABLE_TRACING,
-                profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
                 traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+                profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
             )
 
         # Configure middleware

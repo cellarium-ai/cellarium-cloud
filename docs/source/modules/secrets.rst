@@ -49,6 +49,17 @@ created manually.
 +------------------------------------+-----------------------------------------------------------------------+
 | FROM_ADDRESS                       | Email address to send emails from                                     |
 +------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_DSN                         | Connection string for reporting to Sentry. Must be set to use Sentry  |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_ENVIRONMENT                 | Environment that Sentry events will be associated with.  Must be set |
+|                                    | to use Sentry                                                         |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_ENABLE_TRACING              | If true, transactions and trace data will be generated and captured   |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_TRACES_SAMPLE_RATE          | The percentage chance a given transaction will be sent to Sentry      |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_PROFILES_SAMPLE_RATE        | Sample rate in Sentry relative to SENTRY_TRACES_SAMPLE_RATE           |
++------------------------------------+-----------------------------------------------------------------------+
 
 
 

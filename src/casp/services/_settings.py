@@ -40,6 +40,7 @@ class AllEnvSettings(BaseSettings):
     SENTRY_ENABLE_TRACING: bool = True
     SENTRY_PROFILES_SAMPLE_RATE: float = 1.0
     SENTRY_TRACES_SAMPLE_RATE: float = 1.0
+    SENTRY_ENVIRONMENT: t.Optional[str] = os.environ.get("SENTRY_ENVIRONMENT")
     # Model Training
     NEPTUNE_API_KEY: t.Optional[str] = os.environ.get("NEPTUNE_API_KEY")
     # API
