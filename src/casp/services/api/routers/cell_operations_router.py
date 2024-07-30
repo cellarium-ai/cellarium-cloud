@@ -41,14 +41,6 @@ async def annotate(
     )
 
 
-@cell_operations_router.get("/cache-info")
-def get_cache_info():
-    """
-    TODO: Delete this method before merge
-    """
-    return services.CellOperationsService._get_cache_info()
-
-
 @cell_operations_router.post(
     "/annotate-cell-type-summary-statistics-strategy",
     response_model=schemas.QueryAnnotationCellTypeSummaryStatisticsType,
