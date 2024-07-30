@@ -41,14 +41,6 @@ async def annotate(
     )
 
 
-@cell_operations_router.get("/cache-info")
-def get_cache_info():
-    """
-    TODO: Delete this method before merge
-    """
-    return services.CellOperationsService._get_cache_info()
-
-
 @cell_operations_router.post(
     "/annotate-cell-type-summary-statistics-strategy",
     response_model=schemas.QueryAnnotationCellTypeSummaryStatisticsType,
@@ -109,6 +101,15 @@ async def annotate_cell_type_ontology_aware_strategy(
         prune_threshold=prune_threshold,
         weighting_prefactor=weighting_prefactor,
     )
+
+
+@cell_operations_router.get("/cache-info", response_model=schemas.CacheInfo)
+def get_cache_info(user: models.User = Depends(dependencies.authenticate_user)):
+    """
+    Returns the cache info for the model checkpoint file and module caches.
+    """
+
+    return services.CellOperationsService.get_cache_info(user=user)
 
 
 @cell_operations_router.post(path="/nearest-neighbor-search", response_model=t.List[schemas.SearchQueryCellResult])

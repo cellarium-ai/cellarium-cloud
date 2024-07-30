@@ -106,3 +106,8 @@ class CellariumCellMetadata(BaseModel):
     self_reported_ethnicity_ontology_term_id: t.Optional[str] = Field(default=None, example="HANCESTRO:0019")
     sex_ontology_term_id: t.Optional[str] = Field(default=None, example="PATO:0000384")
     tissue_ontology_term_id: t.Optional[str] = Field(default=None, example="UBERON:0002037")
+
+
+class CacheInfo(BaseModel):
+    file_cache_info: t.Tuple[int, int, t.Optional[int], int]
+    module_cache_info: t.Tuple[int, int, t.Optional[int], int]
