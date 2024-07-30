@@ -148,8 +148,6 @@ runs:
         labels: |
           deployment-prefix=${{ env.DEPLOYMENT_PREFIX }}
           deployed-by=${{ env.DEPLOYED_BY }}
-        env_vars: |
-          MODEL_SERVER_URL=${{ env.MODEL_SERVER_URL }}
         flags: |
           --add-cloudsql-instances ${{ inputs.deployment-sql-instance }}
           --vpc-connector ${{ inputs.deployment-vpc-connector }}
@@ -172,14 +170,6 @@ runs:
       name: Log URL
       run: |
         echo "Deployed [${{ env.DEPLOYMENT_PREFIX }}-${{ inputs.deployment-type }}](${{ steps.deploy.outputs.url }})" >> $GITHUB_STEP_SUMMARY
-      shell: bash
-
-    - id: set-model-url
-      name: We need to stash the URL for the model server for downstream deployments
-      run: |
-        if [[ "${{ inputs.deployment-type }}" == "cas-model" ]]; then
-          echo "MODEL_SERVER_URL=${{ steps.deploy.outputs.url }}" >> $GITHUB_ENV
-        fi
       shell: bash
 
     - id: set-api-url

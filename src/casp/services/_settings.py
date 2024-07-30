@@ -46,7 +46,6 @@ class AllEnvSettings(BaseSettings):
     # API
     AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 650  # 350 seconds
     AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 600  # 300 seconds
-    MODEL_SERVER_URL: str = os.environ.get("MODEL_SERVER_URL", "https://cellarium-cloud-model.cellarium.ai")
     DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
     DEFAULT_MODEL_BQ_DATASET_NAME: str = "cas_50m_dataset"
     API_REQUEST_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cellarium_api_temp_tables"
@@ -109,7 +108,6 @@ class AllEnvSettings(BaseSettings):
 class DevSettings(AllEnvSettings):
     # General
     debug: bool = True
-    MODEL_SERVER_URL: str = os.environ.get("MODEL_SERVER_URL", "https://cellarium-cloud-model-dev.cellarium.ai")
 
 
 class ProductionSettings(AllEnvSettings):
@@ -119,7 +117,6 @@ class ProductionSettings(AllEnvSettings):
 class LocalSettings(AllEnvSettings):
     # General
     debug: bool = True
-    MODEL_SERVER_URL: str = "http://localhost:8001"
     API_SERVICE_PORT: int = 8000
     MODEL_SERVICE_PORT: int = 8001
     # Database
