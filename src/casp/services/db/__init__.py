@@ -1,6 +1,7 @@
 import pg8000
 import sqlalchemy.orm
 from google.cloud.sql.connector import Connector, IPTypes
+from google.cloud.sql.connector.enums import RefreshStrategy
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from casp.services import settings
@@ -17,16 +18,18 @@ class PrivateConnectionProvider:
             user=settings.DB_USER,
             password=settings.DB_PASSWORD,
             db=settings.DB_NAME,
-            enable_iam_auth=False,
-            ip_type=IPTypes.PRIVATE,
         )
         return conn
 
 
 def create_engine() -> sqlalchemy.engine.base.Engine:
     if settings.DB_PRIVATE_IP is not None:
-        # initialize Cloud SQL Python Connector object
-        connector = Connector()
+        # initialize Cloud SQL Python Connector object with default settings for all connections
+        connector = Connector(
+            enable_iam_auth=False,
+            ip_type=IPTypes.PRIVATE,
+            refresh_strategy=RefreshStrategy.LAZY,
+        )
 
         return sqlalchemy.create_engine(
             url="postgresql+pg8000://",
