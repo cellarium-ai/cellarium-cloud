@@ -43,11 +43,20 @@ created manually.
 +------------------------------------+-----------------------------------------------------------------------+
 | PROJECT_BUCKET_NAME                | Name of the bucket for the project                                    |
 +------------------------------------+-----------------------------------------------------------------------+
-| MODEL_SERVER_URL                   | Url of the model service                                              |
-+------------------------------------+-----------------------------------------------------------------------+
 | SENDGRID_API_KEY                   | Key to use to send emails using the Sendgrid API                      |
 +------------------------------------+-----------------------------------------------------------------------+
 | FROM_ADDRESS                       | Email address to send emails from                                     |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_DSN                         | Connection string for reporting to Sentry. Must be set to use Sentry  |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_ENVIRONMENT                 | Environment that Sentry events will be associated with.  Must be set |
+|                                    | to use Sentry                                                         |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_ENABLE_TRACING              | If true, transactions and trace data will be generated and captured   |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_TRACES_SAMPLE_RATE          | The percentage chance a given transaction will be sent to Sentry      |
++------------------------------------+-----------------------------------------------------------------------+
+| SENTRY_PROFILES_SAMPLE_RATE        | Sample rate in Sentry relative to SENTRY_TRACES_SAMPLE_RATE           |
 +------------------------------------+-----------------------------------------------------------------------+
 
 
