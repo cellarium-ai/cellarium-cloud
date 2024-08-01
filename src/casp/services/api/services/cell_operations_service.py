@@ -42,6 +42,24 @@ class CellOperationsService:
         self.model_service = services.ModelInferenceService()
         self.authorizer = Authorizer(cellarium_general_dm=self.cellarium_general_dm)
 
+    @staticmethod
+    def get_cache_info(user: models.User) -> schemas.CacheInfo:
+        """
+        Returns the cache info for the file and module cache in ModelInferenceService.
+
+        :return: A dict containing two entries: file_cache_info and module_cache_info.  Each
+            contains a tuple with 4 values: hits, misses, maxsize, and currsize.
+        """
+        if not user.is_admin:
+            raise exceptions.AccessDeniedError("Access denied.  This is an admin-only endpoint.")
+
+        cache_info = services.ModelInferenceService.get_cache_info()
+
+        return schemas.CacheInfo(
+            file_cache_info=cache_info["file_cache_info"],
+            module_cache_info=cache_info["module_cache_info"],
+        )
+
     def __get_cell_count_from_anndata(self, file: t.BinaryIO) -> int:
         """
         Get the number of cells in the anndata file.

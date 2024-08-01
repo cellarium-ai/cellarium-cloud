@@ -1,4 +1,5 @@
 from casp.services.api.schemas.cell_operations import (  # noqa
+    CacheInfo,
     CellariumCellByIdsInput,
     CellariumCellMetadata,
     CellTypeStatisticsExtendedObject,

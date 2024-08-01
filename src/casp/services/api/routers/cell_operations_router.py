@@ -103,6 +103,15 @@ async def annotate_cell_type_ontology_aware_strategy(
     )
 
 
+@cell_operations_router.get("/cache-info", response_model=schemas.CacheInfo)
+def get_cache_info(user: models.User = Depends(dependencies.authenticate_user)):
+    """
+    Returns the cache info for the model checkpoint file and module caches.
+    """
+
+    return services.CellOperationsService.get_cache_info(user=user)
+
+
 @cell_operations_router.post(path="/nearest-neighbor-search", response_model=t.List[schemas.SearchQueryCellResult])
 async def nearest_neighbor_search(
     file: UploadFile = File(),
