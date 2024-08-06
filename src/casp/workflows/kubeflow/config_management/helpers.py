@@ -1,6 +1,7 @@
 import json
 import secrets
 import tempfile
+import re
 import typing as t
 
 import yaml
@@ -13,6 +14,34 @@ from casp.workflows.kubeflow import constants, machine_specs_utils
 PIPELINE_CONFIGS_TEMPLATE_PATH = f"{settings.CAS_DIR}/workflows/kubeflow/config_management/config_templates"
 AUTO_GENERATED_CONFIG_PREFIX = "ml-configs/auto-generated-benchmarking"
 CONFIG_BUCKET_PATH = f"gs://{settings.PROJECT_BUCKET_NAME}/{AUTO_GENERATED_CONFIG_PREFIX}"
+
+
+def extract_variables(template_string):
+    # Find all ${...} placeholders
+    variable_pattern = re.compile(r"\${(\w+)}")
+    variables = set(re.findall(variable_pattern, template_string))
+
+    # Find all % if conditions
+    condition_pattern = re.compile(r"% if ([\w\s\.\_\(\)]+):")
+    conditions = set()
+
+    for condition in re.findall(condition_pattern, template_string):
+        # Split the condition by logical operators and strip whitespace
+        for part in re.split(r"\sand\s|\sor\s|not\s", condition):
+            part = part.strip()
+            if part:  # Only add non-empty strings
+                conditions.add(part)
+
+    all_variables = variables.union(conditions)
+    all_variables = sorted(list(all_variables))
+    return all_variables
+
+
+def validate_template(template_string: str, config_yaml_path: str):
+    with open(config_yaml_path, "r") as file:
+        data = yaml.safe_load(file)
+
+
 
 
 def get_component_config_template_kwargs(config_data: t.Dict[str, t.Any], component_name: str) -> t.Dict[str, t.Any]:

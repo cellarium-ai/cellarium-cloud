@@ -117,7 +117,7 @@ model:
       init_args:
         filter_list:
           !FileLoader
-          file_path: gs://cellarium-file-system/curriculum/human_10x_only_exclude_benchmarking_2024_05_16_ingest/models/shared_meta/filters/${filter_file_name}
+          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/shared_meta/filters/${filter_file_name}
           loader_fn: pandas.read_csv
           attr: original_feature_id
           convert_fn: pandas.Series.to_list
@@ -127,7 +127,7 @@ model:
       init_args:
         filter_list:
           !FileLoader
-          file_path: gs://cellarium-file-system/curriculum/human_10x_only_exclude_benchmarking_2024_05_16_ingest/models/shared_meta/filters/${filter_file_name}
+          file_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/shared_meta/filters/${filter_file_name}
           loader_fn: pandas.read_csv
           attr: original_feature_id
           convert_fn: pandas.Series.to_list
