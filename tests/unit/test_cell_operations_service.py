@@ -198,7 +198,7 @@ class TestCellOperationsService:
                 model_name=MODEL.model_name,
                 include_extended_output=False,
             )
-    
+
     @pytest.mark.asyncio
     async def test_annotate_adata_file_invalid_anndata_dtype(self) -> None:
         """
