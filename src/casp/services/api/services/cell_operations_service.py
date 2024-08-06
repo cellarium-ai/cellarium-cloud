@@ -70,6 +70,8 @@ class CellOperationsService:
         """
         if adata.X.dtype != np.float32:
             raise exceptions.InvalidAnndataFileException(adata.X.dtype)
+        if adata.obs["total_mrna_umis"].dtype != np.float32:
+            raise exceptions.InvalidAnndataFileException(adata.obs["total_mrna_umis"].dtype)
 
     def __read_anndata_file(self, file: t.BinaryIO) -> anndata.AnnData:
         """
