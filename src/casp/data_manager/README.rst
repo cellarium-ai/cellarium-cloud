@@ -1,9 +1,6 @@
 Data Manager
 ============
 
-..
-    Are we still using bigquery?  Will we still be using it at the time when we start letting people actually use this thing?
-
 This module is designed for managing single-cell data in Cellarium DataStore. Currently, single-cell data are stored in BigQuery, which uses its own SQL dialect to handle data in the warehouse. This module should not be limited to only BigQuery, as there is potential to switch to other data warehouse products.
 
 For more information about BigQuery SQL dialect, please visit `BigQuery SQL dialect <https://cloud.google.com/bigquery/docs/introduction-sql>`_.

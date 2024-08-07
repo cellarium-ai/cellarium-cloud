@@ -17,6 +17,7 @@ Table of Contents
    modules/vertex_ai_matching_engine
    modules/cicd
    modules/secrets
+   modules/readme_modules/db_service
    modules/readme_modules/wdl_workflows
    modules/readme_modules/data_manager
    modules/changelog
