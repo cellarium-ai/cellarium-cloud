@@ -1,12 +1,8 @@
 Vertex AI Matching Engine
 =========================
 
-..
-    I'm not 100% sure this is entirely accurate, but I made my best attempt
-
 Vertex AI is a Google Cloud service that provides a variety of machine learning tools. One of these tools is the Matching Engine, 
-which is a vector similarity search service. The Matching Engine is used in CAS to search for cells types that are close to
-the user's submitted cells.
+which is a vector similarity search service. The Matching Engine is used in CAS to search for cells that are in close proximity in a vector space to the user's submitted cells.
 
 Summary - The good, the bad and the ugly
 ----------------------------------------
