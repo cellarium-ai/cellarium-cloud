@@ -73,7 +73,7 @@ class CellOperationsService:
         if adata.obs["total_mrna_umis"].dtype != np.float32:
             raise exceptions.InvalidAnndataFileException(adata.obs["total_mrna_umis"].dtype)
 
-    def __read_anndata_file(self, file: t.BinaryIO) -> anndata.AnnData:
+    def __read_and_validate_anndata_file(self, file: t.BinaryIO) -> anndata.AnnData:
         """
         Reads an anndata file and validates that the matrix is float32
 
