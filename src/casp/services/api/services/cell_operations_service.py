@@ -60,18 +60,27 @@ class CellOperationsService:
             module_cache_info=cache_info["module_cache_info"],
         )
 
-    def __validate_anndata_type(self, adata: anndata.AnnData):
+    def __validate_anndata_file(self, adata: anndata.AnnData):
         """
-        Validates that the anndata matrix is float32, which is a requirement for cellarium-ml
+        Validates the type of the anndata matrix and the presence of the 'total_mrna_umis' column,
+        which are required for the data to be processed properly by our cellarium-ml models.
 
         :param adata: Anndata object to validate
 
         :raises exceptions.InvalidAnndataFileException: If the anndata matrix is not float32
         """
         if adata.X.dtype != np.float32:
-            raise exceptions.InvalidAnndataFileException(adata.X.dtype)
-        if adata.obs["total_mrna_umis"].dtype != np.float32:
-            raise exceptions.InvalidAnndataFileException(adata.obs["total_mrna_umis"].dtype)
+            raise exceptions.InvalidAnndataFileException(
+                f"CAS only support anndata matrices with dtype 'float32'. The provided matrix has type '{adata.X.dtype}'."
+            )
+        if "total_mrna_umis" not in adata.obs:
+            raise exceptions.InvalidAnndataFileException(
+                "Provided matrix does not contain 'total_mrna_umis' column. This column is required for CAS to work."
+            )
+        elif adata.obs["total_mrna_umis"].dtype != np.float32:
+            raise exceptions.InvalidAnndataFileException(
+                f"Provided matrix column 'total_mrna_umis' should be type 'float32', but has type '{adata.obs['total_mrna_umis'].dtype}'."
+            )
 
     def __read_and_validate_anndata_file(self, file: t.BinaryIO) -> anndata.AnnData:
         """
@@ -82,7 +91,7 @@ class CellOperationsService:
         :return: Anndata object
         """
         adata = anndata.read_h5ad(file)
-        self.__validate_anndata_type(adata)
+        self.__validate_anndata_file(adata)
 
         # Reset the file pointer to the beginning of the file because we're gonna need to read it
         # again later.
@@ -275,7 +284,7 @@ class CellOperationsService:
         model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
 
         # Read the anndata file and validate it
-        adata = self.__read_anndata_file(file=file)
+        adata = self.__read_and_validate_anndata_file(file=file)
 
         # Make sure the user has enough quota to process the file
         cell_count = self.__verify_quota_and_log_activity(
@@ -361,7 +370,7 @@ class CellOperationsService:
         model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
 
         # Read the anndata file and validate it
-        adata = self.__read_anndata_file(file=file)
+        adata = self.__read_and_validate_anndata_file(file=file)
 
         # Make sure the user has enough quota to process the file
         cell_count = self.__verify_quota_and_log_activity(

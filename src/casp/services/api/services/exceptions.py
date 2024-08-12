@@ -40,8 +40,3 @@ class InvalidClientVersionException(APIBaseException):
 
 class InvalidAnndataFileException(InvalidInputError):
     http_code: int = status.HTTP_400_BAD_REQUEST
-
-    def __init__(self, dtype: str):
-        super().__init__(
-            f"CAS only supports anndata matrices with dtype 'float32'. The provided matrix has dtype '{dtype}'"
-        )

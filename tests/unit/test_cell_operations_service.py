@@ -143,9 +143,9 @@ class TestCellOperationsService:
                 cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
             ).thenReturn(response)
 
-        when(self.cell_operations_service)._CellOperationsService__read_anndata_file(file=ANNDATA_FILE).thenReturn(
-            embeddings
-        )
+        when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
+            file=ANNDATA_FILE
+        ).thenReturn(embeddings)
         when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
             user=USER_ADMIN
         ).thenReturn(10000)
@@ -184,9 +184,9 @@ class TestCellOperationsService:
         """
         self.__mock_apis(model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=[])
 
-        when(self.cell_operations_service)._CellOperationsService__read_anndata_file(file=ANNDATA_FILE).thenReturn(
-            ANNDATA_DATA
-        )
+        when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
+            file=ANNDATA_FILE
+        ).thenReturn(ANNDATA_DATA)
         when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
             user=USER_ADMIN
         ).thenReturn(2)
