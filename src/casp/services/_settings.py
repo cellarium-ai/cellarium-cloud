@@ -58,7 +58,9 @@ class AllEnvSettings(BaseSettings):
     GET_MATCHES_RETRY_BACKOFF_MAX: int = 30
     MAX_CELL_IDS_PER_QUERY: int = 20_000  # Maximum number of cell IDs that can be queried at once
     # Consensus Engine
-    GCS_CELL_ONTOLOGY_RESOURCE_FILE: str = f"gs://{PROJECT_BUCKET_NAME}/consensus_engine/cell_ontology_resources.json"
+    GCS_CELL_ONTOLOGY_RESOURCE_FILE: str = (
+        f"gs://{PROJECT_BUCKET_NAME}/consensus_engine/cell_ontology_resources_schema_5.json"
+    )
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
     JWT_DEFAULT_TOKEN_TTL: int = 60 * 60 * 24 * 180  # 180 days
