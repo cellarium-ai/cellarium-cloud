@@ -2,11 +2,15 @@ import tempfile
 import typing as t
 
 from google.cloud import aiplatform
-from kfp import compiler
+from kfp import compiler, dsl
 from kfp.dsl.base_component import BaseComponent
 
 from casp.services import utils
 from casp.workflows.kubeflow import constants
+
+
+def get_dsl_pipeline_from_function(pipeline_function: t.Callable[..., t.Any], name: str) -> BaseComponent:
+    return dsl.pipeline(name=name)(pipeline_function)
 
 
 def submit_pipeline(
@@ -29,7 +33,9 @@ def submit_pipeline(
     credentials, project_id = utils.get_google_service_credentials()
     aiplatform.init(project=project_id, location=pipeline_location, credentials=credentials)
 
-    compiler.Compiler().compile(pipeline_func=pipeline_func, package_path=temp_file.name)
+    pipeline_dsl_func = get_dsl_pipeline_from_function(pipeline_function=pipeline_func, name=pipeline_display_name)
+
+    compiler.Compiler().compile(pipeline_func=pipeline_dsl_func, package_path=temp_file.name)
 
     job = aiplatform.PipelineJob(
         display_name=pipeline_display_name,

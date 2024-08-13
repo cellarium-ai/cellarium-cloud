@@ -39,16 +39,20 @@ model:
     init_args:
       n_components: ${n_components}
       svd_lowrank_niter: 2
+      % if use_zscore:
       perform_mean_correction: false
+      % else:
+      perform_mean_correction: true
+      % endif
   transforms:
     - class_path: cellarium.ml.transforms.NormalizeTotal
       init_args:
         target_count: ${normalize_total_target_count}
         eps: ${normalize_total_eps}
-% if use_log_1p:
+% if use_log1p:
     - class_path: cellarium.ml.transforms.Log1p
 % endif
-% if use_z_score:
+% if use_zscore:
     - class_path: cellarium.ml.transforms.ZScore
       init_args:
         mean_g:
@@ -67,7 +71,7 @@ model:
           attr: model.var_names_g
           convert_fn: numpy.ndarray.tolist
 % endif
-% if use_divide_by_scale:
+% if use_dividebyscale:
     - class_path: cellarium.ml.transforms.DivideByScale
       init_args:
         scale_g:
@@ -89,7 +93,7 @@ model:
           attr: original_feature_id
           convert_fn: pandas.Series.to_list
 % endif
-% if use_filter and not use_divide_by_scale:
+% if use_filter and not use_dividebyscale:
     - class_path: cellarium.ml.transforms.Filter
       init_args:
         filter_list:

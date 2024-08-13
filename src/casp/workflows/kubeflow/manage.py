@@ -6,21 +6,21 @@ from casp.workflows.kubeflow import kubeflow_command_registry
 typer_app = typer.Typer()
 
 
-kubeflow_command_registry.register_pipeline_as_command(
-    typer_app=typer_app,
-    name="calculate-metrics",
-    pipeline_func=pipelines.calculate_metrics_pipeline,
-    display_name="Calculate Metrics",
-    help_text="Run a pipeline to calculate metrics",
-)
+# kubeflow_command_registry.register_pipeline_as_command(
+#     typer_app=typer_app,
+#     name="calculate-metrics",
+#     pipeline_func=pipelines.calculate_metrics_pipeline,
+#     display_name="Calculate Metrics",
+#     help_text="Run a pipeline to calculate metrics",
+# )
 
-kubeflow_command_registry.register_pipeline_as_command(
-    typer_app=typer_app,
-    name="generate-cas-outputs",
-    pipeline_func=pipelines.generate_cas_outputs_pipeline,
-    display_name="Generate CAS Outputs",
-    help_text="Run a pipeline to generate CAS outputs",
-)
+# kubeflow_command_registry.register_pipeline_as_command(
+#     typer_app=typer_app,
+#     name="generate-cas-outputs",
+#     pipeline_func=pipelines.generate_cas_outputs_pipeline,
+#     display_name="Generate CAS Outputs",
+#     help_text="Run a pipeline to generate CAS outputs",
+# )
 
 
 kubeflow_command_registry.register_pipeline_as_command(
@@ -30,6 +30,65 @@ kubeflow_command_registry.register_pipeline_as_command(
     display_name="BQ Ops prepare and extract",
     help_text="BQ Ops prepare extract tables and process extract",
 )
+
+kubeflow_command_registry.register_pipeline_as_command(
+    typer_app=typer_app,
+    name="bq-ops-prepare-extract",
+    pipeline_func=pipelines.bq_ops_prepare_extract,
+    display_name="BQ Ops prepare extract",
+    help_text="BQ Ops prepare extract tables",
+)
+
+
+kubeflow_command_registry.register_pipeline_as_command(
+    typer_app=typer_app,
+    name="bq-ops-extract",
+    pipeline_func=pipelines.bq_ops_extract,
+    display_name="BQ Ops extract",
+    help_text="BQ Ops extract data",
+)
+
+kubeflow_command_registry.register_pipeline_as_command(
+    typer_app=typer_app,
+    name="summary-stats-train",
+    pipeline_func=pipelines.summary_stats_train_pipeline,
+    display_name="Train Summary Stats",
+    help_text="Train Summary Statis",
+)
+
+kubeflow_command_registry.register_pipeline_as_command(
+    typer_app=typer_app,
+    name="pca-train",
+    pipeline_func=pipelines.pca_train_pipeline,
+    display_name="Train PCA Model",
+    help_text="Train PCA Model",
+)
+
+
+kubeflow_command_registry.register_pipeline_as_command(
+    typer_app=typer_app,
+    name="pca-resize-embed",
+    pipeline_func=pipelines.pca_resize_and_embed_pipeline,
+    display_name="Resize PCA model and embed data",
+    help_text="Resize PCA model and embed data",
+)
+
+
+# @typer_app.command()
+# def summary_stats_train(config_yaml_path: Annotated[str, typer.Option()]) -> None:
+#     """
+#     Run summary stats train pipeline in parallel.
+#     This pipeline will train onepass_mean_var_std and tdigest models and save them in a GCS bucket.
+#
+#     :param config_yaml_path: Path to the local YAML config file containing a list of configs for each run.
+#     """
+#     config_paths = config_management.create_configs_pipelines_as_components(config_yaml_path)
+#     submit_pipeline(
+#         pipelines.summary_stats_train_pipeline,
+#         pipeline_display_name="summary_stats_train_parallel",
+#         pipeline_kwargs={"pipeline_config_paths": config_paths},
+#     )
+
 
 # @typer_app.command()
 # def bq_ops_prepare_extract(config_yaml_path: Annotated[str, typer.Option()]) -> None:

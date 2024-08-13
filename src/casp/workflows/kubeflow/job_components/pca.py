@@ -1,7 +1,7 @@
 from kfp import dsl
 
 
-@dsl.component()
+# @dsl.component()
 def train(gcs_config_path: str):
     """
     Cellarium ML CLI component for running incremental PCA training.
@@ -18,7 +18,7 @@ def train(gcs_config_path: str):
     cellarium_ml_cli(args=["incremental_pca", "fit", "--config", gcs_config_path])
 
 
-@dsl.component()
+# @dsl.component()
 def embed(gcs_config_path: str) -> None:
     """
     Cellarium ML CLI component for running incremental PCA Data embedding.
@@ -35,7 +35,7 @@ def embed(gcs_config_path: str) -> None:
     cellarium_ml_cli(args=["incremental_pca", "predict", "--config", gcs_config_path])
 
 
-@dsl.component()
+# @dsl.component()
 def resize_and_save(gcs_config_path: str) -> None:
     import torch
     import yaml

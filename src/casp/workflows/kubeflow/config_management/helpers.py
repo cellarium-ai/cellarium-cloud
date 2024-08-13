@@ -12,7 +12,7 @@ from casp.services import settings, utils
 from casp.workflows.kubeflow import constants, machine_specs_utils
 
 PIPELINE_CONFIGS_TEMPLATE_PATH = f"{settings.CAS_DIR}/workflows/kubeflow/config_management/config_templates"
-AUTO_GENERATED_CONFIG_PREFIX = "ml-configs/auto-generated-benchmarking"
+AUTO_GENERATED_CONFIG_PREFIX = "ml-configs/10x_models_training"
 CONFIG_BUCKET_PATH = f"gs://{settings.PROJECT_BUCKET_NAME}/{AUTO_GENERATED_CONFIG_PREFIX}"
 
 
@@ -40,8 +40,6 @@ def extract_variables(template_string):
 def validate_template(template_string: str, config_yaml_path: str):
     with open(config_yaml_path, "r") as file:
         data = yaml.safe_load(file)
-
-
 
 
 def get_component_config_template_kwargs(config_data: t.Dict[str, t.Any], component_name: str) -> t.Dict[str, t.Any]:
@@ -139,8 +137,13 @@ def create_configs(config_yaml: str | t.Dict[str, t.Any]) -> t.List[str]:
             for component_name in component_names:
                 template_path = f"{PIPELINE_CONFIGS_TEMPLATE_PATH}/{component_name}_config.yml.mako"
                 component_config_unique_name = pipeline_config.get(
-                    f"{component_name}__config_unique_name", secrets.token_hex()
+                    f"{component_name}__config_unique_name", secrets.token_hex(4)
                 )
+                if "model_name" in config_object:
+                    model_name = config_object["model_name"]
+                    curriculum_name = config_object["curriculum_name"]
+                    component_config_unique_name = f"{curriculum_name}__{model_name}__{component_config_unique_name}"
+
                 component_config_filename = f"{component_name}-{component_config_unique_name}_config.yml"
                 output_path = f"{CONFIG_BUCKET_PATH}/{component_config_filename}"
 

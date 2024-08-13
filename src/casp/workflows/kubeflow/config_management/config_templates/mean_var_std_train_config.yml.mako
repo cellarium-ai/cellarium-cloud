@@ -1,9 +1,11 @@
 <%
-    from casp.workflows.kubeflow.machine_specs import MeanVarStdMachineSpec
+    from casp.workflows.kubeflow import machine_specs_utils
 
-    accelerator = "cpu" if MeanVarStdMachineSpec.accelerator_type is None else "gpu"
-    num_nodes = MeanVarStdMachineSpec.replica_count
-    devices = 4 if MeanVarStdMachineSpec.accelerator_count is None else MeanVarStdMachineSpec.accelerator_count
+    machine_specs_info = machine_specs_utils.read_machine_specs()
+    current_spec_info = machine_specs_info["mean_var_std_train"]
+    accelerator = "cpu" if current_spec_info["accelerator_type"] is None else "gpu"
+    num_nodes = current_spec_info["replica_count"]
+    devices = 4 if current_spec_info["accelerator_count"] is None else current_spec_info["accelerator_count"]
 %>
 # lightning.pytorch==2.0.9
 seed_everything: true

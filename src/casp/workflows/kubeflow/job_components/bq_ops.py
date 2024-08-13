@@ -1,7 +1,7 @@
 from kfp import dsl
 
 
-@dsl.component()
+# @dsl.component()
 def create_avro_files(gcs_config_path: str):
     import yaml
     from smart_open import open
@@ -41,7 +41,7 @@ def create_avro_files(gcs_config_path: str):
     )
 
 
-@dsl.component()
+# @dsl.component()
 def ingest_data(gcs_config_path: str):
     import yaml
     from smart_open import open
@@ -66,7 +66,7 @@ def ingest_data(gcs_config_path: str):
     )
 
 
-@dsl.component()
+# @dsl.component()
 def precalculate_fields(gcs_config_path: str):
     import yaml
     from smart_open import open
@@ -84,7 +84,7 @@ def precalculate_fields(gcs_config_path: str):
     precalculate_fields(dataset=dataset, fields=fields_list, project=project_id)
 
 
-@dsl.component()
+# @dsl.component()
 def prepare_extract(gcs_config_path: str):
     import yaml
     from smart_open import open
@@ -117,7 +117,7 @@ def prepare_extract(gcs_config_path: str):
     )
 
 
-@dsl.component()
+# @dsl.component()
 def extract(gcs_config_path: str):
     import yaml
     from smart_open import open
@@ -135,7 +135,6 @@ def extract(gcs_config_path: str):
     extract_bucket_path = config_data["extract_bucket_path"]
     start_bin = config_data["start_bin"]
     end_bin = config_data["end_bin"]
-    obs_columns_to_include_list = obs_columns_to_include.split(",")
 
     extract_bins_in_parallel_workers(
         project_id=project_id,
@@ -145,5 +144,5 @@ def extract(gcs_config_path: str):
         end_bin=end_bin,
         output_bucket_name=output_bucket_name,
         extract_bucket_path=extract_bucket_path,
-        obs_columns_to_include=obs_columns_to_include_list,
+        obs_columns_to_include=obs_columns_to_include,
     )

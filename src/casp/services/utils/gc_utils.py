@@ -120,11 +120,11 @@ def upload_many_blobs_with_transfer_manager(bucket_name, file_paths, prefix, wor
         # the input list, in order.
 
         if isinstance(result, Exception):
-            print("Failed to upload {} due to exception: {}".format(name, result))
+            logger.info(f"Failed to upload {name} due to exception: {result}")
         else:
             number_of_uploaded += 1
 
-    print(f"Successfully uploaded {number_of_uploaded} files")
+    logger.info(f"Successfully uploaded {number_of_uploaded} files")
 
 
 def list_blobs(bucket_name: str, prefix: t.Optional[str] = None) -> t.List[storage.Blob]:
@@ -151,4 +151,4 @@ def delete_folder_from_bucket(bucket_name: str, folder_name: str) -> None:
     bucket = storage_client.get_bucket(bucket_name)
     blobs = list(bucket.list_blobs(prefix=folder_name))
     bucket.delete_blobs(blobs)
-    print(f"Folder {folder_name} deleted")
+    logger.info(f"Folder {folder_name} deleted")

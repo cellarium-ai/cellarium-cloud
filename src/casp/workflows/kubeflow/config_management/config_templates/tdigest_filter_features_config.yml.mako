@@ -1,2 +1,2 @@
 tdigest_model_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/${tdigest_model_name}/lightning_logs/version_0/checkpoints/model.ckpt
-feature_file_filter_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/shared_meta/${tdigest_model_name}-non-nan-features.csv
+feature_file_filter_path: gs://cellarium-file-system/curriculum/${curriculum_name}/models/shared_meta/filters/${tdigest_model_name}-non-nan-features.csv

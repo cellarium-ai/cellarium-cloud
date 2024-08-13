@@ -1,7 +1,7 @@
 from kfp import dsl
 
 
-@dsl.component()
+# @dsl.component()
 def mean_var_std_train(gcs_config_path: str):
     """
     Cellarium ML CLI component for running one pass mean var std training.
@@ -18,7 +18,7 @@ def mean_var_std_train(gcs_config_path: str):
     cellarium_ml_cli(args=["onepass_mean_var_std", "fit", "--config", gcs_config_path])
 
 
-@dsl.component()
+# @dsl.component()
 def tdigest_train(gcs_config_path: str):
     """
     Cellarium ML CLI component for running tdigest model training.
@@ -35,7 +35,7 @@ def tdigest_train(gcs_config_path: str):
     cellarium_ml_cli(args=["tdigest", "fit", "--config", gcs_config_path])
 
 
-@dsl.component()
+# @dsl.component()
 def tdigest_filter_features_component(gcs_config_path: str):
     """
     Get TDigest model and expedite its `median_g` argument. Create a new feature set with only the features that
