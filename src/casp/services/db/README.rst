@@ -1,10 +1,9 @@
-Database Service
+Database Module
 ================
 
-This module represents the codebase for connecting to the SQL database and performing operations on it. It is not a deployable service,
-but rather a library that is used by other services.
+This module represents the codebase for connecting to the SQL database and performing operations on it. It is a library that is used by other services.
 
-.. note:: This service requires a running database cluster.
+.. note:: This module requires a running database cluster.
 
 Setting up a Database Cluster
 -----------------------------

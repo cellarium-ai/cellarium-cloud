@@ -79,3 +79,6 @@ These secrets are used by GitHub Actions to connect with Google Cloud Platform a
 | CAS_SERVICES_ENV_B64      | Base64 encoded `.env` file which is passed to docker's secret         |
 |                           | environment. Should include secrets from :ref:`Project Secrets`       |
 +---------------------------+-----------------------------------------------------------------------+
+| TEST_API_KEY              | API key for the test user that will be used to run integration tests  |
++---------------------------+-----------------------------------------------------------------------+
+

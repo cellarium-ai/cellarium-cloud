@@ -1,9 +1,8 @@
 Cellarium Cloud
 ===============
 
-**What's Cellarium Cloud?** Cellarium Cloud is the backend application that serves the Cellarium Cloud platform.
-This is a backend application that provides API for Cellarium Client tool. It is a mono-repository that contains all
-the services that are required to run the Cellarium Cloud platform.
+**What's Cellarium Cloud?** Cellarium Cloud contains the service code that supports the Cellarium Cloud platform by providing APIs for the Cellarium Client tool.
+The APIs can be access with direct REST access or, preferably, via the cellarium-cas Python client.
 
 Repository Structure
 --------------------

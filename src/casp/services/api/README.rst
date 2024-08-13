@@ -2,8 +2,8 @@ API Service
 ===========
 
 The API service is a REST API that provides access to the Cellarium Backend. It is built using FastAPI and deployed
-using Cloud Run. It is designed to be deployed in the same VPC as the Vertex Matching Engine as this is the only way how
-the API can access the Vertex Matching Engine. It is also required to have a cloud SQL connection to the database.
+using Cloud Run. It is designed to be deployed in the same VPC as the Vertex Matching Engine. 
+It is also required to have a Cloud SQL connection to the database.
 
 API is the only service that communicates with the outside world. Its methods require authentication and authorization.
 
