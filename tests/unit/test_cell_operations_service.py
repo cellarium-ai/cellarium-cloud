@@ -120,9 +120,7 @@ class TestCellOperationsService:
         :param cell_types: The cell types to use for the test.  Should match 1:1 with the embeddings array.
         :param include_dev_metadata: Whether or not to set the include_dev_metadata flag when calling the method.
         """
-        matching_client_response = self.__mock_apis(
-            model=MODEL, index=INDEX, adata=embeddings, embeddings=embeddings
-        )
+        matching_client_response = self.__mock_apis(model=MODEL, index=INDEX, adata=embeddings, embeddings=embeddings)
 
         # mock calls to get cell distribution
         temp_table_fqn = "temp_table_fqn"
@@ -309,9 +307,9 @@ class TestCellOperationsService:
         model_name = model.model_name
         embeddings = np.array(embeddings, dtype=np.float32)
         query_ids = [f"q{i}" for i in range(len(embeddings))]
-        when(self.cell_operations_service.model_service).embed_adata(
-            adata=adata, model=model
-        ).thenReturn((query_ids, embeddings))
+        when(self.cell_operations_service.model_service).embed_adata(adata=adata, model=model).thenReturn(
+            (query_ids, embeddings)
+        )
 
         when(self.cell_operations_service.cellarium_general_dm).get_model_by_name(model_name=model_name).thenReturn(
             model
