@@ -73,7 +73,7 @@ class TestCellOperationsService:
         self.__mock_apis(
             model=MODEL,
             index=INDEX,
-            anndata_file=ANNDATA_FILE,
+            adata=ANNDATA_DATA,
             embeddings=embeddings,
             matching_client_response=knn_response,
         )
@@ -91,7 +91,7 @@ class TestCellOperationsService:
         self.__mock_apis(
             model=MODEL,
             index=INDEX,
-            anndata_file=ANNDATA_FILE,
+            adata=ANNDATA_DATA,
             embeddings=embeddings,
             matching_client_response=knn_response,
         )
@@ -121,7 +121,7 @@ class TestCellOperationsService:
         :param include_dev_metadata: Whether or not to set the include_dev_metadata flag when calling the method.
         """
         matching_client_response = self.__mock_apis(
-            model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=embeddings
+            model=MODEL, index=INDEX, adata=embeddings, embeddings=embeddings
         )
 
         # mock calls to get cell distribution
@@ -182,7 +182,7 @@ class TestCellOperationsService:
         Test the annotate_adata_file method returns the correct error in the case of an exceeded
         quota.
         """
-        self.__mock_apis(model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=[])
+        self.__mock_apis(model=MODEL, index=INDEX, adata=ANNDATA_DATA, embeddings=[])
 
         when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
             file=ANNDATA_FILE
@@ -205,7 +205,7 @@ class TestCellOperationsService:
         Test the annotate_adata_file method returns the correct error in the case of the anndata
         matrix being of the wrong dtype
         """
-        self.__mock_apis(model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=[])
+        self.__mock_apis(model=MODEL, index=INDEX, adata=ANNDATA_DATA, embeddings=[])
 
         mock_anndata = anndata.AnnData(np.array([[0, 1, 2]]))
         mock_anndata.X = mock_anndata.X.astype(np.float64)
@@ -244,7 +244,11 @@ class TestCellOperationsService:
         :param expected_response: The expected response from the method.
 
         """
-        self.__mock_apis(model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=embeddings)
+        self.__mock_apis(model=MODEL, index=INDEX, adata=ANNDATA_DATA, embeddings=embeddings)
+
+        when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
+            file=ANNDATA_FILE
+        ).thenReturn(ANNDATA_DATA)
 
         actual_response = await self.cell_operations_service.search_adata_file(
             user=USER_ADMIN, file=ANNDATA_FILE, model_name=MODEL.model_name
@@ -284,7 +288,7 @@ class TestCellOperationsService:
         self,
         model: models.CASModel = MODEL,
         index: models.CASMatchingEngineIndex = INDEX,
-        anndata_file: io.BytesIO = ANNDATA_FILE,
+        adata: anndata.AnnData = ANNDATA_DATA,
         embeddings: t.List[t.List[float]] = [],
         matching_client_response: t.Optional[MatchResult] = None,
     ) -> MatchResult:
@@ -305,8 +309,8 @@ class TestCellOperationsService:
         model_name = model.model_name
         embeddings = np.array(embeddings, dtype=np.float32)
         query_ids = [f"q{i}" for i in range(len(embeddings))]
-        when(self.cell_operations_service.model_service).embed_adata_file(
-            file_to_embed=anndata_file, model=model
+        when(self.cell_operations_service.model_service).embed_adata(
+            adata=adata, model=model
         ).thenReturn((query_ids, embeddings))
 
         when(self.cell_operations_service.cellarium_general_dm).get_model_by_name(model_name=model_name).thenReturn(

@@ -132,17 +132,17 @@ class CellOperationsService:
 
         return cell_count
 
-    async def get_embeddings(self, file_to_embed: t.BinaryIO, model: models.CASModel) -> t.Tuple[t.List[str], np.array]:
+    async def get_embeddings(self, adata: anndata.AnnData, model: models.CASModel) -> t.Tuple[t.List[str], np.array]:
         """
         Get embeddings from the specified model.
 
-        :param file_to_embed: File object of :class:`anndata.AnnData` object to embed.
+        :param adata: Object of :class:`anndata.AnnData` to embed.
         :param model: Model to use for embedding.
 
-        :return: Query ids (original cell ids from the input file) and embeddings.
+        :return: Query ids (original cell ids from the input anndata) and embeddings.
         """
 
-        query_ids, embeddings = self.model_service.embed_adata_file(file_to_embed=file_to_embed, model=model)
+        query_ids, embeddings = self.model_service.embed_adata(adata=adata, model=model)
         return query_ids, embeddings
 
     @staticmethod
@@ -239,17 +239,19 @@ class CellOperationsService:
         num_chunks: int = math.ceil(len(embeddings) / chunk_size)
         return np.array_split(embeddings, num_chunks)
 
-    async def get_knn_matches(self, file: t.Any, model: models.CASModel) -> t.Tuple[t.List[str], MatchResult]:
+    async def get_knn_matches(
+        self, adata: anndata.AnnData, model: models.CASModel
+    ) -> t.Tuple[t.List[str], MatchResult]:
         """
         Get KNN matches for anndata object.
 
-        :param file: Anndata object to get KNN matches for.
+        :param adata: Anndata object to get KNN matches for.
         :param model: Model to use for matching.
 
         :return: Matches in a MatchResult object
         """
         logger.info("Getting embeddings")
-        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model=model)
+        query_ids, embeddings = await self.get_embeddings(adata=adata, model=model)
 
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings, return empty match result
@@ -294,7 +296,7 @@ class CellOperationsService:
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
             annotation_response = await self.__annotate_cell_type_summary_statistics_strategy(
-                file=file, model=model, include_extended_output=include_extended_output
+                adata=adata, model=model, include_extended_output=include_extended_output
             )
 
             self.cellarium_general_dm.log_user_activity(
@@ -321,7 +323,7 @@ class CellOperationsService:
 
     async def __annotate_cell_type_summary_statistics_strategy(
         self,
-        file: t.BinaryIO,
+        adata: anndata.AnnData,
         model: models.CASModel,
         include_extended_output: t.Optional[bool] = None,
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
@@ -330,14 +332,14 @@ class CellOperationsService:
         model schema. Increment user cells processed counter after successful annotation.
 
         :param user: User object used to increment user cells processed counter.
-        :param file: Byte object of :class:`anndata.AnnData` file to annotate.
+        :param file: Object of :class:`anndata.AnnData` to annotate.
         :param model: Model to use for annotation. See `/list-models` endpoint for available models.
         :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
             in `cell_type_count` method.
 
         :return: JSON response with annotations.
         """
-        query_ids, knn_response = await self.get_knn_matches(file=file, model=model)
+        query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
@@ -380,7 +382,7 @@ class CellOperationsService:
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
             annotation_response = await self.__annotate_cell_type_ontology_aware_strategy(
-                file=file,
+                adata=adata,
                 model=model,
                 prune_threshold=prune_threshold,
                 weighting_prefactor=weighting_prefactor,
@@ -409,21 +411,21 @@ class CellOperationsService:
             raise e
 
     async def __annotate_cell_type_ontology_aware_strategy(
-        self, file: t.BinaryIO, model: models.CASModel, prune_threshold: float, weighting_prefactor: float
+        self, adata: anndata.AnnData, model: models.CASModel, prune_threshold: float, weighting_prefactor: float
     ) -> schemas.QueryAnnotationOntologyAwareType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
         model schema. Increment user cells processed counter after successful annotation.
 
         :param user: User object used to increment user cells processed counter.
-        :param file: Byte object of :class:`anndata.AnnData` file to annotate.
+        :param adata: Object of :class:`anndata.AnnData` to annotate.
         :param model: Model to use for annotation. See `/list-models` endpoint for available models.
         :param prune_threshold: Prune threshold for the ontology-aware annotation strategy.
         :param weighting_prefactor: Distance exponential weighting prefactor.
 
         :return: JSON response with annotations.
         """
-        query_ids, knn_response = await self.get_knn_matches(file=file, model=model)
+        query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         logger.info("Applying CellTypeOntologyAwareConsensusStrategy to the query results")
         strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
@@ -454,8 +456,11 @@ class CellOperationsService:
 
         :return: JSON response with search results.
         """
+        # Read the anndata file and validate it
+        adata = self.__read_and_validate_anndata_file(file=file)
+
         model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
-        query_ids, embeddings = await self.get_embeddings(file_to_embed=file, model=model)
+        query_ids, embeddings = await self.get_embeddings(adata=adata, model=model)
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
