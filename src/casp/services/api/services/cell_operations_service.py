@@ -60,36 +60,62 @@ class CellOperationsService:
             module_cache_info=cache_info["module_cache_info"],
         )
 
-    def __get_cell_count_from_anndata(self, file: t.BinaryIO) -> int:
+    def __validate_anndata_file(self, adata: anndata.AnnData):
         """
-        Get the number of cells in the anndata file.
+        Validates the type of the anndata matrix and the presence of the 'total_mrna_umis' column,
+        which are required for the data to be processed properly by our cellarium-ml models.
 
-        :param file: Anndata file to get the number of cells from.
+        :param adata: Anndata object to validate
 
-        :return: Number of cells in the anndata file.
+        :raises exceptions.InvalidAnndataFileException: If the anndata matrix is not float32
+        """
+        if adata.X.dtype != np.float32:
+            raise exceptions.InvalidAnndataFileException(
+                f"CAS only support anndata matrices with dtype 'float32'. The provided matrix has type '{adata.X.dtype}'."
+            )
+        if "total_mrna_umis" not in adata.obs:
+            raise exceptions.InvalidAnndataFileException(
+                "Provided matrix does not contain 'total_mrna_umis' column. This column is required for CAS to work."
+            )
+        elif adata.obs["total_mrna_umis"].dtype != np.float32:
+            raise exceptions.InvalidAnndataFileException(
+                f"Provided matrix column 'total_mrna_umis' should be type 'float32', but has type '{adata.obs['total_mrna_umis'].dtype}'."
+            )
+
+    def __read_and_validate_anndata_file(self, file: t.BinaryIO) -> anndata.AnnData:
+        """
+        Reads an anndata file and validates that the matrix is float32
+
+        :param file: Anndata file to read
+
+        :return: Anndata object
         """
         adata = anndata.read_h5ad(file)
-        cell_count = len(adata)
+        self.__validate_anndata_file(adata)
+
         # Reset the file pointer to the beginning of the file because we're gonna need to read it
         # again later.
         file.seek(0)
-        return cell_count
 
-    def __verify_quota_and_log_activity(self, user: models.User, file: t.BinaryIO, model_name: str, method: str) -> int:
+        return adata
+
+    def __verify_quota_and_log_activity(
+        self, user: models.User, adata: anndata.AnnData, model_name: str, method: str
+    ) -> int:
         """
-        Verify that the number of cells in the anndata file does not exceed the user's remaining
-        quota and log the user activity in the database in an atomic transaction.
+        Verify that the number of cells in the anndata object does not exceed the user's remaining
+        quota and log the user activity in the database.
 
         :param user: User object to check quota for.
-        :param file: Anndata file to check the number of cells in.
+        :param adata: Anndata object to check the number of cells in.
         :param model_name: Model name to log in the database.
         :param method: Method name to log in the database.
 
-        :return: Number of cells in the anndata file.
+        :return: Number of cells in the anndata object.
 
-        :raises exceptions.QuotaExceededException: If the number of cells in the anndata file exceeds the user's quota.
+        :raises exceptions.QuotaExceededException: If the number of cells in the anndata object exceeds the user's quota.
         """
-        cell_count = self.__get_cell_count_from_anndata(file=file)
+        cell_count = len(adata)
         user_quota = self.cellarium_general_dm.get_remaining_quota_for_user(user=user)
         if cell_count > user_quota:
             raise exceptions.QuotaExceededException(
@@ -256,9 +282,13 @@ class CellOperationsService:
         :return: JSON response with annotations.
         """
         model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
+
+        # Read the anndata file and validate it
+        adata = self.__read_and_validate_anndata_file(file=file)
+
         # Make sure the user has enough quota to process the file
         cell_count = self.__verify_quota_and_log_activity(
-            user=user, file=file, model_name=model_name, method="annotate_cell_type_summary_statistics_strategy"
+            user=user, adata=adata, model_name=model_name, method="annotate_cell_type_summary_statistics_strategy"
         )
 
         # Annotate the file and log successful activity (or log failure if an exception is raised)
@@ -339,9 +369,12 @@ class CellOperationsService:
         """
         model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
 
+        # Read the anndata file and validate it
+        adata = self.__read_and_validate_anndata_file(file=file)
+
         # Make sure the user has enough quota to process the file
         cell_count = self.__verify_quota_and_log_activity(
-            user=user, file=file, model_name=model_name, method="annotate_cell_type_ontology_aware_strategy"
+            user=user, adata=adata, model_name=model_name, method="annotate_cell_type_ontology_aware_strategy"
         )
 
         # Annotate the file and log successful activity (or log failure if an exception is raised)

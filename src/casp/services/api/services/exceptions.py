@@ -36,3 +36,7 @@ class InvalidClientVersionException(APIBaseException):
 
     def __init__(self, client_version: str):
         super().__init__(f"Client version {client_version} is not a valid version string")
+
+
+class InvalidAnndataFileException(InvalidInputError):
+    http_code: int = status.HTTP_400_BAD_REQUEST

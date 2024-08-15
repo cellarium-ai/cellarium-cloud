@@ -6,6 +6,7 @@ import io
 import re
 import typing as t
 
+import anndata
 import numpy
 import numpy as np
 import pytest
@@ -142,9 +143,9 @@ class TestCellOperationsService:
                 cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
             ).thenReturn(response)
 
-        when(self.cell_operations_service)._CellOperationsService__get_cell_count_from_anndata(
+        when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
             file=ANNDATA_FILE
-        ).thenReturn(len(query_ids))
+        ).thenReturn(embeddings)
         when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
             user=USER_ADMIN
         ).thenReturn(10000)
@@ -183,14 +184,35 @@ class TestCellOperationsService:
         """
         self.__mock_apis(model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=[])
 
-        when(self.cell_operations_service)._CellOperationsService__get_cell_count_from_anndata(
+        when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
             file=ANNDATA_FILE
-        ).thenReturn(20)
+        ).thenReturn(ANNDATA_DATA)
         when(self.cell_operations_service.cellarium_general_dm).get_remaining_quota_for_user(
             user=USER_ADMIN
-        ).thenReturn(10)
+        ).thenReturn(2)
 
         with pytest.raises(exceptions.QuotaExceededException):
+            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+                user=USER_ADMIN,
+                file=ANNDATA_FILE,
+                model_name=MODEL.model_name,
+                include_extended_output=False,
+            )
+
+    @pytest.mark.asyncio
+    async def test_annotate_adata_file_invalid_anndata_dtype(self) -> None:
+        """
+        Test the annotate_adata_file method returns the correct error in the case of the anndata
+        matrix being of the wrong dtype
+        """
+        self.__mock_apis(model=MODEL, index=INDEX, anndata_file=ANNDATA_FILE, embeddings=[])
+
+        mock_anndata = anndata.AnnData(np.array([[0, 1, 2]]))
+        mock_anndata.X = mock_anndata.X.astype(np.float64)
+
+        when(anndata).read_h5ad(ANNDATA_FILE).thenReturn(mock_anndata)
+
+        with pytest.raises(exceptions.InvalidAnndataFileException):
             await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
                 user=USER_ADMIN,
                 file=ANNDATA_FILE,
