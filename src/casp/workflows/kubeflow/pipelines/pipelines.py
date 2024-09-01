@@ -156,44 +156,46 @@ def pca_resize_and_embed_pipeline(pca_resize_and_embed_pipeline_config_paths: t.
 
 
 # @dsl.pipeline(name="pca_resize_full_cycle_parallel", description="Incremental PCA Resize and Save Full Cycle Parallel")
-# def pca_resize_full_cycle_pipeline(pca_resize_full_cycle_pipeline_config_paths: t.List[str]):
-#     """
-#     KFP pipeline that takes a model resizes it, saves and the uses for creating new index, and then registers it.
-#
-#     :param pca_resize_full_cycle_pipeline_config_paths: List of JSON strings with train and embed config paths.
-#
-#     :rtype: dsl.Pipeline
-#     """
-#     with dsl.ParallelFor(pca_resize_full_cycle_pipeline_config_paths, parallelism=3) as item:
-#         resize_and_save_op = create_job(
-#             component_func=job_components.pca.resize_and_save,
-#             component_name=constants.PCA_RESIZE_AND_SAVE_COMPONENT_NAME,
-#             gcs_config_path=item.pca_resize_and_save_gcs_config_path,
-#         )
-#         embed_job_task_op = create_job(
-#             component_func=job_components.pca.embed,
-#             component_name=constants.PCA_EMBED_COMPONENT_NAME,
-#             gcs_config_path=item.pca_embed_gcs_config_path,
-#         )
-#         register_embedding_model_op = create_job(
-#             component_func=job_components.registry.register_embedding_model,
-#             component_name=constants.PCA_REGISTRY_COMPONENT_NAME,
-#             gcs_config_path=item.pca_register_model_gcs_config_path,
-#         )
-#         index_create_op = create_job(
-#             component_func=job_components.pca_index_create.create_register_index,
-#             component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
-#             gcs_config_path=item.pca_index_create_gcs_config_path,
-#         )
-#         resize_and_save_task = resize_and_save_op()
-#         embed_job_task = embed_job_task_op()
-#         register_embedding_model_task = register_embedding_model_op()
-#         index_create_task = index_create_op()
-#
-#         embed_job_task.after(resize_and_save_task)
-#         register_embedding_model_task.after(resize_and_save_task)
-#         index_create_task.after(embed_job_task)
-#         index_create_task.after(register_embedding_model_task)
+def pca_resize_full_cycle_pipeline(pca_resize_full_cycle_pipeline_config_paths: t.List[str]):
+    """
+    KFP pipeline that takes a model resizes it, saves and the uses for creating new index, and then registers it.
+
+    :param pca_resize_full_cycle_pipeline_config_paths: List of JSON strings with train and embed config paths.
+
+    :rtype: dsl.Pipeline
+    """
+    with dsl.ParallelFor(pca_resize_full_cycle_pipeline_config_paths, parallelism=3) as item:
+        # resize_and_save_op = create_job(
+        #     component_func=job_components.pca.resize_and_save,
+        #     component_name=constants.PCA_RESIZE_AND_SAVE_COMPONENT_NAME,
+        #     gcs_config_path=item.pca_resize_and_save_gcs_config_path,
+        # )
+        embed_job_task_op = create_job(
+            component_func=job_components.pca.embed,
+            component_name=constants.PCA_EMBED_COMPONENT_NAME,
+            gcs_config_path=item.pca_embed_gcs_config_path,
+        )
+        register_embedding_model_op = create_job(
+            component_func=job_components.registry.register_embedding_model,
+            component_name=constants.PCA_REGISTRY_COMPONENT_NAME,
+            gcs_config_path=item.pca_registry_gcs_config_path,
+        )
+        index_create_op = create_job(
+            component_func=job_components.pca_index_create.create_register_index,
+            component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
+            gcs_config_path=item.pca_index_create_gcs_config_path,
+        )
+        # resize_and_save_task = resize_and_save_op()
+        embed_job_task = embed_job_task_op()
+        register_embedding_model_task = register_embedding_model_op()
+        index_create_task = index_create_op()
+
+        # embed_job_task.after(resize_and_save_task)
+        # register_embedding_model_task.after(resize_and_save_task)
+        index_create_task.after(embed_job_task)
+        index_create_task.after(register_embedding_model_task)
+
+
 #
 #
 # @dsl.pipeline(name="summary_stats_train_parallel", description="Summary Stats Train in Parallel")
@@ -276,14 +278,14 @@ def summary_stats_train_pipeline(summary_stats_train_pipeline_config_paths: t.Li
 #
 #
 # @dsl.pipeline(name="generate_cas_outputs", description="Generate outputs from CAS by running on the set of datasets")
-# def generate_cas_outputs_pipeline(generate_cas_outputs_config_paths: t.List[str]):
-#     with dsl.ParallelFor(generate_cas_outputs_config_paths, parallelism=18) as item:
-#         generate_cas_outputs_op = create_job(
-#             component_func=job_components.benchmarking.generate_cas_outputs,
-#             component_name=constants.GENERATE_CAS_OUTPUTS_COMPONENT_NAME,
-#             gcs_config_path=item.generate_cas_outputs_gcs_config_path,
-#         )
-#         _ = generate_cas_outputs_op()
+def generate_cas_outputs_pipeline(generate_cas_outputs_pipeline_config_paths: t.List[str]):
+    with dsl.ParallelFor(generate_cas_outputs_pipeline_config_paths, parallelism=18) as item:
+        generate_cas_outputs_op = create_job(
+            component_func=job_components.benchmarking.generate_cas_outputs,
+            component_name=constants.GENERATE_CAS_OUTPUTS_COMPONENT_NAME,
+            gcs_config_path=item.generate_cas_outputs_gcs_config_path,
+        )
+        _ = generate_cas_outputs_op()
 #
 #
 # @dsl.pipeline(name="calculate_metrics", description="Calculate metrics for cas outputs")

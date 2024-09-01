@@ -1,7 +1,7 @@
 from kfp import dsl
 
 
-@dsl.component()
+# @dsl.component()
 def register_embedding_model(gcs_config_path: str) -> None:
     """
     Component for registering embedding model in the registry by creating an instance in the database with the model

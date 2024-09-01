@@ -9,9 +9,9 @@ from casp.workflows.kubeflow import machine_specs_utils, exceptions
 
 
 def get_dsl_component_from_python_function(
-    component_function: t.Callable[..., t.Any], base_image: str
+    component_function: t.Callable[..., t.Any], base_image: str, packages_to_install: t.Optional[t.List[str]] = None,
 ) -> t.Union[t.Callable, PythonComponent, BaseComponent]:
-    return dsl.component(base_image=base_image)(component_function)
+    return dsl.component(base_image=base_image, packages_to_install=packages_to_install)(component_function)
 
 
 def create_job(
@@ -35,8 +35,12 @@ def create_job(
         print(machine_specs_info)
         raise exceptions.MachineSpecsDoesntExist(f"No machine specs found for component {component_name}")
 
+    packages_to_install = machine_spec.get("packages_to_install", None)
+    base_image = machine_spec.get("base_image", None)
+    env_vars = machine_spec.get("env", None)
+
     dsl_component = get_dsl_component_from_python_function(
-        component_function=component_func, base_image=machine_spec["base_image"]
+        component_function=component_func, base_image=base_image, packages_to_install=packages_to_install
     )
 
     job = create_custom_training_job_from_component(
@@ -48,7 +52,7 @@ def create_job(
         accelerator_count=machine_spec["accelerator_count"],
         service_account=machine_spec.get("service_account", ""),
         boot_disk_size_gb=machine_spec.get("boot_disk_size_gb", 100),
-        env=machine_spec.get("env", None),
+        env=env_vars,
     )
 
     return lambda: job(gcs_config_path=gcs_config_path)

@@ -5,7 +5,6 @@ from casp.workflows.kubeflow import kubeflow_command_registry
 
 typer_app = typer.Typer()
 
-
 # kubeflow_command_registry.register_pipeline_as_command(
 #     typer_app=typer_app,
 #     name="calculate-metrics",
@@ -39,7 +38,6 @@ kubeflow_command_registry.register_pipeline_as_command(
     help_text="BQ Ops prepare extract tables",
 )
 
-
 kubeflow_command_registry.register_pipeline_as_command(
     typer_app=typer_app,
     name="bq-ops-extract",
@@ -64,7 +62,6 @@ kubeflow_command_registry.register_pipeline_as_command(
     help_text="Train PCA Model",
 )
 
-
 kubeflow_command_registry.register_pipeline_as_command(
     typer_app=typer_app,
     name="pca-resize-embed",
@@ -73,6 +70,22 @@ kubeflow_command_registry.register_pipeline_as_command(
     help_text="Resize PCA model and embed data",
 )
 
+kubeflow_command_registry.register_pipeline_as_command(
+    typer_app=typer_app,
+    name="pca-resize-full",
+    pipeline_func=pipelines.pca_resize_full_cycle_pipeline,
+    display_name="Resize PCA model and create all resources",
+    help_text="Resize PCA model and create all resources",
+)
+
+
+kubeflow_command_registry.register_pipeline_as_command(
+    typer_app=typer_app,
+    name="benchmarking-generate-outputs",
+    pipeline_func=pipelines.generate_cas_outputs_pipeline,
+    display_name="Generate CAS Outputs for Benchmarking",
+    help_text="Generate CAS Outputs for Benchmarking",
+)
 
 # @typer_app.command()
 # def summary_stats_train(config_yaml_path: Annotated[str, typer.Option()]) -> None:

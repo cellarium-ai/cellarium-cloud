@@ -33,9 +33,13 @@ def generate_cas_outputs(
     :param cas_api_url: URL of the CAS API.
     :param cas_results_output_path: Path to save the CAS results.
     """
+    print("YOOO IM IN DA FUNCTION")
+    print(f"AAAAAA {dataset_paths}")
     _dataset_file_paths = utils.get_paths(paths=dataset_paths)
+    print(f"BBBBBBB {_dataset_file_paths}")
     delay = 30
     num_attempts = 5
+    print("1. ====================")
     gcs_output_path = cas_results_output_path.replace("gs://", "")
     gcs_bucket_name = gcs_output_path.split("/")[0]
     gcs_output_path = "/".join(gcs_output_path.split("/")[1:])
@@ -43,15 +47,17 @@ def generate_cas_outputs(
         f"gs://{gcs_bucket_name}/{x}"
         for x in utils.list_files_in_bucket(bucket_name=gcs_bucket_name, prefix=gcs_output_path)
     )
+    print("2. ====================")
     for dataset_file_path in _dataset_file_paths:
+        print("3. ====================")
         logger.info(f"Running CAS over {dataset_file_path} dataset...")
         dataset_file_name = dataset_file_path.split("/")[-1].split(".")[0]
         output_path = f"{cas_results_output_path}/{model_name}/cas_output_{dataset_file_name}.pickle"
-
+        print("4. ====================")
         if output_path in existing_output_files:
             logger.info(f"Skipping dataset {dataset_file_name} as its output already exists")
             continue
-
+        print("5. ====================")
         cas_client = CASClient(api_token=cas_api_token, api_url=cas_api_url)
 
         with open(dataset_file_path, "rb") as f:

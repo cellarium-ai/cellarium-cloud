@@ -1,7 +1,7 @@
 from kfp import dsl
 
 
-@dsl.component()
+# @dsl.component()
 def create_register_index(gcs_config_path: str) -> None:
     """
     Create, deploy, and register Space Vector Search index.
