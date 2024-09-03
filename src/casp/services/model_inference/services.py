@@ -73,18 +73,16 @@ class ModelInferenceService:
         }
 
     def _get_output_from_model(
-        self, model: models.CASModel, adata_file: t.BinaryIO
+        self, model: models.CASModel, adata: anndata.AnnData
     ) -> t.Tuple[np.ndarray, t.List[str]]:
         """
-        Get output from cellarium-ml model that predicts embeddings given an input adata file.
+        Get output from cellarium-ml model that predicts embeddings given an input adata.
 
         :param model: Cellarium Cloud model db object
-        :param adata_file: File object of :class:`anndata.AnnData` object to embed.
+        :param adata: Object of :class:`anndata.AnnData` to embed.
 
         :return: Tuple of embeddings and obs_ids.
         """
-        adata = anndata.read_h5ad(adata_file)
-
         cellarium_module = ModelInferenceService._load_module_from_checkpoint(model.model_file_path)
 
         cellarium_checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model.model_file_path)
@@ -127,16 +125,16 @@ class ModelInferenceService:
                 f"Ensure that the model is configured to produce embeddings of the correct dimensionality."
             )
 
-    def embed_adata_file(self, file_to_embed: t.BinaryIO, model: models.CASModel) -> t.Tuple[np.ndarray, t.List[str]]:
+    def embed_adata(self, adata: anndata.AnnData, model: models.CASModel) -> t.Tuple[np.ndarray, t.List[str]]:
         """
-        Embed adata file using a specific model using Cellarium-ML model and pytorch.
+        Embed adata using a specific model using Cellarium-ML model and pytorch.
 
-        :param file_to_embed: File object of :class:`anndata.AnnData` object to embed.
+        :param adata: Object of :class:`anndata.AnnData` to embed.
         :param model: Model object that contains relevant information to use for obtaining embedding.
 
         :return: ModelEmbeddings schema object.
         """
-        embeddings, obs_ids = self._get_output_from_model(model=model, adata_file=file_to_embed)
+        embeddings, obs_ids = self._get_output_from_model(model=model, adata=adata)
         self._validate_model_output(embeddings=embeddings, obs_ids=obs_ids, model_info=model)
 
         return obs_ids, embeddings
