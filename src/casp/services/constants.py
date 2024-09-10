@@ -1,7 +1,7 @@
 from enum import Enum
 
 # The minimum client version that is allowed to connect to the server.
-MIN_CLIENT_VERSION: str = "1.4.13"
+MIN_CLIENT_VERSION: str = "1.5.1"
 
 
 class ContextKeys(str, Enum):
