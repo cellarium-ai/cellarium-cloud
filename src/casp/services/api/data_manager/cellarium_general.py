@@ -143,16 +143,21 @@ class CellariumGeneralDataManager(BaseDataManager):
 
     def get_remaining_quota_for_user(self, user: models.User) -> int:
         """
-        Get remaining cell processing quota for a specific user (i.e. their quota minus cells processed this week)
+        Get remaining cell processing quota for a specific user (i.e. their quota minus cells processed this week
+        or their remaining lifetime quota if they have one)
 
         :param user: User object to check quota for
 
         :return: Remaining cell processing quota
         """
-        # Return the remaining quota, or 0 if it's negative (which might happen if the user exceeds
-        # their quota, either because we allow them to, or because of any weirdness in the
-        # simultaneous processing of cells)
-        return max(user.cell_quota - self.get_cells_processed_this_week_for_user(user=user), 0)
+        # Return the smaller of the remaining weekly and lifetime quotas, or 0 if it's negative 
+        # (which might happen if the user exceeds their quota, either because we allow them to, or
+        # because of any weirdness in the simultaneous processing of cells)
+        remaining_quota = min(
+            user.cell_quota - self.get_cells_processed_this_week_for_user(user),
+            user.lifetime_cell_quota - user.total_cells_processed if user.lifetime_cell_quota is not None else float("inf")
+        )
+        return max(remaining_quota, 0)
 
     def get_cells_processed_this_week_for_user(self, user: models.User) -> int:
         """
