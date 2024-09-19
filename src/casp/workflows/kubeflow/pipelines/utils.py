@@ -1,5 +1,6 @@
 import tempfile
 import typing as t
+import os
 
 from google.cloud import aiplatform
 from kfp import compiler, dsl
@@ -29,7 +30,7 @@ def submit_pipeline(
     :param pipeline_location: Datacenter location of Google Cloud Platform to run the pipeline job.
     """
     temp_file = tempfile.NamedTemporaryFile(suffix=".yaml")
-
+    os.environ["GRPC_DNS_RESOLVER"] = "native"
     credentials, project_id = utils.get_google_service_credentials()
     aiplatform.init(project=project_id, location=pipeline_location, credentials=credentials)
 

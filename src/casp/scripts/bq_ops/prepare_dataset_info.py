@@ -45,6 +45,13 @@ def prepare_measured_genes_info(
     )
 
 
+def prepare_categorical_variable(project: str, dataset: str, credentials: t.Optional[Credentials] = None) -> pd.DataFrame:
+    if credentials is not None:
+        client = bigquery.Client(project=project, credentials=credentials)
+    else:
+        client = bigquery.Client(project=project)
+
+    pass
 def prepare_all_cell_types(project: str, dataset: str, credentials: t.Optional[Credentials] = None) -> pd.DataFrame:
     if credentials is not None:
         client = bigquery.Client(project=project, credentials=credentials)

@@ -43,11 +43,11 @@ def create_register_index(gcs_config_path: str) -> None:
         sync=False,
     )
 
-    clients.CellariumCloudInternalServiceClient.register_index(
-        model_name=config_data["model_name"],
-        index_name=config_data["display_name"],
-        deployed_index_id=None,
-        endpoint_id=config_data["index_endpoint_id"],
-        embedding_dimension=config_data["embedding_dimension"],
-        num_neighbors=config_data["approximate_neighbors_count"],
-    )
+    # clients.CellariumCloudInternalServiceClient.register_index(
+    #     model_name=config_data["model_name"],
+    #     index_name=config_data["display_name"],
+    #     deployed_index_id=None,
+    #     endpoint_id=config_data["index_endpoint_id"],
+    #     embedding_dimension=config_data["embedding_dimension"],
+    #     num_neighbors=config_data["approximate_neighbors_count"],
+    # )

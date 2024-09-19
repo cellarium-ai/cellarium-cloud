@@ -43,7 +43,6 @@ def generate_cas_outputs(gcs_config_path: str):
         update_kwargs={"deployed_index_id": deployed_index_id, "endpoint_id": index_endpoint_full_id},
     )
     try:
-        print("STARTING GENERATING")
         benchmarking.generate_cas_outputs(
             dataset_paths=dataset_paths,
             model_name=model_name,
@@ -51,21 +50,21 @@ def generate_cas_outputs(gcs_config_path: str):
             cas_api_url=cas_api_url,
             cas_results_output_path=cas_results_output_path,
         )
-        print("GENERATED!!!!!")
+
     except Exception as e:
         print(f"Smth went wrong: {e}")
         raise e
     finally:
-        # matching_engine_client.CustomMatchingEngineIndex.undeploy_index(
-        #     region=index_region,
-        #     project_id=project_id,
-        #     index_endpoint_id=index_endpoint_id,
-        #     deployed_index_id=deployed_index_id,
-        # )
-        # clients.CellariumCloudInternalServiceClient.update_index_with_deployment_info(
-        #     index_name=index_name,
-        #     update_kwargs={"deployed_index_id": deployed_index_id},
-        # )
+        matching_engine_client.CustomMatchingEngineIndex.undeploy_index(
+            region=index_region,
+            project_id=project_id,
+            index_endpoint_id=index_endpoint_id,
+            deployed_index_id=deployed_index_id,
+        )
+        clients.CellariumCloudInternalServiceClient.update_index_with_deployment_info(
+            index_name=index_name,
+            update_kwargs={"deployed_index_id": deployed_index_id},
+        )
         print("Job component finished.")
 
 

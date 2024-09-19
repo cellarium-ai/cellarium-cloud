@@ -155,7 +155,6 @@ def pca_resize_and_embed_pipeline(pca_resize_and_embed_pipeline_config_paths: t.
         # embed_job_task.after(resize_and_save_task)
 
 
-# @dsl.pipeline(name="pca_resize_full_cycle_parallel", description="Incremental PCA Resize and Save Full Cycle Parallel")
 def pca_resize_full_cycle_pipeline(pca_resize_full_cycle_pipeline_config_paths: t.List[str]):
     """
     KFP pipeline that takes a model resizes it, saves and the uses for creating new index, and then registers it.
@@ -175,11 +174,11 @@ def pca_resize_full_cycle_pipeline(pca_resize_full_cycle_pipeline_config_paths: 
             component_name=constants.PCA_EMBED_COMPONENT_NAME,
             gcs_config_path=item.pca_embed_gcs_config_path,
         )
-        register_embedding_model_op = create_job(
-            component_func=job_components.registry.register_embedding_model,
-            component_name=constants.PCA_REGISTRY_COMPONENT_NAME,
-            gcs_config_path=item.pca_registry_gcs_config_path,
-        )
+        # register_embedding_model_op = create_job(
+        #     component_func=job_components.registry.register_embedding_model,
+        #     component_name=constants.PCA_REGISTRY_COMPONENT_NAME,
+        #     gcs_config_path=item.pca_registry_gcs_config_path,
+        # )
         index_create_op = create_job(
             component_func=job_components.pca_index_create.create_register_index,
             component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
@@ -187,13 +186,13 @@ def pca_resize_full_cycle_pipeline(pca_resize_full_cycle_pipeline_config_paths: 
         )
         # resize_and_save_task = resize_and_save_op()
         embed_job_task = embed_job_task_op()
-        register_embedding_model_task = register_embedding_model_op()
+        # register_embedding_model_task = register_embedding_model_op()
         index_create_task = index_create_op()
 
         # embed_job_task.after(resize_and_save_task)
         # register_embedding_model_task.after(resize_and_save_task)
         index_create_task.after(embed_job_task)
-        index_create_task.after(register_embedding_model_task)
+        # index_create_task.after(register_embedding_model_task)
 
 
 #
@@ -286,6 +285,8 @@ def generate_cas_outputs_pipeline(generate_cas_outputs_pipeline_config_paths: t.
             gcs_config_path=item.generate_cas_outputs_gcs_config_path,
         )
         _ = generate_cas_outputs_op()
+
+
 #
 #
 # @dsl.pipeline(name="calculate_metrics", description="Calculate metrics for cas outputs")
@@ -390,3 +391,20 @@ def bq_ops_prepare_and_extract(prepare_extract_config_paths: t.List[str], extrac
     # prepare_extract_task = bq_ops_prepare_extract(pipeline_config_paths=prepare_extract_config_paths)
     extract_task = bq_ops_extract(pipeline_config_paths=extract_config_paths)
     # extract_task.after(prepare_extract_task)
+    # with dsl.ParallelFor(prepare_extract_config_paths) as item:
+    #     prepare_extract_op = create_job(
+    #         component_func=job_components.bq_ops.prepare_extract,
+    #         component_name=constants.BQ_OPS_PREPARE_EXTRACT_COMPONENT_NAME,
+    #         gcs_config_path=item.bq_ops_prepare_extract_gcs_config_path,
+    #     )
+    # _ = prepare_extract_op()
+    #
+    # with dsl.ParallelFor(extract_config_paths) as item:
+    #     extract_op = create_job(
+    #         component_func=job_components.bq_ops.extract,
+    #         component_name=constants.BQ_OPS_EXTRACT_COMPONENT_NAME,
+    #         gcs_config_path=item.bq_ops_extract_gcs_config_path,
+    #     )
+    # _ = extract_op()
+    #
+    # dsl
