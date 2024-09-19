@@ -157,7 +157,15 @@ class UserAdminView(CellariumCloudAdminModelView):
         EndpointLinkRowAction("glyphicon glyphicon-asterisk", ".generate_secret_key"),
         LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
     ]
-    column_list = ("email", "is_admin", "active", "cell_quota", "lifetime_cell_quota", "total_requests_processed", "total_cells_processed")
+    column_list = (
+        "email",
+        "is_admin",
+        "active",
+        "cell_quota",
+        "lifetime_cell_quota",
+        "total_requests_processed",
+        "total_cells_processed",
+    )
     column_editable_list = ("is_admin",)
     form_excluded_columns = ("requests_processed", "cells_processed")
 
