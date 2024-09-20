@@ -15,7 +15,7 @@ class TestCellariumGeneralDM:
     def setup_method(self) -> None:
         # Gotta mock up the google service stuff that gets called in the constructor so the tests
         # don't fail when you run them on a system without credentials set up
-        # Important note: Anything tests that actually rely on bigquery or the db will fail, so the
+        # Important note: Any tests that actually rely on bigquery or the db will fail, so the
         # tests I've written here mock up calls to methods that need those
         when(utils).get_google_service_credentials().thenReturn((None, None))
         when(bigquery).Client(credentials=None, project=None).thenReturn(None)
