@@ -2,8 +2,10 @@
 Tests some methods in the cellarium_general data manager
 """
 
+from google.cloud import bigquery
 from mockito import unstub, when
 
+from casp.services import db, utils
 from casp.services.api.data_manager.cellarium_general import CellariumGeneralDataManager
 from casp.services.db.models.users import User
 
@@ -11,6 +13,13 @@ from casp.services.db.models.users import User
 class TestCellariumGeneralDM:
 
     def setup_method(self) -> None:
+        # Gotta mock up the google service stuff that gets called in the constructor so the tests
+        # don't fail when you run them on a system without credentials set up
+        # Important note: Anything tests that actually rely on bigquery or the db will fail, so the
+        # tests I've written here mock up calls to methods that need those
+        when(utils).get_google_service_credentials().thenReturn((None, None))
+        when(bigquery).Client(credentials=None, project=None).thenReturn(None)
+        when(db).get_db_session_maker().thenReturn(lambda: None)
         self.cellarium_general_dm = CellariumGeneralDataManager()
 
     def teardown_method(self) -> None:
