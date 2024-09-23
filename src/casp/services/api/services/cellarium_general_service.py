@@ -92,13 +92,15 @@ class CellariumGeneralService:
             hour=0, minute=0, second=0, microsecond=0
         ) + datetime.timedelta(days=days_to_add)
 
+        remaining_lifetime_quota = (
+            user.lifetime_cell_quota - user.total_cells_processed if user.lifetime_cell_quota is not None else None
+        )
+
         return schemas.UserQuota(
             user_id=user.id,
             weekly_quota=user.cell_quota,
             remaining_weekly_quota=self.cellarium_general_dm.get_remaining_quota_for_user(user=user),
             quota_reset_date=quota_reset_date,
             lifetime_quota=user.lifetime_cell_quota,
-            remaining_lifetime_quota=(
-                None if user.lifetime_cell_quota is None else user.lifetime_cell_quota - user.total_cells_processed
-            ),
+            remaining_lifetime_quota=remaining_lifetime_quota,
         )

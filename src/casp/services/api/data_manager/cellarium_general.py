@@ -153,14 +153,17 @@ class CellariumGeneralDataManager(BaseDataManager):
         # Return the smaller of the remaining weekly and lifetime quotas, or 0 if it's negative
         # (which might happen if the user exceeds their quota, either because we allow them to, or
         # because of any weirdness in the simultaneous processing of cells)
-        remaining_quota = min(
-            user.cell_quota - self.get_cells_processed_this_week_for_user(user),
-            (
-                user.lifetime_cell_quota - user.total_cells_processed
-                if user.lifetime_cell_quota is not None
-                else float("inf")
-            ),
+        weekly_remaining_quota = user.cell_quota - self.get_cells_processed_this_week_for_user(user=user)
+
+        lifetime_remaining_quota = (
+            user.lifetime_cell_quota - user.total_cells_processed
+            if user.lifetime_cell_quota is not None
+            else float("inf")
         )
+
+        remaining_quota = min(weekly_remaining_quota, lifetime_remaining_quota)
+
+        # Ensure the remaining quota is not negative
         return max(remaining_quota, 0)
 
     def get_cells_processed_this_week_for_user(self, user: models.User) -> int:
