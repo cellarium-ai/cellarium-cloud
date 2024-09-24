@@ -12,6 +12,7 @@ import traceback
 import typing as t
 from pathlib import Path
 
+import anndata
 import anndata as ad
 import numpy as np
 import pandas as pd
@@ -144,9 +145,40 @@ def add_cell_type_info(extract_bucket_path: str, bucket_name: str, adata: "ad.An
     adata.obs.cell_type = pd.Categorical(adata.obs.cell_type.values, categories=df["cell_type"].values)
 
 
+def update_categorical_columns(
+    extract_bucket_path: str,
+    bucket_name: str,
+    adata: anndata.AnnData,
+    columns: t.List[str],
+):
+    shared_meta_path = f"{extract_bucket_path}/{constants.SHARED_META_DIR_NAME}"
+    metadata_file_names = [x.name for x in utils.list_blobs(bucket_name=bucket_name, prefix=shared_meta_path)]
+    categorical_columns_metadata_file_paths = [
+        name for name in metadata_file_names if constants.CATEGORICAL_COLUMN_SEP in name
+    ]
+    categorical_column_names = [
+        name.split("/")[-1].split(constants.CATEGORICAL_COLUMN_SEP)[0]
+        for name in categorical_columns_metadata_file_paths
+    ]
+
+    if not set(categorical_column_names).issubset(set(columns)):
+        raise ValueError(
+            f"Categorical Column metadata files found in the bucket supposed to be a subset of input `columns`."
+            f"Got: {categorical_column_names} in the bucket metadata files and {columns} as input `columns`"
+        )
+
+    for categorical_column_name, categorical_column_metadata_file_path in zip(
+        categorical_column_names, categorical_columns_metadata_file_paths
+    ):
+        pass
+        cat_metadata_gcs_filepath = f"gs://{bucket_name}/{categorical_column_metadata_file_path}"
+        # categorical_column_metadata_file_nam
+        # adata.obs[categorical_column] = ...
+
+
 def add_measured_genes_layer_mask(extract_bucket_path, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list):
     filename = "measured_genes_info.csv"
-    source_blob_name = f"{extract_bucket_path}/shared_meta/{filename}"
+    source_blob_name = f"{extract_bucket_path}/{constants.SHARED_META_DIR_NAME}/{filename}"
 
     if not os.path.exists(filename):
         utils.download_file_from_bucket(

@@ -30,18 +30,18 @@ def generate_cas_outputs(gcs_config_path: str):
     deployed_index_id = config_data["deployed_index_id"]
     index_endpoint_full_id = f"projects/350868384795/locations/us-central1/indexEndpoints/{index_endpoint_id}"
 
-    matching_engine_client.CustomMatchingEngineIndex.deploy_index(
-        region=index_region,
-        project_id=project_id,
-        index_id=index_id,
-        index_endpoint_id=index_endpoint_id,
-        display_name=display_name,
-        deployed_index_id=deployed_index_id,
-    )
-    clients.CellariumCloudInternalServiceClient.update_index_with_deployment_info(
-        index_name=index_name,
-        update_kwargs={"deployed_index_id": deployed_index_id, "endpoint_id": index_endpoint_full_id},
-    )
+    # matching_engine_client.CustomMatchingEngineIndex.deploy_index(
+    #     region=index_region,
+    #     project_id=project_id,
+    #     index_id=index_id,
+    #     index_endpoint_id=index_endpoint_id,
+    #     display_name=display_name,
+    #     deployed_index_id=deployed_index_id,
+    # )
+    # clients.CellariumCloudInternalServiceClient.update_index_with_deployment_info(
+    #     index_name=index_name,
+    #     update_kwargs={"deployed_index_id": deployed_index_id, "endpoint_id": index_endpoint_full_id},
+    # )
     try:
         benchmarking.generate_cas_outputs(
             dataset_paths=dataset_paths,
@@ -55,16 +55,16 @@ def generate_cas_outputs(gcs_config_path: str):
         print(f"Smth went wrong: {e}")
         raise e
     finally:
-        matching_engine_client.CustomMatchingEngineIndex.undeploy_index(
-            region=index_region,
-            project_id=project_id,
-            index_endpoint_id=index_endpoint_id,
-            deployed_index_id=deployed_index_id,
-        )
-        clients.CellariumCloudInternalServiceClient.update_index_with_deployment_info(
-            index_name=index_name,
-            update_kwargs={"deployed_index_id": deployed_index_id},
-        )
+        # matching_engine_client.CustomMatchingEngineIndex.undeploy_index(
+        #     region=index_region,
+        #     project_id=project_id,
+        #     index_endpoint_id=index_endpoint_id,
+        #     deployed_index_id=deployed_index_id,
+        # )
+        # clients.CellariumCloudInternalServiceClient.update_index_with_deployment_info(
+        #     index_name=index_name,
+        #     update_kwargs={"deployed_index_id": deployed_index_id},
+        # )
         print("Job component finished.")
 
 

@@ -3,7 +3,6 @@ Prepare data for extract by randomizing, preprocessing and staging in temporary 
 """
 
 import json
-import tempfile
 import time
 import typing as t
 
@@ -12,8 +11,8 @@ from google.oauth2.service_account import Credentials
 from smart_open import open
 
 from casp.data_manager import sql
-from casp.scripts.bq_ops import constants, prepare_all_cell_types, prepare_measured_genes_info
-from casp.services import utils
+from casp.scripts.bq_ops import constants
+from casp.scripts.bq_ops.prepare_dataset_info import prepare_categorical_variables, prepare_measured_genes_info
 
 
 def execute_query(client: bigquery.Client, sql: str):
@@ -316,25 +315,23 @@ def prepare_extract(
         dataset=dataset,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
     )
-    print("Preparing cell type categorical variable info")
-    all_cell_types_df = prepare_all_cell_types(project=project_id, dataset=dataset)
+    print("Preparing categorical columns info")
+    categorical_columns = prepare_categorical_variables(
+        project=project_id, dataset=dataset, extract_table_prefix=extract_table_prefix
+    )
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        measured_genes_file_name = f"measured_genes_info.csv"
-        measured_genes_file_path = f"{temp_dir}/{measured_genes_file_name}"
-        measured_genes_info_df.to_csv(measured_genes_file_path)
+    measured_genes_info_df.to_csv(
+        f"gs://{bucket_name}/{extract_bucket_path}"
+        f"/{constants.SHARED_META_DIR_NAME}"
+        f"/{constants.MEASURED_GENES_INFO_FILE_NAME}"
+    )
 
-        all_cell_types_file_name = f"all_cell_types.csv"
-        all_cell_types_file_path = f"{temp_dir}/{all_cell_types_file_name}"
-        all_cell_types_df.to_csv(all_cell_types_file_path, index=False)
-
-        utils.upload_file_to_bucket(
-            local_file_name=measured_genes_file_path,
-            bucket=bucket_name,
-            blob_name=f"{extract_bucket_path}/shared_meta/{measured_genes_file_name}",
+    for column_name, unique_values_df in categorical_columns.items():
+        categorical_column_unique_values_file_name = constants.CATEGORICAL_COLUMN_CSV_FILE_NAME_FORMAT.format(
+            column_name=column_name
         )
-        utils.upload_file_to_bucket(
-            local_file_name=all_cell_types_file_path,
-            bucket=bucket_name,
-            blob_name=f"{extract_bucket_path}/shared_meta/{all_cell_types_file_name}",
+        gcs_blob_path = (
+            f"gs://{bucket_name}/"
+            f"{extract_bucket_path}/{constants.SHARED_META_DIR_NAME}/{categorical_column_unique_values_file_name}"
         )
+        unique_values_df.to_csv(gcs_blob_path)

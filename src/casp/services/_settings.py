@@ -3,7 +3,7 @@ import os
 import typing as t
 
 import dotenv
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 # Directory that contains the services package
 SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -25,10 +25,10 @@ class AllEnvSettings(BaseSettings):
     APP_ROOT: str = ROOT_DIR
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str = os.environ.get("PROJECT_BUCKET_NAME")
-    SERVICES_DIR = SERVICES_DIR
+    SERVICES_DIR: str = SERVICES_DIR
     DEFAULT_SERVICE_HOST: str = "0.0.0.0"
     DEFAULT_SERVICE_PORT: int = 8000
-    CAS_DIR = CAS_DIR
+    CAS_DIR: str = CAS_DIR
     API_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
     API_INTERNAL_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
     MODEL_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
@@ -58,7 +58,7 @@ class AllEnvSettings(BaseSettings):
     GET_MATCHES_RETRY_BACKOFF_MULTIPLIER: int = 2
     GET_MATCHES_RETRY_BACKOFF_MIN: int = 0
     GET_MATCHES_RETRY_BACKOFF_MAX: int = 30
-    MAX_CELL_IDS_PER_QUERY = 20_000  # Maximum number of cell IDs that can be queried at once
+    MAX_CELL_IDS_PER_QUERY: int = 20_000  # Maximum number of cell IDs that can be queried at once
     # Consensus Engine
     GCS_CELL_ONTOLOGY_RESOURCE_FILE: str = f"gs://{PROJECT_BUCKET_NAME}/consensus_engine/cell_ontology_resources.json"
     # Auth
@@ -73,10 +73,10 @@ class AllEnvSettings(BaseSettings):
     DB_NAME: str = os.environ.get("DB_NAME")
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
-    DB_INSTANCE_UNIX_SOCKET: str = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
+    DB_INSTANCE_UNIX_SOCKET: t.Optional[str] = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
     DB_PORT: str = os.environ.get("DB_PORT")
     # If this is value is specified, it will be used instead of the unix socket
-    DB_PRIVATE_IP: str = os.environ.get("DB_PRIVATE_IP")
+    DB_PRIVATE_IP: t.Optional[str] = os.environ.get("DB_PRIVATE_IP")
     # BigQuery
     BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/data_manager/sql/templates"
     # Stage db connector through unix socket or private IP
@@ -103,16 +103,16 @@ class AllEnvSettings(BaseSettings):
     SENDGRID_API_KEY: str = os.environ.get("SENDGRID_API_KEY", "")
     FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "cas-support@broadinstitute.org")
     # Workflows
-    API_INTERNAL_SERVER_URL = os.environ.get(
+    API_INTERNAL_SERVER_URL: str = os.environ.get(
         "API_INTERNAL_SERVER_URL", "https://cellarium-cloud-api-internal.cellarium.ai"
     )
 
 
 class DevSettings(AllEnvSettings):
     # General
-    debug = True
+    DEBUG: bool = True
     MODEL_SERVER_URL: str = os.environ.get("MODEL_SERVER_URL", "https://cellarium-cloud-model-dev.cellarium.ai")
-    API_INTERNAL_SERVER_URL = os.environ.get(
+    API_INTERNAL_SERVER_URL: str = os.environ.get(
         "API_INTERNAL_SERVER_URL", "https://cellarium-cloud-api-internal-dev.cellarium.ai"
     )
 
@@ -123,7 +123,7 @@ class ProductionSettings(AllEnvSettings):
 
 class LocalSettings(AllEnvSettings):
     # General
-    debug = True
+    DEBUG: bool = True
     MODEL_SERVER_URL: str = "http://localhost:8001"
     API_SERVICE_PORT: int = 8000
     MODEL_SERVICE_PORT: int = 8001
@@ -133,9 +133,9 @@ class LocalSettings(AllEnvSettings):
     DB_NAME: str = os.environ.get("DB_NAME")
     DB_PASSWORD: str = os.environ.get("DB_PASSWORD")
     DB_USER: str = os.environ.get("DB_USER")
-    SQLALCHEMY_DATABASE_URI = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    SQLALCHEMY_DATABASE_URI: str = f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     LOG_AS_JSON: bool = os.environ.get("LOG_AS_JSON", False)
 
 
 class TestSettings(AllEnvSettings):
-    SECRET_KEY = "test"
+    SECRET_KEY: str = "test"

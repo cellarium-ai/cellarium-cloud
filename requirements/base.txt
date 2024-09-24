@@ -6,7 +6,7 @@ google-cloud-bigquery==3.9.0
 google-cloud-bigquery-storage==2.19.1
 google-cloud-storage
 scipy
-fastapi==0.96.0
+fastapi==0.109.1
 uvicorn[standard]==0.29.0
 python-dotenv
 pyarrow
@@ -43,3 +43,5 @@ kfp==2.4.0
 typer==0.9.0
 PyYAML==6.0.1
 requests==2.31.0
+pydantic==2.8.2
+pydantic-settings==2.3.4
