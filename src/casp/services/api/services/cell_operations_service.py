@@ -14,9 +14,10 @@ from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_r
 from casp.services import settings
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
-from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager, CellQuotaDataManager
+from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from casp.services.api.data_manager import exceptions as dm_exc
 from casp.services.api.services import Authorizer, consensus_engine, exceptions
+from casp.services.api.services.cell_quota_service import CellQuotaService
 from casp.services.db import models
 from casp.services.model_inference import services
 
@@ -36,11 +37,11 @@ class CellOperationsService:
         self,
         cell_operations_dm: t.Optional[CellOperationsDataManager] = None,
         cellarium_general_dm: t.Optional[CellariumGeneralDataManager] = None,
-        cell_quota_dm: t.Optional[CellQuotaDataManager] = None,
+        cell_quota_service: t.Optional[CellQuotaService] = None,
     ):
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
-        self.cell_quota_dm = cell_quota_dm or CellQuotaDataManager()
+        self.cell_quota_service = cell_quota_service or CellQuotaService()
         self.model_service = services.ModelInferenceService()
         self.authorizer = Authorizer(cellarium_general_dm=self.cellarium_general_dm)
 
@@ -118,7 +119,7 @@ class CellOperationsService:
         :raises exceptions.QuotaExceededException: If the number of cells in the anndata object exceeds the user's quota.
         """
         cell_count = len(adata)
-        user_quota = self.cell_quota_dm.get_remaining_quota_for_user(user=user)
+        user_quota = self.cell_quota_service.get_remaining_quota_for_user(user=user)
         if cell_count > user_quota:
             raise exceptions.QuotaExceededException(
                 f"User quota exceeded. You have {user_quota} cells left, "

@@ -43,7 +43,7 @@ class TestCellOperationsService:
 
     def setup_method(self) -> None:
         self.cell_operations_service = CellOperationsService(
-            cell_operations_dm=mock(), cellarium_general_dm=mock(), cell_quota_dm=mock()
+            cell_operations_dm=mock(), cellarium_general_dm=mock(), cell_quota_service=mock()
         )
 
     def teardown_method(self) -> None:
@@ -146,7 +146,9 @@ class TestCellOperationsService:
         when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
             file=ANNDATA_FILE
         ).thenReturn(embeddings)
-        when(self.cell_operations_service.cell_quota_dm).get_remaining_quota_for_user(user=USER_ADMIN).thenReturn(10000)
+        when(self.cell_operations_service.cell_quota_service).get_remaining_quota_for_user(user=USER_ADMIN).thenReturn(
+            10000
+        )
 
         actual_response = (
             await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
@@ -185,7 +187,9 @@ class TestCellOperationsService:
         when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
             file=ANNDATA_FILE
         ).thenReturn(ANNDATA_DATA)
-        when(self.cell_operations_service.cell_quota_dm).get_remaining_quota_for_user(user=USER_ADMIN).thenReturn(2)
+        when(self.cell_operations_service.cell_quota_service).get_remaining_quota_for_user(user=USER_ADMIN).thenReturn(
+            2
+        )
 
         with pytest.raises(exceptions.QuotaExceededException):
             await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
