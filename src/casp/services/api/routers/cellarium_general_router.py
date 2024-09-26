@@ -9,6 +9,7 @@ from casp.services.db import models
 
 cellarium_general_router = APIRouter(prefix="/cellarium-general")
 cellarium_general_service = services.CellariumGeneralService()
+cell_quota_service = services.CellQuotaService()
 
 
 @cellarium_general_router.get("/application-info", response_model=schemas.ApplicationInfo)
@@ -103,4 +104,4 @@ async def get_user_quota(user: models.User = Depends(dependencies.authenticate_u
 
     :return: User quota information
     """
-    return cellarium_general_service.get_quota_for_user(user=user)
+    return cell_quota_service.get_quota_for_user(user=user)

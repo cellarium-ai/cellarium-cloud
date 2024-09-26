@@ -1,4 +1,5 @@
 import datetime
+import typing as t
 
 from pydantic import BaseModel, Field, validator
 
@@ -36,9 +37,11 @@ class UserInfo(BaseModel):
 
 class UserQuota(BaseModel):
     user_id: int
-    quota: int
-    remaining_quota: int
+    weekly_quota: int
+    remaining_weekly_quota: int
     quota_reset_date: datetime.datetime
+    lifetime_quota: t.Optional[int]
+    remaining_lifetime_quota: t.Optional[int]
 
 
 class ClientVersionInput(BaseModel):
