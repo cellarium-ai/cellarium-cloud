@@ -5,6 +5,7 @@ Prepare data for extract by randomizing, preprocessing and staging in temporary 
 import json
 import time
 import typing as t
+import pickle
 
 from google.cloud import bigquery
 from google.oauth2.service_account import Credentials
@@ -309,29 +310,29 @@ def prepare_extract(
         ci_partition_bin_count=ci_partition_bin_count,
         ci_partition_size=ci_partition_size,
     )
-    print("Preparing measured genes info")
+    print("Preparing measured genes info...")
     measured_genes_info_df = prepare_measured_genes_info(
         project=project_id,
         dataset=dataset,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
     )
-    print("Preparing categorical columns info")
-    categorical_columns = prepare_categorical_variables(
+    print("Preparing categorical columns info...")
+    categorical_columns_metadata = prepare_categorical_variables(
         project=project_id, dataset=dataset, extract_table_prefix=extract_table_prefix
     )
 
-    measured_genes_info_df.to_csv(
+    measured_genes_info_filepath = (
         f"gs://{bucket_name}/{extract_bucket_path}"
         f"/{constants.SHARED_META_DIR_NAME}"
         f"/{constants.MEASURED_GENES_INFO_FILE_NAME}"
     )
+    categorical_columns_meta_filepath = (
+        f"gs://{bucket_name}/{extract_bucket_path}"
+        f"/{constants.SHARED_META_DIR_NAME}/{constants.CATEGORICAL_COLUMNS_META_FILE_NAME}"
+    )
 
-    for column_name, unique_values_df in categorical_columns.items():
-        categorical_column_unique_values_file_name = constants.CATEGORICAL_COLUMN_CSV_FILE_NAME_FORMAT.format(
-            column_name=column_name
-        )
-        gcs_blob_path = (
-            f"gs://{bucket_name}/"
-            f"{extract_bucket_path}/{constants.SHARED_META_DIR_NAME}/{categorical_column_unique_values_file_name}"
-        )
-        unique_values_df.to_csv(gcs_blob_path)
+    measured_genes_info_df.to_csv(path_or_buf=measured_genes_info_filepath)
+
+    with open(categorical_columns_meta_filepath, "wb") as f:
+        pickle.dump(obj=categorical_columns_metadata, file=f)
+

@@ -7,6 +7,7 @@ import datetime
 import json
 import multiprocessing
 import os
+import pickle
 import tempfile
 import traceback
 import typing as t
@@ -20,9 +21,10 @@ from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
 from google.oauth2.service_account import Credentials
 from scipy.sparse import coo_matrix
+from smart_open import open
 
 from casp.data_manager import sql
-from casp.scripts.bq_ops import constants
+from casp.scripts.bq_ops import constants, extract_metadata_utils
 from casp.services import utils
 
 
@@ -131,62 +133,52 @@ def assign_uns_metadata(anndata, json_string):
         anndata.uns[key] = val
 
 
-def add_cell_type_info(extract_bucket_path: str, bucket_name: str, adata: "ad.AnnData", cell_types: list):
-    filename = "all_cell_types.csv"
-    source_blob_name = f"{extract_bucket_path}/shared_meta/{filename}"
-
-    if not os.path.exists(filename):
-        utils.download_file_from_bucket(
-            bucket_name=bucket_name, source_blob_name=source_blob_name, destination_file_name=filename
-        )
-
-    adata.obs["cell_type"] = cell_types
-    df = pd.read_csv(filename, index_col=False)
-    adata.obs.cell_type = pd.Categorical(adata.obs.cell_type.values, categories=df["cell_type"].values)
-
-
 def update_categorical_columns(
-    extract_bucket_path: str,
     bucket_name: str,
+    extract_bucket_path: str,
     adata: anndata.AnnData,
     columns: t.List[str],
-):
-    shared_meta_path = f"{extract_bucket_path}/{constants.SHARED_META_DIR_NAME}"
-    metadata_file_names = [x.name for x in utils.list_blobs(bucket_name=bucket_name, prefix=shared_meta_path)]
-    categorical_columns_metadata_file_paths = [
-        name for name in metadata_file_names if constants.CATEGORICAL_COLUMN_SEP in name
-    ]
-    categorical_column_names = [
-        name.split("/")[-1].split(constants.CATEGORICAL_COLUMN_SEP)[0]
-        for name in categorical_columns_metadata_file_paths
-    ]
+) -> None:
+    categorical_columns_metadata_filepath = extract_metadata_utils.get_categorical_columns_metadata_filepath(
+        bucket_name=bucket_name, extract_bucket_path=extract_bucket_path
+    )
+    with open(categorical_columns_metadata_filepath, "rb") as f:
+        categorical_columns_metadata = pickle.load(f)
+
+    categorical_column_names = categorical_columns_metadata.keys()
 
     if not set(categorical_column_names).issubset(set(columns)):
         raise ValueError(
-            f"Categorical Column metadata files found in the bucket supposed to be a subset of input `columns`."
-            f"Got: {categorical_column_names} in the bucket metadata files and {columns} as input `columns`"
+            f"Categorical Column metadata files found in the bucket supposed to be the same as an input `columns`."
+            f"Got: {categorical_column_names} in the bucket metadata files and {columns} as input `columns` instead"
         )
 
-    for categorical_column_name, categorical_column_metadata_file_path in zip(
-        categorical_column_names, categorical_columns_metadata_file_paths
-    ):
-        pass
-        cat_metadata_gcs_filepath = f"gs://{bucket_name}/{categorical_column_metadata_file_path}"
-        # categorical_column_metadata_file_nam
-        # adata.obs[categorical_column] = ...
+    for categorical_column_name, categorical_column_unique_values in categorical_columns_metadata.items():
+
+        if categorical_column_name not in adata.obs.keys():
+            # This happens when the current categorical column was not included to extract.
+            continue
+
+        adata.obs[categorical_column_name] = pd.Categorical(
+            values=adata.obs[categorical_column_name].values, categories=categorical_column_unique_values
+        )
 
 
-def add_measured_genes_layer_mask(extract_bucket_path, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list):
-    filename = "measured_genes_info.csv"
-    source_blob_name = f"{extract_bucket_path}/{constants.SHARED_META_DIR_NAME}/{filename}"
-
-    if not os.path.exists(filename):
+def add_measured_genes_layer_mask(
+    extract_bucket_path: str, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list
+):
+    source_blob_name = (
+        f"{extract_bucket_path}/{constants.SHARED_META_DIR_NAME}/{constants.MEASURED_GENES_INFO_FILE_NAME}"
+    )
+    if not os.path.exists(constants.MEASURED_GENES_INFO_FILE_NAME):
         utils.download_file_from_bucket(
-            bucket_name=bucket_name, source_blob_name=source_blob_name, destination_file_name=filename
+            bucket_name=bucket_name,
+            source_blob_name=source_blob_name,
+            destination_file_name=constants.MEASURED_GENES_INFO_FILE_NAME,
         )
 
     adata.obs["cas_ingest_id"] = cas_ingest_ids
-    df = pd.read_csv(filename, index_col="cas_ingest_id").astype(bool)
+    df = pd.read_csv(constants.MEASURED_GENES_INFO_FILE_NAME, index_col="cas_ingest_id").astype(bool)
 
     measured_genes_mask = df.loc[adata.obs["cas_ingest_id"], adata.var.index].to_numpy()
 
@@ -261,6 +253,7 @@ def extract_minibatch_to_anndata(
     cas_ingest_ids = []
     obs_columns_values = {k: [] for k in _obs_columns_to_include}
     cas_cell_index_to_row_num = {}
+
     for row_num, cell in enumerate(cells):
         original_cell_ids.append(cell["cas_cell_index"])
         cas_ingest_ids.append(cell["cas_ingest_id"])
@@ -274,7 +267,6 @@ def extract_minibatch_to_anndata(
     )
 
     print("Converting Matrix Data to COO format...")
-
     rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(
         matrix_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num
     )
@@ -290,17 +282,17 @@ def extract_minibatch_to_anndata(
     adata.obs.index = original_cell_ids
     adata.var.index = feature_ids
 
-    print("Adding Cell Types Categorical Info...")
-    if "cell_type" in obs_columns_values:
-        # To avoid adding and overwriting cell types, pop them from dictionary:
-        cell_types = obs_columns_values.pop("cell_type")
-        add_cell_type_info(
-            extract_bucket_path=extract_bucket_path,
-            bucket_name=bucket_name,
-            adata=adata,
-            cell_types=cell_types,
-        )
+    print("Adding Obs Columns...")
+    for obs_column_name, obs_column_value_list in obs_columns_values.items():
+        adata.obs[obs_column_name] = obs_column_value_list
 
+    print("Updating Categorical Obs Columns to be Consistent Across Batches...")
+    categorical_column_names = extract_metadata_utils.get_categorical_column_names_from_cell_info_table(
+        project=project, dataset=dataset, extract_table_prefix=extract_table_prefix
+    )
+    update_categorical_columns(
+        bucket_name=bucket_name, extract_bucket_path=extract_bucket_path, adata=adata, columns=categorical_column_names
+    )
     print("Adding Measured Genes Layer Mask...")
     add_measured_genes_layer_mask(
         extract_bucket_path=extract_bucket_path,
@@ -308,9 +300,6 @@ def extract_minibatch_to_anndata(
         adata=adata,
         cas_ingest_ids=cas_ingest_ids,
     )
-    print("Adding Other Obs Columns...")
-    for obs_column in obs_columns_values:
-        adata.obs[obs_column] = obs_columns_values[obs_column]
 
     print("Writing AnnData Matrix")
     adata.write(Path(output), compression="gzip")

@@ -13,8 +13,4 @@ PREPARE_CATEGORICAL_VARIABLE_SQL_DIR = f"{settings.CAS_DIR}/scripts/sql_template
 # Metadata File name formats and strings
 SHARED_META_DIR_NAME = "shared_meta"
 MEASURED_GENES_INFO_FILE_NAME = "measured_genes_info.csv"
-CATEGORICAL_VARIABLE_CSV_FILE_NAME_SUFFIX = "unique_values"
-CATEGORICAL_COLUMN_SEP = "__catcol__"
-CATEGORICAL_COLUMN_CSV_FILE_NAME_FORMAT = (
-    f"{{column_name}}{CATEGORICAL_COLUMN_SEP}{CATEGORICAL_VARIABLE_CSV_FILE_NAME_SUFFIX}.csv"
-)
+CATEGORICAL_COLUMNS_META_FILE_NAME = "categorical_columns_meta.pickle"

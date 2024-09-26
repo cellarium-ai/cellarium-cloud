@@ -5,7 +5,7 @@ import pandas as pd
 from google.cloud import bigquery
 from google.oauth2.service_account import Credentials
 from casp.data_manager import sql
-from casp.scripts.bq_ops import constants
+from casp.scripts.bq_ops import constants, extract_metadata_utils
 
 
 def prepare_measured_genes_info(
@@ -50,37 +50,24 @@ def prepare_measured_genes_info(
 def prepare_categorical_variables(project: str, dataset: str, extract_table_prefix: str) -> t.Dict[str, t.List[str]]:
     client = bigquery.Client(project=project)
 
-    table_ref = bigquery.TableReference.from_string(f"{project}.{dataset}.cas_cell_info")
-    table = client.get_table(table_ref)
+    categorical_column_names = extract_metadata_utils.get_categorical_column_names_from_cell_info_table(
+        project=project, dataset=dataset, extract_table_prefix=extract_table_prefix
+    )
 
     columns_unique_values = {}
 
-    for schema_field in table.schema:
-        if schema_field.field_type == "STRING":
-            template_data = sql.TemplateData(
-                project=project,
-                dataset=dataset,
-                extract_table_prefix=extract_table_prefix,
-                column_name=schema_field.name,
-            )
+    for column_name in categorical_column_names:
+        template_data = sql.TemplateData(
+            project=project,
+            dataset=dataset,
+            extract_table_prefix=extract_table_prefix,
+            column_name=column_name,
+        )
 
-            sql_query = sql.render(
-                template_path=constants.PREPARE_CATEGORICAL_VARIABLE_SQL_DIR, template_data=template_data
-            )
+        sql_query = sql.render(
+            template_path=constants.PREPARE_CATEGORICAL_VARIABLE_SQL_DIR, template_data=template_data
+        )
 
-            columns_unique_values[schema_field.name] = [x[schema_field.name] for x in client.query(sql_query).result()]
+        columns_unique_values[column_name] = [x[column_name] for x in client.query(sql_query).result()]
 
     return columns_unique_values
-
-
-# def prepare_all_cell_types(project: str, dataset: str, credentials: t.Optional[Credentials] = None) -> pd.DataFrame:
-#     if credentials is not None:
-#         client = bigquery.Client(project=project, credentials=credentials)
-#     else:
-#         client = bigquery.Client(project=project)
-#
-#     sql_get_all_cel_types = f"""
-#         SELECT DISTINCT(cell_type)
-#         FROM `{project}.{dataset}.cas_cell_info`
-#     """
-#     return client.query(sql_get_all_cel_types).to_dataframe()
