@@ -11,6 +11,7 @@ import wandb
 from smart_open import open
 
 from casp.scripts.benchmarking import utils
+from cellarium.cas import models as cas_models
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,10 @@ def calculate_f1(precision: float, recall: float) -> float:
 
 
 def calculate_tps_and_fps(
-    query_cell_obj: t.Dict[str, t.Any], ground_truth_cl_name: str, num_hops: int, co_resource: t.Dict[str, t.Any]
+    query_cell_obj: cas_models.CellTypeOntologyAwareResults.OntologyAwareAnnotation,
+    ground_truth_cl_name: str,
+    num_hops: int,
+    co_resource: t.Dict[str, t.Any]
 ) -> t.Tuple[t.List[float], t.List[float]]:
     """
     Calculate true positives and false positives for each hop level.
@@ -62,9 +66,9 @@ def calculate_tps_and_fps(
     true_positives = [0.0] * len(hops)
     false_positives = [0.0] * len(hops)
 
-    for match in query_cell_obj["matches"]:
-        match_cl_name = match["cell_type_ontology_term_id"]
-        match_score = match["score"]  # Ensure match_score is retrieved here
+    for match in query_cell_obj.matches:
+        match_cl_name = match.cell_type_ontology_term_id
+        match_score = match.score
         match_co_data = co_resource[match_cl_name]
         match_ancestors = match_co_data["all_ancestors"]
 
@@ -82,7 +86,7 @@ def calculate_tps_and_fps(
 
 
 def calculate_metrics_for_query_cell(
-    query_cell_obj: t.Dict[str, t.Any],
+    query_cell_obj: cas_models.CellTypeOntologyAwareResults.OntologyAwareAnnotation,
     ground_truth_cl_name: str,
     co_resource: t.Dict[str, t.Any],
     num_hops=4,
@@ -99,7 +103,7 @@ def calculate_metrics_for_query_cell(
     """
     if ground_truth_cl_name not in co_resource:
         metrics_na = {
-            "query_cell_id": query_cell_obj["query_cell_id"],
+            "query_cell_id": query_cell_obj.query_cell_id,
             "detail": f"Couldn't find cell type {ground_truth_cl_name} in Cell Ontology resource",
         }
         for hop in range(num_hops + 1):
@@ -123,7 +127,7 @@ def calculate_metrics_for_query_cell(
         for precision, sensitivity in zip(precisions, sensitivities)
     ]
 
-    query_cell_metrics = {"query_cell_id": query_cell_obj["query_cell_id"], "detail": ""}
+    query_cell_metrics = {"query_cell_id": query_cell_obj.query_cell_id, "detail": ""}
 
     for i, (sensitivity, specificity, f1_score) in enumerate(zip(sensitivities, specificities, f1_scores)):
         query_cell_metrics[f"hop_{i}_sensitivity"] = sensitivity
@@ -135,7 +139,7 @@ def calculate_metrics_for_query_cell(
 
 def calculate_metrics_for_cas_output(
     ground_truth_cl_names: t.Iterable[str],
-    cas_result: t.List[t.Dict[str, t.Any]],
+    cas_result: t.List[cas_models.CellTypeOntologyAwareResults.OntologyAwareAnnotation],
     co_resource: t.Dict[str, t.Any],
     num_hops: int,
 ) -> pd.DataFrame:
@@ -184,7 +188,7 @@ def split_into_batches(data_list, batch_size):
 
 def calculate_metrics_for_cas_output_in_batches(
     ground_truth_cl_names: t.List[str],
-    cas_result: t.List[t.Dict[str, t.Any]],
+    cas_result: cas_models.CellTypeOntologyAwareResults,
     co_resource: t.Dict[str, t.Any],
     num_hops: int,
     batch_size: int = 20000,
@@ -202,17 +206,12 @@ def calculate_metrics_for_cas_output_in_batches(
 
     :return: DataFrame containing the calculated metrics.
     """
-    if len(cas_result) != len(ground_truth_cl_names):
-        raise ValueError(
-            "Length of ground truths array does not correspond to the length of cas result list. "
-            "Make sure you're using the right dataset's ground truths and cas_result combination"
-        )
     result_dfs = []
     num_workers = multiprocessing.cpu_count()
     with concurrency.ProcessPoolExecutor(max_workers=num_workers) as executor:
         futures = []
 
-        cas_result_batches = split_into_batches(data_list=cas_result, batch_size=batch_size)
+        cas_result_batches = split_into_batches(data_list=cas_result.data, batch_size=batch_size)
         ground_truth_cl_names_batches = split_into_batches(data_list=ground_truth_cl_names, batch_size=batch_size)
 
         for i, (cas_result_batch, ground_truth_cl_names_batch) in enumerate(
@@ -302,7 +301,7 @@ def calculate_metrics_for_cas_responses(
         # Cell Ontology resource has a different delimiter than what they use in the data.
         ground_truth_cl_names = adata.obs.cell_type_ontology_term_id.map(lambda x: x.replace(":", "_"))
 
-        if len(cas_result) != len(ground_truth_cl_names):
+        if len(cas_result.data) != len(ground_truth_cl_names):
             raise ValueError(
                 "Length of ground truths array in input dataset does not correspond to the length of cas result list. "
                 "Make sure you're using the right dataset and cas_result combination"
