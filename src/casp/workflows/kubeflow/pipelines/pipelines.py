@@ -290,14 +290,14 @@ def generate_cas_outputs_pipeline(generate_cas_outputs_pipeline_config_paths: t.
 #
 #
 # @dsl.pipeline(name="calculate_metrics", description="Calculate metrics for cas outputs")
-# def calculate_metrics_pipeline(calculate_metrics_config_paths: t.List[str]):
-#     with dsl.ParallelFor(calculate_metrics_config_paths) as item:
-#         calculate_metrics_op = create_job(
-#             component_func=job_components.benchmarking.calculate_metrics,
-#             component_name=constants.CALCULATE_METRICS_COMPONENT_NAME,
-#             gcs_config_path=item.calculate_metrics_gcs_config_path,
-#         )
-#         _ = calculate_metrics_op()
+def calculate_metrics_pipeline(calculate_metrics_config_paths: t.List[str]):
+    with dsl.ParallelFor(calculate_metrics_config_paths) as item:
+        calculate_metrics_op = create_job(
+            component_func=job_components.benchmarking.calculate_metrics,
+            component_name=constants.CALCULATE_METRICS_COMPONENT_NAME,
+            gcs_config_path=item.calculate_metrics_gcs_config_path,
+        )
+        _ = calculate_metrics_op()
 #
 #
 # @dsl.pipeline(name="bq_ops_create_avro_files", description="Create avro files for BigQuery ingest")

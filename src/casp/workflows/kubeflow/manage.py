@@ -87,6 +87,14 @@ kubeflow_command_registry.register_pipeline_as_command(
     help_text="Generate CAS Outputs for Benchmarking",
 )
 
+kubeflow_command_registry.register_pipeline_as_command(
+    typer_app=typer_app,
+    name="benchmarking-calculate-metrics",
+    pipeline_func=pipelines.calculate_metrics_pipeline,
+    display_name="benchmarking_calculate_metrics",
+    help_text="Benchmark CAS results",
+)
+
 # @typer_app.command()
 # def summary_stats_train(config_yaml_path: Annotated[str, typer.Option()]) -> None:
 #     """
