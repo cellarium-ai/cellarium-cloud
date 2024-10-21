@@ -54,7 +54,7 @@ sa.inspect(User).add_property(
     key="total_cells_processed",
     prop=column_property(
         User.cells_processed
-        + sa.select(sa.func.sum(UserActivity.cell_count))
+        + sa.select(sa.func.coalesce(sa.func.sum(UserActivity.cell_count), 0))
         .where((UserActivity.user_id == User.id) & (UserActivity.event == UserActivityEvent.SUCCEEDED))
         .scalar_subquery()
     ),
@@ -63,7 +63,7 @@ sa.inspect(User).add_property(
     key="total_requests_processed",
     prop=column_property(
         User.requests_processed
-        + sa.select(sa.func.count(UserActivity.id))
+        + sa.select(sa.func.coalesce(sa.func.count(UserActivity.id), 0))
         .where((UserActivity.user_id == User.id) & (UserActivity.event == UserActivityEvent.SUCCEEDED))
         .scalar_subquery()
     ),
