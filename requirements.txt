@@ -16,6 +16,7 @@ SQLAlchemy==1.4.46
 Flask==2.2.5
 Flask-Admin==1.6.0
 Flask-HTTPAuth==4.7.0
+WTForms==3.1.2
 PyJWT==2.6.0
 alembic==1.9.2
 gunicorn==22.0.0
