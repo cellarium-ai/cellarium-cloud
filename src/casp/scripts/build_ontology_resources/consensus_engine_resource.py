@@ -6,40 +6,10 @@ import networkx as nx
 import owlready2
 from smart_open import open
 
+from casp.scripts.build_ontology_resources.utils import build_nx_graph_from_cl_ontology
+
 CL_PREFIX = "CL_"
 logging.basicConfig(level=logging.INFO)
-
-
-def build_nx_graph_from_cl_ontology(
-    cl_ontology: owlready2.Ontology, cl_classes: t.List[owlready2.EntityClass]
-) -> nx.DiGraph:
-    """
-    Build a directed graph from a cl ontology. Ontology object only considers immediate parents, while traversing the
-    ontology ancestors, while in this algorithm we need to consider all ancestors. Network X library provides this
-    functionality as we build the whole graph based on immediate parents and children of each node.
-
-    :param cl_ontology: Cell Type Ontology object
-    :param cl_classes: List of Cell Type Ontology classes
-
-    :return: Directed graph
-    """
-    logging.info("Building nx graph from cl ontology...")
-    cl_graph = nx.DiGraph(name="CL graph")
-    cl_classes_set = set(cl_classes)
-
-    for cl_class in cl_classes:
-        cl_graph.add_node(cl_class.name)
-
-    for cl_class in cl_classes:
-        for parent_cl_class in cl_ontology.get_parents_of(entity=cl_class):
-            if parent_cl_class in cl_classes_set:
-                cl_graph.add_edge(u_of_edge=parent_cl_class.name, v_of_edge=cl_class.name)
-
-        for child_cl_class in cl_ontology.get_children_of(Class=cl_class):
-            if child_cl_class in cl_classes_set:
-                cl_graph.add_edge(u_of_edge=cl_class.name, v_of_edge=child_cl_class.name)
-
-    return cl_graph
 
 
 def build_cell_ontology_ancestor_dictionary(
