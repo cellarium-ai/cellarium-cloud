@@ -1,3 +1,4 @@
+WTForms==3.1.2
 anndata~=0.8.0
 fastavro
 google-api-python-client
