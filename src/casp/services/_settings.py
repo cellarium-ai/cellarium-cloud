@@ -105,6 +105,10 @@ class AllEnvSettings(BaseSettings):
     FEEDBACK_FORM_BASE_URL: t.Optional[str] = os.environ.get("FEEDBACK_FORM_BASE_URL")
     DB_LOG_QUERIES: bool = os.environ.get("DB_LOG_QUERIES", False)
 
+    # Quota settings
+    DEFAULT_LIFETIME_QUOTA: int = 50000
+    INCREASED_LIFETIME_QUOTA: int = 200000
+
 
 class DevSettings(AllEnvSettings):
     # General

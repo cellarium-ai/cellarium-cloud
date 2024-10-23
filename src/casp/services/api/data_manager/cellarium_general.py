@@ -109,6 +109,20 @@ class CellariumGeneralDataManager(BaseDataManager):
                 raise exceptions.NotFound(f"Model {model_name} not found in the database")
 
             return model
+        
+    def get_user_by_email(self, user_email: str) -> models.User:
+        """
+        Get user by email
+
+        :param user_email: Email of the user to get
+
+        :return: User object
+        """
+        with self.system_data_db_session_maker() as session:
+            user = session.query(models.User).filter(models.User.email == user_email).one_or_none()
+            if user is None:
+                raise exceptions.NotFound(f"User with email {user_email} not found")
+            return user
 
     def log_user_activity(
         self, user_id: int, model_name: str, method: str, cell_count: int, event: models.UserActivityEvent

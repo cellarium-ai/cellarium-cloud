@@ -20,7 +20,8 @@ class User(db.Base):
     cells_processed = sa.Column(sa.Integer, default=0, nullable=False)
     is_admin = sa.Column(sa.Boolean(), default=True, nullable=False)
     cell_quota = sa.Column(sa.Integer(), default=100000, nullable=False)
-    lifetime_cell_quota = sa.Column(sa.Integer(), default=200000, nullable=True)
+    lifetime_cell_quota = sa.Column(sa.Integer(), default=settings.DEFAULT_LIFETIME_QUOTA, nullable=True)
+    quota_increased = sa.Column(sa.Boolean(), default=False, nullable=False)
     created_at = sa.Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.timezone.utc))
     ask_for_feedback = sa.Column(sa.Boolean(), default=True, nullable=False)
 

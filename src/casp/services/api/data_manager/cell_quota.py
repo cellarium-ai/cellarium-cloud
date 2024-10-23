@@ -38,3 +38,18 @@ class CellQuotaDataManager(BaseDataManager):
         with self.system_data_db_session_maker() as session:
             cell_count_sum_query = sa.sql.text(self.SQL_GET_CELLS_PROCESSED_THIS_WEEK)
             return session.execute(cell_count_sum_query, {"id": user.id, "start_of_week": start_of_week}).first()[0]
+    
+    def increase_quota_for_user(self, user: models.User, new_quota: int):
+        """
+        Increase cell processing quota for a specific user
+
+        :param user: User object to increase quota for
+        :param new_quota: The new quota to set for the user
+
+        :return: User object with updated quota
+        """
+        with self.system_data_db_session_maker() as session:
+            session.execute(
+                sa.update(models.User).where(models.User.id == user.id).values(lifetime_cell_quota=new_quota, quota_increased=True)
+            )
+            session.commit()
