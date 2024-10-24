@@ -46,7 +46,7 @@ class TestCellQuotaService:
             quota_reset_date=user.created_at + datetime.timedelta(days=7),
             lifetime_quota=200000,
             remaining_lifetime_quota=125000,
-            quota_increased=True
+            quota_increased=True,
         )
 
     def test_get_quota_for_user_lifetime_low(self):
@@ -67,5 +67,5 @@ class TestCellQuotaService:
             quota_reset_date=user.created_at + datetime.timedelta(days=7),
             lifetime_quota=200000,
             remaining_lifetime_quota=10000,
-            quota_increased=True
+            quota_increased=True,
         )

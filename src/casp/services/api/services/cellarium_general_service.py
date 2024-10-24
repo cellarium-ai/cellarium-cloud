@@ -61,7 +61,7 @@ class CellariumGeneralService:
         :return: List of features in a correct order
         """
         return self.cellarium_general_dm.get_feature_schema_by(schema_name=schema_name)
-    
+
     def get_user_by_email(self, user_email: str) -> models.User:
         """
         Get user by email

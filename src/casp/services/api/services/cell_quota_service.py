@@ -2,8 +2,8 @@ import datetime
 
 from casp.services import settings
 from casp.services.api import schemas
-from casp.services.api.services import exceptions
 from casp.services.api.data_manager import CellQuotaDataManager
+from casp.services.api.services import exceptions
 from casp.services.db import models
 
 
@@ -69,7 +69,7 @@ class CellQuotaService:
             remaining_lifetime_quota=remaining_lifetime_quota,
             quota_increased=user.quota_increased,
         )
-    
+
     def increase_quota(self, admin_user: models.User, user_for_increase: models.User):
         """
         Increase the lifetime quota of the specified user if their lifetime quota has not been
@@ -84,8 +84,8 @@ class CellQuotaService:
         """
         if not admin_user.is_admin:
             raise exceptions.AccessDeniedError("Access denied.  This is an admin-only endpoint.")
-        
+
         if user_for_increase.quota_increased:
             return
 
-        self.cell_quota_dm.increase_quota_for_user(user=user_for_increase, new_quota = settings.INCREASED_LIFETIME_QUOTA)
+        self.cell_quota_dm.increase_quota_for_user(user=user_for_increase, new_quota=settings.INCREASED_LIFETIME_QUOTA)

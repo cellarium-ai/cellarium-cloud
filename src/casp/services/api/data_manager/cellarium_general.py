@@ -109,7 +109,7 @@ class CellariumGeneralDataManager(BaseDataManager):
                 raise exceptions.NotFound(f"Model {model_name} not found in the database")
 
             return model
-        
+
     def get_user_by_email(self, user_email: str) -> models.User:
         """
         Get user by email

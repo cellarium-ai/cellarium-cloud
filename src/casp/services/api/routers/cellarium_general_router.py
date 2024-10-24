@@ -106,10 +106,10 @@ async def get_user_quota(user: models.User = Depends(dependencies.authenticate_u
     """
     return cell_quota_service.get_quota_for_user(user=user)
 
+
 @cellarium_general_router.post("/increase-quota/{user_email}")
 async def increase_quota_for_user_by_email(
-    user_email: str,
-    admin_user: models.User = Depends(dependencies.authenticate_user)
+    user_email: str, admin_user: models.User = Depends(dependencies.authenticate_user)
 ):
     """
     Increase the lifetime cell quota for the user specified by user_email if their lifetime quota
