@@ -42,6 +42,7 @@ class UserQuota(BaseModel):
     quota_reset_date: datetime.datetime
     lifetime_quota: t.Optional[int]
     remaining_lifetime_quota: t.Optional[int]
+    quota_increased: bool
 
 
 class ClientVersionInput(BaseModel):

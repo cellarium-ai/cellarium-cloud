@@ -33,6 +33,7 @@ class TestCellQuotaService:
             id=1,
             cell_quota=100000,
             lifetime_cell_quota=200000,
+            quota_increased=True,
             total_cells_processed=75000,
             created_at=datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
         )
@@ -45,6 +46,7 @@ class TestCellQuotaService:
             quota_reset_date=user.created_at + datetime.timedelta(days=7),
             lifetime_quota=200000,
             remaining_lifetime_quota=125000,
+            quota_increased=True,
         )
 
     def test_get_quota_for_user_lifetime_low(self):
@@ -52,6 +54,7 @@ class TestCellQuotaService:
             id=1,
             cell_quota=100000,
             lifetime_cell_quota=200000,
+            quota_increased=True,
             total_cells_processed=190000,
             created_at=datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
         )
@@ -64,4 +67,5 @@ class TestCellQuotaService:
             quota_reset_date=user.created_at + datetime.timedelta(days=7),
             lifetime_quota=200000,
             remaining_lifetime_quota=10000,
+            quota_increased=True,
         )

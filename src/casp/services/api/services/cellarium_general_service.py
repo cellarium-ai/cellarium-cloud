@@ -62,6 +62,16 @@ class CellariumGeneralService:
         """
         return self.cellarium_general_dm.get_feature_schema_by(schema_name=schema_name)
 
+    def get_user_by_email(self, user_email: str) -> models.User:
+        """
+        Get user by email
+
+        :param user_email: Email of the user to get
+
+        :return: User object
+        """
+        return self.cellarium_general_dm.get_user_by_email(user_email=user_email)
+
     def get_model_list_for_user(self, user: models.User) -> t.List[models.CASModel]:
         """
         Get query with available models for a specific user based on their permissions.
