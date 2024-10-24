@@ -83,7 +83,7 @@ class CellQuotaService:
         :raises: AccessDeniedError if admin_user is not an admin
         """
         if not admin_user.is_admin:
-            raise exceptions.AccessDeniedError("Access denied.  This is an admin-only endpoint.")
+            raise exceptions.AccessDeniedError("Access denied. This is an admin-only endpoint.")
 
         if user_for_increase.quota_increased:
             return
