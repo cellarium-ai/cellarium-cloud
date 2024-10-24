@@ -23,3 +23,4 @@ Table of Contents
    modules/changelog
    modules/running_locally
    modules/deploying_in_cloud
+   modules/readme_modules/scripts
