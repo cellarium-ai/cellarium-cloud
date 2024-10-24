@@ -117,5 +117,5 @@ async def increase_quota_for_user_by_email(
 
     :param user_email: Email of the user whose quota will be increased
     """
-    user_for_increase = cellarium_general_service.get_user_by_email(email=user_email)
+    user_for_increase = cellarium_general_service.get_user_by_email(user_email=user_email)
     cell_quota_service.increase_quota(admin_user=admin_user, user_for_increase=user_for_increase)
