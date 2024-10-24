@@ -70,15 +70,13 @@ class CellQuotaService:
             quota_increased=user.quota_increased,
         )
 
-    def increase_quota(self, admin_user: models.User, user_for_increase: models.User):
+    def increase_quota(self, admin_user: models.User, user_for_increase: models.User) -> None:
         """
         Increase the lifetime quota of the specified user if their lifetime quota has not been
         increased yet
 
         :param admin_user: User object of the admin user requesting the quota increase
         :param user_for_increase: User object to increase quota for
-
-        :return: None
 
         :raises: AccessDeniedError if admin_user is not an admin
         """
