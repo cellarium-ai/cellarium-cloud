@@ -388,8 +388,8 @@ def bq_ops_extract(pipeline_config_paths: t.List[str]):
 #     name="bq_ops_prepare_and_extract", description="Prepare extract tables in BigQuery and extract data to GCS bucket"
 # )
 def bq_ops_prepare_and_extract(prepare_extract_config_paths: t.List[str], extract_config_paths: t.List[str]) -> None:
-    # prepare_extract_task = bq_ops_prepare_extract(pipeline_config_paths=prepare_extract_config_paths)
-    extract_task = bq_ops_extract(pipeline_config_paths=extract_config_paths)
+    prepare_extract_task = bq_ops_prepare_extract(pipeline_config_paths=prepare_extract_config_paths)
+    # extract_task = bq_ops_extract(pipeline_config_paths=extract_config_paths)
     # extract_task.after(prepare_extract_task)
     # with dsl.ParallelFor(prepare_extract_config_paths) as item:
     #     prepare_extract_op = create_job(

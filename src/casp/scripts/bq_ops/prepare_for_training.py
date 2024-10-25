@@ -298,18 +298,18 @@ def prepare_extract(
 
     obs_columns_to_include = obs_columns_to_include.split(",")
 
-    prepare_extract_tables(
-        project=project_id,
-        dataset=dataset,
-        extract_table_prefix=extract_table_prefix,
-        fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
-        extract_bin_size=extract_bin_size,
-        filters=filters,
-        obs_columns_to_include=obs_columns_to_include,
-        ci_random_seed_offset=ci_random_seed_offset,
-        ci_partition_bin_count=ci_partition_bin_count,
-        ci_partition_size=ci_partition_size,
-    )
+    # prepare_extract_tables(
+    #     project=project_id,
+    #     dataset=dataset,
+    #     extract_table_prefix=extract_table_prefix,
+    #     fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
+    #     extract_bin_size=extract_bin_size,
+    #     filters=filters,
+    #     obs_columns_to_include=obs_columns_to_include,
+    #     ci_random_seed_offset=ci_random_seed_offset,
+    #     ci_partition_bin_count=ci_partition_bin_count,
+    #     ci_partition_size=ci_partition_size,
+    # )
     print("Preparing measured genes info...")
     measured_genes_info_df = prepare_measured_genes_info(
         project=project_id,
