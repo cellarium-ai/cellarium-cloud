@@ -150,6 +150,7 @@ def dump_cell_info(adata: AnnData, filename: str, cas_cell_index_start: int, ing
             {"name": "obs_metadata_extra", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "cas_ingest_id", "type": "string"},
             {"name": "total_mrna_umis", "type": ["null", "int"], "default": None},
+            {"name": "bq_row_number", "type": ["null", "int"], "default": None},
         ],
     }
 

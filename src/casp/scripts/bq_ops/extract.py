@@ -386,22 +386,20 @@ def extract_bin(
         However, the output extract table would contain only the column names, without any aliases.
         Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
-    try:
-        extract_minibatch_to_anndata(
-            project=project_id,
-            dataset=dataset,
-            extract_table_prefix=extract_table_prefix,
-            start_bin=bin_number,
-            end_bin=bin_number,
-            output=file_path,
-            bucket_name=output_bucket_name,
-            extract_bucket_path=extract_bucket_path,
-            obs_columns_to_include=obs_columns_to_include,
-        )
-        blob_name = f"{extract_bucket_path}/extract_files/{file_name}"
-        utils.upload_file_to_bucket(local_file_name=file_path, blob_name=blob_name, bucket=output_bucket_name)
-    except Exception as e:
-        print(f"Error occurred in thread: {str(e)}")
+
+    extract_minibatch_to_anndata(
+        project=project_id,
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix,
+        start_bin=bin_number,
+        end_bin=bin_number,
+        output=file_path,
+        bucket_name=output_bucket_name,
+        extract_bucket_path=extract_bucket_path,
+        obs_columns_to_include=obs_columns_to_include,
+    )
+    blob_name = f"{extract_bucket_path}/extract_files/{file_name}"
+    utils.upload_file_to_bucket(local_file_name=file_path, blob_name=blob_name, bucket=output_bucket_name)
 
     print(f"Processed bin {bin_number}")
 

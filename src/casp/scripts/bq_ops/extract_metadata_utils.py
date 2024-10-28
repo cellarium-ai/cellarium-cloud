@@ -4,7 +4,7 @@ from google.cloud import bigquery
 
 from casp.scripts.bq_ops import constants
 
-COLUMNS_TO_IGNORE = ["original_feature_id"]
+COLUMNS_TO_IGNORE = ["original_cell_id"]
 
 
 def get_measured_genes_info_filepath(bucket_name: str, extract_bucket_path: str) -> str:

@@ -20,6 +20,7 @@ import typing as t
 
 import anndata
 import pytest
+import pandas as pd
 from google.cloud import bigquery, exceptions
 
 from casp.scripts.bq_ops.anndata_to_avro import create_ingest_files
@@ -55,9 +56,11 @@ def get_anndata_or_raw(adata: "anndata.AnnData") -> "anndata.AnnData":
 def get_extract_file_paths(extract_dir: str, num_chunks: int) -> t.List[str]:
     """
     Get extract file paths for each of the chunk
+
     :param extract_dir: Extract directory
     :param num_chunks: Number of extract chunks are in the extract dir
-    :return:
+
+    :return: List of extract file paths in GCS
     """
     results = []
     for chunk_i in range(num_chunks):
@@ -205,11 +208,8 @@ def verify_chunk_obs_columns(
     expected_obs_df = data_controller.get_cas_cell_info_columns_df(
         dataset_name=dataset_name, cas_cell_ids=cas_cell_ids, columns_to_select=obs_columns
     )
-    obs_columns_no_alias = list(map(lambda x: x.split(".")[-1], obs_columns))
-    obs_has_all_necessary_columns = set(obs_columns_no_alias).issubset(
-        set(adata_extract_chunk.obs.columns.values.tolist())
-    )
-    obs_correspond_to_expected = (adata_extract_chunk.obs[obs_columns_no_alias] == expected_obs_df).all().all()
+    obs_has_all_necessary_columns = set(obs_columns).issubset(set(adata_extract_chunk.obs.columns.values.tolist()))
+    obs_correspond_to_expected = (adata_extract_chunk.obs[obs_columns] == expected_obs_df).all().all()
 
     assert obs_has_all_necessary_columns, "`adata.obs` does not have all the necessary columns that had to be extracted"
     assert obs_correspond_to_expected, "`adata.obs` does not match the values from `cas_cell_info` table"
@@ -241,12 +241,28 @@ def verify_chunk_total_mrna_umis(adata_extract_chunk: "anndata.AnnData", dataset
     ), "Values in obs column `total_mrna_umis` do not correspond to total mRNA counts from BigQuery"
 
 
+def verify_chunk_farm_finger_ordering(adata_extract_chunk: anndata.AnnData) -> None:
+    """
+    Verify that the `farm_finger` column in `adata_extract_chunk.obs` is ordered in ascending order.
+
+    This function checks whether the values in the `farm_finger` column of the provided AnnData
+    chunk are monotonically increasing. If the values are not in ascending order, an assertion
+    error is raised, indicating that a cells are not ordered within the batch
+
+    :param adata_extract_chunk: The AnnData object containing the batch data to verify.
+
+    :raises AssertionError: If the `farm_finger` column in `adata_extract_chunk.obs` is not ordered in ascending order.
+    """
+    farm_finger_values = adata_extract_chunk.obs["farm_finger"].values
+    is_sorted = pd.Series(farm_finger_values).is_monotonic_increasing
+    assert is_sorted, "The column `farm_finger` in `adata_extract_chunk.obs` is not ordered in ascending order."
+
+
 def verify_extracted_chunks(
     gcs_bucket_name: str,
     gcs_input_file_paths: t.List[str],
     gcs_extract_file_paths: t.List[str],
     dataset_name: str,
-    obs_columns: t.List[str],
 ):
     """
     Verifies extracted chunks of data from the Google Cloud Storage (GCS) against the source data.
@@ -255,7 +271,6 @@ def verify_extracted_chunks(
     :param gcs_input_file_paths: List of input file paths within the GCS bucket to verify against.
     :param gcs_extract_file_paths: List of extract file paths within the GCS bucket to verify with.
     :param dataset_name: Name of the BigQuery dataset.
-    :param obs_columns: What columns are expected in `adata.obs`
 
     :raises AssertionError: If not all the chunks are verified
     """
@@ -280,9 +295,12 @@ def verify_extracted_chunks(
                 adata_extract_chunk=adata_extract_chunk, adata_source=adata_source, dataset_name=dataset_name
             )
             verify_chunk_obs_columns(
-                adata_extract_chunk=adata_extract_chunk, dataset_name=dataset_name, obs_columns=obs_columns
+                adata_extract_chunk=adata_extract_chunk,
+                dataset_name=dataset_name,
+                obs_columns=constants.OBS_COLUMNS_TO_VERIFY_LIST,
             )
             verify_chunk_total_mrna_umis(adata_extract_chunk=adata_extract_chunk, dataset_name=dataset_name)
+            verify_chunk_farm_finger_ordering(adata_extract_chunk=adata_extract_chunk)
 
 
 def test_extract_filtered_by_homo_sapiens():
@@ -327,7 +345,6 @@ def test_extract_filtered_by_homo_sapiens():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -377,7 +394,6 @@ def test_extract_filtered_by_mus_mus():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_MUS_MUS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -428,7 +444,6 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -479,7 +494,6 @@ def test_extract_filtered_by_datasets():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -529,7 +543,6 @@ def test_extract_filtered_by_homo_sapiens_and_diseases():
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
