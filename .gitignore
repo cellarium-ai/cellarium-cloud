@@ -111,6 +111,8 @@ ENV/
 env.bak/
 venv.bak/
 casp-venv/
+configs/
+src/settings/.pipelines-metafiles
 
 # Spyder project settings
 .spyderproject

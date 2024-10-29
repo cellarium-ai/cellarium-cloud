@@ -24,6 +24,7 @@ class AllEnvSettings(BaseSettings):
     ENVIRONMENT: str = ENV_TYPE
     APP_VERSION: str = "1.7.1"
     APP_ROOT: str = ROOT_DIR
+    CAS_DIR: str = CAS_DIR
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: t.Optional[str] = os.environ.get("PROJECT_BUCKET_NAME")
     SERVICES_DIR: str = SERVICES_DIR
