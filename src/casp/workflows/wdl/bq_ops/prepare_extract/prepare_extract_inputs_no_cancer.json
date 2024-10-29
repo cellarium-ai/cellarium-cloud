@@ -1,0 +1,11 @@
+{
+  "CASPrepareExtractBQ.prepare_extract.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-extract-paths-21",
+  "CASPrepareExtractBQ.prepare_extract.bq_dataset": "cas_50m_dataset",
+  "CASPrepareExtractBQ.prepare_extract.extract_table_prefix": "fg_extract_mus_mus_brain",
+  "CASPrepareExtractBQ.prepare_extract.fq_allowed_original_feature_ids": "dsp-cell-annotation-service.cas_reference_data.refdata-gex-mm10-2020-A",
+  "CASPrepareExtractBQ.prepare_extract.extract_bin_size": 10000,
+  "CASPrepareExtractBQ.prepare_extract.bucket_name": "cellarium-file-system",
+  "CASPrepareExtractBQ.prepare_extract.extract_bucket_path": "curriculum/mus_mus_brain",
+  "CASPrepareExtractBQ.prepare_extract.filters_json_path": "gs://cellarium-file-system/curriculum/extract_filters/filters_mus_mus_brain.json",
+  "CASPrepareExtractBQ.prepare_extract.obs_columns_to_include": "c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,i.dataset_id"
+}

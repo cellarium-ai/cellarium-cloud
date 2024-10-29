@@ -1,0 +1,12 @@
+cas_api_token: ${cas_api_token}
+cas_api_url: ${cas_api_url}
+dataset_paths: ${dataset_paths}
+model_name: ${model_name}
+cas_results_output_path: ${cas_results_output_path}
+index_region: ${index_region}
+index_name: ${index_name}
+project_id: ${project_id}
+index_endpoint_id: ${index_endpoint_id}
+index_id: ${index_id}
+index_display_name: ${index_display_name}
+deployed_index_id: ${deployed_index_id}

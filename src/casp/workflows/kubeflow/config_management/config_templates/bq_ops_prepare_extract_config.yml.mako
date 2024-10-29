@@ -1,0 +1,9 @@
+project_id: ${project_id}
+obs_columns_to_include: ${obs_columns_to_include}
+filters_json_path: ${filters_json_path}
+dataset: ${dataset}
+extract_table_prefix: ${extract_table_prefix}
+fq_allowed_original_feature_ids: ${fq_allowed_original_feature_ids}
+extract_bin_size: ${extract_bin_size}
+bucket_name: ${bucket_name}
+extract_bucket_path: ${extract_bucket_path}

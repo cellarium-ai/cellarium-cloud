@@ -1,0 +1,5 @@
+{
+   "CASPrecalculateFields.precalculate_fields.docker_image": "us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fg-filter-by-disease-21",
+   "CASPrecalculateFields.precalculate_fields.dataset": "cas_50m_dataset",
+   "CASPrecalculateFields.precalculate_fields.fields": "total_mrna_umis"
+}
