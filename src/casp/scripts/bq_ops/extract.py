@@ -367,8 +367,7 @@ def extract_bin(
     obs_columns_to_include: t.List[str],
 ) -> None:
     """
-    Wrapper task `casp.bq_ops.extract_minibatch_to_anndata` which processes exactly
-    one bin at a time and saves the output anndata file to a GCS bucket.
+    Extract data using `bin_number` from BigQuery tables prepared by the `prepare_extract` script.
 
     :param project_id: Google Cloud Project id
     :param dataset: BigQuery Dataset
@@ -415,8 +414,9 @@ def extract_bins_in_parallel_workers(
     obs_columns_to_include: str,
 ) -> None:
     """
-    Wrapper task `casp.bq_ops.extract_minibatch_to_anndata` which processes exactly
-    one bin at a time and saves the output anndata file to a GCS bucket.
+    Extract bins within a range in parallel. This is a wrapper around extract_bin that executes it using parallel
+    workers with ProcessPoolExecutor. The number of workers is set to the number of CPUs on the machine where the
+    function is run.
 
     :param project_id: Google Cloud Project id
     :param dataset: BigQuery Dataset

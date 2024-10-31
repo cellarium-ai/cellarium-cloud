@@ -19,8 +19,8 @@ import tempfile
 import typing as t
 
 import anndata
-import pytest
 import pandas as pd
+import pytest
 from google.cloud import bigquery, exceptions
 
 from casp.scripts.bq_ops.anndata_to_avro import create_ingest_files
