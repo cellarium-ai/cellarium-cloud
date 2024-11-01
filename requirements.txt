@@ -1,5 +1,5 @@
 anndata~=0.8.0
-fastavro
+fastavro==1.5.4
 google-api-python-client
 google-cloud-aiplatform
 google-cloud-bigquery==3.9.0
@@ -31,7 +31,7 @@ cellarium-ml==0.0.7
 lightning==2.3.3
 db-dtypes==1.1.1
 Mako==1.2.4
-smart-open==7.0.4
+smart-open==6.4.0
 sqlparse==0.5.0
 werkzeug==3.0.6
 sentry-sdk==1.39.2
@@ -47,3 +47,4 @@ pydantic-settings==2.3.4
 numpy==1.26.4
 owlready2==0.46
 networkx==3.3
+pyopenssl>=23.2.0

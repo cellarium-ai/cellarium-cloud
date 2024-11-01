@@ -9,7 +9,9 @@ from casp.workflows.kubeflow import machine_specs_utils, exceptions
 
 
 def get_dsl_component_from_python_function(
-    component_function: t.Callable[..., t.Any], base_image: str, packages_to_install: t.Optional[t.List[str]] = None,
+    component_function: t.Callable[..., t.Any],
+    base_image: str,
+    packages_to_install: t.Optional[t.List[str]] = None,
 ) -> t.Union[t.Callable, PythonComponent, BaseComponent]:
     return dsl.component(base_image=base_image, packages_to_install=packages_to_install)(component_function)
 
@@ -32,7 +34,6 @@ def create_job(
     try:
         machine_spec = machine_specs_info[component_name]
     except KeyError:
-        print(machine_specs_info)
         raise exceptions.MachineSpecsDoesntExist(f"No machine specs found for component {component_name}")
 
     packages_to_install = machine_spec.get("packages_to_install", None)
