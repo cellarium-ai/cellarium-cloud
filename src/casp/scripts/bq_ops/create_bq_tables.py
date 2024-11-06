@@ -82,7 +82,9 @@ def create_bigquery_objects(client, project, dataset):
         "cas_ingest_info",
         [
             bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("dataset_filename", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("dataset_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("dataset_version_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("source_filename", "STRING", mode="REQUIRED"),
             bigquery.SchemaField("uns_metadata", "JSON", mode="REQUIRED"),
             bigquery.SchemaField("ingest_timestamp", "TIMESTAMP", mode="NULLABLE"),
         ],
@@ -122,6 +124,7 @@ def create_bigquery_objects(client, project, dataset):
             bigquery.SchemaField("cas_ingest_id", "STRING", mode="REQUIRED"),
             # Fields to be calculated after ingestion
             bigquery.SchemaField("total_mrna_umis", "INTEGER", mode="NULLABLE"),
+            bigquery.SchemaField("bq_row_number", "INTEGER", mode="NULLABLE"),
         ],
         [],
     )

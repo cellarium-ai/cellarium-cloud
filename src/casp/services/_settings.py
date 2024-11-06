@@ -33,6 +33,7 @@ class AllEnvSettings(BaseSettings):
     LOG_LEVEL: str = "info"
     LOG_CONFIG: str = f"{SERVICES_DIR}/log_config.yaml"
     LOG_AS_JSON: bool = os.environ.get("LOG_AS_JSON", True)
+    SCRIPTS_DIR: str = f"{CAS_DIR}/scripts"
 
     # Sentry
     SENTRY_DSN: t.Optional[str] = os.environ.get("SENTRY_DSN")
@@ -77,8 +78,6 @@ class AllEnvSettings(BaseSettings):
     DB_PORT: t.Optional[str] = os.environ.get("DB_PORT")
     # If this is value is specified, it will be used instead of the unix socket
     DB_PRIVATE_IP: t.Optional[str] = os.environ.get("DB_PRIVATE_IP")
-    # BigQuery
-    BQ_SQL_TEMPLATES_DIR: str = f"{CAS_DIR}/datastore_manager/sql/templates"
     # Stage db connector through unix socket or private IP
     if DB_PRIVATE_IP is None:
         SQLALCHEMY_DATABASE_URI: str = (

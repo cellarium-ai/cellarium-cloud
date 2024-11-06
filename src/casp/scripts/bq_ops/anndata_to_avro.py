@@ -8,13 +8,13 @@ version 0.1.
 
 """
 
-import argparse
 import gc
 import hashlib
 import json
 import math
 import multiprocessing
 import os
+import tempfile
 import time
 import typing as t
 
@@ -27,6 +27,8 @@ from fastavro import parse_schema, writer
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 from scipy import sparse
+
+from casp.services import utils
 
 
 def current_milli_time():
@@ -111,7 +113,7 @@ def dump_core_matrix(
     print(f"    {filename} - Write Chunk... in {current_milli_time() - start} ms")
 
 
-def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
+def dump_cell_info(adata: AnnData, filename: str, cas_cell_index_start: int, ingest_id: str):
     """
     Write cell / obs data.
     """
@@ -148,6 +150,7 @@ def dump_cell_info(adata, filename, cas_cell_index_start, ingest_id):
             {"name": "obs_metadata_extra", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "cas_ingest_id", "type": "string"},
             {"name": "total_mrna_umis", "type": ["null", "int"], "default": None},
+            {"name": "bq_row_number", "type": ["null", "int"], "default": None},
         ],
     }
 
@@ -255,7 +258,17 @@ def dump_feature_info(
     # return col_index_to_cas_feature_index
 
 
-def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included_adata_uns_keys=None):
+def dump_ingest_info(
+    adata: AnnData,
+    filename: str,
+    dataset_id: str,
+    dataset_version_id: str,
+    source_filename: str,
+    ingest_id: str,
+    load_uns_data: bool,
+    prefix: str,
+    included_adata_uns_keys: t.List[str] = None,
+):
     """
     Write ingest (AnnData-file level) data.
     """
@@ -266,7 +279,9 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included
         "type": "record",
         "fields": [
             {"name": "cas_ingest_id", "type": "string"},
-            {"name": "dataset_filename", "type": "string"},
+            {"name": "dataset_id", "type": "string"},
+            {"name": "dataset_version_id", "type": "string"},
+            {"name": "source_filename", "type": "string"},
             {"name": "uns_metadata", "type": {"type": "string", "sqlType": "JSON"}},
             {"name": "ingest_timestamp", "type": ["null", "long"], "logicalType": ["null", "timestamp-millis"]},
         ],
@@ -322,7 +337,9 @@ def dump_ingest_info(adata, filename, ingest_id, load_uns_data, prefix, included
 
         yield {
             "uns_metadata": json.dumps(uns, cls=NumpyEncoder),
-            "dataset_filename": filename,
+            "dataset_id": dataset_id,
+            "dataset_version_id": dataset_version_id,
+            "source_filename": source_filename,
             "cas_ingest_id": ingest_id,
             "ingest_timestamp": None,
             "ingest_prefix_name": prefix,
@@ -390,27 +407,43 @@ def find_max_index(client, project, dataset, table, column):
 
 
 def process(
-    input_file,
-    cas_cell_index_start,
-    cas_feature_index_start,
-    prefix,
-    project,
-    dataset,
-    load_uns_data,
-    original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
+    input_file: str,
+    prefix: str,
+    czi_dataset_id: str,
+    czi_dataset_version_id: str,
+    project: str,
+    load_uns_data: bool,
+    dataset: t.Optional[str] = None,
+    cas_cell_index_start: t.Optional[int] = None,
+    cas_feature_index_start: t.Optional[int] = None,
     included_adata_uns_keys: t.List = None,
+    original_feature_id_lookup=ORIGINAL_FEATURE_ID_LOOKUP_DEFAULT,
     count_matrix_multiprocessing_batch_size: int = COUNT_MATRIX_MULTIPROCESSING_BATCH_SIZE_DEFAULT,
+    save_directory: t.Optional[str] = None,
 ):
     """
     High level entry point, reads the input AnnData file and generates Avro files
     for ingest, cells, features, and raw / core data.
 
-    :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
-    In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
-    an index column of var dataframe would be used.
-
+    :param input_file: Input file that has to be ingested
+    :param prefix: Prefix for filenames
+    :param czi_dataset_id: Dataset id from cellxgene census
+    :param czi_dataset_version_id: Version id of the current dataset from cellxgene census
+    :param project: Google Cloud project which is used for connecting to BigQuery
+    :param load_uns_data: Whether to load uns (unstructured) metadata
+    :param dataset: BigQuery dataset. Used when max indexes for cells and indexes has to be retrieved from BigQuery
+    :param cas_cell_index_start: Starting number for cell index. If ``None``, increment of maximum index would be used.
+        ``None`` requires ``dataset`` to be set as it will use dataset to get the maximum index in the cell_info table
+    :param cas_feature_index_start: Starting number for feature index. If ``None``, increment of maximum index would be
+        used. ``None`` requires ``dataset`` to be set as it will use dataset to get the maximum index in the cell_info
+        table
     :param included_adata_uns_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
+    :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
+        In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
+        an index column of var dataframe would be used.
     :param count_matrix_multiprocessing_batch_size: Size of count matrix csv files batches that are used in ingest
+    :param save_directory: Directory where to save local. If ``None`` current local directory will be used.
+        It is recommended to use a temporary folder for this processing.
     """
     client = None
     if cas_cell_index_start is None:
@@ -435,28 +468,38 @@ def process(
     filenames = [f"{prefix}_{file_type}.avro" for file_type in file_types]
     confirm_output_files_do_not_exist(filenames)
 
-    (ingest_filename, cell_filename, feature_filename, raw_counts_filename) = filenames
+    directory_prefix = f"{save_directory}/" if save_directory is not None else ""
 
-    ingest_filename = f"{prefix}_ingest_info.avro"
-    cell_filename = f"{prefix}_cell_info.avro"
-    feature_filename = f"{prefix}_feature_info.avro"
-    raw_counts_filename = f"{prefix}_raw_counts.avro"
+    ingest_filename = f"{directory_prefix}{prefix}_ingest_info.avro"
+    cell_filename = f"{directory_prefix}{prefix}_cell_info.avro"
+    feature_filename = f"{directory_prefix}{prefix}_feature_info.avro"
+    raw_counts_filename = f"{directory_prefix}{prefix}_raw_counts.avro"
 
     print(f"Loading input AnnData file '{input_file}'...")
     adata = optimized_read_andata(input_file)
 
     print("Processing ingest metadata...")
-    dump_ingest_info(adata, ingest_filename, ingest_id, load_uns_data, prefix, included_adata_uns_keys)
+    dump_ingest_info(
+        adata=adata,
+        filename=ingest_filename,
+        dataset_id=czi_dataset_id,
+        dataset_version_id=czi_dataset_version_id,
+        ingest_id=ingest_id,
+        load_uns_data=load_uns_data,
+        prefix=prefix,
+        included_adata_uns_keys=included_adata_uns_keys,
+        source_filename=input_file,
+    )
 
     print("Processing cell/observation metadata...")
-    dump_cell_info(adata, cell_filename, cas_cell_index_start, ingest_id)
+    dump_cell_info(adata=adata, filename=cell_filename, cas_cell_index_start=cas_cell_index_start, ingest_id=ingest_id)
 
     print("Processing feature/gene/variable metadata...")
     dump_feature_info(
-        adata,
-        feature_filename,
-        cas_feature_index_start,
-        ingest_id,
+        adata=adata,
+        filename=feature_filename,
+        cas_feature_index_start=cas_feature_index_start,
+        ingest_id=ingest_id,
         original_feature_id_lookup=original_feature_id_lookup,
     )
 
@@ -510,7 +553,8 @@ def process_dump_core_matrix(args):
     )
 
 
-# based on implementation of https://github.com/scverse/anndata/blob/6473f2034aa6e28ebc826ceeab15f413b8d294d8/anndata/_io/h5ad.py#L119
+# based on implementation of
+# https://github.com/scverse/anndata/blob/6473f2034aa6e28ebc826ceeab15f413b8d294d8/anndata/_io/h5ad.py#L119
 # optimized for reading of subset of raw.X
 def optimized_read_andata(input_file):
     f = h5py.File(input_file, "r")
@@ -537,51 +581,68 @@ def optimized_read_raw_X(input_file, row_offset, end):
     return coord
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        allow_abbrev=False, description="Convert AnnData Single Cell Expression Data into format for loading into BQ"
+def create_ingest_files(
+    gcs_bucket_name: str,
+    gcs_file_path: str,
+    load_uns_data: bool,
+    cas_cell_index_start: int,
+    cas_feature_index_start: int,
+    uns_meta_keys: t.Optional[t.Iterable[str]],
+    original_feature_id_lookup: str,
+    dataset_id: str,
+    dataset_version_id: str,
+    gcs_stage_dir: str,
+):
+    """
+    Create ingest files and upload them in a stage GCS bucket directory.
+
+    :param gcs_bucket_name: GCS Bucket name
+    :param gcs_file_path: GCS Bucket input file path to process
+    :param load_uns_data: Whether to load uns (unstructured) metadata
+    :param cas_cell_index_start: Starting number for cell index. If ``None``, increment of maximum index would be used.
+        ``None`` requires ``dataset`` to be set as it will use dataset to get the maximum index in the cell_info table
+    :param cas_feature_index_start: Starting number for feature index. If ``None``, increment of maximum index would be
+        used. ``None`` requires ``dataset`` to be set as it will use dataset to get the maximum index in the cell_info
+        table
+    :param uns_meta_keys: List with a set of keys that need to be dumped in ingest. If None, dump all.
+    :param original_feature_id_lookup: A column name in var dataframe from where to get original feature ids.
+        In most of the cases it will be a column with ENSEMBL gene IDs. Default is `index` which means that
+        an index column of var dataframe would be used.
+    :param dataset_id: CZI Dataset ID
+    :param dataset_version_id: CZI Dataset version ID
+    :param gcs_stage_dir: Stage directory in GCS Bucket where to upload the files
+    """
+    temp_dir = tempfile.TemporaryDirectory()
+
+    file_name = gcs_file_path.split("/")[-1]
+
+    utils.download_file_from_bucket(
+        bucket_name=gcs_bucket_name, source_blob_name=gcs_file_path, destination_file_name=file_name
     )
+    _, project_id = utils.get_google_service_credentials()
 
-    parser.add_argument("--input", type=str, help="AnnData format input file", required=True)
-    parser.add_argument(
-        "--prefix",
-        type=str,
-        help="Prefix to use for output files, e.g. <prefix>_cell_info.avro etc",
-        required=False,
-    )
-    parser.add_argument("--cas_cell_index_start", type=int, help="starting number for cell index", required=False)
-    parser.add_argument("--cas_feature_index_start", type=int, help="starting number for feature index", required=False)
-    parser.add_argument("--flush_batch_size", type=int, help="max size of Avro batches to flush", required=False)
-    parser.add_argument("--project", type=str, help="BigQuery Project", required=False)
-    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=False)
-    parser.add_argument(
-        "--load_uns_data", help="load uns (unstructured) metadata", default="False", action="store_true"
-    )
-
-    args = parser.parse_args()
-
-    errors = []
-    if args.cas_cell_index_start is None and not (args.project and args.dataset):
-        errors.append(
-            "if `--cas_cell_index_start` is not specified, --project and --dataset required to find start value"
-        )
-
-    if args.cas_feature_index_start is None and not (args.project and args.dataset):
-        errors.append(
-            "if `--cas_feature_index_start` is not specified, --project and --dataset required to find start value"
-        )
-
-    if errors:
-        raise ValueError("\n\n".join(errors))
-
-    FLUSH_BATCH_SIZE = FLUSH_BATCH_SIZE_DEFAULT if not args.flush_batch_size else args.flush_batch_size
+    prefix = file_name.split(".")[0]
 
     process(
-        args.input,
-        args.cas_cell_index_start,
-        args.cas_feature_index_start,
-        args.prefix,
-        args.project,
-        args.dataset,
-        args.load_uns_data,
+        input_file=file_name,
+        project=project_id,
+        cas_cell_index_start=cas_cell_index_start,
+        cas_feature_index_start=cas_feature_index_start,
+        prefix=prefix,
+        czi_dataset_id=dataset_id,
+        czi_dataset_version_id=dataset_version_id,
+        load_uns_data=load_uns_data,
+        original_feature_id_lookup=original_feature_id_lookup,
+        included_adata_uns_keys=uns_meta_keys,
+        save_directory=temp_dir.name,
     )
+    ingest_files = [x for x in os.listdir(temp_dir.name) if x.startswith(prefix) and not x.endswith(".h5ad")]
+
+    for ingest_file_name in ingest_files:
+        utils.upload_file_to_bucket(
+            local_file_name=f"{temp_dir.name}/{ingest_file_name}",
+            bucket=gcs_bucket_name,
+            blob_name=f"{gcs_stage_dir}/{ingest_file_name}",
+        )
+
+    temp_dir.cleanup()

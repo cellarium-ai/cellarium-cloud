@@ -9,3 +9,4 @@
 ${mh.select(select_columns_processed)}
 from `${project}.${dataset}.${extract_table_prefix}__extract_cell_info` c
 where extract_bin between ${start_bin} and ${end_bin}
+order by farm_finger

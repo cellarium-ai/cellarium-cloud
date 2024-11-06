@@ -14,19 +14,21 @@ Each test function:
 """
 
 import logging
+import secrets
 import tempfile
 import typing as t
 
 import anndata
+import pandas as pd
 import pytest
 from google.cloud import bigquery, exceptions
 
+from casp.scripts.bq_ops.anndata_to_avro import create_ingest_files
+from casp.scripts.bq_ops.extract import extract_bins_in_parallel_workers
+from casp.scripts.bq_ops.ingest_data_to_bq import ingest_data_to_bq
+from casp.scripts.bq_ops.precalculate_fields import precalculate_fields
+from casp.scripts.bq_ops.prepare_extract import prepare_extract
 from casp.services import utils
-from casp.services.bq_ops.anndata_to_ingest_files.main import main as anndata_to_ingest_files
-from casp.services.bq_ops.extract.main import main as extract
-from casp.services.bq_ops.ingest_files_to_bq.main import main as ingest_files_to_bq
-from casp.services.bq_ops.precalculate_fields.main import main as precalculate_fields
-from casp.services.bq_ops.prepare_extract.main import main as prepare_extract
 
 from . import constants, data_controller
 
@@ -51,6 +53,27 @@ def get_anndata_or_raw(adata: "anndata.AnnData") -> "anndata.AnnData":
         return adata
 
 
+def get_extract_file_paths(extract_dir: str, num_chunks: int) -> t.List[str]:
+    """
+    Get extract file paths for each of the chunk
+
+    :param extract_dir: Extract directory
+    :param num_chunks: Number of extract chunks are in the extract dir
+
+    :return: List of extract file paths in GCS
+    """
+    results = []
+    for chunk_i in range(num_chunks):
+        file_path = (
+            f"{extract_dir}/"
+            f"{constants.EXTRACT_FILES_PATH_SUFFIX}/"
+            f"{constants.GCS_EXTRACT_FILE_NAME_PREFIX.format(chunk_id=chunk_i)}"
+        )
+        results.append(file_path)
+
+    return results
+
+
 def clean_up_cloud_from_test_case(bucket_name: str, extract_table_prefix: str):
     """Clean up GCS from files that were produced by a particular test case."""
     test_extract_data_dir = f"{extract_table_prefix}__data"
@@ -71,26 +94,34 @@ def set_up_bq_database():
     """Set up test BigQuery database"""
     ingest_index = 0
     for input_file_path in constants.GCS_INPUT_FILE_PATHS_ALL:
+        dataset_version_id = secrets.token_hex()
+        dataset_id = input_file_path.split("/")[-1].split(".")[0]
         logger.info(f"Creating ingest files for {input_file_path}...")
-        anndata_to_ingest_files(
+        create_ingest_files(
             gcs_bucket_name=constants.GCS_BUCKET_NAME,
             gcs_file_path=input_file_path,
             cas_cell_index_start=ingest_index,
             cas_feature_index_start=ingest_index,
             original_feature_id_lookup="index",
             gcs_stage_dir=constants.GCS_STAGE_DIR,
+            load_uns_data=False,
+            uns_meta_keys=[],
+            dataset_id=dataset_id,
+            dataset_version_id=dataset_version_id,
         )
         # Large number to be sure the start index of the next file will not repeat the index from the previous one
         ingest_index += 2000000
     logger.info("Ingesting files to BigQuery dataset...")
-    ingest_files_to_bq(
+    ingest_data_to_bq(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         gcs_bucket_name=constants.GCS_BUCKET_NAME,
         gcs_stage_dir=constants.GCS_STAGE_DIR,
-        delete_ingest_files=False,
     )
     logger.info("Precalculating fields...")
-    precalculate_fields(dataset=constants.DATASET_NAME, fields_str=constants.PRECALCULATE_FIELDS)
+    precalculate_fields(
+        dataset=constants.DATASET_NAME, fields=constants.PRECALCULATE_FIELDS, project=constants.PROJECT_ID
+    )
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -115,7 +146,7 @@ def manage_test_bq_database():
             executed.
 
     Raises:
-        Any exceptions raised by the called functions like `anndata_to_ingest_files`, `ingest_files_to_bq`, etc.
+        Any exceptions raised by the called functions like `create_ingest_files`, `ingest_data_to_bq`, etc.
     """
     logger.info("Set up BigQuery for the test cases")
     set_up_bq_database()
@@ -177,11 +208,8 @@ def verify_chunk_obs_columns(
     expected_obs_df = data_controller.get_cas_cell_info_columns_df(
         dataset_name=dataset_name, cas_cell_ids=cas_cell_ids, columns_to_select=obs_columns
     )
-    obs_columns_no_alias = list(map(lambda x: x.split(".")[-1], obs_columns))
-    obs_has_all_necessary_columns = set(obs_columns_no_alias).issubset(
-        set(adata_extract_chunk.obs.columns.values.tolist())
-    )
-    obs_correspond_to_expected = (adata_extract_chunk.obs[obs_columns_no_alias] == expected_obs_df).all().all()
+    obs_has_all_necessary_columns = set(obs_columns).issubset(set(adata_extract_chunk.obs.columns.values.tolist()))
+    obs_correspond_to_expected = (adata_extract_chunk.obs[obs_columns] == expected_obs_df).all().all()
 
     assert obs_has_all_necessary_columns, "`adata.obs` does not have all the necessary columns that had to be extracted"
     assert obs_correspond_to_expected, "`adata.obs` does not match the values from `cas_cell_info` table"
@@ -213,12 +241,28 @@ def verify_chunk_total_mrna_umis(adata_extract_chunk: "anndata.AnnData", dataset
     ), "Values in obs column `total_mrna_umis` do not correspond to total mRNA counts from BigQuery"
 
 
+def verify_chunk_farm_finger_ordering(adata_extract_chunk: anndata.AnnData) -> None:
+    """
+    Verify that the `farm_finger` column in `adata_extract_chunk.obs` is ordered in ascending order.
+
+    This function checks whether the values in the `farm_finger` column of the provided AnnData
+    chunk are monotonically increasing. If the values are not in ascending order, an assertion
+    error is raised, indicating that a cells are not ordered within the batch
+
+    :param adata_extract_chunk: The AnnData object containing the batch data to verify.
+
+    :raises AssertionError: If the `farm_finger` column in `adata_extract_chunk.obs` is not ordered in ascending order.
+    """
+    farm_finger_values = adata_extract_chunk.obs["farm_finger"].values
+    is_sorted = pd.Series(farm_finger_values).is_monotonic_increasing
+    assert is_sorted, "The column `farm_finger` in `adata_extract_chunk.obs` is not ordered in ascending order."
+
+
 def verify_extracted_chunks(
     gcs_bucket_name: str,
     gcs_input_file_paths: t.List[str],
     gcs_extract_file_paths: t.List[str],
     dataset_name: str,
-    obs_columns: t.List[str],
 ):
     """
     Verifies extracted chunks of data from the Google Cloud Storage (GCS) against the source data.
@@ -227,7 +271,6 @@ def verify_extracted_chunks(
     :param gcs_input_file_paths: List of input file paths within the GCS bucket to verify against.
     :param gcs_extract_file_paths: List of extract file paths within the GCS bucket to verify with.
     :param dataset_name: Name of the BigQuery dataset.
-    :param obs_columns: What columns are expected in `adata.obs`
 
     :raises AssertionError: If not all the chunks are verified
     """
@@ -252,9 +295,12 @@ def verify_extracted_chunks(
                 adata_extract_chunk=adata_extract_chunk, adata_source=adata_source, dataset_name=dataset_name
             )
             verify_chunk_obs_columns(
-                adata_extract_chunk=adata_extract_chunk, dataset_name=dataset_name, obs_columns=obs_columns
+                adata_extract_chunk=adata_extract_chunk,
+                dataset_name=dataset_name,
+                obs_columns=constants.OBS_COLUMNS_TO_VERIFY_LIST,
             )
             verify_chunk_total_mrna_umis(adata_extract_chunk=adata_extract_chunk, dataset_name=dataset_name)
+            verify_chunk_farm_finger_ordering(adata_extract_chunk=adata_extract_chunk)
 
 
 def test_extract_filtered_by_homo_sapiens():
@@ -264,40 +310,41 @@ def test_extract_filtered_by_homo_sapiens():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.HOMO_SAPIENS_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = constants.HOMO_SAPIENS_EXTRACT_BUCKET_PATH
     num_extract_chunks_to_check = 9
 
     logger.info("Preparing extract tables...")
     prepare_extract(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.HOMO_SAPIENS_EXTRACT_TABLE_PREFIX,
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
+        extract_bucket_path=test_extract_data_dir,
         filters_json_path=constants.FILTER_HOMO_SAP_JSON_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
-    extract(
+    extract_bins_in_parallel_workers(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.HOMO_SAPIENS_EXTRACT_TABLE_PREFIX,
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=test_extract_data_dir,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
-    gcs_extract_file_paths = [
-        f"{test_extract_data_dir}/{constants.GCS_EXTRACT_FILE_NAME_PREFIX.format(chunk_id=x)}"
-        for x in range(num_extract_chunks_to_check)
-    ]
+    gcs_extract_file_paths = get_extract_file_paths(
+        extract_dir=test_extract_data_dir, num_chunks=num_extract_chunks_to_check
+    )
     verify_extracted_chunks(
         gcs_bucket_name=constants.GCS_BUCKET_NAME,
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -313,39 +360,40 @@ def test_extract_filtered_by_mus_mus():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.MUS_MUS_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = constants.MUS_MUS_EXTRACT_BUCKET_PATH
     num_extract_chunks_to_check = 3
     logger.info("Preparing extract tables...")
     prepare_extract(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.MUS_MUS_EXTRACT_TABLE_PREFIX,
         fq_allowed_original_feature_ids=constants.MUS_MUS_GENE_SCHEMA,
         extract_bin_size=10000,
+        extract_bucket_path=test_extract_data_dir,
         bucket_name=constants.GCS_BUCKET_NAME,
         filters_json_path=constants.FILTER_MUS_MUS_JSON_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
-    extract(
+    extract_bins_in_parallel_workers(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.MUS_MUS_EXTRACT_TABLE_PREFIX,
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=test_extract_data_dir,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
-    gcs_extract_file_paths = [
-        f"{test_extract_data_dir}/{constants.GCS_EXTRACT_FILE_NAME_PREFIX.format(chunk_id=x)}"
-        for x in range(num_extract_chunks_to_check)
-    ]
+    gcs_extract_file_paths = get_extract_file_paths(
+        extract_dir=test_extract_data_dir, num_chunks=num_extract_chunks_to_check
+    )
     verify_extracted_chunks(
         gcs_bucket_name=constants.GCS_BUCKET_NAME,
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_MUS_MUS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -362,39 +410,40 @@ def test_extract_filtered_by_homo_sapiens_small_chunk_size():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.HOMO_SAPIENS_5k_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = constants.HOMO_SAPIENS_5k_EXTRACT_BUCKET_PATH
     num_extract_chunks_to_check = 18
     logger.info("Preparing extract tables...")
     prepare_extract(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.HOMO_SAPIENS_5k_EXTRACT_TABLE_PREFIX,
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=5000,
         bucket_name=constants.GCS_BUCKET_NAME,
+        extract_bucket_path=test_extract_data_dir,
         filters_json_path=constants.FILTER_HOMO_SAP_JSON_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
-    extract(
+    extract_bins_in_parallel_workers(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.HOMO_SAPIENS_5k_EXTRACT_TABLE_PREFIX,
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=test_extract_data_dir,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
-    gcs_extract_file_paths = [
-        f"{test_extract_data_dir}/{constants.GCS_EXTRACT_FILE_NAME_PREFIX.format(chunk_id=x)}"
-        for x in range(num_extract_chunks_to_check)
-    ]
+    gcs_extract_file_paths = get_extract_file_paths(
+        extract_dir=test_extract_data_dir, num_chunks=num_extract_chunks_to_check
+    )
     verify_extracted_chunks(
         gcs_bucket_name=constants.GCS_BUCKET_NAME,
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -411,39 +460,40 @@ def test_extract_filtered_by_datasets():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.FILTER_BY_DATASET_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = constants.FILTER_BY_DATASET_EXTRACT_BUCKET_PATH
     num_extract_chunks_to_check = 6
     logger.info("Preparing extract tables...")
     prepare_extract(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.FILTER_BY_DATASET_EXTRACT_TABLE_PREFIX,
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
+        extract_bucket_path=test_extract_data_dir,
         filters_json_path=constants.FILTER_DATASET_FILENAME_JSON_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
-    extract(
+    extract_bins_in_parallel_workers(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.FILTER_BY_DATASET_EXTRACT_TABLE_PREFIX,
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=test_extract_data_dir,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
-    gcs_extract_file_paths = [
-        f"{test_extract_data_dir}/{constants.GCS_EXTRACT_FILE_NAME_PREFIX.format(chunk_id=x)}"
-        for x in range(num_extract_chunks_to_check)
-    ]
+    gcs_extract_file_paths = get_extract_file_paths(
+        extract_dir=test_extract_data_dir, num_chunks=num_extract_chunks_to_check
+    )
     verify_extracted_chunks(
         gcs_bucket_name=constants.GCS_BUCKET_NAME,
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(
@@ -459,39 +509,40 @@ def test_extract_filtered_by_homo_sapiens_and_diseases():
 
     :raises AssertionError: If extracted chunks are not verified.
     """
-    test_extract_data_dir = f"{constants.FILTER_BY_DISEASES_EXTRACT_TABLE_PREFIX}__data"
+    test_extract_data_dir = constants.FILTER_BY_DISEASES_EXTRACT_BUCKET_PATH
     num_extract_chunks_to_check = 8
     logger.info("Preparing extract tables...")
     prepare_extract(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.FILTER_BY_DISEASES_EXTRACT_TABLE_PREFIX,
         fq_allowed_original_feature_ids=constants.HOMO_SAPIENS_GENE_SCHEMA,
         extract_bin_size=10000,
         bucket_name=constants.GCS_BUCKET_NAME,
+        extract_bucket_path=test_extract_data_dir,
         filters_json_path=constants.FILTER_HOMO_SAP_NO_CANCER_JSON_PATH,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Extracting data...")
-    extract(
+    extract_bins_in_parallel_workers(
+        project_id=constants.PROJECT_ID,
         dataset=constants.DATASET_NAME,
         extract_table_prefix=constants.FILTER_BY_DISEASES_EXTRACT_TABLE_PREFIX,
         start_bin=0,
         end_bin=num_extract_chunks_to_check - 1,
         output_bucket_name=constants.GCS_BUCKET_NAME,
-        output_bucket_directory=test_extract_data_dir,
+        extract_bucket_path=test_extract_data_dir,
         obs_columns_to_include=constants.OBS_COLUMNS_TO_INCLUDE,
     )
     logger.info("Verifying extract files...")
-    gcs_extract_file_paths = [
-        f"{test_extract_data_dir}/{constants.GCS_EXTRACT_FILE_NAME_PREFIX.format(chunk_id=x)}"
-        for x in range(num_extract_chunks_to_check)
-    ]
+    gcs_extract_file_paths = get_extract_file_paths(
+        extract_dir=test_extract_data_dir, num_chunks=num_extract_chunks_to_check
+    )
     verify_extracted_chunks(
         gcs_bucket_name=constants.GCS_BUCKET_NAME,
         gcs_input_file_paths=constants.GCS_INPUT_PATHS_HOMO_SAPIENS,
         gcs_extract_file_paths=gcs_extract_file_paths,
         dataset_name=constants.DATASET_NAME,
-        obs_columns=constants.OBS_COLUMNS_TO_INCLUDE_LIST,
     )
     logger.info("Cleaning up infrastructure from files that were produced by the test...")
     clean_up_cloud_from_test_case(

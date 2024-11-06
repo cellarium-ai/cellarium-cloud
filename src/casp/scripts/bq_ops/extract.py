@@ -2,26 +2,30 @@
 Selects a random subset of cells of a specified size from BigQuery and writes the data to output AnnData files.
 """
 
-import argparse
+import concurrent.futures as concurrency
 import datetime
 import json
+import multiprocessing
 import os
+import pickle
+import tempfile
+import traceback
 import typing as t
 from pathlib import Path
 
+import anndata
 import anndata as ad
 import numpy as np
 import pandas as pd
 from google.cloud import bigquery
 from google.cloud.bigquery_storage import BigQueryReadClient, types
+from google.oauth2.service_account import Credentials
 from scipy.sparse import coo_matrix
+from smart_open import open
 
-from casp.bq_scripts import constants
 from casp.data_manager import sql
+from casp.scripts.bq_ops import constants, extract_metadata_utils
 from casp.services import utils
-
-if t.TYPE_CHECKING:
-    from google.oauth2.service_account import Credentials
 
 
 class Feature:
@@ -129,35 +133,52 @@ def assign_uns_metadata(anndata, json_string):
         anndata.uns[key] = val
 
 
-def add_cell_type_info(
-    dataset: str, extract_table_prefix: str, bucket_name: str, adata: "ad.AnnData", cell_types: list
-):
-    filename = "all_cell_types.csv"
-    source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
+def update_categorical_columns(
+    bucket_name: str,
+    extract_bucket_path: str,
+    adata: anndata.AnnData,
+    columns: t.List[str],
+) -> None:
+    categorical_columns_metadata_filepath = extract_metadata_utils.get_categorical_columns_metadata_filepath(
+        bucket_name=bucket_name, extract_bucket_path=extract_bucket_path
+    )
+    with open(categorical_columns_metadata_filepath, "rb") as f:
+        categorical_columns_metadata = pickle.load(f)
 
-    if not os.path.exists(filename):
-        utils.download_file_from_bucket(
-            bucket_name=bucket_name, source_blob_name=source_blob_name, destination_file_name=filename
+    categorical_column_names = categorical_columns_metadata.keys()
+
+    if not set(categorical_column_names).issubset(set(columns)):
+        raise ValueError(
+            f"Categorical Column metadata files found in the bucket supposed to be the same as an input `columns`."
+            f"Got: {categorical_column_names} in the bucket metadata files and {columns} as input `columns` instead"
         )
 
-    adata.obs["cell_type"] = cell_types
-    df = pd.read_csv(filename, index_col=False)
-    adata.obs.cell_type = pd.Categorical(adata.obs.cell_type.values, categories=df["cell_type"].values)
+    for categorical_column_name, categorical_column_unique_values in categorical_columns_metadata.items():
+
+        if categorical_column_name not in adata.obs.keys():
+            # This happens when the current categorical column was not included to extract.
+            continue
+
+        adata.obs[categorical_column_name] = pd.Categorical(
+            values=adata.obs[categorical_column_name].values, categories=categorical_column_unique_values
+        )
 
 
 def add_measured_genes_layer_mask(
-    dataset: str, extract_table_prefix: str, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list
+    extract_bucket_path: str, bucket_name: str, adata: "ad.AnnData", cas_ingest_ids: list
 ):
-    filename = "measured_genes_info.csv"
-    source_blob_name = f"{dataset}_{extract_table_prefix}_info/{filename}"
-
-    if not os.path.exists(filename):
+    source_blob_name = (
+        f"{extract_bucket_path}/{constants.SHARED_META_DIR_NAME}/{constants.MEASURED_GENES_INFO_FILE_NAME}"
+    )
+    if not os.path.exists(constants.MEASURED_GENES_INFO_FILE_NAME):
         utils.download_file_from_bucket(
-            bucket_name=bucket_name, source_blob_name=source_blob_name, destination_file_name=filename
+            bucket_name=bucket_name,
+            source_blob_name=source_blob_name,
+            destination_file_name=constants.MEASURED_GENES_INFO_FILE_NAME,
         )
 
     adata.obs["cas_ingest_id"] = cas_ingest_ids
-    df = pd.read_csv(filename, index_col="cas_ingest_id").astype(bool)
+    df = pd.read_csv(constants.MEASURED_GENES_INFO_FILE_NAME, index_col="cas_ingest_id").astype(bool)
 
     measured_genes_mask = df.loc[adata.obs["cas_ingest_id"], adata.var.index].to_numpy()
 
@@ -172,7 +193,8 @@ def extract_minibatch_to_anndata(
     end_bin: int,
     output: str,
     bucket_name: str,
-    credentials: "Credentials" = None,
+    extract_bucket_path: str,
+    credentials: t.Optional[Credentials] = None,
     obs_columns_to_include: t.Optional[t.List[str]] = None,
 ):
     """
@@ -186,6 +208,9 @@ def extract_minibatch_to_anndata(
     :param end_bin: Ending (inclusive) integer bin to extract
     :param output: Filename of the AnnData file
     :param bucket_name: Bucket name where to save extracted minibatch
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
     :param credentials: Google Cloud Credentials with the access to BigQuery
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
         If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
@@ -228,6 +253,7 @@ def extract_minibatch_to_anndata(
     cas_ingest_ids = []
     obs_columns_values = {k: [] for k in _obs_columns_to_include}
     cas_cell_index_to_row_num = {}
+
     for row_num, cell in enumerate(cells):
         original_cell_ids.append(cell["cas_cell_index"])
         cas_ingest_ids.append(cell["cas_ingest_id"])
@@ -241,7 +267,6 @@ def extract_minibatch_to_anndata(
     )
 
     print("Converting Matrix Data to COO format...")
-
     rows, columns, data = convert_matrix_data_to_coo_matrix_input_format(
         matrix_data, cas_cell_index_to_row_num, cas_feature_index_to_col_num
     )
@@ -257,29 +282,24 @@ def extract_minibatch_to_anndata(
     adata.obs.index = original_cell_ids
     adata.var.index = feature_ids
 
-    print("Adding Cell Types Categorical Info...")
-    if "cell_type" in obs_columns_values:
-        # To avoid adding and overwriting cell types, pop them from dictionary:
-        cell_types = obs_columns_values.pop("cell_type")
-        add_cell_type_info(
-            dataset=dataset,
-            extract_table_prefix=extract_table_prefix,
-            bucket_name=bucket_name,
-            adata=adata,
-            cell_types=cell_types,
-        )
+    print("Adding Obs Columns...")
+    for obs_column_name, obs_column_value_list in obs_columns_values.items():
+        adata.obs[obs_column_name] = obs_column_value_list
 
+    print("Updating Categorical Obs Columns to be Consistent Across Batches...")
+    categorical_column_names = extract_metadata_utils.get_categorical_column_names_from_cell_info_table(
+        project=project, dataset=dataset, extract_table_prefix=extract_table_prefix
+    )
+    update_categorical_columns(
+        bucket_name=bucket_name, extract_bucket_path=extract_bucket_path, adata=adata, columns=categorical_column_names
+    )
     print("Adding Measured Genes Layer Mask...")
     add_measured_genes_layer_mask(
-        dataset=dataset,
-        extract_table_prefix=extract_table_prefix,
+        extract_bucket_path=extract_bucket_path,
         bucket_name=bucket_name,
         adata=adata,
         cas_ingest_ids=cas_ingest_ids,
     )
-    print("Adding Other Obs Columns...")
-    for obs_column in obs_columns_values:
-        adata.obs[obs_column] = obs_columns_values[obs_column]
 
     print("Writing AnnData Matrix")
     adata.write(Path(output), compression="gzip")
@@ -335,16 +355,120 @@ def convert_matrix_data_to_coo_matrix_input_format(
     return rows, columns, data
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(allow_abbrev=False, description="Query CASP tables for random cells")
-    parser.add_argument("--project", type=str, help="BigQuery Project", required=True)
-    parser.add_argument("--dataset", type=str, help="BigQuery Dataset", required=True)
-    parser.add_argument("--extract_table_prefix", type=str, help="Prefix of extract tables", required=True)
-    parser.add_argument("--start_bin", type=int, help="starting (inclusive) integer bin to extract", required=True)
-    parser.add_argument("--end_bin", type=int, help="ending (inclusive) integer bin to extract", required=True)
-    parser.add_argument("--output", type=str, help="Filename of the AnnData file", required=True)
+def extract_bin(
+    project_id: str,
+    dataset: str,
+    extract_table_prefix: str,
+    bin_number: int,
+    file_name: str,
+    file_path: str,
+    output_bucket_name: str,
+    extract_bucket_path: str,
+    obs_columns_to_include: t.List[str],
+) -> None:
+    """
+    Extract data using `bin_number` from BigQuery tables prepared by the `prepare_extract` script.
 
-    args = parser.parse_args()
+    :param project_id: Google Cloud Project id
+    :param dataset: BigQuery Dataset
+    :param extract_table_prefix: Prefix of extract tables
+    :param bin_number: Bin to extract
+    :param file_name: Name for a local file (.h5ad anndata) to save the output
+    :param file_path: Local file path
+    :param output_bucket_name: Name of GCS bucket
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
+    """
+
     extract_minibatch_to_anndata(
-        args.project, args.dataset, args.extract_table_prefix, args.start_bin, args.end_bin, args.output
+        project=project_id,
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix,
+        start_bin=bin_number,
+        end_bin=bin_number,
+        output=file_path,
+        bucket_name=output_bucket_name,
+        extract_bucket_path=extract_bucket_path,
+        obs_columns_to_include=obs_columns_to_include,
     )
+    blob_name = f"{extract_bucket_path}/extract_files/{file_name}"
+    utils.upload_file_to_bucket(local_file_name=file_path, blob_name=blob_name, bucket=output_bucket_name)
+
+    print(f"Processed bin {bin_number}")
+
+
+def extract_bins_in_parallel_workers(
+    project_id: str,
+    dataset: str,
+    extract_table_prefix: str,
+    start_bin: int,
+    end_bin: int,
+    output_bucket_name: str,
+    extract_bucket_path: str,
+    obs_columns_to_include: str,
+) -> None:
+    """
+    Extract bins within a range in parallel. This is a wrapper around extract_bin that executes it using parallel
+    workers with ProcessPoolExecutor. The number of workers is set to the number of CPUs on the machine where the
+    function is run.
+
+    :param project_id: Google Cloud Project id
+    :param dataset: BigQuery Dataset
+    :param extract_table_prefix: Prefix of extract tables
+    :param start_bin: Start bin to extract
+    :param end_bin: End bin to extract
+    :param output_bucket_name: Name of GCS bucket
+    :param extract_bucket_path: Path where the extract files and subdirectories should be located.
+        Should correspond to the directory provided to prepare_extract script as current script uses `shared_meta`
+        files.
+    :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
+        If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
+        Note: It is required to provide the column names along with the aliases for the tables to which they belong.
+        However, the output extract table would contain only the column names, without any aliases.
+        Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
+    """
+    obs_columns_to_include = obs_columns_to_include.split(",")
+    obs_columns_to_include = [x.split(".")[-1] for x in obs_columns_to_include]
+
+    num_of_workers = multiprocessing.cpu_count()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        with concurrency.ProcessPoolExecutor(max_workers=num_of_workers) as executor:
+            futures = []
+            for bin_number in range(start_bin, end_bin + 1, 1):
+                file_name = f"extract_{bin_number}.h5ad"
+                file_path = f"{temp_dir}/{file_name}"
+
+                extract_task_kwargs = {
+                    "project_id": project_id,
+                    "dataset": dataset,
+                    "extract_table_prefix": extract_table_prefix,
+                    "bin_number": bin_number,
+                    "file_name": file_name,
+                    "file_path": file_path,
+                    "output_bucket_name": output_bucket_name,
+                    "extract_bucket_path": extract_bucket_path,
+                    "obs_columns_to_include": obs_columns_to_include,
+                }
+                print("Submitting parallel extract job to thread executor...")
+                future = executor.submit(extract_bin, **extract_task_kwargs)
+                futures.append(future)
+
+            done, not_done = concurrency.wait(futures, return_when=concurrency.ALL_COMPLETED)
+
+            for future in done:
+                try:
+                    # Attempt to get the result of the future
+                    _ = future.result()
+                except Exception as e:
+                    # If an exception is raised, print the exception details
+                    print(f"Future: {future}")
+                    print(f"Exception type: {type(e).__name__}")
+                    print(f"Exception message: {e}")
+                    # Format and print the full traceback
+                    traceback.print_exception(type(e), e, e.__traceback__)
