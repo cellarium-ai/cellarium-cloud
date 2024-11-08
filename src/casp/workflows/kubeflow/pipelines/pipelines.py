@@ -298,6 +298,8 @@ def calculate_metrics_pipeline(calculate_metrics_config_paths: t.List[str]):
             gcs_config_path=item.calculate_metrics_gcs_config_path,
         )
         _ = calculate_metrics_op()
+
+
 #
 #
 # @dsl.pipeline(name="bq_ops_create_avro_files", description="Create avro files for BigQuery ingest")
@@ -354,7 +356,7 @@ def calculate_metrics_pipeline(calculate_metrics_config_paths: t.List[str]):
 #         _ = precalculate_fields_op()
 #
 #
-# @dsl.pipeline(name="bq_ops_prepare_extract", description="Prepare tables for extract in BigQuery")
+@dsl.pipeline(name="bq_ops_prepare_extract", description="Prepare tables for extract in BigQuery")
 def bq_ops_prepare_extract(pipeline_config_paths: t.List[str]):
     """
 
@@ -369,7 +371,7 @@ def bq_ops_prepare_extract(pipeline_config_paths: t.List[str]):
         _ = prepare_extract_op()
 
 
-# @dsl.pipeline(name="bq_ops_extract", description="Extract data from BigQuery")
+@dsl.pipeline(name="bq_ops_extract", description="Extract data from BigQuery")
 def bq_ops_extract(pipeline_config_paths: t.List[str]):
     """
 
@@ -384,13 +386,14 @@ def bq_ops_extract(pipeline_config_paths: t.List[str]):
         _ = extract_op()
 
 
-# @dsl.pipeline(
-#     name="bq_ops_prepare_and_extract", description="Prepare extract tables in BigQuery and extract data to GCS bucket"
-# )
+@dsl.pipeline(
+    name="bq_ops_prepare_and_extract", description="Prepare extract tables in BigQuery and extract data to GCS bucket"
+)
 def bq_ops_prepare_and_extract(prepare_extract_config_paths: t.List[str], extract_config_paths: t.List[str]) -> None:
     prepare_extract_task = bq_ops_prepare_extract(pipeline_config_paths=prepare_extract_config_paths)
-    # extract_task = bq_ops_extract(pipeline_config_paths=extract_config_paths)
-    # extract_task.after(prepare_extract_task)
+    extract_task = bq_ops_extract(pipeline_config_paths=extract_config_paths)
+    extract_task.after(prepare_extract_task)
+
     # with dsl.ParallelFor(prepare_extract_config_paths) as item:
     #     prepare_extract_op = create_job(
     #         component_func=job_components.bq_ops.prepare_extract,
