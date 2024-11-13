@@ -22,7 +22,7 @@ class User(db.Base):
     cell_quota = sa.Column(sa.Integer(), default=100000, nullable=False)
     lifetime_cell_quota = sa.Column(sa.Integer(), default=settings.DEFAULT_LIFETIME_QUOTA, nullable=True)
     quota_increased = sa.Column(sa.Boolean(), default=False, nullable=False)
-    created_at = sa.Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.timezone.utc))
+    created_at = sa.Column(sa.DateTime, nullable=False, default=(lambda: datetime.datetime.now(datetime.timezone.utc)))
     ask_for_feedback = sa.Column(sa.Boolean(), default=True, nullable=False)
 
     __tablename__ = "users_user"
@@ -44,7 +44,7 @@ class UserActivity(db.Base):
     cell_count = sa.Column(sa.Integer, default=0, nullable=False)
     model_name = sa.Column(sa.String(255), nullable=False)
     method = sa.Column(sa.String(255), nullable=True)
-    finished_time = sa.Column(sa.DateTime, default=datetime.datetime.now(datetime.timezone.utc))
+    finished_time = sa.Column(sa.DateTime, default=(lambda: datetime.datetime.now(datetime.timezone.utc)))
     event = sa.Column(sa.Enum(UserActivityEvent), nullable=False)
 
     __tablename__ = "users_useractivity"
@@ -75,7 +75,9 @@ class UserKey(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     key_locator = sa.Column(UUID, nullable=False, unique=True)
     user_id = sa.Column(sa.Integer, sa.ForeignKey(f"{User.__tablename__}.id"), nullable=False)
-    created_date = sa.Column(sa.DateTime, default=datetime.datetime.now(datetime.timezone.utc), nullable=False)
+    created_date = sa.Column(
+        sa.DateTime, default=(lambda: datetime.datetime.now(datetime.timezone.utc)), nullable=False
+    )
     active = sa.Column(sa.Boolean(), default=True, nullable=False)
     expires = sa.Column(
         sa.DateTime,
