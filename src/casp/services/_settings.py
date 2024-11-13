@@ -22,7 +22,7 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = ENV_TYPE
-    APP_VERSION: str = "1.7.0"
+    APP_VERSION: str = "1.7.1"
     APP_ROOT: str = ROOT_DIR
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: t.Optional[str] = os.environ.get("PROJECT_BUCKET_NAME")
