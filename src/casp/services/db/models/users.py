@@ -4,7 +4,6 @@ import enum
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import backref, column_property, deferred, relationship
-from sqlalchemy.sql import func
 
 from casp.services import db, settings
 
@@ -76,7 +75,9 @@ class UserKey(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     key_locator = sa.Column(UUID, nullable=False, unique=True)
     user_id = sa.Column(sa.Integer, sa.ForeignKey(f"{User.__tablename__}.id"), nullable=False)
-    created_date = sa.Column(sa.DateTime, default=(lambda: datetime.datetime.now(datetime.timezone.utc)), nullable=False)
+    created_date = sa.Column(
+        sa.DateTime, default=(lambda: datetime.datetime.now(datetime.timezone.utc)), nullable=False
+    )
     active = sa.Column(sa.Boolean(), default=True, nullable=False)
     expires = sa.Column(
         sa.DateTime,
