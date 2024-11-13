@@ -168,7 +168,7 @@ class UserAdminView(CellariumCloudAdminModelView):
         "created_at",
     )
     column_editable_list = ("is_admin",)
-    form_excluded_columns = ("requests_processed", "cells_processed", "created_at")
+    form_excluded_columns = ("requests_processed", "cells_processed")
 
     inline_models = [
         (
