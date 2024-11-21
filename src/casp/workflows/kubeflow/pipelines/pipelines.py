@@ -7,16 +7,16 @@ from casp.workflows.kubeflow.job_components.utils import create_job
 from casp.workflows.kubeflow.pipelines import utils
 
 
-# @dsl.pipeline(name="pca_train", description="Incremental PCA Train")
-def pca_train_pipeline(train_pipeline_config_paths: t.List[str]):
+@dsl.pipeline(name="pca_train", description="Incremental PCA Train")
+def pca_train_pipeline(pca_train_pipeline_config_paths: t.List[str]):
     """
     KFP pipeline to run PCA train pipeline.
 
-    :param train_pipeline_config_paths: List of JSON strings with train and embed config paths.
+    :param pca_train_pipeline_config_paths: List of JSON strings with train and embed config paths.
 
     :rtype: dsl.Pipeline
     """
-    with dsl.ParallelFor(train_pipeline_config_paths, parallelism=54) as item:
+    with dsl.ParallelFor(pca_train_pipeline_config_paths, parallelism=54) as item:
         train_job_task_op = create_job(
             component_func=job_components.pca.train,
             component_name=constants.PCA_TRAIN_COMPONENT_NAME,
@@ -26,13 +26,13 @@ def pca_train_pipeline(train_pipeline_config_paths: t.List[str]):
 
 
 # @dsl.pipeline(name="pca_embed_parallel", description="Incremental PCA Embed Data")
-# def embed_pipeline(pipeline_config_paths: t.List[str]) -> None:
+# def embed_pipeline(pca_embed_pipeline_config_paths: t.List[str]) -> None:
 #     """
 #     KFP pipeline to run PCA embed pipeline.
 #
-#     :param pipeline_config_paths: List of JSON strings with train and embed config paths.
+#     :param pca_embed_pipeline_config_paths: List of JSON strings with train and embed config paths.
 #     """
-#     with dsl.ParallelFor(pipeline_config_paths) as item:
+#     with dsl.ParallelFor(pca_embed_pipeline_config_paths) as item:
 #         embed_job_task_op = create_job(
 #             component_func=job_components.pca.embed,
 #             component_name=constants.PCA_EMBED_COMPONENT_NAME,
@@ -85,7 +85,7 @@ def pca_train_pipeline(train_pipeline_config_paths: t.List[str]):
 #         )
 #         _ = index_create_op()
 #
-#
+####
 # @dsl.pipeline(name="pca_full_cycle_parallel", description="Incremental PCA Full Cycle Parallel")
 # def pca_full_cycle_pipeline(pipeline_config_paths: t.List[str]) -> None:
 #     """
@@ -126,78 +126,89 @@ def pca_train_pipeline(train_pipeline_config_paths: t.List[str]):
 #         register_embedding_model_task.after(train_job_task)
 #         index_create_task.after(embed_job_task)
 #         index_create_task.after(register_embedding_model_task)
-#
-#
 
 
 # @dsl.pipeline(name="pca_resize_and_embed_parallel", description="Incremental PCA Resize and Embed Parallel")
-def pca_resize_and_embed_pipeline(pca_resize_and_embed_pipeline_config_paths: t.List[str]):
+# def pca_resize_and_embed_pipeline(pca_resize_and_embed_pipeline_config_paths: t.List[str]):
+#     """
+#     KFP pipeline that takes a model resizes it, saves and the uses for creating new index, and then registers it.
+#
+#     :param pca_resize_and_embed_pipeline_config_paths: List of JSON strings with train and embed config paths.
+#
+#     :rtype: dsl.Pipeline
+#     """
+#     with dsl.ParallelFor(pca_resize_and_embed_pipeline_config_paths, parallelism=72) as item:
+#         resize_and_save_op = create_job(
+#             component_func=job_components.pca.resize_and_save,
+#             component_name=constants.PCA_RESIZE_AND_SAVE_COMPONENT_NAME,
+#             gcs_config_path=item.pca_resize_and_save_gcs_config_path,
+#         )
+#         # embed_job_task_op = create_job(
+#         #     component_func=job_components.pca.embed,
+#         #     component_name=constants.PCA_EMBED_COMPONENT_NAME,
+#         #     gcs_config_path=item.pca_embed_gcs_config_path,
+#         # )
+#         resize_and_save_task = resize_and_save_op()
+#         # embed_job_task = embed_job_task_op()
+#         # embed_job_task.after(resize_and_save_task)
+@dsl.pipeline(name="pca_resize_in_parallel", description="Incremental PCA Resize ")
+def pca_resize_pipeline(pca_resize_pipeline_config_paths: t.List[str]):
     """
     KFP pipeline that takes a model resizes it, saves and the uses for creating new index, and then registers it.
 
-    :param pca_resize_and_embed_pipeline_config_paths: List of JSON strings with train and embed config paths.
+    :param pca_resize_pipeline_config_paths: List of JSON strings with train and embed config paths.
 
     :rtype: dsl.Pipeline
     """
-    with dsl.ParallelFor(pca_resize_and_embed_pipeline_config_paths, parallelism=72) as item:
+    with dsl.ParallelFor(pca_resize_pipeline_config_paths) as item:
         resize_and_save_op = create_job(
             component_func=job_components.pca.resize_and_save,
             component_name=constants.PCA_RESIZE_AND_SAVE_COMPONENT_NAME,
             gcs_config_path=item.pca_resize_and_save_gcs_config_path,
         )
+        _ = resize_and_save_op()
+
+# def pca_resize_full_cycle_pipeline(pca_resize_full_cycle_pipeline_config_paths: t.List[str]):
+#     """
+#     KFP pipeline that takes a model resizes it, saves and the uses for creating new index, and then registers it.
+#
+#     :param pca_resize_full_cycle_pipeline_config_paths: List of JSON strings with train and embed config paths.
+#
+#     :rtype: dsl.Pipeline
+#     """
+#     with dsl.ParallelFor(pca_resize_full_cycle_pipeline_config_paths, parallelism=3) as item:
+#         resize_and_save_op = create_job(
+#             component_func=job_components.pca.resize_and_save,
+#             component_name=constants.PCA_RESIZE_AND_SAVE_COMPONENT_NAME,
+#             gcs_config_path=item.pca_resize_and_save_gcs_config_path,
+#         )
         # embed_job_task_op = create_job(
         #     component_func=job_components.pca.embed,
         #     component_name=constants.PCA_EMBED_COMPONENT_NAME,
         #     gcs_config_path=item.pca_embed_gcs_config_path,
         # )
-        resize_and_save_task = resize_and_save_op()
-        # embed_job_task = embed_job_task_op()
-        # embed_job_task.after(resize_and_save_task)
-
-
-def pca_resize_full_cycle_pipeline(pca_resize_full_cycle_pipeline_config_paths: t.List[str]):
-    """
-    KFP pipeline that takes a model resizes it, saves and the uses for creating new index, and then registers it.
-
-    :param pca_resize_full_cycle_pipeline_config_paths: List of JSON strings with train and embed config paths.
-
-    :rtype: dsl.Pipeline
-    """
-    with dsl.ParallelFor(pca_resize_full_cycle_pipeline_config_paths, parallelism=3) as item:
-        # resize_and_save_op = create_job(
-        #     component_func=job_components.pca.resize_and_save,
-        #     component_name=constants.PCA_RESIZE_AND_SAVE_COMPONENT_NAME,
-        #     gcs_config_path=item.pca_resize_and_save_gcs_config_path,
-        # )
-        embed_job_task_op = create_job(
-            component_func=job_components.pca.embed,
-            component_name=constants.PCA_EMBED_COMPONENT_NAME,
-            gcs_config_path=item.pca_embed_gcs_config_path,
-        )
         # register_embedding_model_op = create_job(
         #     component_func=job_components.registry.register_embedding_model,
         #     component_name=constants.PCA_REGISTRY_COMPONENT_NAME,
         #     gcs_config_path=item.pca_registry_gcs_config_path,
         # )
-        index_create_op = create_job(
-            component_func=job_components.pca_index_create.create_register_index,
-            component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
-            gcs_config_path=item.pca_index_create_gcs_config_path,
-        )
+        # index_create_op = create_job(
+        #     component_func=job_components.pca_index_create.create_register_index,
+        #     component_name=constants.PCA_INDEX_CREATE_COMPONENT_NAME,
+        #     gcs_config_path=item.pca_index_create_gcs_config_path,
+        # )
         # resize_and_save_task = resize_and_save_op()
-        embed_job_task = embed_job_task_op()
+        # embed_job_task = embed_job_task_op()
         # register_embedding_model_task = register_embedding_model_op()
-        index_create_task = index_create_op()
+        # index_create_task = index_create_op()
 
         # embed_job_task.after(resize_and_save_task)
         # register_embedding_model_task.after(resize_and_save_task)
-        index_create_task.after(embed_job_task)
+        # index_create_task.after(embed_job_task)
         # index_create_task.after(register_embedding_model_task)
 
 
-#
-#
-# @dsl.pipeline(name="summary_stats_train_parallel", description="Summary Stats Train in Parallel")
+@dsl.pipeline(name="summary_stats_train_parallel", description="Summary Stats Train in Parallel")
 def summary_stats_train_pipeline(summary_stats_train_pipeline_config_paths: t.List[str]):
     """
     KFP pipeline to run Summary Stats train pipeline for multiple models simultaneously.
@@ -251,16 +262,31 @@ def summary_stats_train_pipeline(summary_stats_train_pipeline_config_paths: t.Li
 #
 #         _ = train_logistic_regression()
 #
-#
+@dsl.pipeline(
+    name="pca_train_base_and_resize_parallel", description="PCA Train Base and Resize Full Cycle Parallel"
+)
+def pca_train_base_and_resize_pipeline(
+        pca_train_pipeline_config_paths: t.List[str], pca_resize_pipeline_config_paths: t.List[str]
+):
+    train_pipeline_task = pca_train_pipeline(pca_train_pipeline_config_paths=pca_train_pipeline_config_paths)
+    resize_full_task = pca_resize_pipeline(
+        pca_resize_pipeline_config_paths=pca_resize_pipeline_config_paths
+    )
+    resize_full_task.after(train_pipeline_task)
+
 # @dsl.pipeline(
 #     name="pca_train_base_and_resize_full_cycle_parallel", description="PCA Train Base and Resize Full Cycle Parallel"
 # )
 # def pca_train_base_and_resize_full_cycle_pipeline(
-#     train_base_config_paths: t.List[str], resize_full_cycle_config_paths: t.List[str]
+#         pca_train_pipeline_config_paths: t.List[str], pca_resize_full_cycle_pipeline_config_paths: t.List[str]
 # ):
-#     train_pipeline_task = train_pipeline(pipeline_config_paths=train_base_config_paths)
-#     resize_full_cycle_task = pca_resize_full_cycle_pipeline(pipeline_config_paths=resize_full_cycle_config_paths)
+#     train_pipeline_task = pca_train_pipeline(pca_train_pipeline_config_paths=pca_train_pipeline_config_paths)
+#     resize_full_cycle_task = pca_resize_full_cycle_pipeline(
+#         pca_resize_full_cycle_pipeline_config_paths=pca_resize_full_cycle_pipeline_config_paths
+#     )
 #     resize_full_cycle_task.after(train_pipeline_task)
+
+
 #
 #
 # @dsl.pipeline(

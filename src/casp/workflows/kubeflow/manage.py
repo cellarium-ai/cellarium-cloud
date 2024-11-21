@@ -1,6 +1,7 @@
 # import typer
 import click
-from casp.workflows.kubeflow.pipelines import pipelines
+
+# from casp.workflows.kubeflow.pipelines import pipelines
 from casp.workflows.kubeflow import kubeflow_command_registry
 
 # typer_app = typer.Typer()
@@ -89,13 +90,30 @@ from casp.workflows.kubeflow import kubeflow_command_registry
 
 cli = click.Group()
 
+
 # Register the pipeline command
 kubeflow_command_registry.register_pipeline_as_command(
     click_group=cli,
     name="bq-ops-prepare-and-extract",
-    pipeline_func=pipelines.bq_ops_prepare_and_extract,
+    pipeline_func_name="bq_ops_prepare_and_extract",
     display_name="BQ Ops prepare and extract",
     help_text="BQ Ops prepare extract tables and process extract",
+)
+
+kubeflow_command_registry.register_pipeline_as_command(
+    click_group=cli,
+    name="summary-stats-train",
+    pipeline_func_name="summary_stats_train_pipeline",
+    display_name="Train Summary Stats",
+    help_text="Train Summary Statis",
+)
+
+kubeflow_command_registry.register_pipeline_as_command(
+    click_group=cli,
+    name="pca-train-base-and-resize",
+    pipeline_func_name="pca_train_base_and_resize_pipeline",
+    display_name="Train PCA Base and resize it to have multiple models with different size",
+    help_text="Train PCA Base and resize it",
 )
 
 # Run the CLI
