@@ -13,5 +13,9 @@ partition by range_bucket(extract_bin, generate_array(0, ${partition_bin_count},
 cluster by extract_bin
 as
 ${mh.select(select_column_names_processed)},
+% if assign_bin_by_category:
+    dense_rank() over (order by ${extract_bin_category_column_name}) as extract_bin
+% else:
     cast(floor((row_number() over (order by farm_finger) - 1) / ${extract_bin_size}) as int) as extract_bin
+% endif
 from `${project}.${dataset}.${extract_table_prefix}__extract_cell_info_randomized` c
