@@ -100,7 +100,9 @@ def prepare_extract(gcs_config_path: str):
     dataset = config_data["dataset"]
     extract_table_prefix = config_data["extract_table_prefix"]
     fq_allowed_original_feature_ids = config_data["fq_allowed_original_feature_ids"]
-    extract_bin_size = config_data["extract_bin_size"]
+    extract_bin_size = config_data.get("extract_bin_size")
+    assign_bin_by_category = config_data.get("assign_bin_by_category")
+    extract_bin_category_column_name = config_data.get("extract_bin_category_column_name")
     bucket_name = config_data["bucket_name"]
     extract_bucket_path = config_data["extract_bucket_path"]
 
@@ -110,6 +112,8 @@ def prepare_extract(gcs_config_path: str):
         extract_table_prefix=extract_table_prefix,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
         extract_bin_size=extract_bin_size,
+        assign_bin_by_category=assign_bin_by_category,
+        extract_bin_category_column_name=extract_bin_category_column_name,
         filters_json_path=filters_json_path,
         obs_columns_to_include=obs_columns_to_include,
         bucket_name=bucket_name,
