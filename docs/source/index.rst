@@ -20,7 +20,7 @@ Table of Contents
    modules/readme_modules/db_service
    modules/readme_modules/wdl_workflows
    modules/readme_modules/data_manager
+   modules/readme_modules/scripts
    modules/changelog
    modules/running_locally
    modules/deploying_in_cloud
-   modules/readme_modules/scripts
