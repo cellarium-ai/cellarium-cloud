@@ -1,9 +1,8 @@
 import typer
 from typing_extensions import Annotated
 
-from casp.scripts.build_ontology_resources.consensus_engine_resource import main as _build_consensus_engine_resource
 from casp.scripts.build_ontology_resources.benchmarking_resource import main as _build_benchmarking_resource
-
+from casp.scripts.build_ontology_resources.consensus_engine_resource import main as _build_consensus_engine_resource
 
 typer_app = typer.Typer()
 

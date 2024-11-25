@@ -1,12 +1,10 @@
 import typing as t
+
 import typer
 from typing_extensions import Annotated
 
-from casp.scripts.benchmarking import (
-    generate_cas_outputs as _generate_cas_outputs,
-    calculate_metrics_for_cas_responses as _calculate_metrics,
-)
-
+from casp.scripts.benchmarking import calculate_metrics_for_cas_responses as _calculate_metrics
+from casp.scripts.benchmarking import generate_cas_outputs as _generate_cas_outputs
 
 typer_app = typer.Typer()
 
