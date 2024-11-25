@@ -35,8 +35,6 @@ def generate_cas_outputs(
     :param cas_results_output_path: Path to save the CAS results.
     """
     _dataset_file_paths = utils.get_paths(paths=dataset_paths)
-    delay = 30
-    num_attempts = 5
     gcs_output_path = cas_results_output_path.replace("gs://", "")
     gcs_bucket_name = gcs_output_path.split("/")[0]
     gcs_output_path = "/".join(gcs_output_path.split("/")[1:])
@@ -56,28 +54,11 @@ def generate_cas_outputs(
         with open(dataset_file_path, "rb") as f:
             adata = anndata.read_h5ad(f)
 
-        curr_attempt = 0
-        done = False
-        # TODO: Think about this, don't push it to review like this, there's a better way to do it!
-        while curr_attempt <= num_attempts and not done:
-            try:
-                cas_result = cas_client.annotate_matrix_cell_type_ontology_aware_strategy(
-                    matrix=adata,
-                    cas_model_name=model_name,
-                    chunk_size=1000,
-                )
-            # TODO: Think about this! That's not good.
-            except cas_exceptions.DatasetProcessingError:
-                time.sleep(delay)
-                curr_attempt += 1
-                if curr_attempt < num_attempts:
-                    logger.info(f"Retrying annotation, number of current retry: {curr_attempt}...")
-                    continue
-
-                raise AnnotationError("Exceeded number of allowed retries. Exiting.")
-            else:
-                done = True
-                logger.info("Successfully finished annotation.")
+        cas_result = cas_client.annotate_matrix_cell_type_ontology_aware_strategy(
+            matrix=adata,
+            cas_model_name=model_name,
+            chunk_size=1000,
+        )
 
         logger.info("Uploading output to bucket...")
 
