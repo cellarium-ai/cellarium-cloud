@@ -1,0 +1,1 @@
+.. include:: ../../../../src/casp/scripts/build_ontology_resources/README.rst

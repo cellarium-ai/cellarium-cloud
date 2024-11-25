@@ -1,0 +1,1 @@
+.. include:: ../../../../src/casp/scripts/benchmarking/README.rst

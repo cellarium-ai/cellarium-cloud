@@ -12,3 +12,5 @@ Below is the list of different scripts:
    :maxdepth: 1
 
    bq_ops
+   benchmarking
+   build_ontology_resources
