@@ -3,7 +3,8 @@ import pickle
 import typing as t
 
 import anndata
-from cellarium.cas import CASClient
+
+
 from smart_open import open
 
 from casp.scripts.benchmarking import utils
@@ -32,6 +33,10 @@ def generate_cas_outputs(
     :param cas_api_url: URL of the CAS API.
     :param cas_results_output_path: Path to save the CAS results.
     """
+    # Import it here, because this dependency is only needed in this function and only should be installed in the
+    # environment where this function is called.
+    from cellarium.cas import CASClient
+
     _dataset_file_paths = utils.get_paths(paths=dataset_paths)
     gcs_output_path = cas_results_output_path.replace("gs://", "")
     gcs_bucket_name = gcs_output_path.split("/")[0]
