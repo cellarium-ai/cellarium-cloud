@@ -1,15 +1,15 @@
-import pytest
 from unittest.mock import patch
+
 import pandas as pd
+import pytest
 
 from casp.scripts.benchmarking.calculate_metrics import (
-    calculate_precision,
     calculate_f1,
-    calculate_tps_and_fps,
-    calculate_metrics_for_query_cell,
     calculate_metrics_for_cas_output,
+    calculate_metrics_for_query_cell,
+    calculate_precision,
+    calculate_tps_and_fps,
     split_into_batches,
-    calculate_metrics_for_cas_output_in_batches,
 )
 
 

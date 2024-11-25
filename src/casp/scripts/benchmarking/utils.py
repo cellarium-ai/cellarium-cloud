@@ -1,7 +1,7 @@
 import typing as t
 
-from smart_open import open
 from google.cloud import storage
+from smart_open import open
 
 
 def get_paths(paths: t.Union[str, t.List[str]]) -> t.List[str]:

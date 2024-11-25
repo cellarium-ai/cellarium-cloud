@@ -24,9 +24,7 @@ import typing as t
 import networkx as nx
 import pytest
 
-from casp.scripts.build_ontology_resources.consensus_engine_resource import (
-    build_cell_ontology_ancestor_dictionary,
-)
+from casp.scripts.build_ontology_resources.consensus_engine_resource import build_cell_ontology_ancestor_dictionary
 
 
 @pytest.fixture(

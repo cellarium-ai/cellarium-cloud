@@ -1,10 +1,11 @@
-import pickle
-import typing as t
-import time
 import logging
+import pickle
+import time
+import typing as t
 
 import anndata
-from cellarium.cas import CASClient, exceptions as cas_exceptions
+from cellarium.cas import CASClient
+from cellarium.cas import exceptions as cas_exceptions
 from smart_open import open
 
 from casp.scripts.benchmarking import utils

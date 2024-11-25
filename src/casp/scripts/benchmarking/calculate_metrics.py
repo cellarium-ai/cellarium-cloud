@@ -1,9 +1,9 @@
 import concurrent.futures as concurrency
+import logging
 import multiprocessing
 import pickle
 import traceback
 import typing as t
-import logging
 
 import anndata
 import pandas as pd
@@ -11,7 +11,6 @@ import wandb
 from smart_open import open
 
 from casp.scripts.benchmarking import utils
-
 
 logger = logging.getLogger(__name__)
 
