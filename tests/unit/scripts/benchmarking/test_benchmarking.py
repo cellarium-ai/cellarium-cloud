@@ -62,18 +62,18 @@ def mock_co_resource():
 
 
 def test_calculate_precision():
-    assert calculate_precision(tp=10, fp=5) == pytest.approx(0.66666667, rel=1e-6)
-    assert calculate_precision(tp=10, fp=0) == 1.0
-    assert calculate_precision(tp=0, fp=10) == 0.0
-    assert calculate_precision(tp=0, fp=0) == 0.0
+    assert calculate_precision(tp=10, fp=5) == pytest.approx(expected=0.66666667, rel=1e-6)
+    assert calculate_precision(tp=10, fp=0) == pytest.approx(expected=1.0, rel=1e-6)
+    assert calculate_precision(tp=0, fp=10) == pytest.approx(expected=0.0, rel=1e-6)
+    assert calculate_precision(tp=0, fp=0) == pytest.approx(expected=0.0, rel=1e-6)
 
 
 def test_calculate_f1():
-    assert calculate_f1(precision=0.66666667, recall=0.5) == pytest.approx(0.57142857, rel=1e-6)
-    assert calculate_f1(precision=1.0, recall=1.0) == 1.0
-    assert calculate_f1(precision=0.0, recall=1.0) == 0.0
-    assert calculate_f1(precision=1.0, recall=0.0) == 0.0
-    assert calculate_f1(precision=0.0, recall=0.0) == 0.0
+    assert calculate_f1(precision=0.66666667, recall=0.5) == pytest.approx(expected=0.57142857, rel=1e-6)
+    assert calculate_f1(precision=1.0, recall=1.0) == pytest.approx(expected=1.0, rel=1e-6)
+    assert calculate_f1(precision=0.0, recall=1.0) == pytest.approx(expected=0.0, rel=1e-6)
+    assert calculate_f1(precision=1.0, recall=0.0) == pytest.approx(expected=0.0, rel=1e-6)
+    assert calculate_f1(precision=0.0, recall=0.0) == pytest.approx(expected=0.0, rel=1e-6)
 
 
 def test_calculate_tps_and_fps(mock_co_resource):
@@ -90,8 +90,8 @@ def test_calculate_tps_and_fps(mock_co_resource):
         num_hops=1,
         co_resource=mock_co_resource,
     )
-    assert true_positives == [0.9, 0.9]
-    assert false_positives == [0.0, 0.0]
+    assert true_positives == pytest.approx(expected=[0.9, 0.9], rel=1e-6)
+    assert false_positives == pytest.approx(expected=[0.0, 0.0], rel=1e-6)
 
 
 def test_calculate_metrics_for_query_cell(mock_co_resource):
@@ -119,7 +119,7 @@ def test_calculate_metrics_for_query_cell(mock_co_resource):
         "hop_1_specificity": 1.0,
         "hop_1_f1_score": 0.9473684210526316,
     }
-    assert metrics == expected_metrics
+    assert metrics == pytest.approx(expected=expected_metrics, rel=1e-6)
 
 
 @patch("casp.scripts.benchmarking.calculate_metrics.calculate_metrics_for_query_cell")
