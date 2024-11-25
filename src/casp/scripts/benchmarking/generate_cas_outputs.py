@@ -3,8 +3,6 @@ import pickle
 import typing as t
 
 import anndata
-
-
 from smart_open import open
 
 from casp.scripts.benchmarking import utils
