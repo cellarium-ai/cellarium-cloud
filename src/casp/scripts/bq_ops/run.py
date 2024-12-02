@@ -154,6 +154,8 @@ def bq_ops_prepare_extract(
     bucket_name: Annotated[str, typer.Option()],
     extract_bucket_path: Annotated[str, typer.Option()],
     extract_bin_size: Annotated[int, typer.Option()] = 10000,
+    assign_bin_by_category: Annotated[bool, typer.Option()] = False,
+    extract_bin_category_column_name: Annotated[str, typer.Option()] = None,
     ci_random_seed_offset: Annotated[int, typer.Option()] = 0,
     ci_partition_bin_count: Annotated[int, typer.Option()] = 40000,
     ci_partition_size: Annotated[int, typer.Option()] = 10,
@@ -168,8 +170,14 @@ def bq_ops_prepare_extract(
     :param bucket_name: GCS Bucket name where to store the metadata files.
     :param extract_bucket_path: GCS Bucket path where the extract will be executed. Used to save metadata files there.
         It is required to use the same bucket path during extract
-    :param extract_bin_size: The size for the bins where cells are allocated. |br|
-        `Default`: ``10000``
+    :param extract_bin_size: The size for the bins where cells are allocated. Used only if `assign_bin_by_category`
+        is False |br|
+        `Default:` ``None``
+    :param assign_bin_by_category: Whether ``extract_bin`` has to be assigned as a label to a categorical column |br|
+        `Default:` ``False``
+    :param extract_bin_category_column_name: Which categorical column to use for labeling the bins. Used only if
+        `assign_bin_by_category` is True. |br|
+        `Default:` ``None``
     :param ci_random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization
         Used in cas_cell_info table. |br|
         `Default:` ``0``
@@ -242,10 +250,10 @@ def bq_ops_prepare_extract(
                 --extract-table-prefix my_prefix \\
                 --fq-allowed-original-feature-ids my_feature_ids_table \\
                 --extract-bin-size 10000 \\
-                --filters-json-path path/to/filters.json \\
-                --obs-columns-to-include "c.cell_type,c.donor_id,c.sex,i.dataset_id" \\
+                --filters-json-path="path/to/filters.json" \\
+                --obs-columns-to-include="c.cell_type,c.donor_id,c.sex,i.dataset_id" \\
                 --bucket-name my_bucket \\
-                --extract-bucket-path path/to/extract \\
+                --extract-bucket-path="path/to/extract" \\
                 --ci-random-seed-offset 0 \\
                 --ci-partition-bin-count 40000 \\
                 --ci-partition-size 10
@@ -255,11 +263,13 @@ def bq_ops_prepare_extract(
         dataset=dataset,
         extract_table_prefix=extract_table_prefix,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
-        extract_bin_size=extract_bin_size,
         filters_json_path=filters_json_path,
         obs_columns_to_include=obs_columns_to_include,
         bucket_name=bucket_name,
+        extract_bin_size=extract_bin_size,
         extract_bucket_path=extract_bucket_path,
+        assign_bin_by_category=assign_bin_by_category,
+        extract_bin_category_column_name=extract_bin_category_column_name,
         ci_random_seed_offset=ci_random_seed_offset,
         ci_partition_bin_count=ci_partition_bin_count,
         ci_partition_size=ci_partition_size,

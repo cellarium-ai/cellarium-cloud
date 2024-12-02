@@ -81,7 +81,9 @@ def prepare_cell_info(
     project: str,
     dataset: str,
     extract_table_prefix: str,
-    extract_bin_size: int,
+    extract_bin_size: t.Optional[int] = None,
+    assign_bin_by_category: bool = False,
+    extract_bin_category_column_name: t.Optional[str] = None,
     random_seed_offset: int = 0,
     partition_bin_count: int = 40000,
     partition_size: int = 10,
@@ -99,12 +101,19 @@ def prepare_cell_info(
     :param project: The ID of the Google Cloud project where the BigQuery dataset is hosted.
     :param dataset: The ID of the dataset in BigQuery where the data is hosted.
     :param extract_table_prefix: A prefix string for naming tables or for similar purposes.
-    :param extract_bin_size: The size for the bins where cells are allocated.
-    :param random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization.
-        `Defaults:` ``0``
-    :param partition_bin_count: The count of bins for partitioning.
+    :param extract_bin_size: The size for the bins where cells are allocated. Used only if `assign_bin_by_category`
+        is False |br|
+        `Default:` ``None``
+    :param assign_bin_by_category: Whether ``extract_bin`` has to be assigned as a label to a categorical column |br|
+        `Default:` ``False``
+    :param extract_bin_category_column_name: Which categorical column to use for labeling the bins. Used only if
+        `assign_bin_by_category` is True. |br|
+        `Default:` ``None``
+    :param random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization. |br|
+        `Default:` ``0``
+    :param partition_bin_count: The count of bins for partitioning. |br|
         `Default:` ``40000``
-    :param partition_size: The size for the partitions.
+    :param partition_size: The size for the partitions. |br|
         `Default:` ``10``
     :param filters: Filters that have to be included in a SQL query. Filter format should follow convention described in
         :func:`casp.bq_manager.sql.mako_helpers.parse_where_body`
@@ -114,6 +123,11 @@ def prepare_cell_info(
         However, the output extract table would contain only the column names, without any aliases.
         Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
+    if not assign_bin_by_category and extract_bin_size is None:
+        raise ValueError("If `assign_bin_by_category` is False, `extract_bin_size` must be provided.")
+    if assign_bin_by_category and extract_bin_category_column_name is None:
+        raise ValueError("If `assign_bin_by_category` is True, `extract_bin_category_column_name` must be provided.")
+
     template_data_rand_ordering = sql.TemplateData(
         project=project,
         dataset=dataset,
@@ -137,6 +151,8 @@ def prepare_cell_info(
         partition_bin_count=partition_bin_count,
         partition_size=partition_size,
         extract_bin_size=extract_bin_size,
+        assign_bin_by_category=assign_bin_by_category,
+        extract_bin_category_column_name=extract_bin_category_column_name,
         extract_table_prefix=extract_table_prefix,
     )
     sql_prepare_cell_info = sql.render(
@@ -200,7 +216,9 @@ def prepare_extract_tables(
     dataset: str,
     extract_table_prefix: str,
     fq_allowed_original_feature_ids: str,
-    extract_bin_size: int,
+    extract_bin_size: t.Optional[int] = None,
+    assign_bin_by_category: bool = False,
+    extract_bin_category_column_name: t.Optional[str] = None,
     ci_random_seed_offset: int = 0,
     ci_partition_bin_count: int = 40000,
     ci_partition_size: int = 10,
@@ -215,7 +233,14 @@ def prepare_extract_tables(
     :param dataset: The ID of the dataset in BigQuery where the data is hosted.
     :param extract_table_prefix: A prefix string for naming tables or for similar purposes.
     :param fq_allowed_original_feature_ids: BigQuery table with feature schema needed for the extract
-    :param extract_bin_size: The size for the bins where cells are allocated.
+    :param extract_bin_size: The size for the bins where cells are allocated. Used only if `assign_bin_by_category`
+        is False |br|
+        `Default:` ``None``
+    :param assign_bin_by_category: Whether ``extract_bin`` has to be assigned as a label to a categorical column |br|
+        `Default:` ``False``
+    :param extract_bin_category_column_name: Which categorical column to use for labeling the bins. Used only if
+        `assign_bin_by_category` is True. |br|
+        `Default:` ``None``
     :param credentials: Google Cloud Service account credentials
     :param ci_random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization
         Used in cas_cell_info table.
@@ -240,11 +265,13 @@ def prepare_extract_tables(
     prepare_feature_summary(client, project, dataset, extract_table_prefix, filters=filters)
     prepare_feature_info(client, project, dataset, extract_table_prefix, fq_allowed_original_feature_ids)
     prepare_cell_info(
-        client,
-        project,
-        dataset,
-        extract_table_prefix,
-        extract_bin_size,
+        client=client,
+        project=project,
+        dataset=dataset,
+        extract_table_prefix=extract_table_prefix,
+        extract_bin_size=extract_bin_size,
+        assign_bin_by_category=assign_bin_by_category,
+        extract_bin_category_column_name=extract_bin_category_column_name,
         random_seed_offset=ci_random_seed_offset,
         partition_bin_count=ci_partition_bin_count,
         partition_size=ci_partition_size,
@@ -259,11 +286,13 @@ def prepare_extract(
     dataset: str,
     extract_table_prefix: str,
     fq_allowed_original_feature_ids: str,
-    extract_bin_size: int,
     filters_json_path: str,
     obs_columns_to_include: str,
     bucket_name: str,
     extract_bucket_path: str,
+    extract_bin_size: t.Optional[int] = None,
+    assign_bin_by_category: bool = False,
+    extract_bin_category_column_name: t.Optional[str] = None,
     ci_random_seed_offset: int = 0,
     ci_partition_bin_count: int = 40000,
     ci_partition_size: int = 10,
@@ -275,10 +304,17 @@ def prepare_extract(
     :param dataset: The ID of the dataset in BigQuery where the data is hosted.
     :param extract_table_prefix: A prefix string for naming tables or for similar purposes.
     :param fq_allowed_original_feature_ids: BigQuery table with feature schema needed for the extract
-    :param extract_bin_size: The size for the bins where cells are allocated.
     :param bucket_name: GCS Bucket name where to store the metadata files.
     :param extract_bucket_path: GCS Bucket path where the extract will be executed. Used to save metadata files there.
         It is required to use the same bucket path during extract
+    :param extract_bin_size: The size for the bins where cells are allocated. Used only if `assign_bin_by_category`
+        is False |br|
+        `Default:` ``None``
+    :param assign_bin_by_category: Whether ``extract_bin`` has to be assigned as a label to a categorical column |br|
+        `Default:` ``False``
+    :param extract_bin_category_column_name: Which categorical column to use for labeling the bins. Used only if
+        `assign_bin_by_category` is True. |br|
+        `Default:` ``None``
     :param ci_random_seed_offset: Optional offset for the farm_fingerprint for deterministic randomization
         Used in cas_cell_info table.
         `Defaults:` ``0``
@@ -304,11 +340,13 @@ def prepare_extract(
         extract_table_prefix=extract_table_prefix,
         fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
         extract_bin_size=extract_bin_size,
-        filters=filters,
-        obs_columns_to_include=obs_columns_to_include,
+        assign_bin_by_category=assign_bin_by_category,
+        extract_bin_category_column_name=extract_bin_category_column_name,
         ci_random_seed_offset=ci_random_seed_offset,
         ci_partition_bin_count=ci_partition_bin_count,
         ci_partition_size=ci_partition_size,
+        filters=filters,
+        obs_columns_to_include=obs_columns_to_include,
     )
     print("Preparing measured genes info...")
     measured_genes_info_df = prepare_measured_genes_info(
