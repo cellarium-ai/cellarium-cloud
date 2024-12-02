@@ -1,4 +1,3 @@
-import typing as t
 import typer
 from typing_extensions import Annotated
 
