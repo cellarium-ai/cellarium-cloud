@@ -115,6 +115,21 @@ kubeflow_command_registry.register_pipeline_as_command(
     display_name="Train PCA Base and resize it to have multiple models with different size",
     help_text="Train PCA Base and resize it",
 )
+kubeflow_command_registry.register_pipeline_as_command(
+    click_group=cli,
+    name="pca-train-base-and-resize-full",
+    pipeline_func_name="pca_train_base_and_resize_full_cycle_pipeline",
+    display_name="Train PCA Base and resize it to have multiple models with different size",
+    help_text="Train PCA Base and resize it",
+)
+
+kubeflow_command_registry.register_pipeline_as_command(
+    click_group=cli,
+    name="pca-embed-and-index-create",
+    pipeline_func_name="pca_embed_and_index_create_pipeline",
+    display_name="Train PCA Base and resize it to have multiple models with different size",
+    help_text="Train PCA Base and resize it",
+)
 
 # Run the CLI
 if __name__ == "__main__":
