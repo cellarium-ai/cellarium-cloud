@@ -45,37 +45,48 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyProtocol):
     Handle cell type count consensus strategy, summarizing query neighbor context by cell type distribution.
     """
 
-    def __init__(
-        self, cell_operations_dm: CellOperationsDataManager, cas_model: models.CASModel, include_extended_output: bool
-    ):
+    def __init__(self, cell_operations_dm: CellOperationsDataManager, include_extended_output: bool):
         self.cell_operations_dm = cell_operations_dm
-        self.cas_model = cas_model
         self.include_extended_output = include_extended_output
 
     def summarize(
-        self, query_cell_ids: t.List[str], knn_query: MatchResult
+        self, query_cell_ids: t.List[str], knn_response: MatchResult
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
         Summarize query neighbor context by cell type distribution, querying a database for the distribution.
 
         :param query_cell_ids: List of query cell IDs.
-        :param knn_query: The result of the kNN query.
+        :param knn_response: The result of the kNN query.
 
         :return: An instance of `schemas.QueryAnnotationCellTypeCountType`, representing the summarized cell type
             distribution of query neighbors.
         """
-        temp_table_fqn = self.cell_operations_dm.insert_matches_to_temp_table(
-            query_ids=query_cell_ids, knn_response=knn_query
+        unique_neighbor_ids = set(
+            int(neighbor.cas_cell_index)
+            for query_neighbors in knn_response.matches
+            for neighbor in query_neighbors.neighbors
         )
-
-        if self.include_extended_output:
-            return self.cell_operations_dm.get_neighborhood_distance_summary_dev_details(
-                cas_model=self.cas_model, match_temp_table_fqn=temp_table_fqn
+        with self.cell_operations_dm.system_data_db_session_maker.begin() as session:
+            # Creating temporary tables, it will be dropped automatically when the session is closed
+            # Extract the connection from the session here as it seems that temporary tables don't work just by using
+            # the same session due to connection pooling. If the extracted connection is used, consistency in temporary
+            # tables guarantied.
+            connection = session.connection()
+            cell_info_tmp_table = self.cell_operations_dm.create_temporary_table_with_cell_ids(
+                cell_ids=list(unique_neighbor_ids), connection=connection
             )
 
-        return self.cell_operations_dm.get_neighborhood_distance_summary(
-            cas_model=self.cas_model, match_temp_table_fqn=temp_table_fqn
-        )
+            match_data_temp_table = self.cell_operations_dm.create_temporary_table_with_knn_match_data(
+                query_ids=query_cell_ids, knn_response=knn_response, connection=connection
+            )
+
+            results = self.cell_operations_dm.calculate_query_cell_neighborhood_summary_statistics(
+                connection=connection,
+                knn_match_data_table=match_data_temp_table,
+                knn_unique_neighbors_cell_info_index_table=cell_info_tmp_table,
+            )
+
+        return results
 
 
 class CellOntologyResource:

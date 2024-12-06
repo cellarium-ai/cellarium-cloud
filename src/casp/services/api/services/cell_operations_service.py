@@ -334,8 +334,7 @@ class CellOperationsService:
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
         model schema. Increment user cells processed counter after successful annotation.
 
-        :param user: User object used to increment user cells processed counter.
-        :param file: Instance of :class:`anndata.AnnData` to annotate.
+        :param adata: Instance of :class:`anndata.AnnData` to annotate.
         :param model: Model to use for annotation. See `/list-models` endpoint for available models.
         :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
             in `cell_type_count` method.
@@ -346,7 +345,6 @@ class CellOperationsService:
 
         strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
-            cas_model=model,
             include_extended_output=include_extended_output,
         )
 
