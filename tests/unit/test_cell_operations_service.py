@@ -131,7 +131,7 @@ class TestCellOperationsService:
             {"query_cell_id": query_ids[i], "matches": [{"cell_type": cell_types[i], "cell_count": 10}]}
             for i in range(len(embeddings))
         ]
-        when(self.cell_operations_service.cell_operations_dm).insert_matches_to_temp_table(
+        when(self.cell_operations_service.cell_operations_dm).create_temporary_table_with_knn_match_data(
             query_ids=query_ids, knn_response=matching_client_response
         ).thenReturn(temp_table_fqn)
         if include_dev_metadata:

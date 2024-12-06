@@ -270,7 +270,6 @@ class CellOperationsService:
         user: models.User,
         file: t.BinaryIO,
         model_name: str,
-        include_extended_output: t.Optional[bool] = None,
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -281,8 +280,6 @@ class CellOperationsService:
         :param user: User object used to increment user cells processed counter.
         :param file: Byte object of :class:`anndata.AnnData` file to annotate.
         :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
-        :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
-            in `cell_type_count` method.
 
         :return: JSON response with annotations.
         """
@@ -299,7 +296,8 @@ class CellOperationsService:
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
             annotation_response = await self.__annotate_cell_type_summary_statistics_strategy(
-                adata=adata, model=model, include_extended_output=include_extended_output
+                adata=adata,
+                model=model,
             )
 
             self.cellarium_general_dm.log_user_activity(
@@ -328,17 +326,13 @@ class CellOperationsService:
         self,
         adata: anndata.AnnData,
         model: models.CASModel,
-        include_extended_output: t.Optional[bool] = None,
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
         model schema. Increment user cells processed counter after successful annotation.
 
-        :param user: User object used to increment user cells processed counter.
-        :param file: Instance of :class:`anndata.AnnData` to annotate.
+        :param adata: Instance of :class:`anndata.AnnData` to annotate.
         :param model: Model to use for annotation. See `/list-models` endpoint for available models.
-        :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
-            in `cell_type_count` method.
 
         :return: JSON response with annotations.
         """
@@ -346,8 +340,6 @@ class CellOperationsService:
 
         strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
-            cas_model=model,
-            include_extended_output=include_extended_output,
         )
 
         engine = consensus_engine.ConsensusEngine(strategy=strategy)

@@ -13,19 +13,6 @@ class NeighborhoodCellTypeSummaryStatistics(BaseModel):
     max_distance: float = Field(example=1840.047119140625)
 
 
-class CellTypeStatisticsExtendedObject(BaseModel):
-    dataset_id: str = Field(example="a7a92fb49-50741b00a-244955d47")
-    count_per_dataset: int = Field(example=10)
-    min_distance: float = Field(example=1589.847900390625)
-    max_distance: float = Field(example=1840.047119140625)
-    median_distance: float = Field(example=1791.372802734375)
-    mean_distance: float = Field(example=1791.372802734375)
-
-
-class NeighborhoodCellTypeSummaryStatisticsExtended(NeighborhoodCellTypeSummaryStatistics):
-    dataset_ids_with_counts: t.List[CellTypeStatisticsExtendedObject]
-
-
 class QueryCellNeighborhoodAbstract(BaseModel):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
     matches: t.List
@@ -33,11 +20,6 @@ class QueryCellNeighborhoodAbstract(BaseModel):
 
 class QueryCellNeighborhoodCellTypeSummaryStatistics(QueryCellNeighborhoodAbstract):
     matches: t.List[NeighborhoodCellTypeSummaryStatistics]
-
-
-class QueryCellNeighborhoodCellTypeSummaryStatisticsExtended(QueryCellNeighborhoodAbstract):
-    query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
-    matches: t.List[NeighborhoodCellTypeSummaryStatisticsExtended]
 
 
 class NeighborhoodSummaryOntologyAware(BaseModel):
@@ -56,12 +38,8 @@ class QueryCellNeighborhoodOntologyAware(QueryCellNeighborhoodAbstract):
 
 QueryAnnotationAbstractType: t.TypeAlias = t.List[QueryCellNeighborhoodAbstract]
 QueryAnnotationOntologyAwareType: t.TypeAlias = t.List[QueryCellNeighborhoodOntologyAware]
-QueryAnnotationCellTypeSummaryStatisticsType: t.TypeAlias = t.Union[
-    t.List[QueryCellNeighborhoodCellTypeSummaryStatistics],
-    t.List[QueryCellNeighborhoodCellTypeSummaryStatisticsExtended],
-]
+QueryAnnotationCellTypeSummaryStatisticsType: t.TypeAlias = t.List[QueryCellNeighborhoodCellTypeSummaryStatistics]
 QueryAnnotationType: t.TypeAlias = t.Union[
-    t.List[QueryCellNeighborhoodCellTypeSummaryStatisticsExtended],
     t.List[QueryCellNeighborhoodOntologyAware],
     t.List[QueryCellNeighborhoodCellTypeSummaryStatistics],
 ]
