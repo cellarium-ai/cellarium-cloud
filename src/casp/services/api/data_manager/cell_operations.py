@@ -24,6 +24,7 @@ class CellOperationsDataManager(BaseDataManager):
             metadata,
             sa.Column("cas_cell_index", sa.Integer),
             prefixes=["temporary"],
+            postgresql_on_commit="drop"
         )
         cell_info_tmp_table.create(bind=connection)
 
@@ -45,6 +46,7 @@ class CellOperationsDataManager(BaseDataManager):
             sa.Column("match_score", sa.Float, nullable=False),
             sa.Column("created_at", sa.TIMESTAMP, nullable=False, default=datetime.utcnow),
             prefixes=["temporary"],
+            postgresql_on_commit="drop"
         )
         match_tmp_table.create(bind=connection)
 
