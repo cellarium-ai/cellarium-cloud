@@ -31,7 +31,10 @@ class CellOperationsDataManager(BaseDataManager):
         # Insert values into the temp table
         rows_to_insert = [{"cas_cell_index": cell_id} for cell_id in cell_ids]
         cls.batch_bulk_insert(
-            table=cell_info_tmp_table, rows_to_insert=rows_to_insert, connection=connection, batch_size=100000
+            table=cell_info_tmp_table,
+            rows_to_insert=rows_to_insert,
+            connection=connection,
+            batch_size=settings.MAX_CELL_IDS_PER_QUERY,
         )
         return cell_info_tmp_table
 
