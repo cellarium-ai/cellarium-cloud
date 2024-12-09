@@ -16,21 +16,23 @@ class CellOperationsDataManager(BaseDataManager):
     Data Manager for making data operations in Cellarium Cloud storage.
     """
 
-    @staticmethod
-    def create_temporary_table_with_cell_ids(cell_ids: t.List[int], connection: sa.engine.Connection) -> sa.Table:
+    @classmethod
+    def create_temporary_table_with_cell_ids(cls, cell_ids: t.List[int], connection: sa.engine.Connection) -> sa.Table:
         metadata = sa.MetaData(bind=connection)
         cell_info_tmp_table = sa.Table(
             f"cells_cellinfotemptable",
             metadata,
             sa.Column("cas_cell_index", sa.Integer),
             prefixes=["temporary"],
-            postgresql_on_commit="drop"
+            postgresql_on_commit="drop",
         )
         cell_info_tmp_table.create(bind=connection)
 
         # Insert values into the temp table
-        insert_query = cell_info_tmp_table.insert().values([{"cas_cell_index": cell_id} for cell_id in cell_ids])
-        connection.execute(insert_query)
+        rows_to_insert = [{"cas_cell_index": cell_id} for cell_id in cell_ids]
+        cls.batch_bulk_insert(
+            table=cell_info_tmp_table, rows_to_insert=rows_to_insert, connection=connection, batch_size=100000
+        )
         return cell_info_tmp_table
 
     @classmethod
@@ -46,7 +48,7 @@ class CellOperationsDataManager(BaseDataManager):
             sa.Column("match_score", sa.Float, nullable=False),
             sa.Column("created_at", sa.TIMESTAMP, nullable=False, default=datetime.utcnow),
             prefixes=["temporary"],
-            postgresql_on_commit="drop"
+            postgresql_on_commit="drop",
         )
         match_tmp_table.create(bind=connection)
 
@@ -63,9 +65,7 @@ class CellOperationsDataManager(BaseDataManager):
                 )
 
         # Insert data in batches because this query becomes large
-        cls.batch_bulk_insert(
-            table=match_tmp_table, rows_to_insert=rows_to_insert, connection=connection
-        )
+        cls.batch_bulk_insert(table=match_tmp_table, rows_to_insert=rows_to_insert, connection=connection)
 
         return match_tmp_table
 
