@@ -37,7 +37,6 @@ class CellOperationsDataManager(BaseDataManager):
         cls, query_ids: t.List[str], knn_response: MatchResult, connection: sa.engine.Connection
     ) -> sa.Table:
         metadata = sa.MetaData(bind=connection)
-        # metadata = sa.MetaData(bind=session.bind)
         match_tmp_table = sa.Table(
             f"cells_requestmatchtemptable",
             metadata,
@@ -63,7 +62,7 @@ class CellOperationsDataManager(BaseDataManager):
 
         # Insert data in batches because this query becomes large
         cls.batch_bulk_insert(
-            table=match_tmp_table, rows_to_insert=rows_to_insert, connection=connection, batch_size=20000
+            table=match_tmp_table, rows_to_insert=rows_to_insert, connection=connection
         )
 
         return match_tmp_table
@@ -159,7 +158,7 @@ class CellOperationsDataManager(BaseDataManager):
     @staticmethod
     def calculate_query_cell_neighborhood_summary_statistics(
         knn_match_data_table: sa.Table,
-        knn_unique_neighbors_cell_info_index_table: sa.Table,
+        knn_unique_neighbors_ids_table: sa.Table,
         connection: sa.engine.Connection,
     ) -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
         # Define the subquery to compute and order the aggregate statistics
@@ -176,22 +175,17 @@ class CellOperationsDataManager(BaseDataManager):
             )
             .select_from(
                 knn_match_data_table.join(
-                    knn_unique_neighbors_cell_info_index_table,
-                    knn_match_data_table.c.match_cas_cell_index
-                    == knn_unique_neighbors_cell_info_index_table.c.cas_cell_index,
+                    right=knn_unique_neighbors_ids_table,
+                    onclause=(
+                        knn_match_data_table.c.match_cas_cell_index == knn_unique_neighbors_ids_table.c.cas_cell_index
+                    ),
                 ).join(
-                    models.CellInfo,
-                    knn_match_data_table.c.match_cas_cell_index == models.CellInfo.cas_cell_index,
+                    right=models.CellInfo,
+                    onclause=knn_match_data_table.c.match_cas_cell_index == models.CellInfo.cas_cell_index,
                 )
             )
-            .group_by(
-                knn_match_data_table.c.query_id,
-                models.CellInfo.cell_type,
-            )
-            .order_by(
-                knn_match_data_table.c.query_id,  # Group by query_id and order results
-                sa.desc(sa.func.count()),  # Ensure rows are ordered by cell_count descending
-            )
+            .group_by(knn_match_data_table.c.query_id, models.CellInfo.cell_type)
+            .order_by(knn_match_data_table.c.query_id, sa.desc(sa.func.count()))
             .subquery()
         )
         # Use the ordered subquery to aggregate the results into JSON objects

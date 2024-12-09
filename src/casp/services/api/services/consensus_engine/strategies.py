@@ -75,15 +75,13 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyProtocol):
             cell_info_tmp_table = self.cell_operations_dm.create_temporary_table_with_cell_ids(
                 cell_ids=list(unique_neighbor_ids), connection=connection
             )
-
             match_data_temp_table = self.cell_operations_dm.create_temporary_table_with_knn_match_data(
                 query_ids=query_cell_ids, knn_response=knn_response, connection=connection
             )
-
             results = self.cell_operations_dm.calculate_query_cell_neighborhood_summary_statistics(
                 connection=connection,
                 knn_match_data_table=match_data_temp_table,
-                knn_unique_neighbors_cell_info_index_table=cell_info_tmp_table,
+                knn_unique_neighbors_ids_table=cell_info_tmp_table,
             )
 
         return results
