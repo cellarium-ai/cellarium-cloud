@@ -1,12 +1,10 @@
 import typing as t
-from datetime import datetime
 
 import sqlalchemy as sa
 
 from casp.data_manager import BaseDataManager
 from casp.services import settings
 from casp.services.api import schemas
-from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import exceptions
 from casp.services.db import models
 
@@ -37,40 +35,6 @@ class CellOperationsDataManager(BaseDataManager):
             batch_size=settings.MAX_CELL_IDS_PER_QUERY,
         )
         return cell_info_tmp_table
-
-    @classmethod
-    def create_temporary_table_with_knn_match_data(
-        cls, query_ids: t.List[str], knn_response: MatchResult, connection: sa.engine.Connection
-    ) -> sa.Table:
-        metadata = sa.MetaData(bind=connection)
-        match_tmp_table = sa.Table(
-            f"cells_requestmatchtemptable",
-            metadata,
-            sa.Column("query_id", sa.String, nullable=False),
-            sa.Column("match_cas_cell_index", sa.Integer, nullable=False),
-            sa.Column("match_score", sa.Float, nullable=False),
-            sa.Column("created_at", sa.TIMESTAMP, nullable=False, default=datetime.utcnow),
-            prefixes=["temporary"],
-            postgresql_on_commit="drop",
-        )
-        match_tmp_table.create(bind=connection)
-
-        rows_to_insert = []
-        for query_id, match in zip(query_ids, knn_response.matches):
-            for neighbor in match.neighbors:
-                rows_to_insert.append(
-                    {
-                        "query_id": str(query_id),
-                        "match_cas_cell_index": int(neighbor.cas_cell_index),
-                        "match_score": float(neighbor.distance),
-                        "created_at": datetime.utcnow(),
-                    }
-                )
-
-        # Insert data in batches because this query becomes large
-        cls.batch_bulk_insert(table=match_tmp_table, rows_to_insert=rows_to_insert, connection=connection)
-
-        return match_tmp_table
 
     def _get_cell_metadata_by_ids(
         self,
@@ -124,17 +88,17 @@ class CellOperationsDataManager(BaseDataManager):
         :return: List of dictionaries representing the query results, ordered according to `cell_ids`.
         """
         if len(cell_ids) >= settings.MAX_CELL_IDS_PER_QUERY:
-            neighbors_metadata = []
+            cells_metadata = []
             for i in range(0, len(cell_ids), settings.MAX_CELL_IDS_PER_QUERY):
                 upper_bound_slice_index = min(len(cell_ids), i + settings.MAX_CELL_IDS_PER_QUERY)
-                neighbors_metadata += self._get_cell_metadata_by_ids(
+                cells_metadata += self._get_cell_metadata_by_ids(
                     cell_ids=cell_ids[i:upper_bound_slice_index],
                     feature_names=metadata_feature_names,
                 )
         else:
-            neighbors_metadata = self._get_cell_metadata_by_ids(cell_ids=cell_ids, feature_names=metadata_feature_names)
+            cells_metadata = self._get_cell_metadata_by_ids(cell_ids=cell_ids, feature_names=metadata_feature_names)
 
-        return neighbors_metadata
+        return cells_metadata
 
     @staticmethod
     def parse_query_statistics_from_db_results(
@@ -159,68 +123,3 @@ class CellOperationsDataManager(BaseDataManager):
             )
 
         return query_cell_statistics
-
-    @staticmethod
-    def calculate_query_cell_neighborhood_summary_statistics(
-        knn_match_data_table: sa.Table,
-        knn_unique_neighbors_ids_table: sa.Table,
-        connection: sa.engine.Connection,
-    ) -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
-        # Define the subquery to compute and order the aggregate statistics
-        ordered_subquery = (
-            sa.select(
-                knn_match_data_table.c.query_id.label("query_cell_id"),  # Rename query_id to query_cell_id
-                models.CellInfo.cell_type,
-                sa.func.count().label("cell_count"),
-                sa.func.min(knn_match_data_table.c.match_score).label("min_distance"),
-                sa.func.max(knn_match_data_table.c.match_score).label("max_distance"),
-                sa.func.percentile_cont(0.25).within_group(knn_match_data_table.c.match_score).label("p25_distance"),
-                sa.func.percentile_cont(0.5).within_group(knn_match_data_table.c.match_score).label("median_distance"),
-                sa.func.percentile_cont(0.75).within_group(knn_match_data_table.c.match_score).label("p75_distance"),
-            )
-            .select_from(
-                knn_match_data_table.join(
-                    right=knn_unique_neighbors_ids_table,
-                    onclause=(
-                        knn_match_data_table.c.match_cas_cell_index == knn_unique_neighbors_ids_table.c.cas_cell_index
-                    ),
-                ).join(
-                    right=models.CellInfo,
-                    onclause=knn_match_data_table.c.match_cas_cell_index == models.CellInfo.cas_cell_index,
-                )
-            )
-            .group_by(knn_match_data_table.c.query_id, models.CellInfo.cell_type)
-            .order_by(knn_match_data_table.c.query_id, sa.desc(sa.func.count()))
-            .subquery()
-        )
-        # Use the ordered subquery to aggregate the results into JSON objects
-        query = (
-            sa.select(
-                ordered_subquery.c.query_cell_id,  # Use the renamed column
-                sa.func.array_agg(
-                    sa.func.json_build_object(
-                        "cell_type",
-                        ordered_subquery.c.cell_type,
-                        "cell_count",
-                        ordered_subquery.c.cell_count,
-                        "min_distance",
-                        ordered_subquery.c.min_distance,
-                        "max_distance",
-                        ordered_subquery.c.max_distance,
-                        "p25_distance",
-                        ordered_subquery.c.p25_distance,
-                        "median_distance",
-                        ordered_subquery.c.median_distance,
-                        "p75_distance",
-                        ordered_subquery.c.p75_distance,
-                    )
-                ).label("matches"),
-            )
-            .group_by(ordered_subquery.c.query_cell_id)  # Group by the renamed column
-            .order_by(ordered_subquery.c.query_cell_id)  # Order by the renamed column
-        )
-
-        # Execute the query using the connection
-        results = connection.execute(query).fetchall()
-
-        return CellOperationsDataManager.parse_query_statistics_from_db_results(db_results=results)
