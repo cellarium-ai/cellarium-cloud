@@ -7,11 +7,30 @@ from sqlalchemy.orm import backref, relationship
 from casp.services import db
 
 
+class JSONBType(sa.types.TypeDecorator):
+    """
+    Custom JSONB type to replace JSONB with Text or JSON when running tests on SQLite.
+    """
+
+    impl = JSONB
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "sqlite":
+            return dialect.type_descriptor(sa.types.JSON())  # Use JSON type for SQLite
+        return dialect.type_descriptor(JSONB)
+
+    def process_bind_param(self, value, dialect):
+        return value
+
+    def process_result_value(self, value, dialect):
+        return value
+
+
 class CellIngestInfo(db.Base):
     cas_ingest_id = sa.Column(sa.String(255), unique=True, nullable=False, primary_key=True)
     dataset_id = sa.Column(sa.String(255), nullable=False)
     dataset_version_id = sa.Column(sa.String(255), nullable=True)
-    uns_metadata = sa.Column(JSONB, nullable=False, default={})
+    uns_metadata = sa.Column(JSONBType, nullable=False, default={})
     ingest_timestamp = sa.Column(sa.DateTime, default=datetime.datetime.utcnow)
 
     __tablename__ = "cells_ingestinfo"
@@ -27,7 +46,7 @@ class FeatureInfo(db.Base):
     feature_biotype = sa.Column(sa.String(255), nullable=True)
     feature_is_filtered = sa.Column(sa.Boolean(), default=False, nullable=True)
     feature_reference = sa.Column(sa.String(255), nullable=True)
-    var_metadata_extra = sa.Column(JSONB, nullable=False, default={})
+    var_metadata_extra = sa.Column(JSONBType, nullable=False, default={})
     cas_ingest_id = sa.Column(
         sa.String(255), sa.ForeignKey(f"{CellIngestInfo.__tablename__}.cas_ingest_id"), nullable=False
     )
@@ -46,7 +65,7 @@ class CellInfo(db.Base):
     )
     cas_ingest = relationship("CellIngestInfo", backref=backref("cell_info", uselist=False))
     original_cell_id = sa.Column(sa.String(255), nullable=True)
-    obs_metadata_extra = sa.Column(JSONB, nullable=True, default={})
+    obs_metadata_extra = sa.Column(JSONBType, nullable=True, default={})
     is_primary_data = sa.Column(sa.Boolean(), default=True, nullable=True, index=True)
     donor_id = sa.Column(sa.String(255), nullable=True)
     # Cell Features
