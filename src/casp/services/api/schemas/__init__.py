@@ -2,9 +2,7 @@ from casp.services.api.schemas.cell_operations import (  # noqa
     CacheInfo,
     CellariumCellByIdsInput,
     CellariumCellMetadata,
-    CellTypeStatisticsExtendedObject,
     NeighborhoodCellTypeSummaryStatistics,
-    NeighborhoodCellTypeSummaryStatisticsExtended,
     NeighborhoodSummaryOntologyAware,
     QueryAnnotationAbstractType,
     QueryAnnotationCellTypeSummaryStatisticsType,
@@ -12,7 +10,6 @@ from casp.services.api.schemas.cell_operations import (  # noqa
     QueryAnnotationType,
     QueryCellNeighborhoodAbstract,
     QueryCellNeighborhoodCellTypeSummaryStatistics,
-    QueryCellNeighborhoodCellTypeSummaryStatisticsExtended,
     QueryCellNeighborhoodOntologyAware,
     SearchQueryCellResult,
 )

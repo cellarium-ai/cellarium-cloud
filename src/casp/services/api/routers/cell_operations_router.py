@@ -48,7 +48,6 @@ async def annotate_cell_type_summary_statistics(
     file: UploadFile = File(),
     model_name: str = Form(),
     request_user: models.User = Depends(dependencies.authenticate_user),
-    include_extended_output: t.Optional[bool] = Form(default=False),
     cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
@@ -68,7 +67,6 @@ async def annotate_cell_type_summary_statistics(
         user=request_user,
         file=file.file,
         model_name=model_name,
-        include_extended_output=include_extended_output,
     )
 
 

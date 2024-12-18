@@ -16,9 +16,18 @@ class CellOperationsDataManager(BaseDataManager):
 
     @classmethod
     def create_temporary_table_with_cell_ids(cls, cell_ids: t.List[int], connection: sa.engine.Connection) -> sa.Table:
+        """
+        Create a temporary table in postgres database and populate it with cell indexes for further joining.
+        This tables acts as intermediate cache table to make receiving cell metadata query lighter and faster.
+
+        :param cell_ids: List of cas_cell_index to insert in a temporary table
+        :param connection: Database connection
+
+        :return: An instance of :class:`sqlalchemy.Table` object
+        """
         metadata = sa.MetaData(bind=connection)
         cell_info_tmp_table = sa.Table(
-            f"cells_cellinfotemptable",
+            "cells_cellinfotemptable",
             metadata,
             sa.Column("cas_cell_index", sa.Integer),
             prefixes=["temporary"],
@@ -87,6 +96,7 @@ class CellOperationsDataManager(BaseDataManager):
 
         :return: List of dictionaries representing the query results, ordered according to `cell_ids`.
         """
+        print(f"======== I AM HERE IN GET_METADATA ========= : {cell_ids}, {metadata_feature_names}")
         if len(cell_ids) >= settings.MAX_CELL_IDS_PER_QUERY:
             cells_metadata = []
             for i in range(0, len(cell_ids), settings.MAX_CELL_IDS_PER_QUERY):
@@ -99,27 +109,3 @@ class CellOperationsDataManager(BaseDataManager):
             cells_metadata = self._get_cell_metadata_by_ids(cell_ids=cell_ids, feature_names=metadata_feature_names)
 
         return cells_metadata
-
-    @staticmethod
-    def parse_query_statistics_from_db_results(
-        db_results: t.Iterable[sa.engine.Row],
-    ) -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
-        query_cell_statistics = []
-
-        for row in db_results:
-            # Each row contains `query_id` and `matches` (list of JSON objects)
-            query_cell_id = row["query_cell_id"]
-            matches = [
-                schemas.NeighborhoodCellTypeSummaryStatistics(**match)
-                for match in row["matches"]  # Assuming `matches` is already a JSON array
-            ]
-
-            # Create the Pydantic model for each query
-            query_cell_statistics.append(
-                schemas.QueryCellNeighborhoodCellTypeSummaryStatistics(
-                    query_cell_id=query_cell_id,
-                    matches=matches,
-                )
-            )
-
-        return query_cell_statistics

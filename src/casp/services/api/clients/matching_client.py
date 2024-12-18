@@ -43,9 +43,9 @@ class MatchResult(BaseModel):
 
     def get_unique_ids(self) -> t.List[int]:
         """
-        Get unique cas cell ids across all matches in :class:`MatchResult`
+        Get unique cas cell ids across all neighbors in querying cells in :class:`MatchResult`
 
-        :return:
+        :return: A list with unique indexes of neighbors
         """
         return list(
             set(
