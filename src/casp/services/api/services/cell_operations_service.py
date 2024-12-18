@@ -4,7 +4,6 @@ infrastructure over different protocols in async manner.
 """
 
 import logging
-import math
 import typing as t
 
 import anndata
@@ -38,12 +37,14 @@ class CellOperationsService:
         cell_operations_dm: t.Optional[CellOperationsDataManager] = None,
         cellarium_general_dm: t.Optional[CellariumGeneralDataManager] = None,
         cell_quota_service: t.Optional[CellQuotaService] = None,
+        model_service: t.Optional[services.ModelInferenceService] = None,
+        authorizer: t.Optional[Authorizer] = None,
     ):
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
         self.cell_quota_service = cell_quota_service or CellQuotaService()
-        self.model_service = services.ModelInferenceService()
-        self.authorizer = Authorizer(cellarium_general_dm=self.cellarium_general_dm)
+        self.model_service = model_service or services.ModelInferenceService()
+        self.authorizer = authorizer or Authorizer(cellarium_general_dm=self.cellarium_general_dm)
 
     @staticmethod
     def get_cache_info(user: models.User) -> schemas.CacheInfo:
@@ -239,8 +240,12 @@ class CellOperationsService:
 
         :return: A list of numpy arrays, each containing a chunk of the embeddings.
         """
-        num_chunks: int = math.ceil(len(embeddings) / chunk_size)
-        return np.array_split(embeddings, num_chunks)
+        if chunk_size <= 0:
+            raise ValueError("chunk_size must be greater than 0.")
+        if len(embeddings) == 0:
+            return []
+
+        return [embeddings[i : i + chunk_size] for i in range(0, len(embeddings), chunk_size)]
 
     async def get_knn_matches(
         self, adata: anndata.AnnData, model: models.CASModel

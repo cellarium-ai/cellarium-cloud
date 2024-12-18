@@ -70,6 +70,7 @@ class AllEnvSettings(BaseSettings):
     DB_CONNECTION_POOL_MAX_OVERFLOW: int = 10  # 10 connections
     DB_CONNECTION_POOL_TIMEOUT: int = 40  # 40 seconds
     DB_CONNECTION_POOL_RECYCLE: int = 1800  # 30 minutes
+    ALEMBIC_CONFIG_FILE_PATH: str = f"{CAS_DIR}/services/db/alembic.ini"
     DB_CONNECTION_NAME: t.Optional[str] = os.environ.get("DB_CONNECTION_NAME")
     DB_NAME: t.Optional[str] = os.environ.get("DB_NAME")
     DB_PASSWORD: t.Optional[str] = os.environ.get("DB_PASSWORD")
@@ -134,3 +135,5 @@ class LocalSettings(AllEnvSettings):
 
 class TestSettings(AllEnvSettings):
     SECRET_KEY: str = "test"
+    TEST_DB_FILE_PATH: str = os.getenv("TEST_DB_FILE_PATH", f"{ROOT_DIR}/settings/test_db.sqlite")
+    SQLALCHEMY_DATABASE_URI: str = f"sqlite:///{TEST_DB_FILE_PATH}"

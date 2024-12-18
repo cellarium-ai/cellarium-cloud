@@ -96,7 +96,6 @@ class CellOperationsDataManager(BaseDataManager):
 
         :return: List of dictionaries representing the query results, ordered according to `cell_ids`.
         """
-        print(f"======== I AM HERE IN GET_METADATA ========= : {cell_ids}, {metadata_feature_names}")
         if len(cell_ids) >= settings.MAX_CELL_IDS_PER_QUERY:
             cells_metadata = []
             for i in range(0, len(cell_ids), settings.MAX_CELL_IDS_PER_QUERY):
