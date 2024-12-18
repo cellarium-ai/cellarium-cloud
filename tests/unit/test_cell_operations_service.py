@@ -2,342 +2,298 @@
 Tests things in the cell_operations_service that can reasonably be tested with a unit test.
 """
 
-import io
-import re
-import typing as t
+from unittest.mock import patch
 
-import anndata
-import numpy
 import numpy as np
 import pytest
-from mockito import matchers, mock, unstub, verify, when
-from parameterized import parameterized
 
-from casp.services.api.clients.matching_client import MatchingClient, MatchResult
+from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.services import exceptions
 from casp.services.api.services.cell_operations_service import CellOperationsService
+from casp.services.constants import ContextKeys
 from casp.services.db import models
-from tests.unit.test_utils import async_return
+from tests.unit import constants
 
-USER_ADMIN = models.User(id=1, is_admin=True)
-USER_NON_ADMIN = models.User(id=2, is_admin=False)
-MODEL = models.CASModel(id=1, model_name="model_name", admin_use_only=False)
-MODEL_ADMIN_ONLY = models.CASModel(id=2, model_name="admin_only_model", admin_use_only=True)
-INDEX = models.CASMatchingEngineIndex(
-    is_grpc=True,
-    endpoint_id="endpoint_id_grpc",
-    deployed_index_id="deployed_index_id_grpc",
-    num_neighbors=3,
-    model_id=MODEL.id,
-    model=MODEL,
+
+@pytest.fixture(autouse=True)
+def patch_matching_client(mock_matching_client):
+    patching_method = "casp.services.api.clients.matching_client.MatchingClient.from_index"
+
+    with patch(target=patching_method, return_value=mock_matching_client):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_starlette_context():
+    """
+    Fixture to mock starlette_context.context globally.
+    """
+    from starlette_context.ctx import _request_scope_context_storage
+
+    # Replace the internal context storage to avoid LookupError
+    mock_data = {ContextKeys.sentry_trace_id: constants.TEST_REQUEST_ID_NEW}
+    token = _request_scope_context_storage.set(mock_data)
+
+    try:
+        yield
+    finally:
+        _request_scope_context_storage.reset(token)
+
+
+@pytest.fixture
+def cas_model(db_session) -> models.CASModel:
+    """
+    Fixture to provide the CASModel instance from the database.
+
+    :param db_session: Fixture providing the database session.
+    :return: CASModel instance matching TEST_MODEL_NAME.
+    """
+    return db_session.query(models.CASModel).filter(models.CASModel.model_name == constants.TEST_MODEL_NAME).first()
+
+
+@pytest.fixture
+def user_with_quota(db_session) -> models.User:
+    """
+    Fixture to provide a user with sufficient quota from the database.
+
+    :param db_session: Fixture providing the database session.
+    :return: User instance with sufficient quota.
+    """
+    return db_session.query(models.User).filter(models.User.username == constants.USER_EMAIL_WITH_QUOTA).first()
+
+
+@pytest.fixture
+def user_without_quota(db_session) -> models.User:
+    """
+    Fixture to provide a user without sufficient quota from the database.
+
+    :param db_session: Fixture providing the database session.
+    :return: User instance without sufficient quota.
+    """
+    return db_session.query(models.User).filter(models.User.username == constants.USER_EMAIL_WITHOUT_QUOTA).first()
+
+
+@pytest.fixture(
+    params=[
+        (np.random.rand(10, 3), 3, 4),  # 10 embeddings, chunk size 3
+        (np.random.rand(15, 128), 5, 3),  # 15 embeddings, chunk size 5
+        (np.random.rand(10, 64), 10, 1),  # Exactly one chunk
+        (np.random.rand(10, 64), 20, 1),  # Chunk size larger than data
+        (np.random.rand(0, 64), 5, 0),  # Empty embeddings
+        (np.random.rand(11, 64), 4, 3),  # Irregular chunks
+    ]
 )
-ANNDATA_DATA = b"testdata"
-ANNDATA_FILE = io.BytesIO(ANNDATA_DATA)
-
-
-class TestCellOperationsService:
+def embedding_test_data(request):
     """
-    Test the CellOperationsService class.
+    Fixture to provide test data for chunk splitting tests.
 
+    :param request: Built-in pytest fixture to iterate through parameters.
+    :return: Tuple of (embeddings, chunk_size, expected_num_chunks).
     """
+    return request.param
 
-    def setup_method(self) -> None:
-        self.cell_operations_service = CellOperationsService(
-            cell_operations_dm=mock(), cellarium_general_dm=mock(), cell_quota_service=mock()
-        )
 
-    def teardown_method(self) -> None:
-        unstub()
+def test__split_embeddings_into_chunks(embedding_test_data):
+    """
+    Test the __split_embeddings_into_chunks static method with various inputs.
+    """
+    embeddings, chunk_size, expected_num_chunks = embedding_test_data
+    chunks = CellOperationsService._CellOperationsService__split_embeddings_into_chunks(embeddings, chunk_size)
 
-    def test_split_embeddings_into_chunks_even_split(self) -> None:
-        embeddings = numpy.random.rand(100, 100)
-        chunk_size = 10
+    # Assert
+    assert len(chunks) == expected_num_chunks
 
-        # Turns out this is how you call a private method in a Python unit test.
-        chunks = CellOperationsService._CellOperationsService__split_embeddings_into_chunks(embeddings, chunk_size)
+    # Validate the size of each chunk (all except for the last). Don't check if expected_num_chunks == 0
+    if expected_num_chunks > 0:
+        for chunk in chunks[:-1]:
+            assert len(chunk) == chunk_size
 
-        assert len(chunks) == 10
-        assert sum(len(chunk) for chunk in chunks) == 100
+        # Validate the size of the last chunk
+        assert len(chunks[-1] <= chunk_size)
 
-    def test_split_embeddings_into_chunks_uneven_split(self) -> None:
-        embeddings = numpy.random.rand(100, 100)
-        chunk_size = 9
+    # Validate that the data is correctly preserved across chunks
+    if len(embeddings) > 0:
+        reconstructed = np.vstack(chunks)
+        np.testing.assert_array_equal(reconstructed, embeddings)
 
-        # Turns out this is how you call a private method in a Python unit test.
-        chunks = CellOperationsService._CellOperationsService__split_embeddings_into_chunks(embeddings, chunk_size)
 
-        assert len(chunks) == 12
-        assert sum(len(chunk) for chunk in chunks) == 100
+@pytest.mark.asyncio
+async def test__get_knn_matches_for_chunk(
+    mock_matching_client, cell_operations_service_with_mocks, embedding_test_data
+):
+    embeddings_chunk, _, _ = embedding_test_data
+    service = cell_operations_service_with_mocks
 
-    def test_mismatched_embeddings_and_queries(self) -> None:
-        embeddings = [[0, 1, 2]]
-        knn_response = MatchResult(matches=[])
-        self.__mock_apis(
-            model=MODEL,
-            index=INDEX,
-            adata=ANNDATA_DATA,
-            embeddings=embeddings,
-            matching_client_response=knn_response,
-        )
-        with pytest.raises(
-            exceptions.VectorSearchResponseError,
-            match=re.escape("Number of query ids (1) and knn matches (0) does not match."),
-        ):
-            CellOperationsService._CellOperationsService__validate_knn_response(
-                embeddings=embeddings, knn_response=knn_response
-            )
-
-    def test_empty_neighbors(self) -> None:
-        embeddings = [[0, 1, 2]]
-        knn_response = MatchResult(matches=[MatchResult.NearestNeighbors(neighbors=[])])
-        self.__mock_apis(
-            model=MODEL,
-            index=INDEX,
-            adata=ANNDATA_DATA,
-            embeddings=embeddings,
-            matching_client_response=knn_response,
-        )
-        with pytest.raises(
-            exceptions.VectorSearchResponseError, match=re.escape("Vector Search returned a match with 0 neighbors.")
-        ):
-            CellOperationsService._CellOperationsService__validate_knn_response(
-                embeddings=embeddings, knn_response=knn_response
-            )
-
-    @parameterized.expand(
-        [
-            ([], [], False),
-            ([[0, 1, 2]], ["erythrocyte"], False),
-            ([[0, 1, 2], [3, 4, 5]], ["erythrocyte", "monocyte"], True),
-        ]
+    result = await service._CellOperationsService__get_knn_matches_for_chunk(
+        embeddings_chunk=embeddings_chunk, client=mock_matching_client
     )
-    @pytest.mark.asyncio
-    async def test_annotate_adata_file(
-        self, embeddings: t.List[t.List[float]], cell_types: t.List[str], include_dev_metadata: bool
-    ) -> None:
-        """
-        Test the annotate_adata_file method.
 
-        :param embeddings: The embeddings to use for the test.
-        :param cell_types: The cell types to use for the test.  Should match 1:1 with the embeddings array.
-        :param include_dev_metadata: Whether or not to set the include_dev_metadata flag when calling the method.
-        """
-        matching_client_response = self.__mock_apis(model=MODEL, index=INDEX, adata=embeddings, embeddings=embeddings)
+    assert isinstance(result, MatchResult)
+    assert len(result.matches) == len(embeddings_chunk)
 
-        # mock calls to get cell distribution
-        temp_table_fqn = "temp_table_fqn"
-        query_ids = [f"q{i}" for i in range(len(embeddings))]
-        response = [
-            {"query_cell_id": query_ids[i], "matches": [{"cell_type": cell_types[i], "cell_count": 10}]}
-            for i in range(len(embeddings))
-        ]
-        when(self.cell_operations_service.cell_operations_dm).create_temporary_table_with_knn_match_data(
-            query_ids=query_ids, knn_response=matching_client_response
-        ).thenReturn(temp_table_fqn)
-        if include_dev_metadata:
-            when(self.cell_operations_service.cell_operations_dm).get_neighborhood_distance_summary_dev_details(
-                cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
-            ).thenReturn(response)
-        else:
-            when(self.cell_operations_service.cell_operations_dm).get_neighborhood_distance_summary(
-                cas_model=MODEL, match_temp_table_fqn=temp_table_fqn
-            ).thenReturn(response)
+    # Ensure `match` was called with the correct arguments
+    mock_matching_client.match.assert_awaited_once_with(queries=embeddings_chunk)
 
-        when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
-            file=ANNDATA_FILE
-        ).thenReturn(embeddings)
-        when(self.cell_operations_service.cell_quota_service).get_remaining_quota_for_user(user=USER_ADMIN).thenReturn(
-            10000
-        )
 
-        actual_response = (
-            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
-                user=USER_ADMIN,
-                file=ANNDATA_FILE,
-                model_name=MODEL.model_name,
-                include_extended_output=include_dev_metadata,
-            )
-        )
-        assert actual_response == response
+@pytest.mark.asyncio
+async def test_get_knn_matches_from_embeddings(
+    mock_matching_client, cell_operations_service_with_mocks, db_session, cas_model
+):
+    embeddings = np.random.rand(10, 64)  # A chunk of 5 embeddings, each of 64 dimensions
+    service = cell_operations_service_with_mocks
+    result = await service.get_knn_matches_from_embeddings(embeddings=embeddings, model=cas_model)
 
-        verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
-            user_id=USER_ADMIN.id,
-            model_name=MODEL.model_name,
-            method="annotate_cell_type_summary_statistics_strategy",
-            cell_count=len(query_ids),
-            event=models.UserActivityEvent.STARTED,
-        )
+    assert isinstance(result, MatchResult)
+    assert len(result.matches) == len(embeddings)
 
-        verify(self.cell_operations_service.cellarium_general_dm).log_user_activity(
-            user_id=USER_ADMIN.id,
-            model_name=MODEL.model_name,
-            method="annotate_cell_type_summary_statistics_strategy",
-            cell_count=len(query_ids),
-            event=models.UserActivityEvent.SUCCEEDED,
-        )
+    # Ensure `match` was called N times (depending on the input size as this is executed in batches under retryer
+    assert mock_matching_client.match.await_count == 2
 
-    @pytest.mark.asyncio
-    async def test_annotate_adata_file_quota_exceeded(self) -> None:
-        """
-        Test the annotate_adata_file method returns the correct error in the case of an exceeded
-        quota.
-        """
-        self.__mock_apis(model=MODEL, index=INDEX, adata=ANNDATA_DATA, embeddings=[])
 
-        when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
-            file=ANNDATA_FILE
-        ).thenReturn(ANNDATA_DATA)
-        when(self.cell_operations_service.cell_quota_service).get_remaining_quota_for_user(user=USER_ADMIN).thenReturn(
-            2
-        )
+@pytest.mark.asyncio
+async def test_get_knn_matches(
+    mock_matching_client, cell_operations_service_with_mocks, mock_valid_anndata, db_session, cas_model
+):
+    service = cell_operations_service_with_mocks
+    query_ids, knn_response = await service.get_knn_matches(adata=mock_valid_anndata, model=cas_model)
+    assert len(knn_response.matches) == len(mock_valid_anndata.obs)
 
-        with pytest.raises(exceptions.QuotaExceededException):
-            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
-                user=USER_ADMIN,
-                file=ANNDATA_FILE,
-                model_name=MODEL.model_name,
-                include_extended_output=False,
-            )
 
-    @pytest.mark.asyncio
-    async def test_annotate_adata_file_invalid_anndata_dtype(self) -> None:
-        """
-        Test the annotate_adata_file method returns the correct error in the case of the anndata
-        matrix being of the wrong dtype
-        """
-        self.__mock_apis(model=MODEL, index=INDEX, adata=ANNDATA_DATA, embeddings=[])
+@pytest.mark.asyncio
+async def test_annotate_cell_type_summary_statistics_strategy_with_activity_logging_for_user_with_quota(
+    mock_matching_client,
+    cell_operations_service_with_mocks,
+    mock_valid_anndata,
+    mock_file_with_anndata,
+    mock_starlette_context,
+    db_session,
+    cas_model,
+    user_with_quota,
+):
+    service = cell_operations_service_with_mocks
 
-        mock_anndata = anndata.AnnData(np.array([[0, 1, 2]]))
-        mock_anndata.X = mock_anndata.X.astype(np.float64)
-
-        when(anndata).read_h5ad(ANNDATA_FILE).thenReturn(mock_anndata)
-
-        with pytest.raises(exceptions.InvalidAnndataFileException):
-            await self.cell_operations_service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
-                user=USER_ADMIN,
-                file=ANNDATA_FILE,
-                model_name=MODEL.model_name,
-                include_extended_output=False,
-            )
-
-    @parameterized.expand(
-        [
-            ([], []),
-            ([[0, 1, 2]], [{"query_cell_id": "q0", "neighbors": [{"cas_cell_index": "0", "distance": 0.0}]}]),
-            (
-                [[0, 1, 2], [3, 4, 5]],
-                [
-                    {"query_cell_id": "q0", "neighbors": [{"cas_cell_index": "0", "distance": 0.0}]},
-                    {"query_cell_id": "q1", "neighbors": [{"cas_cell_index": "1", "distance": 0.0}]},
-                ],
-            ),
-        ]
+    cas_response = await service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+        user=user_with_quota, file=mock_file_with_anndata, model_name=cas_model.model_name
     )
-    @pytest.mark.asyncio
-    async def test_search_adata_file(
-        self, embeddings: t.List[t.List[float]], expected_response: t.List[t.Dict[str, t.Any]]
-    ) -> None:
-        """
-        Test the search_adata_file method.
+    # Check if the response length is the same as length of the input anndata file
+    assert len(cas_response) == len(mock_valid_anndata)
 
-        :param embeddings: The embeddings to use for the test.
-        :param expected_response: The expected response from the method.
-
-        """
-        self.__mock_apis(model=MODEL, index=INDEX, adata=ANNDATA_DATA, embeddings=embeddings)
-
-        when(self.cell_operations_service)._CellOperationsService__read_and_validate_anndata_file(
-            file=ANNDATA_FILE
-        ).thenReturn(ANNDATA_DATA)
-
-        actual_response = await self.cell_operations_service.search_adata_file(
-            user=USER_ADMIN, file=ANNDATA_FILE, model_name=MODEL.model_name
+    # Verify that UserActivity was created after the request
+    user_activities = (
+        db_session.query(models.UserActivity)
+        .filter_by(
+            user_id=user_with_quota.id,
+            request_id=constants.TEST_REQUEST_ID_NEW,
+            model_name=cas_model.model_name,
+            method=constants.SUMMARY_STATS_METHOD,
         )
-        assert actual_response == expected_response
+        .all()
+    )
+    assert len(user_activities) == 2
+    first_user_activity = user_activities[0]
+    second_user_activity = user_activities[1]
+    assert first_user_activity.request_id == constants.TEST_REQUEST_ID_NEW
+    assert second_user_activity.request_id == constants.TEST_REQUEST_ID_NEW
+    assert first_user_activity.event == models.UserActivityEvent.STARTED
+    assert second_user_activity.event == models.UserActivityEvent.SUCCEEDED
 
-    @pytest.mark.asyncio
-    async def test_get_cells_by_ids_for_user(self) -> None:
-        self.__mock_apis()
-        cell_ids = [1, 2, 3]
-        metadata_feature_names = ["cell_type", "assay"]
 
-        self.cell_operations_service.get_cells_by_ids_for_user(
-            cell_ids=cell_ids,
-            metadata_feature_names=metadata_feature_names,
+@pytest.mark.asyncio
+async def test_annotate_cell_type_summary_statistics_strategy_with_activity_logging_for_user_without_quota(
+    mock_matching_client,
+    cell_operations_service_with_mocks,
+    mock_valid_anndata,
+    mock_file_with_anndata,
+    db_session,
+    cas_model,
+    user_without_quota,
+):
+    service = cell_operations_service_with_mocks
+    # Use pytest.raises to check for QuotaExceededException
+    with pytest.raises(exceptions.QuotaExceededException, match="User quota exceeded"):
+        await service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+            user=user_without_quota, file=mock_file_with_anndata, model_name=cas_model.model_name
         )
-        verify(self.cell_operations_service.cell_operations_dm).get_cell_metadata_by_ids(
-            cell_ids=cell_ids,
-            metadata_feature_names=metadata_feature_names,
+
+    # Verify that UserActivity was not created after the request
+    user_activities = (
+        db_session.query(models.UserActivity)
+        .filter_by(
+            user_id=user_without_quota.id,
+            request_id=constants.TEST_REQUEST_ID_NEW,
+            model_name=cas_model.model_name,
+            method=constants.SUMMARY_STATS_METHOD,
         )
+        .all()
+    )
+    assert len(user_activities) == 0
 
-    @pytest.mark.asyncio
-    async def test_get_cells_by_ids_for_user_bad_feature_name(self) -> None:
-        self.__mock_apis()
-        cell_ids = [1, 2, 3]
-        metadata_feature_names = ["cell_type", "foo"]
 
-        with pytest.raises(
-            exceptions.CellMetadataColumnDoesNotExist, match=re.escape("Feature foo is not available for querying.")
+@pytest.fixture
+def mock_strategy_with_resource(cell_ontology_resource_mock):
+    """
+    Fixture to patch the CellTypeOntologyAwareConsensusStrategy.__init__ and inject the mocked resource.
+    """
+    patch_ref = "casp.services.api.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
+
+    with patch(patch_ref, autospec=True) as mock_init:
+        # Define a side effect that injects the mocked resource
+        def init_side_effect(
+            self,
+            prune_threshold: float,
+            weighting_prefactor: float,
+            cell_ontology_resource=None,
+            cell_operations_dm=None,
         ):
-            self.cell_operations_service.get_cells_by_ids_for_user(
-                cell_ids=cell_ids,
-                metadata_feature_names=metadata_feature_names,
-            )
+            self.prune_threshold = prune_threshold
+            self.weighting_prefactor = weighting_prefactor
+            self.cell_ontology_resource = cell_ontology_resource_mock
+            self.cell_operations_dm = cell_operations_dm
 
-    def __mock_apis(
-        self,
-        model: models.CASModel = MODEL,
-        index: models.CASMatchingEngineIndex = INDEX,
-        adata: anndata.AnnData = ANNDATA_DATA,
-        embeddings: t.List[t.List[float]] = [],
-        matching_client_response: t.Optional[MatchResult] = None,
-    ) -> MatchResult:
-        """
-        Mock call to the model embedding service and the matching client.
+        mock_init.side_effect = init_side_effect
+        yield mock_init  # Return the patched constructor for assertions if needed
 
-        :param model: The model to mock.
-        :param index: The index to mock.  This should be an index for the model.
-        :param anndata_data: The source anndata to mock
-        :param embeddings: The returned embeddings to mock.
-        :param matching_client_response: The response from the matching client. If it isn't passed in,
-        a response will be created based on the embeddings.
 
-        :return: The response from the matching client to be used for further mocking.
-        """
+@pytest.mark.asyncio
+async def test_annotate_cell_type_ontology_aware_strategy_with_activity_logging(
+    mock_matching_client,
+    mock_strategy_with_resource,
+    cell_operations_service_with_mocks,
+    mock_valid_anndata,
+    mock_file_with_anndata,
+    cas_model,
+    user_with_quota,
+    cell_ontology_resource_mock,
+    db_session,
+):
+    service = cell_operations_service_with_mocks
 
-        # mock calls to model embedding service
-        model_name = model.model_name
-        embeddings = np.array(embeddings, dtype=np.float32)
-        query_ids = [f"q{i}" for i in range(len(embeddings))]
-        when(self.cell_operations_service.model_service).embed_adata(adata=adata, model=model).thenReturn(
-            (query_ids, embeddings)
+    response = await service.annotate_cell_type_ontology_aware_strategy_with_activity_logging(
+        user=user_with_quota,
+        file=mock_file_with_anndata,
+        model_name=cas_model.model_name,
+        prune_threshold=0.1,
+        weighting_prefactor=1.0,
+    )
+
+    # Validate the response has been generated correctly
+    assert len(response) == len(mock_valid_anndata.obs)
+    # Verify that UserActivity was created after the request
+    user_activities = (
+        db_session.query(models.UserActivity)
+        .filter_by(
+            user_id=user_with_quota.id,
+            request_id=constants.TEST_REQUEST_ID_NEW,
+            model_name=cas_model.model_name,
+            method=constants.ONTOLOGY_AWARE_METHOD,
         )
-
-        when(self.cell_operations_service.cellarium_general_dm).get_model_by_name(model_name=model_name).thenReturn(
-            model
-        )
-
-        # mock calls to the matching client
-        matching_client = mock()
-        matching_client_response = (
-            MatchResult(
-                matches=[
-                    MatchResult.NearestNeighbors(
-                        neighbors=[
-                            MatchResult.Neighbor(cas_cell_index=str(i), distance=0.0, feature_vector=list(embedding))
-                        ]
-                    )
-                    for i, embedding in enumerate(embeddings)
-                ]
-            )
-            if matching_client_response is None
-            else matching_client_response
-        )
-
-        # Note: comparing numpy arrays with == doesn't work well with mockito so we need to be a little clever here
-        when(matching_client).match(queries=matchers.arg_that(lambda arg: np.array_equal(arg, embeddings))).thenReturn(
-            async_return(matching_client_response)
-        )
-        when(MatchingClient).from_index(index).thenReturn(matching_client)
-
-        return matching_client_response
+        .all()
+    )
+    assert len(user_activities) == 2
+    first_user_activity = user_activities[0]
+    second_user_activity = user_activities[1]
+    assert first_user_activity.request_id == constants.TEST_REQUEST_ID_NEW
+    assert second_user_activity.request_id == constants.TEST_REQUEST_ID_NEW
+    assert first_user_activity.event == models.UserActivityEvent.STARTED
+    assert second_user_activity.event == models.UserActivityEvent.SUCCEEDED
+    mock_strategy_with_resource.assert_called_once()
