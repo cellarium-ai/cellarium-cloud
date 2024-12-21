@@ -4,7 +4,6 @@ infrastructure over different protocols in async manner.
 """
 
 import logging
-import math
 import typing as t
 
 import anndata
@@ -38,12 +37,14 @@ class CellOperationsService:
         cell_operations_dm: t.Optional[CellOperationsDataManager] = None,
         cellarium_general_dm: t.Optional[CellariumGeneralDataManager] = None,
         cell_quota_service: t.Optional[CellQuotaService] = None,
+        model_service: t.Optional[services.ModelInferenceService] = None,
+        authorizer: t.Optional[Authorizer] = None,
     ):
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
         self.cell_quota_service = cell_quota_service or CellQuotaService()
-        self.model_service = services.ModelInferenceService()
-        self.authorizer = Authorizer(cellarium_general_dm=self.cellarium_general_dm)
+        self.model_service = model_service or services.ModelInferenceService()
+        self.authorizer = authorizer or Authorizer(cellarium_general_dm=self.cellarium_general_dm)
 
     @staticmethod
     def get_cache_info(user: models.User) -> schemas.CacheInfo:
@@ -239,8 +240,12 @@ class CellOperationsService:
 
         :return: A list of numpy arrays, each containing a chunk of the embeddings.
         """
-        num_chunks: int = math.ceil(len(embeddings) / chunk_size)
-        return np.array_split(embeddings, num_chunks)
+        if chunk_size <= 0:
+            raise ValueError("chunk_size must be greater than 0.")
+        if len(embeddings) == 0:
+            return []
+
+        return [embeddings[i : i + chunk_size] for i in range(0, len(embeddings), chunk_size)]
 
     async def get_knn_matches(
         self, adata: anndata.AnnData, model: models.CASModel
@@ -270,7 +275,6 @@ class CellOperationsService:
         user: models.User,
         file: t.BinaryIO,
         model_name: str,
-        include_extended_output: t.Optional[bool] = None,
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -281,8 +285,6 @@ class CellOperationsService:
         :param user: User object used to increment user cells processed counter.
         :param file: Byte object of :class:`anndata.AnnData` file to annotate.
         :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
-        :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
-            in `cell_type_count` method.
 
         :return: JSON response with annotations.
         """
@@ -299,7 +301,8 @@ class CellOperationsService:
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
             annotation_response = await self.__annotate_cell_type_summary_statistics_strategy(
-                adata=adata, model=model, include_extended_output=include_extended_output
+                adata=adata,
+                model=model,
             )
 
             self.cellarium_general_dm.log_user_activity(
@@ -328,17 +331,13 @@ class CellOperationsService:
         self,
         adata: anndata.AnnData,
         model: models.CASModel,
-        include_extended_output: t.Optional[bool] = None,
     ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
         model schema. Increment user cells processed counter after successful annotation.
 
-        :param user: User object used to increment user cells processed counter.
-        :param file: Instance of :class:`anndata.AnnData` to annotate.
+        :param adata: Instance of :class:`anndata.AnnData` to annotate.
         :param model: Model to use for annotation. See `/list-models` endpoint for available models.
-        :param include_extended_output: Boolean flag indicating whether to include dev metadata in the response. Used only
-            in `cell_type_count` method.
 
         :return: JSON response with annotations.
         """
@@ -346,8 +345,6 @@ class CellOperationsService:
 
         strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
-            cas_model=model,
-            include_extended_output=include_extended_output,
         )
 
         engine = consensus_engine.ConsensusEngine(strategy=strategy)

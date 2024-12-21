@@ -16,6 +16,7 @@ import pytest
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.services import consensus_engine
+from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 
 
 def load_ontology_resource_from_file() -> t.Dict[str, t.Any]:
@@ -44,14 +45,14 @@ def load_expected_response() -> list[schemas.QueryCellNeighborhoodOntologyAware]
 
 
 @pytest.fixture
-def cell_ontology_resource_mock() -> consensus_engine.CellOntologyResource:
+def cell_ontology_resource_mock() -> CellOntologyResource:
     """
     Fixture to provide a mocked `CellOntologyResource` instance.
 
     :return: A `CellOntologyResource` mock instance.
     """
     resource_dict = load_ontology_resource_from_file()
-    return consensus_engine.CellOntologyResource(cell_ontology_resource_dict=resource_dict)
+    return CellOntologyResource(cell_ontology_resource_dict=resource_dict)
 
 
 @pytest.fixture

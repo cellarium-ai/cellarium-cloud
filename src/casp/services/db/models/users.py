@@ -11,6 +11,34 @@ from casp.services import db, settings
 CURRENT_TOKEN_VERSION: str = "2"
 
 
+class UUIDType(sa.types.TypeDecorator):
+    """
+    Custom UUID type for compatibility with SQLite.
+    Uses String for SQLite and UUID for PostgreSQL.
+    """
+
+    impl = UUID
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "sqlite":
+            return dialect.type_descriptor(sa.types.String(36))  # Store UUID as string in SQLite
+        return dialect.type_descriptor(UUID)
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if dialect.name == "sqlite":
+            return str(value)  # Convert UUID to string for SQLite
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        if dialect.name == "sqlite":
+            return UUID(value)  # Convert string back to UUID
+        return value
+
+
 class User(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
     email = sa.Column(sa.String(255), unique=True, nullable=False)
@@ -73,7 +101,7 @@ sa.inspect(User).add_property(
 
 class UserKey(db.Base):
     id = sa.Column(sa.Integer, primary_key=True)
-    key_locator = sa.Column(UUID, nullable=False, unique=True)
+    key_locator = sa.Column(UUIDType, nullable=False, unique=True)
     user_id = sa.Column(sa.Integer, sa.ForeignKey(f"{User.__tablename__}.id"), nullable=False)
     created_date = sa.Column(
         sa.DateTime, default=(lambda: datetime.datetime.now(datetime.timezone.utc)), nullable=False

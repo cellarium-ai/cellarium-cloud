@@ -41,6 +41,20 @@ class MatchResult(BaseModel):
         """
         return MatchResult(matches=self.matches + other.matches)
 
+    def get_unique_ids(self) -> t.List[int]:
+        """
+        Get unique cas cell ids across all neighbors in querying cells in :class:`MatchResult`
+
+        :return: A list with unique indexes of neighbors
+        """
+        return list(
+            set(
+                int(neighbor.cas_cell_index)
+                for query_neighbors in self.matches
+                for neighbor in query_neighbors.neighbors
+            )
+        )
+
 
 MatchResult.NearestNeighbors.update_forward_refs()
 MatchResult.Neighbor.update_forward_refs()
