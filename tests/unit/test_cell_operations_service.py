@@ -4,7 +4,6 @@ Unit Tests for Cell Operations Service and Related Functionalities
 This module provides tests for the `CellOperationsService` class, its interaction with related services, and
 its handling of database models and external dependencies like the MatchingClient. It also includes
 pytest fixtures to set up the necessary environment for these tests.
-
 """
 
 import io

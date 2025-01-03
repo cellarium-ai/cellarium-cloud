@@ -1,0 +1,25 @@
+[
+  {
+    "query_cell_id": "query_ACGTGCTGATG_1",
+    "matches": [
+      {
+        "cell_type": "alpha-beta T cell",
+        "cell_count": 1,
+        "min_distance": 0.9,
+        "p25_distance": 0.9,
+        "median_distance": 0.9,
+        "p75_distance": 0.9,
+        "max_distance": 0.9
+      },
+      {
+        "cell_type": "T cell",
+        "cell_count": 1,
+        "min_distance": 0.87,
+        "p25_distance": 0.87,
+        "median_distance": 0.87,
+        "p75_distance": 0.87,
+        "max_distance": 0.87
+      }
+    ]
+  }
+]
