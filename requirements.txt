@@ -11,7 +11,7 @@ uvicorn[standard]==0.29.0
 python-dotenv
 pyarrow
 python-multipart
-aiohttp==3.9.4
+aiohttp==3.10.11
 SQLAlchemy==1.4.46
 Flask==2.2.5
 Flask-Admin==1.6.0
