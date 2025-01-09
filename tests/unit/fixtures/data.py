@@ -69,7 +69,7 @@ def mock_valid_anndata() -> anndata.AnnData:
 
 
 @pytest.fixture
-def mock_file_with_anndata(mock_valid_anndata: anndata.AnnData) -> io.BytesIO:
+def mock_file_with_anndata_read(mock_valid_anndata: anndata.AnnData) -> io.BytesIO:
     """
     Fixture to serialize the mocked AnnData object into a BytesIO object.
 

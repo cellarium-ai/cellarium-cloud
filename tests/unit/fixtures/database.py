@@ -59,7 +59,7 @@ def db_session(test_engine: sa.engine.Engine) -> t.Generator[Session, None, None
         yield session
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture
 def reset_db(test_engine: sa.engine.Engine) -> t.Generator[None, None, None]:
     """
     Fixture to reset the database schema by dropping and recreating all tables.
@@ -84,7 +84,7 @@ def populate_db(
 
     **Scope**: Function
 
-    **Autouse**: No
+    **Autouse**: False
 
     :param db_session: The SQLAlchemy session used for database operations.
     :param reset_db: Fixture to reset the database schema.

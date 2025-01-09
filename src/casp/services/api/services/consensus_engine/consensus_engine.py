@@ -3,7 +3,7 @@ import typing as t
 
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
-from casp.services.api.services.consensus_engine.strategies import ConsensusStrategyProtocol
+from casp.services.api.services.consensus_engine.strategies import ConsensusStrategyInterface
 
 
 class ConsensusEngine:
@@ -11,7 +11,7 @@ class ConsensusEngine:
     Consensus engine responsible for summarizing query neighbor context using a specified strategy.
     """
 
-    def __init__(self, strategy: ConsensusStrategyProtocol):
+    def __init__(self, strategy: ConsensusStrategyInterface):
         self.strategy = strategy
 
     def summarize(self, query_ids: t.List[str], knn_query: MatchResult) -> schemas.QueryAnnotationAbstractType:

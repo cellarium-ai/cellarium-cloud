@@ -237,7 +237,7 @@ async def test_annotate_cell_type_summary_statistics_strategy_with_activity_logg
     patch_starlette_context: None,
     db_session: Session,
     mock_valid_anndata: anndata.AnnData,
-    mock_file_with_anndata: io.BytesIO,
+    mock_file_with_anndata_read: io.BytesIO,
     cell_operations_service_with_mocks: CellOperationsService,
     cas_model: models.CASModel,
     user_with_quota: models.User,
@@ -264,7 +264,7 @@ async def test_annotate_cell_type_summary_statistics_strategy_with_activity_logg
     service = cell_operations_service_with_mocks
 
     cas_response = await service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
-        user=user_with_quota, file=mock_file_with_anndata, model_name=cas_model.model_name
+        user=user_with_quota, file=mock_file_with_anndata_read, model_name=cas_model.model_name
     )
     # Check if the response length is the same as length of the input anndata file
     assert len(cas_response) == len(mock_valid_anndata)
@@ -295,7 +295,7 @@ async def test_annotate_cell_type_summary_statistics_strategy_with_activity_logg
     patch_matching_client: None,
     patch_bigquery_client: None,
     mock_valid_anndata: anndata.AnnData,
-    mock_file_with_anndata: io.BytesIO,
+    mock_file_with_anndata_read: io.BytesIO,
     cell_operations_service_with_mocks: CellOperationsService,
     db_session: Session,
     cas_model: models.CASModel,
@@ -322,7 +322,7 @@ async def test_annotate_cell_type_summary_statistics_strategy_with_activity_logg
     # Use pytest.raises to check for QuotaExceededException
     with pytest.raises(exceptions.QuotaExceededException, match="User quota exceeded"):
         await service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
-            user=user_without_quota, file=mock_file_with_anndata, model_name=cas_model.model_name
+            user=user_without_quota, file=mock_file_with_anndata_read, model_name=cas_model.model_name
         )
 
     # Verify that UserActivity was not created after the request
@@ -380,7 +380,7 @@ async def test_annotate_cell_type_ontology_aware_strategy_with_activity_logging(
     patch_strategy_init_with_resource: Mock,
     mock_valid_anndata: anndata.AnnData,
     db_session: Session,
-    mock_file_with_anndata: io.BytesIO,
+    mock_file_with_anndata_read: io.BytesIO,
     cell_operations_service_with_mocks: CellOperationsService,
     cell_ontology_resource_mock: CellOntologyResource,
     cas_model: models.CASModel,
@@ -411,7 +411,7 @@ async def test_annotate_cell_type_ontology_aware_strategy_with_activity_logging(
 
     response = await service.annotate_cell_type_ontology_aware_strategy_with_activity_logging(
         user=user_with_quota,
-        file=mock_file_with_anndata,
+        file=mock_file_with_anndata_read,
         model_name=cas_model.model_name,
         prune_threshold=0.1,
         weighting_prefactor=1.0,

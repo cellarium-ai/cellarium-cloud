@@ -8,7 +8,7 @@ from casp.services import settings
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import CellOperationsDataManager
-from casp.services.api.services.consensus_engine.strategies.base import ConsensusStrategyProtocol
+from casp.services.api.services.consensus_engine.strategies.base import ConsensusStrategyInterface
 
 
 class CellOntologyResource:
@@ -40,7 +40,7 @@ class CellOntologyResource:
         self.ontology_term_id_to_name_dict = cell_ontology_resource_dict["cell_ontology_term_id_to_cell_type"]
 
 
-class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyProtocol):
+class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
     """
     Handle ontology-aware consensus strategy, summarizing query neighbor context by cell type ontology. Weights are
     assigned to each neighbor cell type based on their distance and cell type ontology, and the weights are propagated

@@ -6,10 +6,10 @@ import numpy as np
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import CellOperationsDataManager
-from casp.services.api.services.consensus_engine.strategies.base import ConsensusStrategyProtocol
+from casp.services.api.services.consensus_engine.strategies.base import ConsensusStrategyInterface
 
 
-class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyProtocol):
+class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
     """
     Handle cell type count consensus strategy, summarizing query neighbor context by cell type distribution.
     """

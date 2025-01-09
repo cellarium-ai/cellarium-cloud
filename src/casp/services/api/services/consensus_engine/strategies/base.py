@@ -4,7 +4,7 @@ from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 
 
-class ConsensusStrategyProtocol(t.Protocol):
+class ConsensusStrategyInterface:
     def summarize(
         self, query_cell_ids: t.List[str], knn_query: MatchResult
     ) -> t.List[schemas.QueryCellNeighborhoodAbstract]:
@@ -16,4 +16,4 @@ class ConsensusStrategyProtocol(t.Protocol):
 
         :return: A list of summarized query neighbor context annotations.
         """
-        ...
+        raise NotImplementedError
