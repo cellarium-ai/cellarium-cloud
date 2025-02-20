@@ -430,39 +430,40 @@ def extract_bins_in_parallel_workers(
     obs_columns_to_include = obs_columns_to_include.split(",")
     obs_columns_to_include = [x.split(".")[-1] for x in obs_columns_to_include]
 
-    num_of_workers = multiprocessing.cpu_count()
+    # num_of_workers = multiprocessing.cpu_count()
     with tempfile.TemporaryDirectory() as temp_dir:
-        with concurrency.ProcessPoolExecutor(max_workers=num_of_workers) as executor:
-            futures = []
-            for bin_number in range(start_bin, end_bin + 1, 1):
-                file_name = f"extract_{bin_number}.h5ad"
-                file_path = f"{temp_dir}/{file_name}"
+    #     with concurrency.ProcessPoolExecutor(max_workers=num_of_workers) as executor:
+    #         futures = []
+        for bin_number in range(start_bin, end_bin + 1, 1):
+            file_name = f"extract_{bin_number}.h5ad"
+            file_path = f"{temp_dir}/{file_name}"
 
-                extract_task_kwargs = {
-                    "project_id": project_id,
-                    "dataset": dataset,
-                    "extract_table_prefix": extract_table_prefix,
-                    "bin_number": bin_number,
-                    "file_name": file_name,
-                    "file_path": file_path,
-                    "output_bucket_name": output_bucket_name,
-                    "extract_bucket_path": extract_bucket_path,
-                    "obs_columns_to_include": obs_columns_to_include,
-                }
-                print("Submitting parallel extract job to thread executor...")
-                future = executor.submit(extract_bin, **extract_task_kwargs)
-                futures.append(future)
+            extract_task_kwargs = {
+                "project_id": project_id,
+                "dataset": dataset,
+                "extract_table_prefix": extract_table_prefix,
+                "bin_number": bin_number,
+                "file_name": file_name,
+                "file_path": file_path,
+                "output_bucket_name": output_bucket_name,
+                "extract_bucket_path": extract_bucket_path,
+                "obs_columns_to_include": obs_columns_to_include,
+            }
+            extract_bin(**extract_task_kwargs)
+            #     print("Submitting parallel extract job to thread executor...")
+            #     future = executor.submit(extract_bin, **extract_task_kwargs)
+            #     futures.append(future)
 
-            done, not_done = concurrency.wait(futures, return_when=concurrency.ALL_COMPLETED)
+            # done, not_done = concurrency.wait(futures, return_when=concurrency.ALL_COMPLETED)
 
-            for future in done:
-                try:
-                    # Attempt to get the result of the future
-                    _ = future.result()
-                except Exception as e:
-                    # If an exception is raised, print the exception details
-                    print(f"Future: {future}")
-                    print(f"Exception type: {type(e).__name__}")
-                    print(f"Exception message: {e}")
-                    # Format and print the full traceback
-                    traceback.print_exception(type(e), e, e.__traceback__)
+            # for future in done:
+            #     try:
+            #         # Attempt to get the result of the future
+            #         _ = future.result()
+            #     except Exception as e:
+            #         # If an exception is raised, print the exception details
+            #         print(f"Future: {future}")
+            #         print(f"Exception type: {type(e).__name__}")
+            #         print(f"Exception message: {e}")
+            #         # Format and print the full traceback
+            #         traceback.print_exception(type(e), e, e.__traceback__)

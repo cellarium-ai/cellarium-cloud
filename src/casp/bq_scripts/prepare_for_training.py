@@ -8,6 +8,7 @@ import time
 import typing as t
 
 from google.cloud import bigquery
+from google.cloud import storage
 from google.oauth2.service_account import Credentials
 from smart_open import open
 
@@ -293,23 +294,28 @@ def prepare_extract(
         However, the output extract table would contain only the column names, without any aliases.
         Example: ``["c.cell_type", "c.donor_id", "c.sex", "i.dataset_id"]``
     """
+
+    # check for bucket access
+    client = storage.Client()
+    bucket = client.get_bucket(bucket_name)
+
     with open(filters_json_path) as f:
         filters = json.loads(f.read())
 
     obs_columns_to_include = obs_columns_to_include.split(",")
 
-    prepare_extract_tables(
-        project=project_id,
-        dataset=dataset,
-        extract_table_prefix=extract_table_prefix,
-        fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
-        extract_bin_size=extract_bin_size,
-        filters=filters,
-        obs_columns_to_include=obs_columns_to_include,
-        ci_random_seed_offset=ci_random_seed_offset,
-        ci_partition_bin_count=ci_partition_bin_count,
-        ci_partition_size=ci_partition_size,
-    )
+    # prepare_extract_tables(
+    #     project=project_id,
+    #     dataset=dataset,
+    #     extract_table_prefix=extract_table_prefix,
+    #     fq_allowed_original_feature_ids=fq_allowed_original_feature_ids,
+    #     extract_bin_size=extract_bin_size,
+    #     filters=filters,
+    #     obs_columns_to_include=obs_columns_to_include,
+    #     ci_random_seed_offset=ci_random_seed_offset,
+    #     ci_partition_bin_count=ci_partition_bin_count,
+    #     ci_partition_size=ci_partition_size,
+    # )
     print("Preparing measured genes info")
     measured_genes_info_df = prepare_measured_genes_info(
         project=project_id,
