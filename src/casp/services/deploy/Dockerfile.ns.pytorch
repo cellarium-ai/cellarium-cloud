@@ -1,13 +1,14 @@
-FROM anibali/pytorch:2.0.1-nocuda
+FROM python:3.10-slim
+
+# Install any system deps you need (you may need build-essential, etc.):
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 USER root
 
-# Install Git to be able to install some Dependencies (such as scvid module)
-RUN apt-get update && \
-    apt-get install -y git gcc && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch==2.2.0
 
 # Install Dependencies
 COPY requirements.txt .
@@ -17,6 +18,9 @@ RUN pip install -r requirements.txt
 
 # Copy Files
 COPY src .
+
+# Remove unnecessary build dependencies
+RUN apt-get remove -y build-essential && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 # Make sure to clear settings (this can be helpful if building locally).  These should be mounted as a volume
 RUN rm -f settings/.env

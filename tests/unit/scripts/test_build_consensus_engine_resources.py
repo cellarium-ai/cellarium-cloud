@@ -184,7 +184,7 @@ def cl_graph_meta_and_expected(
 
 
 def test_build_cell_ontology_ancestor_dictionary(
-    cl_graph_meta_and_expected: t.Tuple[nx.DiGraph, t.List[str], t.Dict[str, int], t.Dict[str, t.Any]]
+    cl_graph_meta_and_expected: t.Tuple[nx.DiGraph, t.List[str], t.Dict[str, int], t.Dict[str, t.Any]],
 ):
     """
     Test the construction of the cell ontology ancestor dictionary from a NetworkX graph.
