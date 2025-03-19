@@ -1,6 +1,5 @@
 import json
 import typing as t
-from enum import Enum
 
 import numpy as np
 from smart_open import open
@@ -9,73 +8,7 @@ from casp.services import settings
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import CellOperationsDataManager
-from casp.services.db import models
-
-
-class ConsensusStrategyProtocol(t.Protocol):
-    def summarize(
-        self, query_cell_ids: t.List[str], knn_query: MatchResult
-    ) -> t.List[schemas.QueryCellNeighborhoodAbstract]:
-        """
-        Define the method signature for the consensus strategy, which is responsible for summarizing query neighbor
-
-        :param query_cell_ids: List of query cell IDs from the kNN query.
-        :param knn_query: The result of the kNN query.
-
-        :return: A list of summarized query neighbor context annotations.
-        """
-        ...
-
-
-class ConsensusStrategyType(str, Enum):
-    """
-    Enum representing the available methods for consensus engine calculations. Methods include:
-
-    - ``ONTOLOGY_AWARE``: Utilizes cell type ontology to enrich context summarization.
-    - ``CELL_TYPE_STATISTICS``: Counts cell types and distance statistics within the neighborhood of a query to
-        summarize context.
-    """
-
-    ONTOLOGY_AWARE = "ontology_aware"
-    CELL_TYPE_STATISTICS = "cell_type_statistics"
-
-
-class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyProtocol):
-    """
-    Handle cell type count consensus strategy, summarizing query neighbor context by cell type distribution.
-    """
-
-    def __init__(
-        self, cell_operations_dm: CellOperationsDataManager, cas_model: models.CASModel, include_extended_output: bool
-    ):
-        self.cell_operations_dm = cell_operations_dm
-        self.cas_model = cas_model
-        self.include_extended_output = include_extended_output
-
-    def summarize(
-        self, query_cell_ids: t.List[str], knn_query: MatchResult
-    ) -> schemas.QueryAnnotationCellTypeSummaryStatisticsType:
-        """
-        Summarize query neighbor context by cell type distribution, querying a database for the distribution.
-
-        :param query_cell_ids: List of query cell IDs.
-        :param knn_query: The result of the kNN query.
-
-        :return: An instance of `schemas.QueryAnnotationCellTypeCountType`, representing the summarized cell type
-            distribution of query neighbors.
-        """
-        temp_table_fqn = self.cell_operations_dm.insert_matches_to_temp_table(
-            query_ids=query_cell_ids, knn_response=knn_query
-        )
-
-        if self.include_extended_output:
-            return self.cell_operations_dm.get_neighborhood_distance_summary_dev_details(
-                cas_model=self.cas_model, match_temp_table_fqn=temp_table_fqn
-            )
-
-        return self.cell_operations_dm.get_neighborhood_distance_summary(
-            cas_model=self.cas_model, match_temp_table_fqn=temp_table_fqn
-        )
+from casp.services.api.services.consensus_engine.strategies.base import ConsensusStrategyInterface
 
 
 class CellOntologyResource:
@@ -107,7 +40,7 @@ class CellOntologyResource:
         self.ontology_term_id_to_name_dict = cell_ontology_resource_dict["cell_ontology_term_id_to_cell_type"]
 
 
-class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyProtocol):
+class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
     """
     Handle ontology-aware consensus strategy, summarizing query neighbor context by cell type ontology. Weights are
     assigned to each neighbor cell type based on their distance and cell type ontology, and the weights are propagated
@@ -227,11 +160,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyProtocol):
         :return: A list of `schemas.QueryCellAnnotationOntologyAware`, representing the summarized context for each
             query cell.
         """
-        unique_neighbor_ids = set(
-            int(neighbor.cas_cell_index)
-            for query_neighbors in knn_query.matches
-            for neighbor in query_neighbors.neighbors
-        )
+        unique_neighbor_ids = knn_query.get_unique_ids()
         neighbors_metadata = self.cell_operations_dm.get_cell_metadata_by_ids(
             cell_ids=list(unique_neighbor_ids),
             metadata_feature_names=self.REQUIRED_CELL_INFO_FEATURE_NAMES,

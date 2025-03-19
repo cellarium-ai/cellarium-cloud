@@ -52,6 +52,19 @@ class CellariumGeneralService:
         """
         return self.cellarium_general_dm.get_feature_schemas()
 
+    def get_model_list_for_user(self, user: models.User) -> t.List[models.CASModel]:
+        """
+        Get query with available models for a specific user based on their permissions.
+
+        :param user: User object to check permissions for
+
+        :return: List of CAS models
+        """
+        if user.is_admin:
+            return self.cellarium_general_dm.get_models_all()
+
+        return self.cellarium_general_dm.get_models_non_admin()
+
     def get_feature_schema_by(self, schema_name: str) -> t.List[str]:
         """
         Get a specific feature schema by its unique name
@@ -71,16 +84,3 @@ class CellariumGeneralService:
         :return: User object
         """
         return self.cellarium_general_dm.get_user_by_email(user_email=user_email)
-
-    def get_model_list_for_user(self, user: models.User) -> t.List[models.CASModel]:
-        """
-        Get query with available models for a specific user based on their permissions.
-
-        :param user: User object to check permissions for
-
-        :return: List of CAS models
-        """
-        if user.is_admin:
-            return self.cellarium_general_dm.get_models_all()
-
-        return self.cellarium_general_dm.get_models_non_admin()

@@ -23,6 +23,13 @@ class PrivateConnectionProvider:
 
 
 def create_engine() -> sqlalchemy.engine.base.Engine:
+    # Use the test database URL automatically if ENVIRONMENT is "test"
+    if settings.ENVIRONMENT == "test":
+        return sqlalchemy.create_engine(
+            url=settings.SQLALCHEMY_DATABASE_URI,
+            echo=settings.DB_LOG_QUERIES,
+        )
+
     if settings.DB_PRIVATE_IP is not None:
         # initialize Cloud SQL Python Connector object with default settings for all connections
         connector = Connector(

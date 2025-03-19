@@ -7,9 +7,6 @@ from casp.services.db import models
 
 cell_operations_router = APIRouter(prefix="/cellarium-cell-operations")
 
-cell_operations_service = services.CellOperationsService()
-cellarium_general_service = services.CellariumGeneralService()
-
 
 @cell_operations_router.post(
     "/annotate", response_model=schemas.QueryAnnotationCellTypeSummaryStatisticsType, deprecated=True
@@ -19,6 +16,7 @@ async def annotate(
     model_name: str = Form(),
     include_dev_metadata: t.Optional[bool] = Form(default=False),
     request_user: models.User = Depends(dependencies.authenticate_user),
+    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Deprecated endpoint. Will be removed in the future version.
@@ -30,6 +28,7 @@ async def annotate(
     :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
     :param include_dev_metadata: Boolean flag indicating whether to include dev metadata in the response.
     :param request_user: Authorized user object obtained  by token from `Bearer` header.
+    :param cell_operations_service: Service controller with domain logic responsible for cell operations
 
     :return: JSON response with annotations.
     """
@@ -49,7 +48,7 @@ async def annotate_cell_type_summary_statistics(
     file: UploadFile = File(),
     model_name: str = Form(),
     request_user: models.User = Depends(dependencies.authenticate_user),
-    include_extended_output: t.Optional[bool] = Form(default=False),
+    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -60,6 +59,7 @@ async def annotate_cell_type_summary_statistics(
     :param request_user: Authorized user object obtained  by token from `Bearer` header.
     :param include_extended_output: Boolean flag indicating whether to include a breakdown by dataset id in the
         response.
+    :param cell_operations_service: Service controller with domain logic responsible for cell operations
 
     :return: JSON response with annotations.
     """
@@ -67,7 +67,6 @@ async def annotate_cell_type_summary_statistics(
         user=request_user,
         file=file.file,
         model_name=model_name,
-        include_extended_output=include_extended_output,
     )
 
 
@@ -80,6 +79,7 @@ async def annotate_cell_type_ontology_aware_strategy(
     prune_threshold: float = Form(),
     weighting_prefactor: float = Form(),
     request_user: models.User = Depends(dependencies.authenticate_user),
+    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Annotate a single anndata file with Cellarium CAS using the cell type statistics strategy. Input file should be
@@ -90,6 +90,7 @@ async def annotate_cell_type_ontology_aware_strategy(
     :param request_user: Authorized user object obtained  by token from `Bearer` header.
     :param prune_threshold: Prune threshold. Threshold for pruning the ontology graph in the response.
     :param weighting_prefactor: Distance exponential weighting prefactor.
+    :param cell_operations_service: Service controller with domain logic responsible for cell operations
 
     :return: JSON response with annotations.
     """
@@ -104,12 +105,18 @@ async def annotate_cell_type_ontology_aware_strategy(
 
 
 @cell_operations_router.get("/cache-info", response_model=schemas.CacheInfo)
-def get_cache_info(user: models.User = Depends(dependencies.authenticate_user)):
+def get_cache_info(
+    user: models.User = Depends(dependencies.authenticate_user),
+    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
+):
     """
-    Returns the cache info for the model checkpoint file and module caches.
+    Return the cache info for the model checkpoint file and module caches.
+
+    :param user: Authorized user object obtained  by token from `Bearer` header.
+    :param cell_operations_service: Service controller with domain logic responsible for cell operations
     """
 
-    return services.CellOperationsService.get_cache_info(user=user)
+    return cell_operations_service.get_cache_info(user=user)
 
 
 @cell_operations_router.post(path="/nearest-neighbor-search", response_model=t.List[schemas.SearchQueryCellResult])
@@ -117,6 +124,7 @@ async def nearest_neighbor_search(
     file: UploadFile = File(),
     model_name: str = Form(),
     user: models.User = Depends(dependencies.authenticate_user),
+    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Search for similar cells in a single anndata file with Cellarium CAS. Input file should be validated and sanitized
@@ -131,6 +139,7 @@ async def nearest_neighbor_search(
 def get_cells_by_ids(
     item: schemas.CellariumCellByIdsInput,
     _: models.User = Depends(dependencies.authenticate_user),
+    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Get cells by their ids from a single anndata file with Cellarium CAS. Input file should be validated and sanitized
