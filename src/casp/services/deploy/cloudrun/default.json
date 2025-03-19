@@ -11,7 +11,7 @@
     "cpu": "4000m",
     "memory": "16Gi",
     "max-instances": 200,
-    "min-instances": 1,
+    "min-instances": 0,
     "concurrency": 20
   }
 }
