@@ -1,18 +1,43 @@
-FROM python:3.10-slim
+FROM ubuntu:22.04
 
-# Install any system deps you need (you may need build-essential, etc.):
+# Prevent interactive prompts and let apt run non-interactively
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install needed packages, including gnupg + dirmngr, so "add-apt-repository ppa:deadsnakes/ppa" can properly
+# import GPG keys.
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
     build-essential \
+    wget \
+    ca-certificates \
+    gnupg \
+    dirmngr \
     && rm -rf /var/lib/apt/lists/*
 
+# Add the deadsnakes PPA and install Python 3.11
+RUN add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-dev \
+    python3.11-distutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pip for Python 3.11 and symlink python
+RUN wget --https-only --max-redirect=0 "https://bootstrap.pypa.io/get-pip.py" -O /tmp/get-pip.py \
+    && python3.11 /tmp/get-pip.py \
+    && rm /tmp/get-pip.py \
+    && ln -s /usr/bin/python3.11 /usr/local/bin/python
+
+# Create a working directory
 WORKDIR /app
 USER root
 
+# Install the specific CPU-only PyTorch version
 RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch==2.2.0
 
 # Install Dependencies
 COPY requirements.txt .
-
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
@@ -20,14 +45,16 @@ RUN pip install -r requirements.txt
 COPY src .
 
 # Remove unnecessary build dependencies
-RUN apt-get remove -y build-essential && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+RUN apt-get remove -y build-essential && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
-# Make sure to clear settings (this can be helpful if building locally).  These should be mounted as a volume
-RUN rm -f settings/.env
+# Clear any local settings if present
+RUN rm -f settings/.env || true
 
-# Create a dockeruser to own the app
-RUN useradd -r dockeruser
-RUN chown dockeruser: /app
+# Create a dockeruser to own /app
+RUN useradd -r dockeruser && chown dockeruser: /app
 USER dockeruser
 
-ENV PYTHONPATH "${PYTHONPATH}:/app"
+# Define or override PYTHONPATH to avoid warnings
+ENV PYTHONPATH="/app"
