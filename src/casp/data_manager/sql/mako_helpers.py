@@ -282,7 +282,10 @@ def add_cell_info_required_columns(column_names: t.List[str]) -> t.List[str]:
     :param column_names: List of columns to process
     :return: New list of column names
     """
-    return [*CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, *column_names]
+    result = [*CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, *column_names]
+    if any(['"' in x for x in result]):
+        raise ValueError("obs_columns_to_include is likely malformed as an entry contains a double quote")
+    return result
 
 
 def remove_leading_alias(column_names: t.List[str]) -> t.List[str]:

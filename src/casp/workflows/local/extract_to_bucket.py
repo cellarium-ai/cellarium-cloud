@@ -62,13 +62,17 @@ def main(
     this_filepath = os.path.abspath(__file__)
     prepare_extract_script = os.path.join(os.path.dirname(this_filepath), "..", "..", "services/bq_ops/prepare_extract/main.py")
     extract_script = os.path.join(os.path.dirname(this_filepath), "..", "..", "services/bq_ops/extract/main.py")
-    # fq_allowed_original_feature_ids = "dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A"
-    try:
-        fq_allowed_original_feature_ids = project + "." + create_table_with_all_ensembl_ids(dataset=dataset)
-    except Exception as e:
-        print("ERROR!", str(e))
-        print(f"It is likely that you need to manually create the dataset `{dataset}_schemas` using the BigQuery UI")
-        return
+
+    # for the dsp-cell-annotation-service project, human data
+    fq_allowed_original_feature_ids = "dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A"
+
+    # otherwise try to roll your own
+    # try:
+    #     fq_allowed_original_feature_ids = project + "." + create_table_with_all_ensembl_ids(dataset=dataset)
+    # except Exception as e:
+    #     print("ERROR!", str(e))
+    #     print(f"It is likely that you need to manually create the dataset `{dataset}_schemas` using the BigQuery UI")
+    #     return
 
     # run preparation
     prepare_extract_cmd = f"""python {prepare_extract_script} 

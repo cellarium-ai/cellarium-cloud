@@ -13,9 +13,19 @@ dotenv.load_dotenv(dotenv_path=f"{SERVICES_DIR}/.env")
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 
 
+def load_account_credentials() -> t.Dict:
+    cred_file = os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", None)
+    if cred_file is None:
+        return {}
+    with open(cred_file, "r", encoding="utf-8") as f:
+        json_str = f.read()  # Read file as string
+        data = json.loads(json_str)  # Now parse the JSON string
+    return data
+
+
 class AllEnvSettings(BaseSettings):
     # General
-    GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
+    GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = load_account_credentials()
     ENVIRONMENT: str = os.environ.get("ENVIRONMENT")
     APP_VERSION: str = "1.4.1-alpha.2"
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"

@@ -3,6 +3,7 @@ Prepare data for extract by randomizing, preprocessing and staging in temporary 
 """
 
 import argparse
+import logging
 import time
 import typing as t
 
