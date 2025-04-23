@@ -6,11 +6,34 @@ The script will look at a specific google bucket folder, find all the h5ad files
 
 # Usage
 
+Ensure a `.env` file exists at `cellarium-cloud/src/casp/services/.env` and is populated appropriately with the result of downloading a service account key from a Google service account (created for this purpose) on the relevant Google project with `BigQuery Admin` permissions. Contents of that file should look like this
+
+```
+GOOGLE_SERVICE_ACCOUNT_CREDENTIALS={
+    "type": "service_account",
+    "project_id": "my-google-project",
+    "private_key_id": "somenumbersandletters",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nbunchofnumbersandletters\n-----END PRIVATE KEY-----\n",
+    "client_email": "named-service-account@my-google-project.iam.gserviceaccount.com",
+    "client_id": "somenumber",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/named-service-account%40my-google-project.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+}
+```
+
 Make a local working dirtory (will get populated with files):
 ```console
 cd <repo_root>
 mkdir ingest
 cd ingest
+```
+
+Make the code visible
+```console
+export PYTHONPATH="${PYTHONPATH}:/path/to/cellarium-cloud/src"
 ```
 
 Run the script (good idea to use a tmux session):

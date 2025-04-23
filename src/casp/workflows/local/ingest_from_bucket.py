@@ -48,7 +48,9 @@ def main(bucket_name: str, h5ad_file_dir: str, avro_dir: str, dataset: str):
             --uns_meta_keys 'batch_condition,title,schema_reference,schema_version'
         """
         print(avro_cmd)
-        os.system(avro_cmd.replace("\n", " "))
+        rc = os.system(avro_cmd.replace("\n", " "))
+        if rc != 0:
+            raise Exception(f"Avro creation failed for {h5ad_file}")
 
         # run bq ingest
         ingest_cmd = f"""python {ingest_script} 
@@ -58,9 +60,11 @@ def main(bucket_name: str, h5ad_file_dir: str, avro_dir: str, dataset: str):
             --delete_ingest_files true
         """
         print(ingest_cmd)
-        os.system(ingest_cmd.replace("\n", " "))
+        rc = os.system(ingest_cmd.replace("\n", " "))
+        if rc != 0:
+            raise Exception(f"BigQuery ingest failed for {h5ad_file}")
 
-        print('Finished all files.')
+    print('Finished all files.')
 
 
 if __name__ == "__main__":
