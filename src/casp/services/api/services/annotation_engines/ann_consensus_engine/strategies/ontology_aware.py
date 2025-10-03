@@ -1,43 +1,14 @@
-import json
 import typing as t
 
 import numpy as np
-from smart_open import open
 
-from casp.services import settings
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import CellOperationsDataManager
-from casp.services.api.services.consensus_engine.strategies.base import ConsensusStrategyInterface
-
-
-class CellOntologyResource:
-    """
-    Handles cell ontology resource data, such as the ancestors dictionary and cell ontology term ID mappings.
-
-    Attributes:
-        ancestors_dictionary: Maps cell ontology term IDs to their ancestor IDs.
-        ontology_term_id_to_name_dict: Maps cell ontology term IDs to cell type names.
-
-    Raises:
-        ValueError: If either ``ancestors_dictionary`` or ``cell_ontology_term_id_to_cell_type`` is missing from the
-            provided dictionary.
-    """
-
-    def __init__(self, cell_ontology_resource_dict: t.Optional[t.Dict[str, t.Any]] = None):
-        if cell_ontology_resource_dict is None:
-            with open(settings.GCS_CELL_ONTOLOGY_RESOURCE_FILE, "rb") as f:
-                cell_ontology_resource_dict = json.loads(f.read())
-
-        if "ancestors_dictionary" not in cell_ontology_resource_dict:
-            raise ValueError("`ancestors_dictionary` is not found in the cell ontology resource dictionary")
-        if "cell_ontology_term_id_to_cell_type" not in cell_ontology_resource_dict:
-            raise ValueError(
-                "`cell_ontology_term_id_to_cell_type` mapping is not found in the cell ontology resource dictionary"
-            )
-
-        self.ancestors_dictionary = cell_ontology_resource_dict["ancestors_dictionary"]
-        self.ontology_term_id_to_name_dict = cell_ontology_resource_dict["cell_ontology_term_id_to_cell_type"]
+from casp.services.api.services.annotation_engines.ann_consensus_engine.strategies.base import (
+    ConsensusStrategyInterface,
+)
+from casp.services.api.services.annotation_engines.shared_resources import CellOntologyResource
 
 
 class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
@@ -80,7 +51,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         query_cell_id: str,
         neighbors: t.List[MatchResult.Neighbor],
         neighbors_metadata_dict: t.Dict[str, schemas.CellariumCellMetadata],
-    ) -> schemas.QueryCellNeighborhoodOntologyAware:
+    ) -> schemas.QueryCellAnnotationOntologyAware:
         """
         Utilize the ontology-aware method to assign weights to neighbor cells based on their distance and cell type
         ontology, to inform context summarization.
@@ -132,14 +103,14 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
             scores_dict = {k: v for k, v in scores_dict.items() if v >= self.prune_threshold}
 
         neighborhood_summary = [
-            schemas.NeighborhoodSummaryOntologyAware(
+            schemas.AnnotationSummaryOntologyAware(
                 score=score,
                 cell_type_ontology_term_id=cell_type_ontology_term_id,
                 cell_type=self.cell_ontology_resource.ontology_term_id_to_name_dict[cell_type_ontology_term_id],
             )
             for cell_type_ontology_term_id, score in scores_dict.items()
         ]
-        return schemas.QueryCellNeighborhoodOntologyAware(
+        return schemas.QueryCellAnnotationOntologyAware(
             query_cell_id=query_cell_id,
             matches=neighborhood_summary,
             total_weight=total_weight,
@@ -147,20 +118,17 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
             total_neighbors_unrecognized=total_neighbors_unrecognized,
         )
 
-    def summarize(
-        self, query_cell_ids: t.List[str], knn_query: MatchResult
-    ) -> schemas.QueryAnnotationOntologyAwareType:
+    def summarize(self, knn_query: MatchResult) -> schemas.QueryAnnotationOntologyAwareType:
         """
         Summarize the query neighbor context using the ontology-aware method, assigning weights to each neighbor cell
         type and propagating the weights to their ancestors in the cell type ontology.
 
-        :param query_cell_ids: IDs of the query cells.
         :param knn_query: The result of the kNN query.
 
         :return: A list of `schemas.QueryCellAnnotationOntologyAware`, representing the summarized context for each
             query cell.
         """
-        unique_neighbor_ids = knn_query.get_unique_ids()
+        unique_neighbor_ids = knn_query.get_unique_neighbor_ids()
         neighbors_metadata = self.cell_operations_dm.get_cell_metadata_by_ids(
             cell_ids=list(unique_neighbor_ids),
             metadata_feature_names=self.REQUIRED_CELL_INFO_FEATURE_NAMES,
@@ -168,7 +136,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         neighbors_metadata_dict = {str(neighbor.cas_cell_index): neighbor for neighbor in neighbors_metadata}
 
         result = []
-        for query_cell_id, query_neighbors in zip(query_cell_ids, knn_query.matches):
+        for query_cell_id, query_neighbors in zip(knn_query.sample_ids, knn_query.matches):
             query_cell_neighborhood = self._calculate_cell_type_ontology_aware_scores(
                 query_cell_id=query_cell_id,
                 neighbors=query_neighbors.neighbors,

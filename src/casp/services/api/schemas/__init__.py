@@ -3,14 +3,14 @@ from casp.services.api.schemas.cell_operations import (  # noqa
     CellariumCellByIdsInput,
     CellariumCellMetadata,
     NeighborhoodCellTypeSummaryStatistics,
-    NeighborhoodSummaryOntologyAware,
+    AnnotationSummaryOntologyAware,
     QueryAnnotationAbstractType,
     QueryAnnotationCellTypeSummaryStatisticsType,
     QueryAnnotationOntologyAwareType,
     QueryAnnotationType,
-    QueryCellNeighborhoodAbstract,
+    QueryCellAnnotationAbstract,
     QueryCellNeighborhoodCellTypeSummaryStatistics,
-    QueryCellNeighborhoodOntologyAware,
+    QueryCellAnnotationOntologyAware,
     SearchQueryCellResult,
 )
 from casp.services.api.schemas.cellarium_general import (  # noqa

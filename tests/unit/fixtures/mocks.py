@@ -8,7 +8,7 @@ import numpy as np
 from casp.services.api import data_manager, schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.db import models
-from casp.services.model_inference.services import ModelInferenceService
+from casp.services.model_inference.services import RepresentationModelInferenceService
 from tests.unit.fixtures import constants
 
 
@@ -107,7 +107,7 @@ class MockMatchingClient(AsyncMock):
         return MatchResult(matches=matches)
 
 
-class MockModelService(ModelInferenceService):
+class MockRepresentationModelService(RepresentationModelInferenceService):
     """
     Mocked version of `ModelInferenceService` to simulate embedding behavior for unit tests.
 

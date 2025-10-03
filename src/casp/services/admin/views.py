@@ -280,6 +280,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "admin_use_only",
         "schema_name",
         "is_default_model",
+        "is_representation_model",
         "bq_dataset_name",
         "created_date",
     )
@@ -304,6 +305,9 @@ class CASModelAdminView(CellariumCloudAdminModelView):
             "Bigquery dataset name that is used to store cell information which were used to train the model. "
         ),
         "created_date": "Datetime when this record has been created. Differs from when model was trained.",
+        "is_representation_model": (
+            "Whether this model is a representation or not. If not, then it will be treated as classifier"
+        ),
     }
     column_editable_list = ("admin_use_only",)
     form_columns = (
@@ -314,6 +318,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "schema_name",
         "is_default_model",
         "admin_use_only",
+        "is_representation_model",
         "bq_dataset_name",
         "created_date",
     )

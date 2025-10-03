@@ -162,7 +162,7 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
     def match(
         self,
         deployed_index_id: str,
-        queries: t.List[t.List[float]],
+        queries: t.Sequence[t.Sequence[float]],
         num_neighbors: int = 1,
         filter: t.Optional[t.List["Namespace"]] = None,
     ) -> t.List[t.List["MatchNeighbor"]]:

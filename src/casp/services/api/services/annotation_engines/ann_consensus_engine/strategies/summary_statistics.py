@@ -6,7 +6,7 @@ import numpy as np
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import CellOperationsDataManager
-from casp.services.api.services.consensus_engine.strategies.base import ConsensusStrategyInterface
+from casp.services.api.services.annotation_engines.ann_consensus_engine.strategies.base import ConsensusStrategyInterface
 
 
 class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
@@ -64,19 +64,16 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
             query_cell_id=query_cell_id, matches=query_cell_matches
         )
 
-    def summarize(
-        self, query_cell_ids: t.List[str], knn_response: MatchResult
-    ) -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
+    def summarize(self, knn_response: MatchResult) -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
         """
         Summarize query neighbor context by cell type distribution, querying a database for the distribution.
 
-        :param query_cell_ids: List of query cell IDs.
         :param knn_response: The result of the kNN query.
 
         :return: An instance of `schemas.QueryAnnotationCellTypeCountType`, representing the summarized cell type
             distribution of query neighbors.
         """
-        unique_neighbor_ids = knn_response.get_unique_ids()
+        unique_neighbor_ids = knn_response.get_unique_neighbor_ids()
         neighbors_metadata = self.cell_operations_dm.get_cell_metadata_by_ids(
             cell_ids=unique_neighbor_ids,
             metadata_feature_names=self.REQUIRED_CELL_INFO_FEATURE_NAMES,
@@ -84,7 +81,7 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
         neighbors_metadata_dict = {str(neighbor.cas_cell_index): neighbor for neighbor in neighbors_metadata}
 
         results = []
-        for query_cell_id, query_neighbors in zip(query_cell_ids, knn_response.matches):
+        for query_cell_id, query_neighbors in zip(knn_response.sample_ids, knn_response.matches):
             query_cell_neighborhood = self.calculate_cell_type_summary_stats_for_query_cell(
                 query_cell_id=query_cell_id,
                 neighbors=query_neighbors.neighbors,

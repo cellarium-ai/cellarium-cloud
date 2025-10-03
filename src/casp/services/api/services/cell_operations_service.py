@@ -13,12 +13,16 @@ from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_r
 from casp.services import settings
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchingClient, MatchResult
-from casp.services.api.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
+from casp.services.api.data_manager import (
+    CellariumGeneralDataManager,
+    CellOperationsDataManager,
+)
 from casp.services.api.data_manager import exceptions as dm_exc
-from casp.services.api.services import Authorizer, consensus_engine, exceptions
+from casp.services.api.services import Authorizer, annotation_engines, exceptions
 from casp.services.api.services.cell_quota_service import CellQuotaService
 from casp.services.db import models
 from casp.services.model_inference import services
+from casp.services.model_inference.schemas import RepresentationModelOutput, ClassificationModelOutput
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
@@ -37,13 +41,19 @@ class CellOperationsService:
         cell_operations_dm: t.Optional[CellOperationsDataManager] = None,
         cellarium_general_dm: t.Optional[CellariumGeneralDataManager] = None,
         cell_quota_service: t.Optional[CellQuotaService] = None,
-        model_service: t.Optional[services.ModelInferenceService] = None,
+        representation_model_service: t.Optional[services.RepresentationModelInferenceService] = None,
+        classification_model_service: t.Optional[services.ClassificationModelInferenceService] = None,
         authorizer: t.Optional[Authorizer] = None,
     ):
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
         self.cell_quota_service = cell_quota_service or CellQuotaService()
-        self.model_service = model_service or services.ModelInferenceService()
+        self.representation_model_service = (
+            representation_model_service or services.RepresentationModelInferenceService()
+        )
+        self.classification_model_service = (
+            classification_model_service or services.ClassificationModelInferenceService()
+        )
         self.authorizer = authorizer or Authorizer(cellarium_general_dm=self.cellarium_general_dm)
 
     @staticmethod
@@ -57,7 +67,7 @@ class CellOperationsService:
         if not user.is_admin:
             raise exceptions.AccessDeniedError("Access denied.  This is an admin-only endpoint.")
 
-        cache_info = services.ModelInferenceService.get_cache_info()
+        cache_info = services.RepresentationModelInferenceService.get_cache_info()
 
         return schemas.CacheInfo(
             file_cache_info=cache_info["file_cache_info"],
@@ -136,21 +146,36 @@ class CellOperationsService:
 
         return cell_count
 
-    async def get_embeddings(self, adata: anndata.AnnData, model: models.CASModel) -> t.Tuple[t.List[str], np.array]:
+    async def get_embeddings(self, adata: anndata.AnnData, model: models.CASModel) -> RepresentationModelOutput:
         """
         Get embeddings from the specified model.
 
         :param adata: Object of :class:`anndata.AnnData` to embed.
         :param model: Model to use for embedding.
 
-        :return: Query ids (original cell ids from the input anndata) and embeddings.
+        :return: Representation model output object
         """
 
-        query_ids, embeddings = self.model_service.embed_adata(adata=adata, model=model)
-        return query_ids, embeddings
+        return self.representation_model_service.run_inference(adata=adata, model=model)
+
+    async def get_predictions(self, adata, model: models.CASModel) -> ClassificationModelOutput:
+        """
+        Get predictions from a specified model classifier.
+
+        :param adata: Object of :class:`anndata.AnnData` to classify.
+        :param model: Model to use for classification.
+
+        :return: Classification model output object
+        """
+        return self.classification_model_service.run_inference(adata=adata, model=model)
 
     @staticmethod
     def __validate_knn_response(embeddings: np.array, knn_response: MatchResult) -> None:
+        if len(knn_response.matches) != len(knn_response.sample_ids):
+            raise exceptions.VectorSearchResponseError(
+                f"Number of sample IDs ({len(knn_response.sample_ids)} does not correspond to "
+                f"number of knn matches ({len(knn_response.matches)}"
+            )
         if len(knn_response.matches) != len(embeddings):
             raise exceptions.VectorSearchResponseError(
                 f"Number of query ids ({len(embeddings)}) and knn matches ({len(knn_response.matches)}) does not match. "
@@ -161,26 +186,27 @@ class CellOperationsService:
             if len(match.neighbors) == 0:
                 raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
+    @classmethod
     async def __get_knn_matches_from_embeddings_with_retry(
-        self, embeddings: np.array, model: models.CASModel, chunk_matches_function: t.Callable
+        cls, model: models.CASModel, model_output: RepresentationModelOutput, chunk_matches_function: t.Callable
     ) -> MatchResult:
         """
         Get KNN matches for embeddings broken into chunks with retry logic
 
-        :param embeddings: Embeddings to match.
         :param model: Model to use for matching.
+        :param model_output: Embeddings to match.
 
         :return: List of lists of MatchNeighbor objects.
         """
-        matching_client = MatchingClient.from_index(model.cas_matching_engine)
+        matching_client = MatchingClient.from_index(index=model.cas_matching_engine)
 
         # Break embeddings into chunks so we don't overload the matching engine
-        embeddings_chunks = CellOperationsService.__split_embeddings_into_chunks(
-            embeddings=embeddings, chunk_size=settings.GET_MATCHES_CHUNK_SIZE
+        model_output_chunks = cls.__split_representation_output(
+            model_output=model_output, chunk_size=settings.GET_MATCHES_CHUNK_SIZE
         )
 
         all_matches = MatchResult()
-        for i in range(0, len(embeddings_chunks)):
+        for model_output_chunk in model_output_chunks:
             # Set up retry logic for the matching engine requests
             retryer = AsyncRetrying(
                 stop=stop_after_attempt(settings.GET_MATCHES_MAX_RETRIES),
@@ -193,65 +219,75 @@ class CellOperationsService:
                 reraise=True,
             )
             matches = await retryer(
-                chunk_matches_function, embeddings_chunk=embeddings_chunks[i], client=matching_client
+                chunk_matches_function,
+                model_output_chunk=model_output_chunk,
+                client=matching_client,
             )
-            all_matches = all_matches.concat(matches)
+            all_matches = all_matches.concat(other=matches)
 
         return all_matches
 
-    @staticmethod
-    async def __get_knn_matches_for_chunk(embeddings_chunk: np.array, client: MatchingClient) -> MatchResult:
+    @classmethod
+    async def __get_knn_matches_for_chunk(
+        cls, model_output_chunk: RepresentationModelOutput, client: MatchingClient
+    ) -> MatchResult:
         """
         Get KNN matches for a chunk of embeddings (split out from get_knn_matches, so it can be
         retried and called in chunks).
 
-        :param embeddings_chunk: Chunk of embeddings to match.
+        :param model_output_chunk: Chunk of representation model to match.
         :param client: Matching engine client that will handle communicating with the matching engine.
 
         :return: List of lists of MatchNeighbor objects.
         """
-        matches = await client.match(queries=embeddings_chunk)
-        CellOperationsService.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
+        matches = await client.match(model_output_chunk.embeddings, sample_ids=model_output_chunk.sample_ids)
+        cls.__validate_knn_response(embeddings=model_output_chunk.embeddings, knn_response=matches)
         return matches
 
-    async def get_knn_matches_from_embeddings(self, embeddings: np.array, model: models.CASModel) -> MatchResult:
+    async def get_knn_matches_from_embeddings(self, model_output: np.array, model: models.CASModel) -> MatchResult:
         """
         Run KNN matching synchronously using Matching Engine client over gRPC.
 
-        :param embeddings: Embeddings from the model.
+        :param model_output: Embeddings from the model.
         :param model: Model to use for matching.
 
         :return: Matches in a MatchResult object
         """
 
         return await self.__get_knn_matches_from_embeddings_with_retry(
-            embeddings=embeddings,
+            model_output=model_output,
             model=model,
             chunk_matches_function=self.__get_knn_matches_for_chunk,
         )
 
     @staticmethod
-    def __split_embeddings_into_chunks(embeddings: np.array, chunk_size: int) -> t.List[np.array]:
+    def __split_representation_output(
+        model_output: RepresentationModelOutput, chunk_size: int
+    ) -> t.List[RepresentationModelOutput]:
         """
         Splits the embeddings into chunks based on the configured chunk size.
 
-        :param embeddings: The embeddings to split into chunks.
+        :param model_output: The embeddings to split into chunks.
         :param chunk_size: The number of query embeddings to include in each chunk.
 
         :return: A list of numpy arrays, each containing a chunk of the embeddings.
         """
         if chunk_size <= 0:
             raise ValueError("chunk_size must be greater than 0.")
-        if len(embeddings) == 0:
+        if len(model_output.embeddings) == 0:
             return []
 
-        return [embeddings[i : i + chunk_size] for i in range(0, len(embeddings), chunk_size)]
+        return [
+            RepresentationModelOutput(
+                sample_ids=model_output.sample_ids[i : i + chunk_size],
+                embeddings=model_output.embeddings[i : i + chunk_size],
+            )
+            for i in range(0, len(model_output.sample_ids), chunk_size)
+        ]
 
-    async def get_knn_matches(
-        self, adata: anndata.AnnData, model: models.CASModel
-    ) -> t.Tuple[t.List[str], MatchResult]:
+    async def get_knn_matches(self, adata: anndata.AnnData, model: models.CASModel) -> MatchResult:
         """
-        Get KNN matches for anndata object.
+        Get KNN matches for an anndata object.
 
         :param adata: Anndata object to get KNN matches for.
         :param model: Model to use for matching.
@@ -259,16 +295,14 @@ class CellOperationsService:
         :return: Matches in a MatchResult object
         """
         logger.info("Getting embeddings")
-        query_ids, embeddings = await self.get_embeddings(adata=adata, model=model)
+        model_output = await self.get_embeddings(adata=adata, model=model)
 
-        if embeddings.size == 0:
+        if model_output.embeddings.size == 0:
             # No further processing needed if there are no embeddings, return empty match result
-            return [], MatchResult()
+            return MatchResult()
 
         logger.info("Getting KNN matches")
-        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)
-
-        return query_ids, knn_response
+        return await self.get_knn_matches_from_embeddings(model=model, model_output=model_output)
 
     async def annotate_cell_type_summary_statistics_strategy_with_activity_logging(
         self,
@@ -295,7 +329,10 @@ class CellOperationsService:
 
         # Make sure the user has enough quota to process the file
         cell_count = self.__verify_quota_and_log_activity(
-            user=user, adata=adata, model_name=model_name, method="annotate_cell_type_summary_statistics_strategy"
+            user=user,
+            adata=adata,
+            model_name=model_name,
+            method="annotate_cell_type_summary_statistics_strategy",
         )
 
         # Annotate the file and log successful activity (or log failure if an exception is raised)
@@ -343,16 +380,21 @@ class CellOperationsService:
         """
         query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
 
-        strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
+        strategy = annotation_engines.ann_consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
         )
 
-        engine = consensus_engine.ConsensusEngine(strategy=strategy)
+        engine = annotation_engines.ann_consensus_engine.ConsensusEngine(strategy=strategy)
 
-        return engine.summarize(query_ids=query_ids, knn_query=knn_response)
+        return engine.summarize(knn_query=knn_response)
 
     async def annotate_cell_type_ontology_aware_strategy_with_activity_logging(
-        self, user: models.User, file: t.BinaryIO, model_name: str, prune_threshold: float, weighting_prefactor: float
+        self,
+        user: models.User,
+        file: t.BinaryIO,
+        model_name: str,
+        prune_threshold: float,
+        weighting_prefactor: float,
     ) -> schemas.QueryAnnotationOntologyAwareType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -376,12 +418,15 @@ class CellOperationsService:
 
         # Make sure the user has enough quota to process the file
         cell_count = self.__verify_quota_and_log_activity(
-            user=user, adata=adata, model_name=model_name, method="annotate_cell_type_ontology_aware_strategy"
+            user=user,
+            adata=adata,
+            model_name=model_name,
+            method="annotate_cell_type_ontology_aware_strategy",
         )
 
         # Annotate the file and log successful activity (or log failure if an exception is raised)
         try:
-            annotation_response = await self.__annotate_cell_type_ontology_aware_strategy(
+            annotation_response = await self.__annotate_cel_type_ontology_aware_strategy(
                 adata=adata,
                 model=model,
                 prune_threshold=prune_threshold,
@@ -410,8 +455,12 @@ class CellOperationsService:
                 logger.error(f"Failed to log user activity: {e2}")
             raise e
 
-    async def __annotate_cell_type_ontology_aware_strategy(
-        self, adata: anndata.AnnData, model: models.CASModel, prune_threshold: float, weighting_prefactor: float
+    async def __annotate_cell_type_ontology_aware_strategy_ann(
+        self,
+        adata: anndata.AnnData,
+        model: models.CASModel,
+        prune_threshold: float,
+        weighting_prefactor: float,
     ) -> schemas.QueryAnnotationOntologyAwareType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -425,23 +474,89 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
-        query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
+        knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         logger.info("Applying CellTypeOntologyAwareConsensusStrategy to the query results")
-        strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
+        strategy = annotation_engines.ann_consensus_engine.CellTypeOntologyAwareConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
             prune_threshold=prune_threshold,
             weighting_prefactor=weighting_prefactor,
         )
 
         logger.info("Summarizing query neighbor context using the specified strategy")
-        engine = consensus_engine.ConsensusEngine(strategy=strategy)
+        engine = annotation_engines.ann_consensus_engine.ConsensusEngine(strategy=strategy)
 
         logger.info("Performing final summarization")
         try:
-            return engine.summarize(query_ids=query_ids, knn_query=knn_response)
+            return engine.summarize(knn_query=knn_response)
         except dm_exc.CellMetadataDatabaseError as e:
             raise exceptions.InvalidInputError(str(e))
+
+    async def __annotate_cell_type_ontology_aware_strategy_probabilities(
+        self,
+        adata: anndata.AnnData,
+        model: models.CASModel,
+        prune_threshold: float,
+        weighting_prefactor: float,
+    ) -> schemas.QueryAnnotationOntologyAwareType:
+        """
+        Annotate a single anndata file with Cellarium CAS using model predictions and an
+        ontology-aware uplift strategy. Input file should be validated and sanitized
+        according to the model schema.
+
+        This path runs model inference to obtain class probabilities, then propagates
+        those predictions to the ontology (including ancestor nodes) to produce
+        ontology-aware annotations.
+
+        :param adata: Object of :class:`anndata.AnnData` to annotate.
+        :param model: Model to use for annotation. See `/list-models` endpoint for available models.
+        :param prune_threshold: Prune threshold for the ontology-aware uplift strategy.
+        :param weighting_prefactor: Reserved for API parity with the ANN consensus path; ignored by the current
+            uplift strategy.
+        :return: JSON response with annotations.
+        """
+        model_output = await self.get_predictions(adata=adata, model=model)
+
+        logger.info("Applying OntologyAncestorUpliftStrategy to the model predictions")
+        strategy = annotation_engines.model_interpretation_engine.OntologyAncestorUpliftStrategy(
+            prune_threshold=prune_threshold,
+        )
+
+        logger.info("Postprocessing model output using the specified strategy")
+        engine = annotation_engines.model_interpretation_engine.ModelInterpretationEngine(strategy=strategy)
+
+        logger.info("Performing final summarization")
+        return engine.summarize(model_output=model_output)
+
+    async def __annotate_cel_type_ontology_aware_strategy(
+        self,
+        adata: anndata.AnnData,
+        model: models.CASModel,
+        prune_threshold: float,
+        weighting_prefactor: float,
+    ) -> schemas.QueryAnnotationOntologyAwareType:
+        """
+        Dispatch to the ontology-aware annotation path based on model type.
+
+        If `model.is_representation_model` is True, uses ANN neighbor consensus;
+        otherwise uses model-prediction → ontology uplift. Input must be validated
+        per the model schema.
+
+        :param adata: :class:`anndata.AnnData` to annotate.
+        :param model: CAS model to run.
+        :param prune_threshold: Pruning threshold applied by the strategy.
+        :param weighting_prefactor: Distance weighting for ANN consensus; ignored by uplift path.
+
+        :return: Ontology-aware annotations.
+        """
+        if model.is_representation_model:
+            return await self.__annotate_cell_type_ontology_aware_strategy_ann(
+                adata=adata, model=model, prune_threshold=prune_threshold, weighting_prefactor=weighting_prefactor
+            )
+        else:
+            return await self.__annotate_cell_type_ontology_aware_strategy_probabilities(
+                adata=adata, model=model, prune_threshold=prune_threshold, weighting_prefactor=weighting_prefactor
+            )
 
     async def search_adata_file(
         self, user: models.User, file: t.BinaryIO, model_name: str
@@ -464,7 +579,7 @@ class CellOperationsService:
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
-        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)
+        knn_response = await self.get_knn_matches_from_embeddings(model_output=embeddings, model=model)
 
         return [
             {

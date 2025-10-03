@@ -13,34 +13,34 @@ class NeighborhoodCellTypeSummaryStatistics(BaseModel):
     max_distance: float = Field(example=1840.047119140625)
 
 
-class QueryCellNeighborhoodAbstract(BaseModel):
+class QueryCellAnnotationAbstract(BaseModel):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
     matches: t.List
 
 
-class QueryCellNeighborhoodCellTypeSummaryStatistics(QueryCellNeighborhoodAbstract):
+class QueryCellNeighborhoodCellTypeSummaryStatistics(QueryCellAnnotationAbstract):
     matches: t.List[NeighborhoodCellTypeSummaryStatistics]
 
 
-class NeighborhoodSummaryOntologyAware(BaseModel):
+class AnnotationSummaryOntologyAware(BaseModel):
     score: float = Field(example=0.789)
     cell_type_ontology_term_id: str = Field(example="CL:0000121")
     cell_type: str = Field(example="erythrocyte")
 
 
-class QueryCellNeighborhoodOntologyAware(QueryCellNeighborhoodAbstract):
+class QueryCellAnnotationOntologyAware(QueryCellAnnotationAbstract):
     query_cell_id: str = Field(example="ATTACTTATTTAGTT-12311")
-    matches: t.List[NeighborhoodSummaryOntologyAware]
+    matches: t.List[AnnotationSummaryOntologyAware]
     total_weight: float = Field(example=11.23232)
     total_neighbors: int = Field(example=1023)
     total_neighbors_unrecognized: int = Field(example=5)
 
 
-QueryAnnotationAbstractType: t.TypeAlias = t.List[QueryCellNeighborhoodAbstract]
-QueryAnnotationOntologyAwareType: t.TypeAlias = t.List[QueryCellNeighborhoodOntologyAware]
+QueryAnnotationAbstractType: t.TypeAlias = t.List[QueryCellAnnotationAbstract]
+QueryAnnotationOntologyAwareType: t.TypeAlias = t.List[QueryCellAnnotationOntologyAware]
 QueryAnnotationCellTypeSummaryStatisticsType: t.TypeAlias = t.List[QueryCellNeighborhoodCellTypeSummaryStatistics]
 QueryAnnotationType: t.TypeAlias = t.Union[
-    t.List[QueryCellNeighborhoodOntologyAware],
+    t.List[QueryCellAnnotationOntologyAware],
     t.List[QueryCellNeighborhoodCellTypeSummaryStatistics],
 ]
 

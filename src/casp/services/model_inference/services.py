@@ -4,21 +4,39 @@ from io import BytesIO
 
 import anndata
 import numpy as np
+import pandas as pd
 from cellarium.ml import CellariumAnnDataDataModule, CellariumModule
 from smart_open import open
 
 from casp.services import settings
 from casp.services.db import models
-from casp.services.model_inference import exceptions
+from casp.services.model_inference import exceptions, schemas
 
 
-class ModelInferenceService:
-    """Service for model inference."""
+class ModelInferenceServiceServiceInterface:
+    @classmethod
+    def run_inference(cls, adata: anndata.AnnData, model: models.CASModel) -> schemas.ModelInferenceOutputBase:
+        """
+        Run inference using the provided model on the given AnnData object. This method must be implemented by all
+        subclasses.
+
+        :param adata: Input annotated data matrix to run inference on.
+        :param model: Cellarium Cloud model database object containing model metadata and checkpoint path.
+
+        :return: Inference results wrapped in a subclass of ``ModelInferenceOutputBase``.
+        """
+        raise NotImplementedError
+
+
+class CheckpointLoaderMixin:
+    """
+    Mixin with helper functions to load the cellarium module and data module from GCS
+    """
 
     @staticmethod
     def _get_model_checkpoint_path(model_checkpoint_file_path: str) -> str:
         """
-        Get model checkpoint path from GCS. It expects a filepath that doesn't include bucket protocol prefix and
+        Get a model checkpoint path from GCS. It expects a filepath that doesn't include bucket protocol prefix and
         bucket name.
 
         :param model_checkpoint_file_path: Model checkpoint file path in GCS
@@ -27,24 +45,24 @@ class ModelInferenceService:
         """
         return f"gs://{settings.PROJECT_BUCKET_NAME}/{model_checkpoint_file_path}"
 
-    @staticmethod
+    @classmethod
     @cache
-    def _get_model_checkpoint_file(model_file_path: str) -> t.BinaryIO:
+    def _get_model_checkpoint_file(cls, model_file_path: str) -> t.BinaryIO:
         """
-        Get model checkpoint from either local or GCS and load it using CellariumModule.
+        Get a model checkpoint from either local or GCS and load it using CellariumModule.
 
         :param model_file_path: Model checkpoint file path (from model db object)
 
         :return: CellariumModule object
         """
-        model_checkpoint_path = ModelInferenceService._get_model_checkpoint_path(model_file_path)
+        model_checkpoint_path = cls._get_model_checkpoint_path(model_file_path)
 
         with open(model_checkpoint_path, "rb") as model_checkpoint_file:
             return BytesIO(model_checkpoint_file.read())
 
-    @staticmethod
+    @classmethod
     @cache
-    def _load_module_from_checkpoint(model_file_path: str) -> CellariumModule:
+    def _load_module_from_checkpoint(cls, model_file_path: str) -> CellariumModule:
         """
         Load CellariumModule from checkpoint file.
 
@@ -52,70 +70,67 @@ class ModelInferenceService:
 
         :return: CellariumModule object
         """
-        checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model_file_path)
+        checkpoint_file = cls._get_model_checkpoint_file(model_file_path)
 
         return CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
 
-    @staticmethod
-    def get_cache_info() -> t.Dict[str, t.Tuple[int, int, t.Optional[int], int]]:
-        """
-        Returns the cache info for the file and module cache.
-
-        :return: A dict containing two entries: file_cache_info and module_cache_info.  Each
-            contains a tuple with 4 values: hits, misses, maxsize, and currsize.
-        """
-        file_cache_info = ModelInferenceService._get_model_checkpoint_file.cache_info()
-        module_cache_info = ModelInferenceService._load_module_from_checkpoint.cache_info()
-
-        return {
-            "file_cache_info": file_cache_info,
-            "module_cache_info": module_cache_info,
-        }
-
-    def _get_output_from_model(
-        self, model: models.CASModel, adata: anndata.AnnData
-    ) -> t.Tuple[np.ndarray, t.List[str]]:
-        """
-        Get output from cellarium-ml model that predicts embeddings given an input adata.
-
-        :param model: Cellarium Cloud model db object
-        :param adata: Object of :class:`anndata.AnnData` to embed.
-
-        :return: Tuple of embeddings and obs_ids.
-        """
-        cellarium_module = ModelInferenceService._load_module_from_checkpoint(model.model_file_path)
-
-        cellarium_checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model.model_file_path)
+    @classmethod
+    def _load_data_module_from_checkpoint(
+        cls, model_file_path: str, adata: anndata.AnnData
+    ) -> CellariumAnnDataDataModule:
+        cellarium_checkpoint_file = cls._get_model_checkpoint_file(model_file_path)
         cellarium_checkpoint_file.seek(0)
         cellarium_data_module = CellariumAnnDataDataModule.load_from_checkpoint(
             cellarium_checkpoint_file, dadc=adata, batch_size=adata.n_obs, num_workers=0
         )
         cellarium_data_module.setup(stage="predict")
+        return cellarium_data_module
+
+
+class RepresentationModelInferenceService(CheckpointLoaderMixin, ModelInferenceServiceServiceInterface):
+    """Service for representation model inference."""
+
+    @classmethod
+    def _get_output_from_model(cls, model: models.CASModel, adata: anndata.AnnData) -> t.Tuple[np.ndarray, t.List[str]]:
+        """
+        Get output from cellarium-ml model that predicts embeddings given an input adata.
+
+        :param model: Cellarium Cloud model db object
+        :param adata: Object of class:`anndata.AnnData` to embed.
+
+        :return: Tuple of embeddings and sample_ids.
+        """
+        cellarium_module = cls._load_module_from_checkpoint(model.model_file_path)
+
+        cellarium_data_module = cls._load_data_module_from_checkpoint(
+            model_file_path=model.model_file_path, adata=adata
+        )
+
         batch = next(iter(cellarium_data_module.predict_dataloader()))
 
         cellarium_output_dict = cellarium_module(batch)
 
         embeddings = cellarium_output_dict["x_ng"].numpy()
 
-        obs_ids = adata.obs.index.tolist()
-        return embeddings, obs_ids
+        sample_ids = adata.obs.index.tolist()
+        return embeddings, sample_ids
 
     @staticmethod
-    def _validate_model_output(embeddings: np.ndarray, obs_ids: t.List[str], model_info: models.CASModel) -> None:
+    def _validate_model_output(embeddings: np.ndarray, sample_ids: t.List[str], model_info: models.CASModel) -> None:
         """
         Validate model output.
 
         :param embeddings: Embeddings
-        :param obs_ids: List of observation ids
+        :param sample_ids: List of observation ids
         :param model_info: Cellarium Cloud model db object
 
-        :raises ModelOutputError: If the length of obs_ids and embeddings are not the same or if the number of embedding
+        :raises ModelOutputError: If the length of sample_ids and embeddings are different, or if the number of embedding
             dimensions is not equal to the model's embedding dimensions.
         """
-        if embeddings.shape[0] != len(obs_ids):
+        if embeddings.shape[0] != len(sample_ids):
             raise exceptions.ModelOutputError(
                 f"The number of embeddings generated ({embeddings.shape[0]}) does not match "
-                f"the number of observation IDs provided ({len(obs_ids)})."
+                f"the number of observation IDs provided ({len(sample_ids)})."
             )
 
         if embeddings.shape[1] != model_info.embedding_dimension:
@@ -125,16 +140,94 @@ class ModelInferenceService:
                 f"Ensure that the model is configured to produce embeddings of the correct dimensionality."
             )
 
-    def embed_adata(self, adata: anndata.AnnData, model: models.CASModel) -> t.Tuple[np.ndarray, t.List[str]]:
+    @classmethod
+    def run_inference(cls, adata: anndata.AnnData, model: models.CASModel) -> schemas.RepresentationModelOutput:
         """
         Embed adata using a specific model using Cellarium-ML model and pytorch.
 
-        :param adata: Object of :class:`anndata.AnnData` to embed.
-        :param model: Model object that contains relevant information to use for obtaining embedding.
+        :param adata: Object of class:`anndata.AnnData` to embed.
+        :param model: Model object that contains relevant information to use for getting embedding.
 
         :return: ModelEmbeddings schema object.
         """
-        embeddings, obs_ids = self._get_output_from_model(model=model, adata=adata)
-        self._validate_model_output(embeddings=embeddings, obs_ids=obs_ids, model_info=model)
+        embeddings, sample_ids = cls._get_output_from_model(model=model, adata=adata)
+        cls._validate_model_output(embeddings=embeddings, sample_ids=sample_ids, model_info=model)
+        return schemas.RepresentationModelOutput(embeddings=embeddings, sample_ids=sample_ids)
 
-        return obs_ids, embeddings
+
+class ClassificationModelInferenceService(CheckpointLoaderMixin, ModelInferenceServiceServiceInterface):
+    @classmethod
+    @cache
+    def _load_module_from_checkpoint(cls, model_file_path: str) -> CellariumModule:
+        """
+        Load CellariumModule from checkpoint file.
+
+        :param model_file_path: Model checkpoint file path (from model db object)
+
+        :return: CellariumModule object
+        """
+        checkpoint_file = cls._get_model_checkpoint_file(model_file_path)
+        checkpoint = CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
+        # TODO: this is temporary and has to be resolved in a better way
+        setattr(checkpoint.model, "actual_categories", 670)
+        return checkpoint
+
+    @classmethod
+    def _get_output_from_model(
+        cls, model: models.CASModel, adata: anndata.AnnData
+    ) -> t.Tuple[np.ndarray, t.List[str], t.List[str]]:
+        """
+        Get output from cellarium-ml model that predicts embeddings given an input adata.
+
+        :param model: Cellarium Cloud model db object
+        :param adata: Object of class:`anndata.AnnData` to classify.
+
+        :return: Tuple of embeddings, categories and sample_ids.
+        """
+        if "cell_type_ontology_term_id" not in adata.obs:
+            adata.obs["cell_type_ontology_term_id"] = "CL_DUMMY"
+
+        cellarium_module = cls._load_module_from_checkpoint(model_file_path=model.model_file_path)
+        cellarium_data_module = cls._load_data_module_from_checkpoint(
+            model_file_path=model.model_file_path, adata=adata
+        )
+
+        batch = next(iter(cellarium_data_module.predict_dataloader()))
+
+        forward_output_dict = cellarium_module.forward(batch)
+
+        probabilities = forward_output_dict["cell_type_probs_nc"].detach().numpy()
+        labels = cellarium_module.model.y_categories.tolist()
+
+        sample_ids = adata.obs.index.tolist()
+        return probabilities, labels, sample_ids
+
+    @staticmethod
+    def _validate_model_output(probabilities: np.ndarray, sample_ids: t.List[str]) -> None:
+        """
+        Validate model output.
+
+        :param probabilities: Probabilities from a classifier model
+        :param sample_ids: List of observation ids
+
+        :raises ModelOutputError: If the length of sample_ids and probabilities are different
+        """
+        if probabilities.shape[0] != len(sample_ids):
+            raise exceptions.ModelOutputError(
+                f"Model output probabilities dimension doesn't correspond to input data length"
+            )
+
+    @classmethod
+    def run_inference(cls, adata: anndata.AnnData, model: models.CASModel) -> schemas.ClassificationModelOutput:
+        """
+        Classify adata using a specific model using classifier Cellarium-ML model and pytorch.
+
+        :param adata: Object of class:`anndata.AnnData` to embed.
+        :param model: Model object that contains relevant information to use for predicting classes.
+
+        :return: ClassificationModelOutput schema object.
+        """
+        probabilities, labels, sample_ids = cls._get_output_from_model(model=model, adata=adata)
+        cls._validate_model_output(probabilities=probabilities, sample_ids=sample_ids)
+
+        return schemas.ClassificationModelOutput(probabilities=probabilities, labels=labels, sample_ids=sample_ids)

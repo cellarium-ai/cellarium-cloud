@@ -5,8 +5,8 @@ import pytest
 
 from casp.services.api import services
 from casp.services.api.services.cell_operations_service import CellOperationsService
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
-from casp.services.model_inference.services import ModelInferenceService
+from casp.services.api.services.annotation_engines import CellOntologyResource
+from casp.services.model_inference.services import RepresentationModelInferenceService
 from tests.unit.fixtures import mocks
 
 
@@ -21,19 +21,19 @@ def mock_cell_quota_service() -> services.CellQuotaService:
 
 
 @pytest.fixture
-def mock_model_service() -> mocks.MockModelService:
+def mock_model_service() -> mocks.MockRepresentationModelService:
     """
     Fixture for a mocked `ModelInferenceService` with embedding behavior.
 
     :return: A mocked `ModelInferenceService` instance that generates random embeddings.
     """
-    return mocks.MockModelService()
+    return mocks.MockRepresentationModelService()
 
 
 @pytest.fixture
 def cell_operations_service_with_mocks(
     mock_cell_quota_service: services.CellQuotaService,
-    mock_model_service: ModelInferenceService,
+    mock_model_service: RepresentationModelInferenceService,
 ) -> CellOperationsService:
     """
     Fixture to provide a `CellOperationsService` with all mocked dependencies.
@@ -45,7 +45,7 @@ def cell_operations_service_with_mocks(
     """
     service = CellOperationsService(
         cell_quota_service=mock_cell_quota_service,
-        model_service=mock_model_service,
+        representation_model_service=mock_model_service,
     )
 
     return service

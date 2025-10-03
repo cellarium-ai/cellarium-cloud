@@ -21,7 +21,7 @@ from casp.services import settings
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.services import exceptions
 from casp.services.api.services.cell_operations_service import CellOperationsService
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
+from casp.services.api.services.annotation_engines import CellOntologyResource
 from casp.services.constants import ContextKeys
 from casp.services.db import models
 from tests.unit.fixtures import constants, mocks
@@ -193,7 +193,7 @@ async def test_get_knn_matches_from_embeddings(
     # embeddings = np.random.rand(10, 64)  # A chunk of 5 embeddings, each of 64 dimensions
     embeddings, _, _ = embedding_test_data
     service = cell_operations_service_with_mocks
-    result = await service.get_knn_matches_from_embeddings(embeddings=embeddings, model=cas_model)
+    result = await service.get_knn_matches_from_embeddings(model_output=embeddings, model=cas_model)
 
     assert isinstance(result, MatchResult)
     assert len(result.matches) == len(embeddings)
@@ -351,7 +351,7 @@ def patch_strategy_init_with_resource(
 
     :param cell_ontology_resource_mock: Mocked ontology resource for the consensus strategy.
     """
-    patch_ref = "casp.services.api.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
+    patch_ref = "casp.services.api.services.annotation_engines.CellTypeOntologyAwareConsensusStrategy.__init__"
 
     with patch(patch_ref, autospec=True) as mock_init:
         # Define a side effect that injects the mocked resource

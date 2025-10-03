@@ -55,7 +55,8 @@ def create_engine() -> sqlalchemy.engine.base.Engine:
             max_overflow=settings.DB_CONNECTION_POOL_MAX_OVERFLOW,
             pool_timeout=settings.DB_CONNECTION_POOL_TIMEOUT,
             pool_recycle=settings.DB_CONNECTION_POOL_RECYCLE,
-            echo=settings.ENVIRONMENT == "local",
+            # echo=settings.ENVIRONMENT == "local",
+            echo=False
         )
 
 
