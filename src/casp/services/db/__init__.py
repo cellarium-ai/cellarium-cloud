@@ -56,7 +56,7 @@ def create_engine() -> sqlalchemy.engine.base.Engine:
             pool_timeout=settings.DB_CONNECTION_POOL_TIMEOUT,
             pool_recycle=settings.DB_CONNECTION_POOL_RECYCLE,
             # echo=settings.ENVIRONMENT == "local",
-            echo=False
+            echo=False,
         )
 
 

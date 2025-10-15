@@ -4,10 +4,8 @@ from io import BytesIO
 
 import anndata
 import numpy as np
-import pandas as pd
 from cellarium.ml import CellariumAnnDataDataModule, CellariumModule
 from smart_open import open
-
 
 from casp.services import settings
 from casp.services.db import models
@@ -183,26 +181,25 @@ class ClassificationModelInferenceService(CheckpointLoaderMixin, ModelInferenceS
 
         :return: Tuple of embeddings, categories and sample_ids.
         """
-        from cellarium.ml.data.fileio import read_pkl_from_gcs
 
         if "cell_type_ontology_term_id" not in adata.obs:
             adata.obs["cell_type_ontology_term_id"] = "CL_DUMMY"
 
         cellarium_module = cls._load_module_from_checkpoint(model_file_path=model.model_file_path)
 
-        # cellarium_module.model.actual_categories = 670  # total cell type categories to predict
-        cellarium_module.model.actual_categories = 2914  # total cell type categories to predict
-        cellarium_module.model.valid_mask = read_pkl_from_gcs(
-            "gs://cellarium-file-system-cas-archive/curriculum/lrexp_human_validation_split_20241126/shared_meta/2914_socam_mask.pkl"
-        )
-        cellarium_module.model.target_row_descendent_col_torch_tensor = read_pkl_from_gcs(
-            "gs://cellarium-file-system-cas-archive/curriculum/lrexp_human_validation_split_20241126/shared_meta/2914_target_row_descendent_col_torch_tensor_lrexp_human.pkl"
-        )
-        cellarium_module.model.probability_propagation_flag = True  # used for both training and validation
-
-        cellarium_module.model.y_categories = read_pkl_from_gcs(
-            "gs://cellarium-file-system-cas-archive/curriculum/lrexp_human_validation_split_20241126/shared_meta/sorted_2914_cell_type_names.pkl"
-        )
+        cellarium_module.model.actual_categories = 670  # total cell type categories to predict
+        # cellarium_module.model.actual_categories = 2914  # total cell type categories to predict
+        # cellarium_module.model.valid_mask = read_pkl_from_gcs(
+        #     "gs://cellarium-file-system-cas-archive/curriculum/lrexp_human_validation_split_20241126/shared_meta/2914_socam_mask.pkl"
+        # )
+        # cellarium_module.model.target_row_descendent_col_torch_tensor = read_pkl_from_gcs(
+        #     "gs://cellarium-file-system-cas-archive/curriculum/lrexp_human_validation_split_20241126/shared_meta/2914_target_row_descendent_col_torch_tensor_lrexp_human.pkl"
+        # )
+        # cellarium_module.model.probability_propagation_flag = True  # used for both training and validation
+        #
+        # cellarium_module.model.y_categories = read_pkl_from_gcs(
+        #     "gs://cellarium-file-system-cas-archive/curriculum/lrexp_human_validation_split_20241126/shared_meta/sorted_2914_cell_type_names.pkl"
+        # )
         cellarium_data_module = cls._load_data_module_from_checkpoint(
             model_file_path=model.model_file_path, adata=adata
         )
@@ -212,14 +209,11 @@ class ClassificationModelInferenceService(CheckpointLoaderMixin, ModelInferenceS
         forward_output_dict = cellarium_module.forward(batch)
 
         probabilities = forward_output_dict["cell_type_probs_nc"].detach().numpy()
-        # import torch
-        # probabilities = forward_output_dict["y_logits_nc"]
-        # probabilities = torch.nn.functional.softmax(probabilities.to(dtype=torch.float), dim=1).detach().numpy()
 
-        # labels = cellarium_module.model.y_categories.tolist()
-        labels = read_pkl_from_gcs(
-            "gs://cellarium-file-system-cas-archive/curriculum/lrexp_human_validation_split_20241126/shared_meta/sorted_2914_cell_type_names.pkl"
-        ).tolist()
+        labels = cellarium_module.model.y_categories.tolist()
+        # labels = read_pkl_from_gcs(
+        #     "gs://cellarium-file-system-cas-archive/curriculum/lrexp_human_validation_split_20241126/shared_meta/sorted_2914_cell_type_names.pkl"
+        # ).tolist()
 
         sample_ids = adata.obs.index.tolist()
         return probabilities, labels, sample_ids
@@ -236,7 +230,7 @@ class ClassificationModelInferenceService(CheckpointLoaderMixin, ModelInferenceS
         """
         if probabilities.shape[0] != len(sample_ids):
             raise exceptions.ModelOutputError(
-                f"Model output probabilities dimension doesn't correspond to input data length"
+                "Model output probabilities dimension doesn't correspond to input data length"
             )
 
     @classmethod

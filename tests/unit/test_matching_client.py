@@ -65,7 +65,7 @@ class TestMatchingClient:
                     neighbors=[MatchResult.Neighbor(cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2])]
                 )
             ],
-            sample_ids=["sample_0"]
+            sample_ids=["sample_0"],
         )
         match2 = MatchResult(
             matches=[
@@ -73,7 +73,7 @@ class TestMatchingClient:
                     neighbors=[MatchResult.Neighbor(cas_cell_index="1", distance=1.0, feature_vector=[10, 11, 12])]
                 )
             ],
-            sample_ids=["sample_1"]
+            sample_ids=["sample_1"],
         )
 
         assert match1.concat(match2) == MatchResult(
@@ -89,7 +89,7 @@ class TestMatchingClient:
                     ]
                 ),
             ],
-            sample_ids=["sample_0", "sample_1"]
+            sample_ids=["sample_0", "sample_1"],
         )
 
     @parameterized.expand(
@@ -114,7 +114,7 @@ class TestMatchingClient:
                             ]
                         )
                     ],
-                    sample_ids=["sample_0"]
+                    sample_ids=["sample_0"],
                 ),
             ),
             (
@@ -145,7 +145,7 @@ class TestMatchingClient:
                             ]
                         ),
                     ],
-                    sample_ids=["sample_0", "sample_1"]
+                    sample_ids=["sample_0", "sample_1"],
                 ),
             ),
         ]
@@ -184,7 +184,9 @@ class TestMatchingClient:
             )
         ).thenReturn(async_return(client_response))
 
-        when(match_client)._MatchingClientREST__adapt_result(result=client_response, sample_ids=sample_ids).thenCallOriginalImplementation()
+        when(match_client)._MatchingClientREST__adapt_result(
+            result=client_response, sample_ids=sample_ids
+        ).thenCallOriginalImplementation()
         when(match_client).match(queries, sample_ids).thenCallOriginalImplementation()
 
         assert await match_client.match(queries, sample_ids) == expected_response
@@ -212,7 +214,7 @@ class TestMatchingClient:
                             ]
                         )
                     ],
-                    sample_ids=["sample_0"]
+                    sample_ids=["sample_0"],
                 ),
             ),
             (
@@ -247,7 +249,7 @@ class TestMatchingClient:
                             ]
                         ),
                     ],
-                    sample_ids=["sample_0", "sample_1"]
+                    sample_ids=["sample_0", "sample_1"],
                 ),
             ),
         ]
@@ -281,6 +283,8 @@ class TestMatchingClient:
             num_neighbors=GRPC_INDEX.num_neighbors,
         ).thenReturn(client_response)
 
-        when(match_client)._MatchingClientGRPC__adapt_result(result=client_response, sample_ids=sample_ids).thenCallOriginalImplementation()
+        when(match_client)._MatchingClientGRPC__adapt_result(
+            result=client_response, sample_ids=sample_ids
+        ).thenCallOriginalImplementation()
         when(match_client).match(queries, sample_ids).thenCallOriginalImplementation()
         assert await match_client.match(queries, sample_ids) == expected_response

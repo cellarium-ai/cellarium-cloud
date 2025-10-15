@@ -20,8 +20,8 @@ from starlette_context.ctx import _request_scope_context_storage
 from casp.services import settings
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.services import exceptions
-from casp.services.api.services.cell_operations_service import CellOperationsService
 from casp.services.api.services.annotation_engines.shared_resources import CellOntologyResource
+from casp.services.api.services.cell_operations_service import CellOperationsService
 from casp.services.constants import ContextKeys
 from casp.services.db import models
 from casp.services.model_inference.schemas import RepresentationModelOutput
@@ -117,7 +117,7 @@ def test__split_embeddings_into_chunks(embedding_test_data: t.Tuple[np.ndarray, 
     embeddings, chunk_size, expected_num_chunks = embedding_test_data
     sample_ids = [f"cell_{i}" for i in range(len(embeddings))]
     model_output = RepresentationModelOutput(embeddings=embeddings, sample_ids=sample_ids)
-    
+
     chunks = CellOperationsService._CellOperationsService__split_representation_output(model_output, chunk_size)
 
     # Assert
@@ -179,7 +179,7 @@ async def test__get_knn_matches_for_chunk(
     assert mock_matching_client.match.await_count == 1
     # Verify sample_ids were passed correctly
     call_args = mock_matching_client.match.await_args
-    assert call_args.kwargs['sample_ids'] == sample_ids
+    assert call_args.kwargs["sample_ids"] == sample_ids
 
 
 @pytest.mark.asyncio
@@ -209,7 +209,7 @@ async def test_get_knn_matches_from_embeddings(
     embeddings, _, _ = embedding_test_data
     sample_ids = [f"cell_{i}" for i in range(len(embeddings))]
     model_output = RepresentationModelOutput(embeddings=embeddings, sample_ids=sample_ids)
-    
+
     service = cell_operations_service_with_mocks
     result = await service.get_knn_matches_from_embeddings(model_output=model_output, model=cas_model)
 

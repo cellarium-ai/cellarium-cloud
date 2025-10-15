@@ -2,6 +2,7 @@ import typing as t
 from collections import defaultdict
 
 import numpy as np
+
 from casp.services.api import schemas
 from casp.services.api.services.annotation_engines.model_interpretation_engine.strategies.base import (
     ModelInterpretationStrategyInterface,

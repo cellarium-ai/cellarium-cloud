@@ -6,7 +6,9 @@ import numpy as np
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.data_manager import CellOperationsDataManager
-from casp.services.api.services.annotation_engines.ann_consensus_engine.strategies.base import ConsensusStrategyInterface
+from casp.services.api.services.annotation_engines.ann_consensus_engine.strategies.base import (
+    ConsensusStrategyInterface,
+)
 
 
 class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):

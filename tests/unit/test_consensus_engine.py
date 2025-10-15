@@ -13,7 +13,6 @@ import pytest
 
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
-from casp.services.api.services import annotation_engines
 from casp.services.api.services.annotation_engines import ann_consensus_engine
 from casp.services.api.services.annotation_engines.shared_resources import CellOntologyResource
 
@@ -120,7 +119,9 @@ def consensus_engine_summary_stats_mock(
     :param cell_operations_dm_mock: A fixture providing a mocked `CellOperationsDataManager` instance.
     :return: instance of :class:`ann_consensus_engine.ConsensusEngine`
     """
-    strategy = ann_consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(cell_operations_dm=cell_operations_dm_mock)
+    strategy = ann_consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
+        cell_operations_dm=cell_operations_dm_mock
+    )
     return ann_consensus_engine.ConsensusEngine(strategy=strategy)
 
 
@@ -140,7 +141,7 @@ def knn_query_result_mock() -> MatchResult:
                 ]
             ),
         ],
-        sample_ids=["query_ACGTGCTGATG_1"]
+        sample_ids=["query_ACGTGCTGATG_1"],
     )
 
 

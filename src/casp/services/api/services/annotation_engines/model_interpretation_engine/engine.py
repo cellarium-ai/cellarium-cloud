@@ -1,8 +1,11 @@
 import asyncio
 
 from casp.services.api import schemas
-from casp.services.api.services.annotation_engines.model_interpretation_engine import ModelInterpretationStrategyInterface
+from casp.services.api.services.annotation_engines.model_interpretation_engine import (
+    ModelInterpretationStrategyInterface,
+)
 from casp.services.model_inference.schemas import ModelInferenceOutputBase
+
 
 class ModelInterpretationEngine:
     """

@@ -22,7 +22,7 @@ from casp.services.api.services import Authorizer, annotation_engines, exception
 from casp.services.api.services.cell_quota_service import CellQuotaService
 from casp.services.db import models
 from casp.services.model_inference import services
-from casp.services.model_inference.schemas import RepresentationModelOutput, ClassificationModelOutput
+from casp.services.model_inference.schemas import ClassificationModelOutput, RepresentationModelOutput
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 

@@ -4,8 +4,8 @@ import typing as t
 import pytest
 
 from casp.services.api import services
-from casp.services.api.services.cell_operations_service import CellOperationsService
 from casp.services.api.services.annotation_engines.shared_resources import CellOntologyResource
+from casp.services.api.services.cell_operations_service import CellOperationsService
 from casp.services.model_inference.services import RepresentationModelInferenceService
 from tests.unit.fixtures import mocks
 

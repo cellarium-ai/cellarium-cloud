@@ -1,16 +1,16 @@
 from casp.services.api.schemas.cell_operations import (  # noqa
+    AnnotationSummaryOntologyAware,
     CacheInfo,
     CellariumCellByIdsInput,
     CellariumCellMetadata,
     NeighborhoodCellTypeSummaryStatistics,
-    AnnotationSummaryOntologyAware,
     QueryAnnotationAbstractType,
     QueryAnnotationCellTypeSummaryStatisticsType,
     QueryAnnotationOntologyAwareType,
     QueryAnnotationType,
     QueryCellAnnotationAbstract,
-    QueryCellNeighborhoodCellTypeSummaryStatistics,
     QueryCellAnnotationOntologyAware,
+    QueryCellNeighborhoodCellTypeSummaryStatistics,
     SearchQueryCellResult,
 )
 from casp.services.api.schemas.cellarium_general import (  # noqa

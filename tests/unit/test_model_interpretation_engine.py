@@ -6,8 +6,6 @@ OntologyAncestorUpliftStrategy which processes classification model outputs and 
 probabilities to ontology ancestors.
 """
 
-import typing as t
-
 import numpy as np
 import pytest
 
@@ -54,10 +52,12 @@ def mock_classification_output() -> ClassificationModelOutput:
     :return: ClassificationModelOutput with synthetic probabilities.
     """
     # Simulate 2 cells with probabilities for 5 classes
-    probabilities = np.array([
-        [0.6, 0.2, 0.1, 0.05, 0.05],  # Cell 0: high confidence for class 0
-        [0.1, 0.1, 0.5, 0.2, 0.1],    # Cell 1: high confidence for class 2
-    ])
+    probabilities = np.array(
+        [
+            [0.6, 0.2, 0.1, 0.05, 0.05],  # Cell 0: high confidence for class 0
+            [0.1, 0.1, 0.5, 0.2, 0.1],  # Cell 1: high confidence for class 2
+        ]
+    )
     labels = ["CL_0000624", "CL_0000625", "CL_0000084", "CL_0000576", "CL_0000232"]
     sample_ids = ["cell_0", "cell_1"]
 
@@ -136,9 +136,9 @@ def test_ontology_ancestor_uplift_with_prune_threshold(
     # First cell should have fewer matches due to pruning
     first_cell = result[0]
     scores = [match.score for match in first_cell.matches]
-    assert all(score >= 0.15 or len(first_cell.matches) == 1 for score in scores), (
-        "All scores should be >= threshold (or single match if all pruned)"
-    )
+    assert all(
+        score >= 0.15 or len(first_cell.matches) == 1 for score in scores
+    ), "All scores should be >= threshold (or single match if all pruned)"
 
 
 def test_ontology_ancestor_uplift_with_decay(

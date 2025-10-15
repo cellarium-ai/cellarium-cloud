@@ -8,8 +8,11 @@ import numpy as np
 from casp.services.api import data_manager, schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.db import models
-from casp.services.model_inference.services import RepresentationModelInferenceService, ClassificationModelInferenceService
 from casp.services.model_inference import schemas as model_schemas
+from casp.services.model_inference.services import (
+    ClassificationModelInferenceService,
+    RepresentationModelInferenceService,
+)
 from tests.unit.fixtures import constants
 
 
@@ -125,7 +128,7 @@ class MockRepresentationModelService(RepresentationModelInferenceService):
 
         # Trackable mock methods with side effects
         self.embed_adata = MagicMock(side_effect=self._mock_embed_adata)
-    
+
     @classmethod
     def run_inference(cls, adata: anndata.AnnData, model: models.CASModel) -> model_schemas.RepresentationModelOutput:
         """
@@ -171,7 +174,7 @@ class MockClassificationModelService(ClassificationModelInferenceService):
         """
         super().__init__()
         self.num_classes = num_classes
-    
+
     @classmethod
     def run_inference(cls, adata: anndata.AnnData, model: models.CASModel) -> model_schemas.ClassificationModelOutput:
         """
