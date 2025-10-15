@@ -14,6 +14,7 @@ import pytest
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.services import annotation_engines
+from casp.services.api.services.annotation_engines import ann_consensus_engine
 from casp.services.api.services.annotation_engines.shared_resources import CellOntologyResource
 
 
@@ -91,36 +92,36 @@ def cell_operations_dm_mock() -> Mock:
 @pytest.fixture
 def consensus_engine_ontology_aware_mock(
     cell_ontology_resource_mock: CellOntologyResource, cell_operations_dm_mock: Mock
-) -> annotation_engines.ConsensusEngine:
+) -> ann_consensus_engine.ConsensusEngine:
     """
     Fixture to provide a `ConsensusEngine` instance with ontology aware strategy and mocked dependencies.
 
     :param cell_ontology_resource_mock: A fixture providing a mocked `CellOntologyResource` instance.
     :param cell_operations_dm_mock: A fixture providing a mocked `CellOperationsDataManager` instance.
-    :return: instance of :class:`annotation_engines.ConsensusEngine`
+    :return: instance of :class:`ann_consensus_engine.ConsensusEngine`
     """
-    strategy = annotation_engines.CellTypeOntologyAwareConsensusStrategy(
+    strategy = ann_consensus_engine.CellTypeOntologyAwareConsensusStrategy(
         prune_threshold=0.1,
         weighting_prefactor=1.0,
         cell_ontology_resource=cell_ontology_resource_mock,
         cell_operations_dm=cell_operations_dm_mock,
     )
-    return annotation_engines.ConsensusEngine(strategy=strategy)
+    return ann_consensus_engine.ConsensusEngine(strategy=strategy)
 
 
 @pytest.fixture
 def consensus_engine_summary_stats_mock(
     cell_ontology_resource_mock: CellOntologyResource, cell_operations_dm_mock: Mock
-) -> annotation_engines.ConsensusEngine:
+) -> ann_consensus_engine.ConsensusEngine:
     """
     Fixture to provide a `ConsensusEngine` instance with summary stats strategy and mocked dependencies.
 
     :param cell_ontology_resource_mock: A fixture providing a mocked `CellOntologyResource` instance.
     :param cell_operations_dm_mock: A fixture providing a mocked `CellOperationsDataManager` instance.
-    :return: instance of :class:`annotation_engines.ConsensusEngine`
+    :return: instance of :class:`ann_consensus_engine.ConsensusEngine`
     """
-    strategy = annotation_engines.CellTypeSummaryStatisticsConsensusStrategy(cell_operations_dm=cell_operations_dm_mock)
-    return annotation_engines.ConsensusEngine(strategy=strategy)
+    strategy = ann_consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(cell_operations_dm=cell_operations_dm_mock)
+    return ann_consensus_engine.ConsensusEngine(strategy=strategy)
 
 
 @pytest.fixture
@@ -138,12 +139,13 @@ def knn_query_result_mock() -> MatchResult:
                     MatchResult.Neighbor(cas_cell_index="1384010152", distance=0.87),
                 ]
             ),
-        ]
+        ],
+        sample_ids=["query_ACGTGCTGATG_1"]
     )
 
 
 def test_summarize_query_neighbor_context_ontology_aware(
-    consensus_engine_ontology_aware_mock: annotation_engines.ConsensusEngine, knn_query_result_mock: MatchResult
+    consensus_engine_ontology_aware_mock: ann_consensus_engine.ConsensusEngine, knn_query_result_mock: MatchResult
 ):
     """
     Test the ontology-aware query neighbor context summarization.
@@ -162,9 +164,7 @@ def test_summarize_query_neighbor_context_ontology_aware(
         dependencies.
     :param knn_query_result_mock: Mocked `MatchResult` data to simulate neighbor matching results.
     """
-    query_ids = ["query_ACGTGCTGATG_1"]
-
-    result = consensus_engine_ontology_aware_mock.summarize(query_ids=query_ids, knn_query=knn_query_result_mock)
+    result = consensus_engine_ontology_aware_mock.summarize(knn_query=knn_query_result_mock)
     expected = load_expected_response_ontology_aware()
     # Assertions to validate the output
     assert isinstance(result, list), "The result should be a list"
@@ -176,7 +176,7 @@ def test_summarize_query_neighbor_context_ontology_aware(
 
 
 def test_summarize_query_neighbor_context_summary_stats(
-    consensus_engine_summary_stats_mock: annotation_engines.ConsensusEngine, knn_query_result_mock: MatchResult
+    consensus_engine_summary_stats_mock: ann_consensus_engine.ConsensusEngine, knn_query_result_mock: MatchResult
 ):
     """
     Test the summary stats query neighbor context summarization.
@@ -195,8 +195,7 @@ def test_summarize_query_neighbor_context_summary_stats(
         instance with mocked dependencies.
     :param knn_query_result_mock: Mocked `MatchResult` data to simulate neighbor matching results.
     """
-    query_ids = ["query_ACGTGCTGATG_1"]
-    result = consensus_engine_summary_stats_mock.summarize(query_ids=query_ids, knn_query=knn_query_result_mock)
+    result = consensus_engine_summary_stats_mock.summarize(knn_query=knn_query_result_mock)
     expected = load_expected_response_summary_stats()
     assert isinstance(result, list), "The result should be a list"
     assert all(

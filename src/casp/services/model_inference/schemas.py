@@ -7,9 +7,9 @@ class ModelInferenceOutputBase(BaseModel):
 
 
 class RepresentationModelOutput(ModelInferenceOutputBase):
-    embeddings: t.Iterable
+    embeddings: t.Any  # numpy array or array-like
 
 
 class ClassificationModelOutput(ModelInferenceOutputBase):
-    probabilities: t.Iterable
+    probabilities: t.Any  # numpy array or array-like
     labels: t.Sequence[str]

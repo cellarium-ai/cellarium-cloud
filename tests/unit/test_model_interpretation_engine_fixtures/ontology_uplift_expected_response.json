@@ -1,0 +1,63 @@
+[
+  {
+    "query_cell_id": "cell_0",
+    "matches": [
+      {
+        "score": 0.6,
+        "cell_type_ontology_term_id": "CL_0000624",
+        "cell_type": "CD4-positive, alpha-beta T cell"
+      },
+      {
+        "score": 0.6,
+        "cell_type_ontology_term_id": "CL_0000084",
+        "cell_type": "T cell"
+      },
+      {
+        "score": 0.6,
+        "cell_type_ontology_term_id": "CL_0000542",
+        "cell_type": "lymphocyte"
+      },
+      {
+        "score": 0.6,
+        "cell_type_ontology_term_id": "CL_0000000",
+        "cell_type": "cell"
+      },
+      {
+        "score": 0.2,
+        "cell_type_ontology_term_id": "CL_0000625",
+        "cell_type": "CD8-positive, alpha-beta T cell"
+      }
+    ],
+    "total_weight": 0,
+    "total_neighbors": 0,
+    "total_neighbors_unrecognized": 0
+  },
+  {
+    "query_cell_id": "cell_1",
+    "matches": [
+      {
+        "score": 0.5,
+        "cell_type_ontology_term_id": "CL_0000084",
+        "cell_type": "T cell"
+      },
+      {
+        "score": 0.5,
+        "cell_type_ontology_term_id": "CL_0000542",
+        "cell_type": "lymphocyte"
+      },
+      {
+        "score": 0.5,
+        "cell_type_ontology_term_id": "CL_0000000",
+        "cell_type": "cell"
+      },
+      {
+        "score": 0.2,
+        "cell_type_ontology_term_id": "CL_0000576",
+        "cell_type": "monocyte"
+      }
+    ],
+    "total_weight": 0,
+    "total_neighbors": 0,
+    "total_neighbors_unrecognized": 0
+  }
+]

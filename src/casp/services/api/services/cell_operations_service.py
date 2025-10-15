@@ -378,7 +378,7 @@ class CellOperationsService:
 
         :return: JSON response with annotations.
         """
-        query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
+        knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         strategy = annotation_engines.ann_consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,

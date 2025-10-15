@@ -8,7 +8,8 @@ import numpy as np
 from casp.services.api import data_manager, schemas
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.db import models
-from casp.services.model_inference.services import RepresentationModelInferenceService
+from casp.services.model_inference.services import RepresentationModelInferenceService, ClassificationModelInferenceService
+from casp.services.model_inference import schemas as model_schemas
 from tests.unit.fixtures import constants
 
 
@@ -71,7 +72,7 @@ class MockMatchingClient(AsyncMock):
         self.cell_info_data = cell_info_data
         self.match = AsyncMock(side_effect=self._match_side_effect)
 
-    async def _match_side_effect(self, queries: t.List[t.Any]) -> MatchResult:
+    async def _match_side_effect(self, queries: t.List[t.Any], sample_ids: t.List[str]) -> MatchResult:
         """
         Simulates the `match` method of the MatchingClient.
 
@@ -104,7 +105,7 @@ class MockMatchingClient(AsyncMock):
                     ]
                 )
             )
-        return MatchResult(matches=matches)
+        return MatchResult(matches=matches, sample_ids=sample_ids)
 
 
 class MockRepresentationModelService(RepresentationModelInferenceService):
@@ -118,12 +119,26 @@ class MockRepresentationModelService(RepresentationModelInferenceService):
         """
         Initialize the mock model service.
 
-        The `embed_adata` method is mocked with a realistic side effect to simulate embedding generation.
+        The `embed_adata` and `run_inference` methods are mocked with realistic side effects.
         """
         super().__init__()  # Safely call the base class initializer if needed.
 
         # Trackable mock methods with side effects
         self.embed_adata = MagicMock(side_effect=self._mock_embed_adata)
+    
+    @classmethod
+    def run_inference(cls, adata: anndata.AnnData, model: models.CASModel) -> model_schemas.RepresentationModelOutput:
+        """
+        Mock run_inference to avoid loading actual models from GCS.
+
+        :param adata: Anndata object containing cell data.
+        :param model: CASModel instance specifying the model to use.
+
+        :return: RepresentationModelOutput with mock embeddings.
+        """
+        obs_ids = adata.obs_names.tolist()
+        random_embeddings = np.random.rand(len(obs_ids), 32)
+        return model_schemas.RepresentationModelOutput(embeddings=random_embeddings, sample_ids=obs_ids)
 
     def _mock_embed_adata(self, adata: anndata.AnnData, model: models.CASModel) -> t.Tuple[t.List[str], np.ndarray]:
         """
@@ -139,3 +154,68 @@ class MockRepresentationModelService(RepresentationModelInferenceService):
         obs_ids = adata.obs_names.tolist()
         random_embeddings = np.random.rand(len(obs_ids), 32)
         return obs_ids, random_embeddings
+
+
+class MockClassificationModelService(ClassificationModelInferenceService):
+    """
+    Mocked version of `ClassificationModelInferenceService` to simulate classification behavior for unit tests.
+
+    This mock tracks method calls and generates synthetic probabilities for input data.
+    """
+
+    def __init__(self, num_classes: int = 10):
+        """
+        Initialize the mock classification model service.
+
+        :param num_classes: Number of classification categories to simulate.
+        """
+        super().__init__()
+        self.num_classes = num_classes
+    
+    @classmethod
+    def run_inference(cls, adata: anndata.AnnData, model: models.CASModel) -> model_schemas.ClassificationModelOutput:
+        """
+        Mock run_inference to avoid loading actual models from GCS.
+
+        :param adata: Anndata object containing cell data.
+        :param model: CASModel instance specifying the model to use.
+
+        :return: ClassificationModelOutput with mock probabilities.
+        """
+        sample_ids = adata.obs_names.tolist()
+        n_cells = len(sample_ids)
+        num_classes = 10  # Default number of classes
+
+        # Generate random probabilities that sum to 1 for each cell
+        probabilities = np.random.dirichlet(np.ones(num_classes), size=n_cells)
+
+        # Generate mock labels (e.g., CL_0000001, CL_0000002, ...)
+        labels = [f"CL_{str(i).zfill(7)}" for i in range(num_classes)]
+
+        return model_schemas.ClassificationModelOutput(
+            probabilities=probabilities, labels=labels, sample_ids=sample_ids
+        )
+
+    def _mock_run_inference(
+        self, adata: anndata.AnnData, model: models.CASModel
+    ) -> model_schemas.ClassificationModelOutput:
+        """
+        Side effect method for `run_inference` to simulate classification output generation.
+
+        :param adata: Anndata object containing cell data.
+        :param model: CASModel instance specifying the model to use.
+
+        :return: ClassificationModelOutput with probabilities, labels, and sample_ids.
+        """
+        sample_ids = adata.obs_names.tolist()
+        n_cells = len(sample_ids)
+
+        # Generate random probabilities that sum to 1 for each cell
+        probabilities = np.random.dirichlet(np.ones(self.num_classes), size=n_cells)
+
+        # Generate mock labels (e.g., CL_0000001, CL_0000002, ...)
+        labels = [f"CL_{str(i).zfill(7)}" for i in range(self.num_classes)]
+
+        return model_schemas.ClassificationModelOutput(
+            probabilities=probabilities, labels=labels, sample_ids=sample_ids
+        )

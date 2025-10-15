@@ -109,6 +109,7 @@ def populate_db(
         admin_use_only=constants.TEST_MODEL_ADMIN_USE_ONLY,
         model_file_path=constants.TEST_MODEL_FILE_PATH,
         embedding_dimension=constants.TEST_EMBEDDING_DIMENSION,
+        is_representation_model=True,
     )
     # Add index
     cas_matching_engine_index = models.CASMatchingEngineIndex(
