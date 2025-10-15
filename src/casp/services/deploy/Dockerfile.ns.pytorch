@@ -40,6 +40,8 @@ RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/wh
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir --no-deps \
+  "cellarium-ml @ https://github.com/cellarium-ai/cellarium-ml/archive/c789ca152a9c6a209249d86a80bbb7c1abacdae1.zip"
 
 # Copy Files
 COPY src .
