@@ -2,7 +2,9 @@ import asyncio
 
 from casp.services.api import schemas
 from casp.services.api.clients.matching_client import MatchResult
-from casp.services.api.services.annotation_engines.ann_consensus_engine import ConsensusStrategyInterface
+from casp.services.api.services.annotation_engines.ann_consensus_engine.strategies.base import (
+    ConsensusStrategyInterface,
+)
 
 
 class ConsensusEngine:

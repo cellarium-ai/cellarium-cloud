@@ -85,31 +85,6 @@ class OntologyAncestorUpliftStrategy(ModelInterpretationStrategyInterface):
             total_neighbors_unrecognized=0,
         )
 
-        # root_node_cell_type = self.cell_ontology_resource.ontology_term_id_to_name_dict.get(
-        #     ROOT_NODE_CL_LABEL, ROOT_NODE_CL_LABEL
-        # )
-        # root_node_annotation = schemas.AnnotationSummaryOntologyAware(
-        #     score=1, cell_type_ontology_term_id=ROOT_NODE_CL_LABEL, cell_type=root_node_cell_type
-        # )
-        # matches = [root_node_annotation]
-        # for cl_class, probability in zip(cl_classes_from_model, probabilities):
-        #     if probability >= self.prune_threshold:
-        #         matches.append(
-        #             schemas.AnnotationSummaryOntologyAware(
-        #                 score=probability,
-        #                 cell_type_ontology_term_id=cl_class,
-        #                 cell_type=self.cell_ontology_resource.ontology_term_id_to_name_dict.get(cl_class, cl_class),
-        #             )
-        #         )
-
-        return schemas.QueryCellAnnotationOntologyAware(
-            query_cell_id=query_cell_id,
-            matches=matches,
-            total_weight=0,
-            total_neighbors=0,
-            total_neighbors_unrecognized=0,
-        )
-
     def summarize(self, model_output: ClassificationModelOutput) -> t.List[schemas.QueryCellAnnotationAbstract]:
         # normalize your IDs once; make sure your resource uses the same convention
         model_terms = [x.replace(":", "_") for x in model_output.labels]
