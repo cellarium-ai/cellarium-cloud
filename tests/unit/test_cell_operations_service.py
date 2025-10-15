@@ -20,10 +20,11 @@ from starlette_context.ctx import _request_scope_context_storage
 from casp.services import settings
 from casp.services.api.clients.matching_client import MatchResult
 from casp.services.api.services import exceptions
+from casp.services.api.services.annotation_engines.shared_resources import CellOntologyResource
 from casp.services.api.services.cell_operations_service import CellOperationsService
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 from casp.services.constants import ContextKeys
 from casp.services.db import models
+from casp.services.model_inference.schemas import RepresentationModelOutput
 from tests.unit.fixtures import constants, mocks
 
 
@@ -106,7 +107,7 @@ def embedding_test_data(request: pytest.FixtureRequest) -> t.Tuple[np.ndarray, i
 
 def test__split_embeddings_into_chunks(embedding_test_data: t.Tuple[np.ndarray, int, int]):
     """
-    Test the static method `_split_embeddings_into_chunks` for correctness.
+    Test the static method `__split_representation_output` for correctness.
 
     Validate that the method correctly splits embeddings into the specified chunk size,
     preserving data integrity and ensuring correct chunk counts.
@@ -114,7 +115,10 @@ def test__split_embeddings_into_chunks(embedding_test_data: t.Tuple[np.ndarray, 
     :param embedding_test_data: Embedding data for the test.
     """
     embeddings, chunk_size, expected_num_chunks = embedding_test_data
-    chunks = CellOperationsService._CellOperationsService__split_embeddings_into_chunks(embeddings, chunk_size)
+    sample_ids = [f"cell_{i}" for i in range(len(embeddings))]
+    model_output = RepresentationModelOutput(embeddings=embeddings, sample_ids=sample_ids)
+
+    chunks = CellOperationsService._CellOperationsService__split_representation_output(model_output, chunk_size)
 
     # Assert
     assert len(chunks) == expected_num_chunks
@@ -122,15 +126,21 @@ def test__split_embeddings_into_chunks(embedding_test_data: t.Tuple[np.ndarray, 
     # Validate the size of each chunk (all except for the last). Don't check if expected_num_chunks == 0
     if expected_num_chunks > 0:
         for chunk in chunks[:-1]:
-            assert len(chunk) == chunk_size
+            chunk_emb_array = np.array(chunk.embeddings)
+            assert len(chunk_emb_array) == chunk_size
+            assert len(chunk.sample_ids) == chunk_size
 
         # Validate the size of the last chunk
-        assert len(chunks[-1] <= chunk_size)
+        last_chunk_emb_array = np.array(chunks[-1].embeddings)
+        assert len(last_chunk_emb_array) <= chunk_size
+        assert len(chunks[-1].sample_ids) <= chunk_size
 
     # Validate that the data is correctly preserved across chunks
     if len(embeddings) > 0:
-        reconstructed = np.vstack(chunks)
-        np.testing.assert_array_equal(reconstructed, embeddings)
+        reconstructed_embeddings = np.vstack([np.array(chunk.embeddings) for chunk in chunks])
+        reconstructed_sample_ids = [sid for chunk in chunks for sid in chunk.sample_ids]
+        np.testing.assert_array_equal(reconstructed_embeddings, embeddings)
+        assert reconstructed_sample_ids == sample_ids
 
 
 @pytest.mark.asyncio
@@ -142,7 +152,7 @@ async def test__get_knn_matches_for_chunk(
     embedding_test_data: t.Tuple[np.ndarray, int, int],
 ):
     """
-    Test the private `_get_knn_matches_for_chunk` method.
+    Test the private `__get_knn_matches_for_chunk` method.
 
     Validate that the method retrieves nearest neighbors for a given chunk of embeddings using the mocked
     `MatchingClient`.
@@ -154,17 +164,22 @@ async def test__get_knn_matches_for_chunk(
     :param embedding_test_data: Embedding test data.
     """
     embeddings_chunk, _, _ = embedding_test_data
+    sample_ids = [f"cell_{i}" for i in range(len(embeddings_chunk))]
+    model_output_chunk = RepresentationModelOutput(embeddings=embeddings_chunk, sample_ids=sample_ids)
     service = cell_operations_service_with_mocks
 
     result = await service._CellOperationsService__get_knn_matches_for_chunk(
-        embeddings_chunk=embeddings_chunk, client=mock_matching_client
+        model_output_chunk=model_output_chunk, client=mock_matching_client
     )
 
     assert isinstance(result, MatchResult)
     assert len(result.matches) == len(embeddings_chunk)
 
-    # Ensure `match` was called with the correct arguments
-    mock_matching_client.match.assert_awaited_once_with(queries=embeddings_chunk)
+    # Ensure `match` was called once
+    assert mock_matching_client.match.await_count == 1
+    # Verify sample_ids were passed correctly
+    call_args = mock_matching_client.match.await_args
+    assert call_args.kwargs["sample_ids"] == sample_ids
 
 
 @pytest.mark.asyncio
@@ -192,8 +207,11 @@ async def test_get_knn_matches_from_embeddings(
     """
     # embeddings = np.random.rand(10, 64)  # A chunk of 5 embeddings, each of 64 dimensions
     embeddings, _, _ = embedding_test_data
+    sample_ids = [f"cell_{i}" for i in range(len(embeddings))]
+    model_output = RepresentationModelOutput(embeddings=embeddings, sample_ids=sample_ids)
+
     service = cell_operations_service_with_mocks
-    result = await service.get_knn_matches_from_embeddings(embeddings=embeddings, model=cas_model)
+    result = await service.get_knn_matches_from_embeddings(model_output=model_output, model=cas_model)
 
     assert isinstance(result, MatchResult)
     assert len(result.matches) == len(embeddings)
@@ -225,8 +243,9 @@ async def test_get_knn_matches(
     :param cas_model: CASModel instance from the test database.
     """
     service = cell_operations_service_with_mocks
-    query_ids, knn_response = await service.get_knn_matches(adata=mock_valid_anndata, model=cas_model)
+    knn_response = await service.get_knn_matches(adata=mock_valid_anndata, model=cas_model)
     assert len(knn_response.matches) == len(mock_valid_anndata.obs)
+    assert len(knn_response.sample_ids) == len(mock_valid_anndata.obs)
 
 
 @pytest.mark.asyncio
@@ -351,7 +370,7 @@ def patch_strategy_init_with_resource(
 
     :param cell_ontology_resource_mock: Mocked ontology resource for the consensus strategy.
     """
-    patch_ref = "casp.services.api.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
+    patch_ref = "casp.services.api.services.annotation_engines.ann_consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
 
     with patch(patch_ref, autospec=True) as mock_init:
         # Define a side effect that injects the mocked resource

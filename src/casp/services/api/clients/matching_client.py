@@ -1,7 +1,9 @@
 import typing as t
 
 from google.cloud import aiplatform_v1
-from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
+from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import (
+    MatchNeighbor,
+)
 from pydantic import BaseModel, Field
 
 from casp.services.api import clients
@@ -30,6 +32,7 @@ class MatchResult(BaseModel):
         neighbors: t.List["MatchResult.Neighbor"] = Field(default=[])
 
     matches: t.List["MatchResult.NearestNeighbors"] = Field(default=[])
+    sample_ids: t.List[str] = Field(default=[])
 
     def concat(self, other: "MatchResult") -> "MatchResult":
         """
@@ -39,9 +42,12 @@ class MatchResult(BaseModel):
 
         :return: The concatenated match result as a new instance of MatchResult.
         """
-        return MatchResult(matches=self.matches + other.matches)
+        return MatchResult(
+            matches=self.matches + other.matches,
+            sample_ids=self.sample_ids + other.sample_ids,
+        )
 
-    def get_unique_ids(self) -> t.List[int]:
+    def get_unique_neighbor_ids(self) -> t.List[int]:
         """
         Get unique cas cell ids across all neighbors in querying cells in :class:`MatchResult`
 
@@ -68,11 +74,12 @@ class MatchingClient:
     def __init__(self, index: models.CASMatchingEngineIndex):
         self.index = index
 
-    async def match(self, queries: t.List[t.List[float]]) -> MatchResult:
+    async def match(self, queries: t.Sequence[t.Sequence[float]], sample_ids: t.List[str]) -> MatchResult:
         """
         Match queries against the specified index.
 
         :param queries: The queries to match.
+        :param sample_ids: IDs of the input query data points
 
         :return: The match result.
         """
@@ -105,7 +112,8 @@ class MatchingClientGRPC(MatchingClient):
             index_endpoint_name=self.index.endpoint_id
         )
 
-    def __adapt_result(self, result: t.List[t.List[MatchNeighbor]]) -> MatchResult:
+    @staticmethod
+    def __adapt_result(result: t.List[t.List[MatchNeighbor]], sample_ids: t.List[str]) -> MatchResult:
         matches = []
         for query_result in result:
             neighbors = []
@@ -122,20 +130,21 @@ class MatchingClientGRPC(MatchingClient):
                     )
                 )
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
-        return MatchResult(matches=matches)
+        return MatchResult(matches=matches, sample_ids=sample_ids)
 
-    async def match(self, queries: t.List[t.List[float]]) -> MatchResult:
+    async def match(self, queries: t.Sequence[t.Sequence[float]], sample_ids: t.List[str]) -> MatchResult:
         """
         Match queries against the specified index using gRPC.
 
         :param queries: The queries to match.
+        :param sample_ids: IDs of the input query data points
 
         :return: The match result.
         """
         matches = self.index_endpoint_client.match(
             deployed_index_id=self.index.deployed_index_id, queries=queries, num_neighbors=self.index.num_neighbors
         )
-        return self.__adapt_result(matches)
+        return self.__adapt_result(result=matches, sample_ids=sample_ids)
 
 
 class MatchingClientREST(MatchingClient):
@@ -149,11 +158,12 @@ class MatchingClientREST(MatchingClient):
         client_options = {"api_endpoint": self.index.api_endpoint}
         self.vector_search_client = aiplatform_v1.MatchServiceAsyncClient(client_options=client_options)
 
-    def __adapt_result(self, result: aiplatform_v1.FindNeighborsResponse) -> MatchResult:
+    @staticmethod
+    def __adapt_result(result: aiplatform_v1.FindNeighborsResponse, sample_ids: t.List[str]) -> MatchResult:
         matches = []
-        for query_reqult in result.nearest_neighbors:
+        for query_result in result.nearest_neighbors:
             neighbors = []
-            for neighbor in query_reqult.neighbors:
+            for neighbor in query_result.neighbors:
                 # TODO: We have to make sure that index returns a distance, not a similarity score. All indexes
                 # that we use at the moment (DOT_PRODUCT_DISTANCE with L2_NORM_TYPE return cosine similarity instead of
                 # cosine distance. We have to develop a more sophisticated handler for index depending on its type.
@@ -166,13 +176,14 @@ class MatchingClientREST(MatchingClient):
                     )
                 )
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
-        return MatchResult(matches=matches)
+        return MatchResult(matches=matches, sample_ids=sample_ids)
 
-    async def match(self, queries: t.List[t.List[float]]) -> MatchResult:
+    async def match(self, queries: t.Sequence[t.Sequence[float]], sample_ids: t.List[str]) -> MatchResult:
         """
         Match queries against the specified index using REST.
 
         :param queries: The queries to match.
+        :param sample_ids: IDs of the input query data points
 
         :return: The match result.
         """
@@ -194,4 +205,4 @@ class MatchingClientREST(MatchingClient):
 
         # Send the request
         matches = await self.vector_search_client.find_neighbors(request)
-        return self.__adapt_result(matches)
+        return self.__adapt_result(result=matches, sample_ids=sample_ids)

@@ -4,9 +4,9 @@ import typing as t
 import pytest
 
 from casp.services.api import services
+from casp.services.api.services.annotation_engines.shared_resources import CellOntologyResource
 from casp.services.api.services.cell_operations_service import CellOperationsService
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
-from casp.services.model_inference.services import ModelInferenceService
+from casp.services.model_inference.services import RepresentationModelInferenceService
 from tests.unit.fixtures import mocks
 
 
@@ -21,31 +21,44 @@ def mock_cell_quota_service() -> services.CellQuotaService:
 
 
 @pytest.fixture
-def mock_model_service() -> mocks.MockModelService:
+def mock_representation_model_service() -> mocks.MockRepresentationModelService:
     """
-    Fixture for a mocked `ModelInferenceService` with embedding behavior.
+    Fixture for a mocked `RepresentationModelInferenceService` with embedding behavior.
 
-    :return: A mocked `ModelInferenceService` instance that generates random embeddings.
+    :return: A mocked `RepresentationModelInferenceService` instance that generates random embeddings.
     """
-    return mocks.MockModelService()
+    return mocks.MockRepresentationModelService()
+
+
+@pytest.fixture
+def mock_classification_model_service() -> mocks.MockClassificationModelService:
+    """
+    Fixture for a mocked `ClassificationModelInferenceService` with classification behavior.
+
+    :return: A mocked `ClassificationModelInferenceService` instance that generates random probabilities.
+    """
+    return mocks.MockClassificationModelService()
 
 
 @pytest.fixture
 def cell_operations_service_with_mocks(
     mock_cell_quota_service: services.CellQuotaService,
-    mock_model_service: ModelInferenceService,
+    mock_representation_model_service: RepresentationModelInferenceService,
+    mock_classification_model_service: mocks.MockClassificationModelService,
 ) -> CellOperationsService:
     """
     Fixture to provide a `CellOperationsService` with all mocked dependencies.
 
-    :param mock_cell_quota_service: Mocked `CellQuotaService`.
-    :param mock_model_service: Mocked `ModelInferenceService`.
+    :param mock_cell_quota_service: A fixture providing a mocked `CellQuotaService` instance.
+    :param mock_representation_model_service: A fixture providing a mocked `RepresentationModelInferenceService` instance.
+    :param mock_classification_model_service: A fixture providing a mocked `ClassificationModelInferenceService` instance.
 
-    :return: An instance of `CellOperationsService` with all dependencies mocked.
+    :return: A `CellOperationsService` instance with mocked dependencies.
     """
     service = CellOperationsService(
         cell_quota_service=mock_cell_quota_service,
-        model_service=mock_model_service,
+        representation_model_service=mock_representation_model_service,
+        classification_model_service=mock_classification_model_service,
     )
 
     return service

@@ -64,14 +64,16 @@ class TestMatchingClient:
                 MatchResult.NearestNeighbors(
                     neighbors=[MatchResult.Neighbor(cas_cell_index="0", distance=0.0, feature_vector=[0, 1, 2])]
                 )
-            ]
+            ],
+            sample_ids=["sample_0"],
         )
         match2 = MatchResult(
             matches=[
                 MatchResult.NearestNeighbors(
                     neighbors=[MatchResult.Neighbor(cas_cell_index="1", distance=1.0, feature_vector=[10, 11, 12])]
                 )
-            ]
+            ],
+            sample_ids=["sample_1"],
         )
 
         assert match1.concat(match2) == MatchResult(
@@ -86,14 +88,16 @@ class TestMatchingClient:
                         MatchResult.Neighbor(cas_cell_index="1", distance=1.0, feature_vector=[10, 11, 12]),
                     ]
                 ),
-            ]
+            ],
+            sample_ids=["sample_0", "sample_1"],
         )
 
     @parameterized.expand(
         [
-            ([], [], FindNeighborsResponse(), MatchResult()),
+            ([], [], [], FindNeighborsResponse(), MatchResult()),
             (
                 [[1, 2, 3]],
+                ["sample_0"],
                 [FindNeighborsRequest.Query(neighbor_count=3, datapoint=IndexDatapoint(feature_vector=[1, 2, 3]))],
                 # Note: reading from JSON so that we have a few examples of responses from the REST service.
                 Parse(
@@ -109,11 +113,13 @@ class TestMatchingClient:
                                 matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
                             ]
                         )
-                    ]
+                    ],
+                    sample_ids=["sample_0"],
                 ),
             ),
             (
                 [[1, 2, 3], [4, 5, 6]],
+                ["sample_0", "sample_1"],
                 [
                     FindNeighborsRequest.Query(neighbor_count=3, datapoint=IndexDatapoint(feature_vector=[1, 2, 3])),
                     FindNeighborsRequest.Query(neighbor_count=3, datapoint=IndexDatapoint(feature_vector=[4, 5, 6])),
@@ -138,7 +144,8 @@ class TestMatchingClient:
                                 matching_client.MatchResult.Neighbor(cas_cell_index="12", distance=0.6),
                             ]
                         ),
-                    ]
+                    ],
+                    sample_ids=["sample_0", "sample_1"],
                 ),
             ),
         ]
@@ -147,6 +154,7 @@ class TestMatchingClient:
     async def test_rest_client(
         self,
         queries: t.List[t.List[float]],
+        sample_ids: t.List[str],
         client_queries: t.List[FindNeighborsRequest.Query],
         client_response: FindNeighborsResponse,
         expected_response: MatchResult,
@@ -155,6 +163,7 @@ class TestMatchingClient:
         Test the REST matching client.
 
         :param queries: The ones that are sent into the match method.
+        :param sample_ids: Sample IDs corresponding to the queries.
         :param client_queries: The queries sent to the REST client (e.g. after translation)
         :param client_response: The response from the REST client (e.g. pre-parsing the response)
         :param expected_response: The expected response from the match method.
@@ -175,16 +184,19 @@ class TestMatchingClient:
             )
         ).thenReturn(async_return(client_response))
 
-        when(match_client)._MatchingClientREST__adapt_result(client_response).thenCallOriginalImplementation()
-        when(match_client).match(queries).thenCallOriginalImplementation()
+        when(match_client)._MatchingClientREST__adapt_result(
+            result=client_response, sample_ids=sample_ids
+        ).thenCallOriginalImplementation()
+        when(match_client).match(queries, sample_ids).thenCallOriginalImplementation()
 
-        assert await match_client.match(queries) == expected_response
+        assert await match_client.match(queries, sample_ids) == expected_response
 
     @parameterized.expand(
         [
-            ([], [], MatchResult()),
+            ([], [], [], MatchResult()),
             (
                 [[1, 2, 3]],
+                ["sample_0"],
                 [
                     [
                         MatchNeighbor(id="0", distance=0.9),
@@ -201,11 +213,13 @@ class TestMatchingClient:
                                 matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
                             ]
                         )
-                    ]
+                    ],
+                    sample_ids=["sample_0"],
                 ),
             ),
             (
                 [[1, 2, 3], [4, 5, 6]],
+                ["sample_0", "sample_1"],
                 [
                     [
                         MatchNeighbor(id="0", distance=0.9),
@@ -234,7 +248,8 @@ class TestMatchingClient:
                                 matching_client.MatchResult.Neighbor(cas_cell_index="12", distance=0.7),
                             ]
                         ),
-                    ]
+                    ],
+                    sample_ids=["sample_0", "sample_1"],
                 ),
             ),
         ]
@@ -243,6 +258,7 @@ class TestMatchingClient:
     async def test_grpc_client(
         self,
         queries: t.List[t.List[float]],
+        sample_ids: t.List[str],
         client_response: t.List[t.List[MatchNeighbor]],
         expected_response: MatchResult,
     ) -> None:
@@ -250,6 +266,7 @@ class TestMatchingClient:
         Test the gRPC matching client.
 
         :param queries: The ones that are sent into the match method.
+        :param sample_ids: Sample IDs corresponding to the queries.
         :param client_response: The response from the gRPC client (e.g. pre-parsing the response)
         :param expected_response: The expected response from the match method.
 
@@ -266,6 +283,8 @@ class TestMatchingClient:
             num_neighbors=GRPC_INDEX.num_neighbors,
         ).thenReturn(client_response)
 
-        when(match_client)._MatchingClientGRPC__adapt_result(client_response).thenCallOriginalImplementation()
-        when(match_client).match(queries).thenCallOriginalImplementation()
-        assert await match_client.match(queries) == expected_response
+        when(match_client)._MatchingClientGRPC__adapt_result(
+            result=client_response, sample_ids=sample_ids
+        ).thenCallOriginalImplementation()
+        when(match_client).match(queries, sample_ids).thenCallOriginalImplementation()
+        assert await match_client.match(queries, sample_ids) == expected_response
