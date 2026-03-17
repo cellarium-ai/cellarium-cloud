@@ -7,7 +7,7 @@ task precalculate_fields {
     command {
         cd /app
         echo "START INGESTING"
-        python casp/services/bq_ops/ingest_files_to_bq/main.py \
+        python scripts/bq_ops/entrypoints/ingest_files_to_bq/main.py \
         --dataset ${dataset} \
         --fields ${fields}
     }

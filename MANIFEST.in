@@ -1,3 +1,0 @@
-include README.rst
-include requirements.txt
-include src/casp/services/api/data_manager/sql_queries/*

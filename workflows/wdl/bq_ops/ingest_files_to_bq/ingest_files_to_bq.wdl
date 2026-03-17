@@ -8,7 +8,7 @@ task ingest_files_to_bq {
     command {
         cd /app
         echo "START INGESTING"
-        python casp/services/bq_ops/ingest_files_to_bq/main.py \
+        python scripts/bq_ops/entrypoints/ingest_files_to_bq/main.py \
         --dataset ${dataset} \
         --gcs_bucket_name ${gcs_bucket_name} \
         --gcs_stage_dir ${gcs_stage_dir}

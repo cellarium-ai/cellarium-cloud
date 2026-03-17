@@ -13,7 +13,7 @@ task extract {
     command {
         cd /app
         echo "START EXTRACTING"
-        python casp/services/bq_ops/extract/main.py \
+        python scripts/bq_ops/entrypoints/extract/main.py \
         --dataset ${bq_dataset} \
         --extract_table_prefix ${extract_table_prefix} \
         --start_bin ${start_bin} \

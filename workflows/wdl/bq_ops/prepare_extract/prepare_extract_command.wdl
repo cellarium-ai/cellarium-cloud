@@ -15,7 +15,7 @@ task prepare_extract {
     command {
         cd /app
         echo "START PREPARING EXTRACT"
-        python casp/services/bq_ops/prepare_extract/main.py \
+        python scripts/bq_ops/entrypoints/prepare_extract/main.py \
         --dataset ${bq_dataset} \
         --extract_table_prefix ${extract_table_prefix} \
         --fq_allowed_original_feature_ids ${fq_allowed_original_feature_ids} \
