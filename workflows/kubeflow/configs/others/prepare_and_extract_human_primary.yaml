@@ -1,0 +1,226 @@
+prepare_extract:
+  machine_specs:
+    bq_ops_prepare_extract:
+      display_name: Bq Ops Prepare Extract
+      replica_count: 1
+      accelerator_type: null
+      accelerator_count: 4
+      machine_type: n1-standard-4
+      base_image:  us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline-dev:1.4.6-alpha.4
+      service_account: backend-service-account@dsp-cell-annotation-service.iam.gserviceaccount.com
+
+  pipeline_configs:
+    - bq_ops_prepare_extract__project_id: dsp-cell-annotation-service
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      filters_json_path: gs://cellarium-file-system/curriculum/extract_filters/filters_all_human_primary.json
+      dataset: cas_2024_05_16_dataset
+      extract_table_prefix: human_all_primary
+      fq_allowed_original_feature_ids: dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A
+      extract_bin_size: 10000
+      bucket_name: cellarium-human-primary-data
+      extract_bucket_path: curriculum/human_all_primary
+
+extract:
+  machine_specs:
+    bq_ops_extract:
+      display_name: Bq Ops Extract
+      replica_count: 1
+      accelerator_type: null
+      accelerator_count: 1
+      machine_type: n1-standard-96
+      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline-dev:1.4.6-alpha.4
+      service_account: backend-service-account@dsp-cell-annotation-service.iam.gserviceaccount.com
+
+  pipeline_configs:
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 191
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 0
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 383
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 192
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 575
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 384
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 767
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 576
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 959
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 768
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 1151
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 960
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 1343
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 1152
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 1535
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 1344
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 1727
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 1536
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 1919
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 1728
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 2111
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 1920
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 2303
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 2112
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 2495
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 2304
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 2687
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 2496
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 2879
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 2688
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 3071
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 2880
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 3263
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 3072
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 3455
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 3264
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 3647
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 3456
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 3839
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 3648
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 4031
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 3840
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 4223
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 4032
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 4415
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 4224
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 4441
+      extract_bucket_path: curriculum/human_all_primary
+      extract_table_prefix: human_all_primary
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-human-primary-data
+      start_bin: 4416

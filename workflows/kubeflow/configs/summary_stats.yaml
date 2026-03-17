@@ -1,0 +1,60 @@
+pipeline_configs:
+  - curriculum_name: human_10x_only_2024_05_16_ingest
+    shard_size: 10000
+    extract_start: 0
+    extract_end: 3737
+    last_shard_size: 9002
+    use_log_1p: true
+    normalize_total_eps: 1e-6
+    normalize_total_target_count: 10000
+    mean_var_std_train__model_name: mean_var_std_log1p_v1
+    mean_var_std_train__config_unique_name: human_10x_only_2024_05_16_ingest_mean_var_std_log1p_v3
+    tdigest_train__model_name: tdigest_log1p_v1
+    tdigest_train__config_unique_name: human_10x_only_2024_05_16_tdigest_log1p_v3
+    tdigest_filter_features__tdigest_model_name: tdigest_log1p_v1
+    tdigest_filter_features__config_unique_name: filter_features-tdigest_v1_human_10x_only_2024_05_16_ingest_log1p_v3
+
+  - curriculum_name: human_10x_only_exclude_benchmarking_2024_05_16_ingest
+    shard_size: 10000
+    extract_start: 0
+    extract_end: 2930
+    last_shard_size: 6596
+    use_log_1p: true
+    normalize_total_eps: 1e-6
+    normalize_total_target_count: 10000
+    mean_var_std_train__model_name: mean_var_std_log1p_v1
+    mean_var_std_train__config_unique_name: human_10x_only_exclude_benchmarking_2024_05_16_ingest_mean_var_std_log1p_v2
+    tdigest_train__model_name: tdigest_log1p_v1
+    tdigest_train__config_unique_name: human_10x_only_exclude_benchmarking_2024_05_16_ingest_log1p_v2
+    tdigest_filter_features__tdigest_model_name: tdigest_log1p_v1
+    tdigest_filter_features__config_unique_name: filter_features-tdigest_v1_human_10x_only_exclude_benchmarking_2024_05_16_ingest_log1p_v2
+
+  - curriculum_name: human_10x_only_2024_05_16_ingest
+    shard_size: 10000
+    extract_start: 0
+    extract_end: 3737
+    last_shard_size: 9002
+    use_log_1p: false
+    normalize_total_eps: 1e-6
+    normalize_total_target_count: 10000
+    mean_var_std_train__model_name: mean_var_std_no_log1p_v1
+    mean_var_std_train__config_unique_name: human_10x_only_2024_05_16_ingest_mean_var_std_no_log1p_v3
+    tdigest_train__model_name: tdigest_no_log1p_v1
+    tdigest_train__config_unique_name: human_10x_only_2024_05_16_tdigest_no_log1p_v3
+    tdigest_filter_features__tdigest_model_name: tdigest_no_log1p_v1
+    tdigest_filter_features__config_unique_name: filter_features-tdigest_v1_human_10x_only_2024_05_16_ingest_no_log1p_v3
+
+  - curriculum_name: human_10x_only_exclude_benchmarking_2024_05_16_ingest
+    shard_size: 10000
+    extract_start: 0
+    extract_end: 2930
+    last_shard_size: 6596
+    use_log_1p: false
+    normalize_total_eps: 1e-6
+    normalize_total_target_count: 10000
+    mean_var_std_train__model_name: mean_var_std_no_log1p_v1
+    mean_var_std_train__config_unique_name: human_10x_only_exclude_benchmarking_2024_05_16_ingest_mean_var_std_no_log1p_v2
+    tdigest_train__model_name: tdigest_no_log1p_v1
+    tdigest_train__config_unique_name: human_10x_only_exclude_benchmarking_2024_05_16_ingest_no_log1p_v2
+    tdigest_filter_features__tdigest_model_name: tdigest_no_log1p_v1
+    tdigest_filter_features__config_unique_name: filter_features-tdigest_v1_human_10x_only_exclude_benchmarking_2024_05_16_ingest_no_log1p_v2

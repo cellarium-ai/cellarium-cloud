@@ -1,0 +1,136 @@
+prepare_extract:
+  machine_specs:
+    bq_ops_prepare_extract:
+      display_name: Bq Ops Prepare Extract
+      replica_count: 1
+      accelerator_type: null
+      accelerator_count: 4
+      machine_type: n1-standard-4
+      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fgfixextractrandomness
+      service_account: backend-service-account@dsp-cell-annotation-service.iam.gserviceaccount.com
+      env:
+        - name: PROJECT_BUCKET_NAME
+          value: cellarium-file-system
+        - name: LOG_AS_JSON
+          value: "false"
+        - name: SENTRY_DSN
+          value: dummysecret
+        - name: SENTRY_ENVIRONMENT
+          value: dummyenvironment
+        - name: NEPTUNE_API_KEY
+          value: notusinganymore
+        - name: DB_CONNECTION_NAME
+          value: notusingnow
+        - name: DB_NAME
+          value: dummyname
+        - name: DB_PASSWORD
+          value: dummypass
+        - name: DB_USER
+          value: dummyuser
+        - name: DB_INSTANCE_UNIX_SOCKET
+          value: dummysocket
+        - name: DB_PORT
+          value: "2000"
+        - name: DB_PRIVATE_IP
+          value: privatewhat
+        - name: SECRET_KEY
+          value: dummysecretistilllsecret
+        - name: SECURITY_PASSWORD_SALT
+          value: verysecurysalt
+        - name: FLASK_BASIC_AUTH_USERNAME
+          value: dummyusername
+        - name: FLASK_BASIC_AUTH_PASSWORD
+          value: dummyusername
+        - name: ENVIRONMENT
+          value: development
+
+  pipeline_configs:
+    - bq_ops_prepare_extract__project_id: dsp-cell-annotation-service
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,c.bq_row_index,c.donor_dataset_concat,i.dataset_id,i.dataset_version_id
+      filters_json_path: gs://cellarium-file-system/curriculum/extract_filters/filters_human_benchmarking_lrexp.json
+      dataset: cas_2024_05_16_dataset
+      extract_table_prefix: human_10x_bd_lrexp_v2_extract
+      fq_allowed_original_feature_ids: dsp-cell-annotation-service.cas_reference_data.refdata-gex-GRCh38-2020-A
+      extract_bin_size: 10000
+      bucket_name: cellarium-file-system
+      extract_bucket_path: curriculum/human_10x_bd_lrexp_v2_extract
+
+extract:
+  machine_specs:
+    bq_ops_extract:
+      replica_count: 1
+      display_name: Bq Ops Extract
+      accelerator_type: null
+      accelerator_count: 1
+      machine_type: n1-standard-96
+      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:fgfixextractrandomness
+      service_account: backend-service-account@dsp-cell-annotation-service.iam.gserviceaccount.com
+      env:
+        - name: PROJECT_BUCKET_NAME
+          value: cellarium-file-system
+        - name: LOG_AS_JSON
+          value: "false"
+        - name: SENTRY_DSN
+          value: dummysecret
+        - name: SENTRY_ENVIRONMENT
+          value: dummyenvironment
+        - name: NEPTUNE_API_KEY
+          value: notusinganymore
+        - name: DB_CONNECTION_NAME
+          value: notusingnow
+        - name: DB_NAME
+          value: dummyname
+        - name: DB_PASSWORD
+          value: dummypass
+        - name: DB_USER
+          value: dummyuser
+        - name: DB_INSTANCE_UNIX_SOCKET
+          value: dummysocket
+        - name: DB_PORT
+          value: "2000"
+        - name: DB_PRIVATE_IP
+          value: privatewhat
+        - name: SECRET_KEY
+          value: dummysecretistilllsecret
+        - name: SECURITY_PASSWORD_SALT
+          value: verysecurysalt
+        - name: FLASK_BASIC_AUTH_USERNAME
+          value: dummyusername
+        - name: FLASK_BASIC_AUTH_PASSWORD
+          value: dummyusername
+        - name: ENVIRONMENT
+          value: development
+
+  pipeline_configs:
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 191
+      extract_bucket_path: curriculum/human_10x_bd_lrexp_v2_extract
+      extract_table_prefix: human_10x_bd_lrexp_v2_extract
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,c.bq_row_index,c.donor_dataset_concat,c.farm_finger,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-file-system
+      start_bin: 0
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 383
+      extract_bucket_path: curriculum/human_10x_bd_lrexp_v2_extract
+      extract_table_prefix: human_10x_bd_lrexp_v2_extract
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,c.bq_row_index,c.donor_dataset_concat,c.farm_finger,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-file-system
+      start_bin: 192
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 575
+      extract_bucket_path: curriculum/human_10x_bd_lrexp_v2_extract
+      extract_table_prefix: human_10x_bd_lrexp_v2_extract
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,c.bq_row_index,c.donor_dataset_concat,c.farm_finger,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-file-system
+      start_bin: 384
+    - bq_ops_extract__project_id: dsp-cell-annotation-service
+      dataset: cas_2024_05_16_dataset
+      end_bin: 631
+      extract_bucket_path: curriculum/human_10x_bd_lrexp_v2_extract
+      extract_table_prefix: human_10x_bd_lrexp_v2_extract
+      obs_columns_to_include: c.original_cell_id,c.cell_type,c.assay_ontology_term_id,c.cell_type_ontology_term_id,c.development_stage_ontology_term_id,c.disease_ontology_term_id,c.donor_id,c.is_primary_data,c.organism_ontology_term_id,c.self_reported_ethnicity_ontology_term_id,c.sex_ontology_term_id,c.suspension_type,c.tissue_ontology_term_id,c.assay,c.development_stage,c.disease,c.organism,c.self_reported_ethnicity,c.sex,c.tissue,c.total_mrna_umis,c.cell_type_distance_from_root,c.bq_row_index,c.donor_dataset_concat,c.farm_finger,i.dataset_id,i.dataset_version_id
+      output_bucket_name: cellarium-file-system
+      start_bin: 576

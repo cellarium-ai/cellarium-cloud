@@ -1,0 +1,146 @@
+summary_stats_train_pipeline:
+  machine_specs:
+    mean_var_std_train:
+      display_name: Train Mean Var Std model
+      replica_count: 1
+      accelerator_type: NVIDIA_TESLA_T4
+      accelerator_count: 1
+      machine_type: n1-highmem-16
+      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline-dev:1.4.6-alpha.1
+      service_account: backend-service-account@dsp-cell-annotation-service.iam.gserviceaccount.com
+      env:
+        - name: PROJECT_BUCKET_NAME
+          value: cellarium-file-system
+        - name: LOG_AS_JSON
+          value: "false"
+        - name: SENTRY_DSN
+          value: dummysecret
+        - name: SENTRY_ENVIRONMENT
+          value: dummyenvironment
+        - name: NEPTUNE_API_KEY
+          value: notusinganymore
+        - name: DB_CONNECTION_NAME
+          value: notusingnow
+        - name: DB_NAME
+          value: dummyname
+        - name: DB_PASSWORD
+          value: dummypass
+        - name: DB_USER
+          value: dummyuser
+        - name: DB_INSTANCE_UNIX_SOCKET
+          value: dummysocket
+        - name: DB_PORT
+          value: "2000"
+        - name: DB_PRIVATE_IP
+          value: privatewhat
+        - name: SECRET_KEY
+          value: dummysecretistilllsecret
+        - name: SECURITY_PASSWORD_SALT
+          value: verysecurysalt
+        - name: FLASK_BASIC_AUTH_USERNAME
+          value: dummyusername
+        - name: FLASK_BASIC_AUTH_PASSWORD
+          value: dummyusername
+        - name: ENVIRONMENT
+          value: development
+
+    tdigest_train:
+      display_name: Train TDigest model
+      replica_count: 1
+      accelerator_type: null
+      accelerator_count: 4
+      machine_type: n1-highmem-32
+      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline-dev:1.4.6-alpha.1
+      service_account: backend-service-account@dsp-cell-annotation-service.iam.gserviceaccount.com
+      env:
+        - name: PROJECT_BUCKET_NAME
+          value: cellarium-file-system
+        - name: LOG_AS_JSON
+          value: "false"
+        - name: SENTRY_DSN
+          value: dummysecret
+        - name: SENTRY_ENVIRONMENT
+          value: dummyenvironment
+        - name: NEPTUNE_API_KEY
+          value: notusinganymore
+        - name: DB_CONNECTION_NAME
+          value: notusingnow
+        - name: DB_NAME
+          value: dummyname
+        - name: DB_PASSWORD
+          value: dummypass
+        - name: DB_USER
+          value: dummyuser
+        - name: DB_INSTANCE_UNIX_SOCKET
+          value: dummysocket
+        - name: DB_PORT
+          value: "2000"
+        - name: DB_PRIVATE_IP
+          value: privatewhat
+        - name: SECRET_KEY
+          value: dummysecretistilllsecret
+        - name: SECURITY_PASSWORD_SALT
+          value: verysecurysalt
+        - name: FLASK_BASIC_AUTH_USERNAME
+          value: dummyusername
+        - name: FLASK_BASIC_AUTH_PASSWORD
+          value: dummyusername
+        - name: ENVIRONMENT
+          value: development
+
+    tdigest_filter_features:
+      display_name: TDigest filter features
+      replica_count: 1
+      accelerator_type: null
+      accelerator_count: 4
+      machine_type: n1-standard-4
+      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch:1.7.1-pipes
+      service_account: backend-service-account@dsp-cell-annotation-service.iam.gserviceaccount.com
+      env:
+        - name: PROJECT_BUCKET_NAME
+          value: cellarium-file-system
+        - name: LOG_AS_JSON
+          value: "false"
+        - name: SENTRY_DSN
+          value: dummysecret
+        - name: SENTRY_ENVIRONMENT
+          value: dummyenvironment
+        - name: NEPTUNE_API_KEY
+          value: notusinganymore
+        - name: DB_CONNECTION_NAME
+          value: notusingnow
+        - name: DB_NAME
+          value: dummyname
+        - name: DB_PASSWORD
+          value: dummypass
+        - name: DB_USER
+          value: dummyuser
+        - name: DB_INSTANCE_UNIX_SOCKET
+          value: dummysocket
+        - name: DB_PORT
+          value: "2000"
+        - name: DB_PRIVATE_IP
+          value: privatewhat
+        - name: SECRET_KEY
+          value: dummysecretistilllsecret
+        - name: SECURITY_PASSWORD_SALT
+          value: verysecurysalt
+        - name: FLASK_BASIC_AUTH_USERNAME
+          value: dummyusername
+        - name: FLASK_BASIC_AUTH_PASSWORD
+          value: dummyusername
+        - name: ENVIRONMENT
+          value: development
+
+  pipeline_configs:
+    - curriculum_name: 10x_human_full_20250218
+      shard_size: 10000
+      extract_start: 0
+      extract_end: 3737
+      last_shard_size: 9002
+      use_log_1p: true
+      normalize_total_eps: 1e-6
+      normalize_total_target_count: 10000
+      mean_var_std_train__model_name: mean_var_std_log1p
+      tdigest_train__model_name: tdigest_log1p
+      tdigest_filter_features__tdigest_model_name: tdigest_log1p

@@ -1,0 +1,25 @@
+calculate_metrics:
+  machine_specs:
+    calculate_metrics:
+      display_name: Calculate Metrics
+      replica_count: 1
+      machine_type: e2-standard-32
+      accelerator_type: null
+      accelerator_count: null
+      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-pipeline-dev:1.4.6-alpha.3
+      env:
+        - name: WANDB_API_KEY
+          value: 2bc373264f98a15fac0e869d98f7b207d575937d
+      packages_to_install:
+        - git+https://github.com/cellarium-ai/cellarium-cas.git@1.5.1
+        - owlready2
+
+  pipeline_configs:
+    - batch_size: 10000
+      calculate_metrics__model_name: pca_ebd_dfrgt3_64_hvcutoffsgenes_log1p_zscore
+      cas_result_paths: gs://cellarium-file-system/dev/benchmarking_june_2024/metadata/cas_outputs_drf_gt_3_names/pca_ebd_dfrgt3_64_hvcutoffsgenes_log1p_zscore_cas_outputs.txt
+      cell_ontology_resource_path: gs://cellarium-file-system/dev/benchmarking_june_2024/metadata/benchmarking_resource_schema_5-0.pickle
+      dataset_paths: gs://cellarium-file-system/dev/benchmarking_june_2024/metadata/dataset_paths.txt
+      metrics_metadata_path: gs://cellarium-file-system/dev/benchmarking_june_2024/metrics_model_drf_gt_3
+      num_hops: 4
+      wandb_project: bench_drf_gt_3

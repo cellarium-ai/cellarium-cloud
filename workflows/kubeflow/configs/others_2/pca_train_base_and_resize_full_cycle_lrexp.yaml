@@ -1,0 +1,182 @@
+#pca_train_pipeline:
+#  machine_specs:
+#    pca_train:
+#      display_name: Train PCA For Human Data
+#      replica_count: 1
+#      accelerator_type: NVIDIA_TESLA_T4
+#      accelerator_count: 1
+#      machine_type: n1-highmem-8
+#      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline-dev:1.4.6-alpha.1
+#      service_account: backend-service-account@dsp-cell-annotation-service.iam.gserviceaccount.com
+#      env:
+#        - name: WANDB_API_KEY
+#          value: 2bc373264f98a15fac0e869d98f7b207d575937d
+#        - name: PROJECT_BUCKET_NAME
+#          value: cellarium-file-system
+#        - name: LOG_AS_JSON
+#          value: "false"
+#        - name: SENTRY_DSN
+#          value: dummysecret
+#        - name: SENTRY_ENVIRONMENT
+#          value: dummyenvironment
+#        - name: NEPTUNE_API_KEY
+#          value: notusinganymore
+#        - name: DB_CONNECTION_NAME
+#          value: notusingnow
+#        - name: DB_NAME
+#          value: dummyname
+#        - name: DB_PASSWORD
+#          value: dummypass
+#        - name: DB_USER
+#          value: dummyuser
+#        - name: DB_INSTANCE_UNIX_SOCKET
+#          value: dummysocket
+#        - name: DB_PORT
+#          value: "2000"
+#        - name: DB_PRIVATE_IP
+#          value: privatewhat
+#        - name: SECRET_KEY
+#          value: dummysecretistilllsecret
+#        - name: SECURITY_PASSWORD_SALT
+#          value: verysecurysalt
+#        - name: FLASK_BASIC_AUTH_USERNAME
+#          value: dummyusername
+#        - name: FLASK_BASIC_AUTH_PASSWORD
+#          value: dummyusername
+#        - name: ENVIRONMENT
+#          value: development
+#  pipeline_configs:
+#    - curriculum_name: lrexp_human_training_split_20241106
+#      shard_size: 10000
+#      extract_start: 0
+#      extract_end: 454
+#      last_shard_size: 5132
+#      filter_file_name: features_TPM_above_1_intersection_with_CAS_lrexp_human_train.csv
+#      mean_var_std_model_name: mean_var_std_log1p
+#      n_components: 880
+#      normalize_total_eps: 1e-6
+#      normalize_total_target_count: 10000
+#      pca_train__model_name: pca_880base_defaultcutoffs_log1p_zscore
+#      use_divide_by_scale: false
+#      use_filter: true
+#      use_log_1p: true
+#      use_wandb: true
+#      use_z_score: true
+#      wandb_project_name: cellarium-models
+#
+#pca_resize_pipeline:
+#  machine_specs:
+#    pca_resize_and_save:
+#      display_name: PCA Resize and Save
+#      replica_count: 1
+#      machine_type: n1-highmem-4
+#      accelerator_type: null
+#      accelerator_count: null
+#      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline-dev:1.4.6-alpha.1
+#      env:
+#        - name: WANDB_API_KEY
+#          value: 2bc373264f98a15fac0e869d98f7b207d575937d
+#        - name: PROJECT_BUCKET_NAME
+#          value: cellarium-file-system
+#        - name: LOG_AS_JSON
+#          value: "false"
+#        - name: SENTRY_DSN
+#          value: dummysecret
+#        - name: SENTRY_ENVIRONMENT
+#          value: dummyenvironment
+#        - name: NEPTUNE_API_KEY
+#          value: notusinganymore
+#        - name: DB_CONNECTION_NAME
+#          value: notusingnow
+#        - name: DB_NAME
+#          value: dummyname
+#        - name: DB_PASSWORD
+#          value: dummypass
+#        - name: DB_USER
+#          value: dummyuser
+#        - name: DB_INSTANCE_UNIX_SOCKET
+#          value: dummysocket
+#        - name: DB_PORT
+#          value: "2000"
+#        - name: DB_PRIVATE_IP
+#          value: privatewhat
+#        - name: SECRET_KEY
+#          value: dummysecretistilllsecret
+#        - name: SECURITY_PASSWORD_SALT
+#          value: verysecurysalt
+#        - name: FLASK_BASIC_AUTH_USERNAME
+#          value: dummyusername
+#        - name: FLASK_BASIC_AUTH_PASSWORD
+#          value: dummyusername
+#        - name: ENVIRONMENT
+#          value: development
+#
+#    pca_embed:
+#      display_name: PCA Embed
+#      replica_count: 1
+#      accelerator_type: NVIDIA_TESLA_T4
+#      accelerator_count: 1
+#      machine_type: n1-highmem-16
+#      base_image: us-central1-docker.pkg.dev/dsp-cell-annotation-service/cas-services-cicd/cas-pytorch-cuda-pipeline-dev:1.4.6-alpha.1
+#      env:
+#        - name: WANDB_API_KEY
+#          value: 2bc373264f98a15fac0e869d98f7b207d575937d
+#        - name: PROJECT_BUCKET_NAME
+#          value: cellarium-file-system
+#        - name: LOG_AS_JSON
+#          value: "false"
+#        - name: SENTRY_DSN
+#          value: dummysecret
+#        - name: SENTRY_ENVIRONMENT
+#          value: dummyenvironment
+#        - name: NEPTUNE_API_KEY
+#          value: notusinganymore
+#        - name: DB_CONNECTION_NAME
+#          value: notusingnow
+#        - name: DB_NAME
+#          value: dummyname
+#        - name: DB_PASSWORD
+#          value: dummypass
+#        - name: DB_USER
+#          value: dummyuser
+#        - name: DB_INSTANCE_UNIX_SOCKET
+#          value: dummysocket
+#        - name: DB_PORT
+#          value: "2000"
+#        - name: DB_PRIVATE_IP
+#          value: privatewhat
+#        - name: SECRET_KEY
+#          value: dummysecretistilllsecret
+#        - name: SECURITY_PASSWORD_SALT
+#          value: verysecurysalt
+#        - name: FLASK_BASIC_AUTH_USERNAME
+#          value: dummyusername
+#        - name: FLASK_BASIC_AUTH_PASSWORD
+#          value: dummyusername
+#        - name: ENVIRONMENT
+#          value: development
+#
+#  pipeline_configs:
+#    - curriculum_name: lrexp_human_training_split_20241106
+#      model_name: pca_64_defaultcutoffs_log1p_zscore
+#      schema_name: refdata-gex-mm10-2020-A
+#      embedding_dimension: 64
+#      shard_size: 10000
+#      extract_start: 0
+#      extract_end: 454
+#      last_shard_size: 5132
+#      use_log_1p: true
+#      use_z_score: true
+#      use_divide_by_scale: false
+#      use_filter: true
+#      mean_var_std_model_name: mean_var_std_log1p
+#      tdigest_model_name: tdigest_log1p
+#      filter_file_name: mean-var-std-highly-variable-genes-log1p-default-cutoffs.csv
+#      normalize_total_target_count: 10000
+#      normalize_total_eps: 1e-6
+#      pca_resize_and_save__base_model_name: pca_880base_defaultcutoffs_log1p_zscore
+#      pca_resize_and_save__new_model_name: pca_64_defaultcutoffs_log1p_zscore
+#      pca_resize_and_save__new_embedding_dimension: 64
+#      pca_embed__n_components: 64
+#      use_wandb: true
+#      wandb_project_name: cas_model_benchmarking
