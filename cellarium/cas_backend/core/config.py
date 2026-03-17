@@ -33,14 +33,24 @@ class AllEnvSettings(BaseSettings):
     APP_ROOT: str = ROOT_DIR
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: t.Optional[str] = os.environ.get("PROJECT_BUCKET_NAME")
+
+    # Directory paths (new structure)
+    CORE_DIR: str = CORE_DIR
+    CAS_BACKEND_DIR: str = CAS_BACKEND_DIR
+    CELLARIUM_DIR: str = CELLARIUM_DIR
+    REPO_ROOT: str = REPO_ROOT
+
+    # Directory paths (backwards compatibility)
     SERVICES_DIR: str = SERVICES_DIR
+    CAS_DIR: str = CAS_DIR
+
     DEFAULT_SERVICE_HOST: str = "0.0.0.0"
     DEFAULT_SERVICE_PORT: int = 8000
     API_SERVICE_PORT: int = DEFAULT_SERVICE_PORT
     LOG_LEVEL: str = "info"
-    LOG_CONFIG: str = f"{SERVICES_DIR}/log_config.yaml"
+    LOG_CONFIG: str = f"{CORE_DIR}/log_config.yaml"
     LOG_AS_JSON: bool = os.environ.get("LOG_AS_JSON", True)
-    SCRIPTS_DIR: str = f"{CAS_DIR}/scripts"
+    SCRIPTS_DIR: str = f"{REPO_ROOT}/scripts"
 
     # Sentry
     SENTRY_DSN: t.Optional[str] = os.environ.get("SENTRY_DSN")

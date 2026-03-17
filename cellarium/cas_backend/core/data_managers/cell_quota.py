@@ -10,7 +10,7 @@ from cellarium.cas_backend.core.db import models
 class CellQuotaDataManager(BaseDataManager):
 
     # SQL query directory
-    SQL_QUERY_DIR = f"{settings.SERVICES_DIR}/api/data_manager/sql_queries"
+    SQL_QUERY_DIR = f"{settings.CORE_DIR}/data_managers/sql_queries"
 
     # SQL queries from files
     with open(f"{SQL_QUERY_DIR}/get_cells_processed_this_week_for_user.sql.sa", "r") as f:

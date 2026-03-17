@@ -18,7 +18,7 @@ class CellariumGeneralDataManager(BaseDataManager):
     """
 
     # Directories for SQL templates
-    SQL_TEMPLATE_DIR = f"{settings.SERVICES_DIR}/api/data_manager/sql_templates/cellarium_general"
+    SQL_TEMPLATE_DIR = f"{settings.CORE_DIR}/data_managers/sql_templates/cellarium_general"
 
     # SQL template file paths
     SQL_GET_ALL_GENE_SCHEMAS = f"{SQL_TEMPLATE_DIR}/get_all_gene_schemas.sql.mako"
