@@ -1,1 +1,97 @@
+# Data files
 *.h5ad
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+python/
+python3.*/
+
+# Testing
+.tox/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.readthedocs.yaml
+
+# Documentation
+docs/
+*.md
+!README.md
+!README.rst
+
+# Development files
+dev-requirements.txt
+test-requirements.txt
+setup.py
+setup.cfg
+tox.ini
+.editorconfig
+.pre-commit-config.yaml
+Makefile
+update_imports.py
+poetry.lock
+
+# Deployment (don't copy deploy dir into images)
+deploy/
+
+# Tests
+tests/
+
+# Workflows
+workflows/
+
+# Local settings and secrets
+src/settings/.env
+src/settings/test_db.sqlite
+src/settings/.pipelines-metafiles/
+
+# Logs
+*.log
