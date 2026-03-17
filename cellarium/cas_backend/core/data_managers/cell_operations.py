@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from cellarium.cas_backend.core.data_managers import BaseDataManager
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.data_manager import exceptions
+from cellarium.cas_backend.core.data_managers import exceptions
 from cellarium.cas_backend.core.db import models
 
 

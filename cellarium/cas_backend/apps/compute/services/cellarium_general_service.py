@@ -4,7 +4,7 @@ from packaging.version import Version
 
 from cellarium.cas_backend.core import constants
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.data_manager import CellariumGeneralDataManager
+from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager
 from cellarium.cas_backend.apps.compute.services import exceptions
 from cellarium.cas_backend.core.db import models
 
