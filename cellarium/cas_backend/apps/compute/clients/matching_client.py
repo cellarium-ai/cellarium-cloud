@@ -4,7 +4,7 @@ from google.cloud import aiplatform_v1
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 from pydantic import BaseModel, Field
 
-from cellarium.cas_backend.core.api import clients
+from cellarium.cas_backend.apps.compute import clients
 from cellarium.cas_backend.core.db import models
 
 

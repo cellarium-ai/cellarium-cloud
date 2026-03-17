@@ -1,4 +1,4 @@
-from cellarium.cas_backend.core.api import services
+from cellarium.cas_backend.apps.compute import services
 
 
 def get_cell_operations_service() -> services.CellOperationsService:

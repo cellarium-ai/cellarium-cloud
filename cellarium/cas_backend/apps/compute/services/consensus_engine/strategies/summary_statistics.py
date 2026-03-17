@@ -3,7 +3,7 @@ from collections import OrderedDict, defaultdict
 
 import numpy as np
 
-from cellarium.cas_backend.core.api import schemas
+from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
 from cellarium.cas_backend.apps.compute.data_manager import CellOperationsDataManager
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.base import ConsensusStrategyInterface

@@ -15,8 +15,8 @@ from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
 from werkzeug.exceptions import HTTPException
 
-from cellarium.cas_backend.core import _auth, settings
-from cellarium.cas_backend.core.admin import basic_auth, db_session, flask_app
+from cellarium.cas_backend.core import auth, settings
+from cellarium.cas_backend.apps.admin import basic_auth, db_session, flask_app
 from cellarium.cas_backend.core.db import models, ops
 from cellarium.cas_backend.core.utils.email_utils import EmailSender
 

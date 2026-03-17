@@ -11,7 +11,7 @@ import numpy as np
 from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_random
 
 from cellarium.cas_backend.core.config import settings
-from cellarium.cas_backend.core.api import schemas
+from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.clients.matching_client import MatchingClient, MatchResult
 from cellarium.cas_backend.apps.compute.data_manager import CellariumGeneralDataManager, CellOperationsDataManager
 from cellarium.cas_backend.apps.compute.data_manager import exceptions as dm_exc

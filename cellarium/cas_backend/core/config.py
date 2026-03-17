@@ -144,3 +144,14 @@ class TestSettings(AllEnvSettings):
     SECRET_KEY: str = "test"
     TEST_DB_FILE_PATH: str = os.getenv("TEST_DB_FILE_PATH", f"{ROOT_DIR}/settings/test_db.sqlite")
     SQLALCHEMY_DATABASE_URI: str = f"sqlite:///{TEST_DB_FILE_PATH}"
+
+
+# Instantiate settings based on environment
+if ENV_TYPE == "local":
+    settings = LocalSettings()
+elif ENV_TYPE == "production":
+    settings = ProductionSettings()
+elif ENV_TYPE == "test":
+    settings = TestSettings()
+else:
+    settings = DevSettings()

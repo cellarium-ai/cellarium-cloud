@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sentry_sdk import set_user
 from starlette_context import context
 
-from cellarium.cas_backend.core import _auth
+from cellarium.cas_backend.core import auth
 from cellarium.cas_backend.core.constants import ContextKeys
 from cellarium.cas_backend.core.db import models
 

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 
 from cellarium.cas_backend.core import constants, settings
-from cellarium.cas_backend.core.api import dependencies, schemas, services
+from cellarium.cas_backend.apps.compute import dependencies, schemas, services
 from cellarium.cas_backend.core.db import models
 
 cellarium_general_router = APIRouter(prefix="/cellarium-general")
