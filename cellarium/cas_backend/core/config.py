@@ -5,15 +5,22 @@ import typing as t
 import dotenv
 from pydantic_settings import BaseSettings
 
-# Directory that contains the services package
-SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
-# Directory that contains the CAS package's contents
-CAS_DIR = os.path.dirname(SERVICES_DIR)
-# Directory that contains the CAS package and its settings
-ROOT_DIR = os.path.dirname(CAS_DIR)
+# Directory that contains the core package (cellarium/cas_backend/core/)
+CORE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Directory that contains cas_backend (cellarium/cas_backend/)
+CAS_BACKEND_DIR = os.path.dirname(CORE_DIR)
+# Directory that contains cellarium namespace (cellarium/)
+CELLARIUM_DIR = os.path.dirname(CAS_BACKEND_DIR)
+# Repository root directory
+REPO_ROOT = os.path.dirname(CELLARIUM_DIR)
 
+# For backwards compatibility
+SERVICES_DIR = CORE_DIR
+CAS_DIR = CAS_BACKEND_DIR
+ROOT_DIR = REPO_ROOT
 
-dotenv.load_dotenv(dotenv_path=f"{ROOT_DIR}/settings/.env")
+# Load .env from src/settings/ (legacy location, TODO: move to repo root)
+dotenv.load_dotenv(dotenv_path=os.path.join(REPO_ROOT, "src", "settings", ".env"))
 
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 
