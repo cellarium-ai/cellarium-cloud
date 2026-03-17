@@ -20,7 +20,7 @@ def patch_google_service_credentials():
         return mock_credentials, mock_project_id
 
     # Target the function to be patched
-    patch_target = "casp.services.utils.get_google_service_credentials"
+    patch_target = "cellarium.cas_backend.services.utils.get_google_service_credentials"
 
     with patch(patch_target, side_effect=mocked_get_google_service_credentials):
         yield

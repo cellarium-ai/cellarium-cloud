@@ -3,7 +3,7 @@ import typing as t
 import pandas as pd
 from google.cloud import bigquery
 
-from casp.services import utils
+from cellarium.cas_backend.core import utils
 
 SQL_GET_ORIGINAL_CELL_IDS = """
     SELECT cas_cell_index, original_cell_id from `{project}.{dataset}.cas_cell_info`

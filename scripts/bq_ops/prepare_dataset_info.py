@@ -5,8 +5,8 @@ import pandas as pd
 from google.cloud import bigquery
 from google.oauth2.service_account import Credentials
 
-from casp.data_manager import sql
-from casp.scripts.bq_ops import constants, extract_metadata_utils
+from cellarium.cas_backend.core.data_managers import sql
+from scripts.bq_ops import constants, extract_metadata_utils
 
 
 def prepare_measured_genes_info(

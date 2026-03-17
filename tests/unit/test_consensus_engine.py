@@ -11,10 +11,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from casp.services.api import schemas
-from casp.services.api.clients.matching_client import MatchResult
-from casp.services.api.services import consensus_engine
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
+from cellarium.cas_backend.core.api import schemas
+from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
+from cellarium.cas_backend.apps.compute.services import consensus_engine
+from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 
 
 def load_ontology_resource_from_file() -> t.Dict[str, t.Any]:

@@ -7,7 +7,7 @@ from mockito import mock, unstub, when
 from sqlalchemy import orm
 from sqlalchemy.orm import sessionmaker
 
-from casp.services import db
+from cellarium.cas_backend.core import db
 
 
 def read_resource(resource_path: str) -> str:

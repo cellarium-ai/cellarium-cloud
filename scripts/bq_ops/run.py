@@ -1,7 +1,7 @@
 import typer
 from typing_extensions import Annotated
 
-from casp.scripts import bq_ops
+from cellarium.cas_backend.scripts import bq_ops
 
 typer_app = typer.Typer()
 

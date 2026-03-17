@@ -17,13 +17,13 @@ import pytest
 from sqlalchemy.orm import Session
 from starlette_context.ctx import _request_scope_context_storage
 
-from casp.services import settings
-from casp.services.api.clients.matching_client import MatchResult
-from casp.services.api.services import exceptions
-from casp.services.api.services.cell_operations_service import CellOperationsService
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
-from casp.services.constants import ContextKeys
-from casp.services.db import models
+from cellarium.cas_backend.core.config import settings
+from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
+from cellarium.cas_backend.apps.compute.services import exceptions
+from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
+from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
+from cellarium.cas_backend.core.constants import ContextKeys
+from cellarium.cas_backend.core.db import models
 from tests.unit.fixtures import constants, mocks
 
 
@@ -351,7 +351,7 @@ def patch_strategy_init_with_resource(
 
     :param cell_ontology_resource_mock: Mocked ontology resource for the consensus strategy.
     """
-    patch_ref = "casp.services.api.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
+    patch_ref = "cellarium.cas_backend.services.api.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
 
     with patch(patch_ref, autospec=True) as mock_init:
         # Define a side effect that injects the mocked resource

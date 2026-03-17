@@ -12,11 +12,11 @@ from mockito import unstub, when
 from parameterized import parameterized
 from starlette_context import context, request_cycle_context
 
-from casp.services import _auth, settings
-from casp.services._auth import OpaqueToken, exceptions, jwt_token, opaque_token
-from casp.services.api.dependencies.auth import TokenTypes, authenticate_user
-from casp.services.constants import ContextKeys
-from casp.services.db import models
+from cellarium.cas_backend.core import _auth, settings
+from cellarium.cas_backend.core.auth import OpaqueToken, exceptions, jwt_token, opaque_token
+from cellarium.cas_backend.apps.compute.dependencies.auth import TokenTypes, authenticate_user
+from cellarium.cas_backend.core.constants import ContextKeys
+from cellarium.cas_backend.core.db import models
 from tests.unit.test_utils import mock_sqlalchemy, unmock_sqlalchemy
 
 TEST_HASHING_KEY: str = "test"

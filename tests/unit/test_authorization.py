@@ -3,9 +3,9 @@ import re
 import pytest
 from mockito import mock, unstub, when
 
-from casp.services.api.data_manager import exceptions as dm_exc
-from casp.services.api.services import Authorizer, exceptions
-from casp.services.db import models
+from cellarium.cas_backend.apps.compute.data_manager import exceptions as dm_exc
+from cellarium.cas_backend.apps.compute.services import Authorizer, exceptions
+from cellarium.cas_backend.core.db import models
 
 USER_ADMIN = models.User(id=1, is_admin=True)
 USER_NON_ADMIN = models.User(id=2, is_admin=False)

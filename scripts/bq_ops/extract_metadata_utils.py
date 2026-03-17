@@ -2,7 +2,7 @@ import typing as t
 
 from google.cloud import bigquery
 
-from casp.scripts.bq_ops import constants
+from scripts.bq_ops import constants
 
 COLUMNS_TO_IGNORE = ["original_cell_id"]
 

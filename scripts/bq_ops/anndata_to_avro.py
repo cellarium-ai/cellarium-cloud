@@ -28,7 +28,7 @@ from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 from scipy import sparse
 
-from casp.services import utils
+from cellarium.cas_backend.core import utils
 
 
 def current_milli_time():

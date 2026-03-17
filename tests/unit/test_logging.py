@@ -3,8 +3,8 @@ import re
 import pytest
 from parameterized import parameterized
 
-from casp.services.api.services.exceptions import InvalidInputError
-from casp.services.logging import CloudTraceContext
+from cellarium.cas_backend.apps.compute.services.exceptions import InvalidInputError
+from cellarium.cas_backend.core.logging import CloudTraceContext
 
 
 class TestLogging:

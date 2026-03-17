@@ -5,10 +5,10 @@ from unittest.mock import AsyncMock, MagicMock
 import anndata
 import numpy as np
 
-from casp.services.api import data_manager, schemas
-from casp.services.api.clients.matching_client import MatchResult
-from casp.services.db import models
-from casp.services.model_inference.services import ModelInferenceService
+from cellarium.cas_backend.core.api import data_manager, schemas
+from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
+from cellarium.cas_backend.core.db import models
+from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
 from tests.unit.fixtures import constants
 
 

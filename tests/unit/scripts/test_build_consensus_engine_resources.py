@@ -27,7 +27,7 @@ import networkx as nx
 import owlready2
 import pytest
 
-from casp.scripts.build_consensus_engine_resources.build_cell_type_ontology_resource import (
+from scripts.build_consensus_engine_resources.build_cell_type_ontology_resource import (
     build_cell_ontology_ancestor_dictionary,
     build_nx_graph_from_cl_ontology,
 )

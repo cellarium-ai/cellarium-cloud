@@ -8,14 +8,14 @@ from google.protobuf.json_format import Parse
 from mockito import mock, unstub, when
 from parameterized import parameterized
 
-from casp.services.api.clients import CustomMatchingEngineIndexEndpointClient, matching_client
-from casp.services.api.clients.matching_client import (
+from cellarium.cas_backend.apps.compute.clients import CustomMatchingEngineIndexEndpointClient, matching_client
+from cellarium.cas_backend.apps.compute.clients.matching_client import (
     MatchingClient,
     MatchingClientGRPC,
     MatchingClientREST,
     MatchResult,
 )
-from casp.services.db import models
+from cellarium.cas_backend.core.db import models
 from tests.unit.test_utils import async_return, read_resource
 
 GRPC_INDEX = models.CASMatchingEngineIndex(

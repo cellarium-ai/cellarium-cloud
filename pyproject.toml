@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Cellarium Cell Annotation Service Backend"
 authors = ["Variants Team <variants@broadinstitute.org>"]
 readme = "README.rst"
-packages = [{include = "cas_backend"}]  # Will point to cas_backend/ after refactor
+packages = [
+    {include = "cellarium"},
+    {include = "cellarium/cas_backend"}
+]
 license = "LICENSE"
 
 [tool.poetry.dependencies]
@@ -116,14 +119,14 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "--cov=cas_backend",
+    "--cov=cellarium.cas_backend",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
 ]
 
 [tool.coverage.run]
-source = ["cas_backend"]
+source = ["cellarium/cas_backend"]
 omit = ["*/tests/*", "*/test_*.py"]
 
 [tool.coverage.report]

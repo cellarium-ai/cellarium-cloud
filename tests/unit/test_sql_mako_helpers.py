@@ -1,5 +1,5 @@
 """
-Test cases for the functions in the 'mako_helpers' module of the 'casp.data_manager' package.
+Test cases for the functions in the 'mako_helpers' module of the 'cellarium.cas_backend.data_manager' package.
 
 These test cases cover the following functions:
 - _string_value_processor
@@ -13,7 +13,7 @@ These test cases cover the following functions:
 
 import pytest
 
-from casp.data_manager.sql import exceptions, mako_helpers
+from cellarium.cas_backend.core.data_managers.sql import exceptions, mako_helpers
 
 
 def test_string_value_processor() -> None:

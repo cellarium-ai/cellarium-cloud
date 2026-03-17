@@ -11,9 +11,9 @@ from google.cloud import bigquery
 from google.oauth2.service_account import Credentials
 from smart_open import open
 
-from casp.data_manager import sql
-from casp.scripts.bq_ops import constants, extract_metadata_utils
-from casp.scripts.bq_ops.prepare_dataset_info import prepare_categorical_variables, prepare_measured_genes_info
+from cellarium.cas_backend.core.data_managers import sql
+from scripts.bq_ops import constants, extract_metadata_utils
+from scripts.bq_ops.prepare_dataset_info import prepare_categorical_variables, prepare_measured_genes_info
 
 
 def execute_query(client: bigquery.Client, sql: str):
@@ -107,7 +107,7 @@ def prepare_cell_info(
     :param partition_size: The size for the partitions.
         `Default:` ``10``
     :param filters: Filters that have to be included in a SQL query. Filter format should follow convention described in
-        :func:`casp.bq_manager.sql.mako_helpers.parse_where_body`
+        :func:`cellarium.cas_backend.bq_manager.sql.mako_helpers.parse_where_body`
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
         If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
         Note: It is required to provide the column names along with the aliases for the tables to which they belong.
@@ -225,7 +225,7 @@ def prepare_extract_tables(
     :param ci_partition_size: The size for the partitions in cas_cell_info table.
         `Default:` ``10``
     :param filters: Filters that have to be included in a SQL query. Filter format should follow convention described in
-        :func:`casp.bq_manager.sql.mako_helpers.parse_where_body`
+        :func:`cellarium.cas_backend.bq_manager.sql.mako_helpers.parse_where_body`
     :param obs_columns_to_include: Optional list of columns from `cas_cell_info` table to include in ``adata.obs``.
         If not provided, no specific columns would be added to ``adata.obs`` apart from `cas_cell_index`.
         Note: It is required to provide the column names along with the aliases for the tables to which they belong.

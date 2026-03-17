@@ -7,8 +7,8 @@ from google.api_core.exceptions import Forbidden
 from google.cloud import bigquery
 from smart_open import open
 
-from casp.scripts.bq_ops import create_bigquery_objects
-from casp.services import utils
+from scripts.bq_ops import create_bigquery_objects
+from cellarium.cas_backend.core import utils
 
 MAX_RETRY_ATTEMPTS = 5
 
