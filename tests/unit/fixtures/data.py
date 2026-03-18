@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cellarium.cas_backend.core.api import schemas
+from cellarium.cas_backend.apps.compute import schemas
 
 
 @pytest.fixture
