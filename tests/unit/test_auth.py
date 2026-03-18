@@ -12,9 +12,9 @@ from mockito import unstub, when
 from parameterized import parameterized
 from starlette_context import context, request_cycle_context
 
-from cellarium.cas_backend.core import _auth, settings
-from cellarium.cas_backend.core.auth import OpaqueToken, exceptions, jwt_token, opaque_token
 from cellarium.cas_backend.apps.compute.dependencies.auth import TokenTypes, authenticate_user
+from cellarium.cas_backend.core import auth, settings
+from cellarium.cas_backend.core.auth import OpaqueToken, exceptions, jwt_token, opaque_token
 from cellarium.cas_backend.core.constants import ContextKeys
 from cellarium.cas_backend.core.db import models
 from tests.unit.test_utils import mock_sqlalchemy, unmock_sqlalchemy
@@ -94,8 +94,8 @@ class TestAuth:
             with pytest.raises(expected_exception):
                 await authenticate_user(auth_token_scheme)
         else:
-            when(_auth).authenticate_user_with_opaque_token(...).thenReturn(user)
-            when(_auth).authenticate_user_with_jwt(...).thenReturn(user)
+            when(auth).authenticate_user_with_opaque_token(...).thenReturn(user)
+            when(auth).authenticate_user_with_jwt(...).thenReturn(user)
 
             with request_cycle_context() as _:
                 assert await authenticate_user(auth_token_scheme) == user

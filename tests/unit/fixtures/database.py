@@ -14,8 +14,8 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.orm import Session, sessionmaker
 
+from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.core.config import settings
-from cellarium.cas_backend.core.api import schemas
 from cellarium.cas_backend.core.db import Base, create_engine, models
 from tests.unit.fixtures import constants
 

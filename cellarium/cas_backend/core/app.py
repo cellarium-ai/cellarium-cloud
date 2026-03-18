@@ -12,12 +12,12 @@ from starlette_context import context, plugins
 from starlette_context.middleware import RawContextMiddleware
 from starlette_context.plugins import Plugin
 
-from cellarium.cas_backend.core.config import settings
-from cellarium.cas_backend.core.auth.exceptions import TokenException
 from cellarium.cas_backend.apps.compute import exception_handlers
-from cellarium.cas_backend.core.data_managers.exceptions import NotFound
 from cellarium.cas_backend.apps.compute.services.exceptions import APIBaseException
+from cellarium.cas_backend.core.auth.exceptions import TokenException
+from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.constants import ContextKeys, HeaderKeys, SentryTags
+from cellarium.cas_backend.core.data_managers.exceptions import NotFound
 
 logger = logging.getLogger(__name__)
 

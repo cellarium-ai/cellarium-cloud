@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from cellarium.cas_backend.core.api import schemas
+from cellarium.cas_backend.apps.compute import schemas
 from tests.unit.fixtures import constants, mocks
 
 

@@ -1,7 +1,10 @@
 import typing as t
 
 from cellarium.cas_backend.core.data_managers.sql import exceptions
-from cellarium.cas_backend.core.data_managers.sql.constants import CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, ComparisonOperators
+from cellarium.cas_backend.core.data_managers.sql.constants import (
+    CAS_CELL_INFO_REQUIRED_COLUMN_NAMES,
+    ComparisonOperators,
+)
 from cellarium.cas_backend.core.data_managers.sql.validation.template_data_validator import validate_column_name
 
 

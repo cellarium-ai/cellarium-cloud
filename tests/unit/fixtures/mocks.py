@@ -5,14 +5,15 @@ from unittest.mock import AsyncMock, MagicMock
 import anndata
 import numpy as np
 
-from cellarium.cas_backend.core.api import data_manager, schemas
+from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
-from cellarium.cas_backend.core.db import models
 from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
+from cellarium.cas_backend.core import data_managers
+from cellarium.cas_backend.core.db import models
 from tests.unit.fixtures import constants
 
 
-class MockCellQuotaDataManager(data_manager.CellQuotaDataManager):
+class MockCellQuotaDataManager(data_managers.CellQuotaDataManager):
     """
     Mocked version of `CellQuotaDataManager` to simulate behavior for unit tests. This mock is required because
     CellQuotaDataManager executes a SQL query with `array_agg` which is not available in sqlite.

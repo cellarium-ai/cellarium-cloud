@@ -22,12 +22,12 @@ import anndata
 import pandas as pd
 import pytest
 from google.cloud import bigquery, exceptions
-
 from scripts.bq_ops.anndata_to_avro import create_ingest_files
 from scripts.bq_ops.extract import extract_bins_in_parallel_workers
 from scripts.bq_ops.ingest_data_to_bq import ingest_data_to_bq
 from scripts.bq_ops.precalculate_fields import precalculate_fields
 from scripts.bq_ops.prepare_extract import prepare_extract
+
 from cellarium.cas_backend.core import utils
 
 from . import constants, data_controller

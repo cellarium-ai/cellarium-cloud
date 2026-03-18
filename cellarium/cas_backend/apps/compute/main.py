@@ -1,6 +1,6 @@
-from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.apps.compute.routers import cell_operations_router, cellarium_general_router
 from cellarium.cas_backend.core.app import CASService, RouterDef
+from cellarium.cas_backend.core.config import settings
 
 application = CASService(
     title="Cellarium Cloud API",

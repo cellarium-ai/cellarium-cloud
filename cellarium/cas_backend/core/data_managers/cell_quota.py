@@ -2,8 +2,8 @@ import datetime
 
 import sqlalchemy as sa
 
-from cellarium.cas_backend.core.data_managers import BaseDataManager
 from cellarium.cas_backend.core.config import settings
+from cellarium.cas_backend.core.data_managers import BaseDataManager
 from cellarium.cas_backend.core.db import models
 
 

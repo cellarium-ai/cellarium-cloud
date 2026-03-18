@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 import jwt
 from sqlalchemy.exc import IntegrityError
 
-from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.auth import exceptions
+from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.db import get_db_session_maker, models
 
 

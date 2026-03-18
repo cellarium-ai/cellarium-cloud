@@ -8,7 +8,9 @@ from cellarium.cas_backend.core.data_managers.sql.template_data import TemplateD
 from cellarium.cas_backend.core.data_managers.sql.validation.query_validators import BigQuerySQLSyntaxValidator
 
 if t.TYPE_CHECKING:
-    from cellarium.cas_backend.core.data_managers.sql.validation.query_validators.base_query_validator import SQLSyntaxValidator
+    from cellarium.cas_backend.core.data_managers.sql.validation.query_validators.base_query_validator import (
+        SQLSyntaxValidator,
+    )
 
 logger = logging.getLogger(__name__)
 

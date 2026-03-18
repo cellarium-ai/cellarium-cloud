@@ -4,7 +4,9 @@ from google.cloud import bigquery
 from google.cloud import exceptions as gc_exceptions
 
 from cellarium.cas_backend.core.data_managers.sql.validation import exceptions
-from cellarium.cas_backend.core.data_managers.sql.validation.query_validators.base_query_validator import SQLSyntaxValidator
+from cellarium.cas_backend.core.data_managers.sql.validation.query_validators.base_query_validator import (
+    SQLSyntaxValidator,
+)
 
 if t.TYPE_CHECKING:
     import google

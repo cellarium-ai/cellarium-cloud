@@ -3,7 +3,7 @@ import typing as t
 
 import pytest
 
-from cellarium.cas_backend.core.api import services
+from cellarium.cas_backend.apps.compute import services
 from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService

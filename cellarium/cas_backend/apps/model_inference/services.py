@@ -7,9 +7,9 @@ import numpy as np
 from cellarium.ml import CellariumAnnDataDataModule, CellariumModule
 from smart_open import open
 
+from cellarium.cas_backend.apps.model_inference import exceptions
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.db import models
-from cellarium.cas_backend.apps.model_inference import exceptions
 
 
 class ModelInferenceService:

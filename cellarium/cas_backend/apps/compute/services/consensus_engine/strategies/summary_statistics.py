@@ -5,8 +5,8 @@ import numpy as np
 
 from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
-from cellarium.cas_backend.core.data_managers import CellOperationsDataManager
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.base import ConsensusStrategyInterface
+from cellarium.cas_backend.core.data_managers import CellOperationsDataManager
 
 
 class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):

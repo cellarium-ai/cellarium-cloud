@@ -1,10 +1,10 @@
 from fastapi import Request, responses, status
 from starlette_context import context
 
-from cellarium.cas_backend.core.auth.exceptions import TokenException
-from cellarium.cas_backend.core.data_managers.exceptions import NotFound
 from cellarium.cas_backend.apps.compute.services.exceptions import APIBaseException
+from cellarium.cas_backend.core.auth.exceptions import TokenException
 from cellarium.cas_backend.core.constants import ContextKeys, HeaderKeys
+from cellarium.cas_backend.core.data_managers.exceptions import NotFound
 
 
 def decorate_response_headers(init_headers: dict[str, str] = None):

@@ -7,9 +7,9 @@ import datetime
 from google.cloud import bigquery
 from mockito import unstub, when
 
-from cellarium.cas_backend.core import db, utils
-from cellarium.cas_backend.core.api import schemas
+from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
+from cellarium.cas_backend.core import db, utils
 from cellarium.cas_backend.core.db.models.users import User
 
 

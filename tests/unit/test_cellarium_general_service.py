@@ -5,9 +5,9 @@ Tests things in the cellarium_general_service that can reasonably be tested with
 import pytest
 from mockito import mock, unstub
 
-from cellarium.cas_backend.core import constants
 from cellarium.cas_backend.apps.compute.services.cellarium_general_service import CellariumGeneralService
 from cellarium.cas_backend.apps.compute.services.exceptions import InvalidClientVersionException
+from cellarium.cas_backend.core import constants
 
 
 class TestCellariumGeneralService:

@@ -9,8 +9,8 @@ from starlette_context import context
 from starlette_context.errors import ContextDoesNotExistError
 from starlette_context.header_keys import HeaderKeys as BaseHeaderKeys
 
-from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.apps.compute.services.exceptions import InvalidInputError
+from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.constants import ContextKeys, HeaderKeys, LogRecordKeys
 from cellarium.cas_backend.core.utils import get_google_service_credentials
 
