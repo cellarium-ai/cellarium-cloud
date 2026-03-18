@@ -89,9 +89,9 @@ tests/
 workflows/
 
 # Local settings and secrets
-src/settings/.env
-src/settings/test_db.sqlite
-src/settings/.pipelines-metafiles/
+settings/.env
+settings/test_db.sqlite
+settings/.pipelines-metafiles/
 
 # Logs
 *.log

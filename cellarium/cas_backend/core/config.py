@@ -19,8 +19,8 @@ SERVICES_DIR = CORE_DIR
 CAS_DIR = CAS_BACKEND_DIR
 ROOT_DIR = REPO_ROOT
 
-# Load .env from src/settings/ (legacy location, TODO: move to repo root)
-dotenv.load_dotenv(dotenv_path=os.path.join(REPO_ROOT, "src", "settings", ".env"))
+# Load .env from settings/.env
+dotenv.load_dotenv(dotenv_path=os.path.join(REPO_ROOT, "settings", ".env"))
 
 ENV_TYPE = os.environ.get("ENVIRONMENT")
 

@@ -18,7 +18,7 @@ from cellarium.cas_backend.core.data_managers import exceptions as dm_exc
 from cellarium.cas_backend.apps.compute.services import Authorizer, consensus_engine, exceptions
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
 from cellarium.cas_backend.core.db import models
-from cellarium.cas_backend.core.model_inference import services
+from cellarium.cas_backend.apps.model_inference import services
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 

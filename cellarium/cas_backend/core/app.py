@@ -15,7 +15,7 @@ from starlette_context.plugins import Plugin
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.auth.exceptions import TokenException
 from cellarium.cas_backend.apps.compute import exception_handlers
-from cellarium.cas_backend.apps.compute.data_manager.exceptions import NotFound
+from cellarium.cas_backend.core.data_managers.exceptions import NotFound
 from cellarium.cas_backend.apps.compute.services.exceptions import APIBaseException
 from cellarium.cas_backend.core.constants import ContextKeys, HeaderKeys, SentryTags
 

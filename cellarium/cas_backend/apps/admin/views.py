@@ -189,7 +189,7 @@ class UserAdminView(CellariumCloudAdminModelView):
             # Expiration and id are created when inserting into the database
             key_locator: UUID = uuid4()
             key: UUID = uuid4()
-            token: _auth.OpaqueToken = _auth.generate_opaque_token_for_user(key_locator, key)
+            token: auth.OpaqueToken = auth.generate_opaque_token_for_user(key_locator, key)
 
             model.user_keys.append(
                 models.UserKey(
@@ -208,7 +208,7 @@ class UserAdminView(CellariumCloudAdminModelView):
                 if user_key.key_locator is None:
                     key_locator: UUID = uuid4()
                     key: UUID = uuid4()
-                    token: _auth.OpaqueToken = _auth.generate_opaque_token_for_user(key_locator, key)
+                    token: auth.OpaqueToken = auth.generate_opaque_token_for_user(key_locator, key)
 
                     # Set the keylocator and keyhash to store in the database
                     user_key.key_locator = str(key_locator)
@@ -262,7 +262,7 @@ class UserAdminView(CellariumCloudAdminModelView):
         downloading it as a .txt file
         :return: A HTTP response that makes a web browser downloading the file
         """
-        token = _auth.generate_jwt_for_user(int(request.args["id"]))
+        token = auth.generate_jwt_for_user(int(request.args["id"]))
         temp = self._create_token_file(token)
         return send_file(temp, as_attachment=True, download_name=temp.name)
 
