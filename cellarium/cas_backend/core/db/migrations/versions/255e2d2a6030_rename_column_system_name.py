@@ -6,8 +6,8 @@ Create Date: 2023-09-12 17:17:16.219869
 
 """
 
-import sqlalchemy as sa
 from alembic import op
+import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "255e2d2a6030"
@@ -35,8 +35,13 @@ def upgrade() -> None:
 #     op.drop_constraint(None, 'cas_model', type_='unique')
 #     op.create_unique_constraint('cas_model_system_name_key', 'cas_model', ['system_name'])
 #     op.drop_column('cas_model', 'model_name')
-#     op.add_column('cas_matching_engine_index', sa.Column('system_name', sa.VARCHAR(length=255), autoincrement=False, nullable=False))
+#     op.add_column(
+#         'cas_matching_engine_index',
+#         sa.Column('system_name', sa.VARCHAR(length=255), autoincrement=False, nullable=False)
+#     )
 #     op.drop_constraint(None, 'cas_matching_engine_index', type_='unique')
-#     op.create_unique_constraint('cas_matching_engine_index_system_name_key', 'cas_matching_engine_index', ['system_name'])
+#     op.create_unique_constraint(
+#         'cas_matching_engine_index_system_name_key', 'cas_matching_engine_index', ['system_name']
+#     )
 #     op.drop_column('cas_matching_engine_index', 'index_name')
 #     # ### end Alembic commands ###

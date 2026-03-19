@@ -1,5 +1,3 @@
-import typing as t
-
 from google.cloud import aiplatform_v1
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 from pydantic import BaseModel, Field
@@ -27,9 +25,9 @@ class MatchResult(BaseModel):
         per query that was sent.
         """
 
-        neighbors: t.List["MatchResult.Neighbor"] = Field(default=[])
+        neighbors: list["MatchResult.Neighbor"] = Field(default=[])
 
-    matches: t.List["MatchResult.NearestNeighbors"] = Field(default=[])
+    matches: list["MatchResult.NearestNeighbors"] = Field(default=[])
 
     def concat(self, other: "MatchResult") -> "MatchResult":
         """
@@ -41,18 +39,14 @@ class MatchResult(BaseModel):
         """
         return MatchResult(matches=self.matches + other.matches)
 
-    def get_unique_ids(self) -> t.List[int]:
+    def get_unique_ids(self) -> list[int]:
         """
         Get unique cas cell ids across all neighbors in querying cells in :class:`MatchResult`
 
         :return: A list with unique indexes of neighbors
         """
         return list(
-            set(
-                int(neighbor.cas_cell_index)
-                for query_neighbors in self.matches
-                for neighbor in query_neighbors.neighbors
-            )
+            {int(neighbor.cas_cell_index) for query_neighbors in self.matches for neighbor in query_neighbors.neighbors}
         )
 
 
@@ -68,7 +62,7 @@ class MatchingClient:
     def __init__(self, index: models.CASMatchingEngineIndex):
         self.index = index
 
-    async def match(self, queries: t.List[t.List[float]]) -> MatchResult:
+    async def match(self, queries: list[list[float]]) -> MatchResult:
         """
         Match queries against the specified index.
 
@@ -105,7 +99,7 @@ class MatchingClientGRPC(MatchingClient):
             index_endpoint_name=self.index.endpoint_id
         )
 
-    def __adapt_result(self, result: t.List[t.List[MatchNeighbor]]) -> MatchResult:
+    def __adapt_result(self, result: list[list[MatchNeighbor]]) -> MatchResult:
         matches = []
         for query_result in result:
             neighbors = []
@@ -124,7 +118,7 @@ class MatchingClientGRPC(MatchingClient):
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
         return MatchResult(matches=matches)
 
-    async def match(self, queries: t.List[t.List[float]]) -> MatchResult:
+    async def match(self, queries: list[list[float]]) -> MatchResult:
         """
         Match queries against the specified index using gRPC.
 
@@ -168,7 +162,7 @@ class MatchingClientREST(MatchingClient):
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
         return MatchResult(matches=matches)
 
-    async def match(self, queries: t.List[t.List[float]]) -> MatchResult:
+    async def match(self, queries: list[list[float]]) -> MatchResult:
         """
         Match queries against the specified index using REST.
 

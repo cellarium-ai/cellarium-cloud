@@ -1,9 +1,9 @@
 from itertools import groupby
 
-import sendgrid
 from mockito import captor, mock, unstub, verify, when
 from mockito.matchers import ArgumentCaptor
 from python_http_client.client import Response
+import sendgrid
 
 from cellarium.cas_backend.core.utils.email_utils import EmailSender
 

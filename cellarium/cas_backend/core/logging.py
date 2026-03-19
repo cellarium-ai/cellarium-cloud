@@ -1,13 +1,13 @@
+from copy import copy
 import json
 import logging
 import re
 import typing as t
-from copy import copy
 
-import uvicorn
 from starlette_context import context
 from starlette_context.errors import ContextDoesNotExistError
 from starlette_context.header_keys import HeaderKeys as BaseHeaderKeys
+import uvicorn
 
 from cellarium.cas_backend.apps.compute.services.exceptions import InvalidInputError
 from cellarium.cas_backend.core.config import settings
@@ -33,7 +33,7 @@ class CloudTraceContext(t.NamedTuple):
 
     trace_id: str
     span_id: str
-    options: t.Optional[str]
+    options: str | None
 
     def get_trace(self, project_id: str) -> str:
         """
@@ -44,7 +44,8 @@ class CloudTraceContext(t.NamedTuple):
     @staticmethod
     def from_header(header: str) -> "CloudTraceContext":
         """
-        Parse a Cloud Trace context header into a CloudTraceContext object.  Throws an exception if the header is invalid.
+        Parse a Cloud Trace context header into a CloudTraceContext object. Throws an exception if
+        the header is invalid.
 
         :param header: The value of the X-Cloud-Trace-Context header.
         :return: A CloudTraceContext object.
@@ -71,7 +72,6 @@ class StreamHandler(logging.StreamHandler):
     def format(self, record):
         message = super().format(record)
         if self.log_as_json:
-
             # Build structured log messages as an object.
             global_log_fields = {}
 
@@ -128,7 +128,7 @@ class CustomDefaultFormatter(uvicorn.logging.DefaultFormatter):
     Custom formatter for default logs.
     """
 
-    def __init__(self, fmt: str, fmt_json: t.Optional[str], use_colors: bool = True, *args, **kwargs):
+    def __init__(self, fmt: str, fmt_json: str | None, use_colors: bool = True, *args, **kwargs):
         if settings.LOG_AS_JSON:
             # Use the JSON format if the setting is enabled.
             if fmt_json:
@@ -141,14 +141,15 @@ class CustomDefaultFormatter(uvicorn.logging.DefaultFormatter):
 
 class CustomAccessFormatter(uvicorn.logging.AccessFormatter):
     """
-    Handles the formatting of access logs and adds data to the log record if it is present in the context.  Specifically:
+    Handles the formatting of access logs and adds data to the log record if it is present in the
+    context. Specifically:
     - user: A loggable representation of the user from the request.
     - user_id: The internal ID of the user from the request.
     - user_email: The email address of the user from the request.
     - user_agent: The user agent string from the request.
     """
 
-    def __init__(self, fmt: str, fmt_json: t.Optional[str], use_colors: bool = True, *args, **kwargs):
+    def __init__(self, fmt: str, fmt_json: str | None, use_colors: bool = True, *args, **kwargs):
         if settings.LOG_AS_JSON:
             # Use the JSON format if the setting is enabled.
             if fmt_json:
@@ -157,7 +158,7 @@ class CustomAccessFormatter(uvicorn.logging.AccessFormatter):
             use_colors = False
         super().__init__(*args, **kwargs, use_colors=use_colors, fmt=fmt)
 
-    def formatMessage(self, record: logging.LogRecord) -> str:
+    def formatMessage(self, record: logging.LogRecord) -> str:  # noqa: N802
         recordcopy = copy(record)
         # Add user, user_id and user_email to the log record if they are present in the context.
         user_obj = context.data[ContextKeys.user] if ContextKeys.user in context.data else None

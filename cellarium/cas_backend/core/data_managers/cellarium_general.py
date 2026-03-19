@@ -1,5 +1,3 @@
-import typing as t
-
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from starlette_context import context
@@ -44,7 +42,7 @@ class CellariumGeneralDataManager(BaseDataManager):
             session.commit()
             return session.query(models.User).get(user.id)
 
-    def get_feature_schemas(self) -> t.List[schemas.FeatureSchemaInfo]:
+    def get_feature_schemas(self) -> list[schemas.FeatureSchemaInfo]:
         """
         :return: List of gene schema objects
         """
@@ -54,7 +52,7 @@ class CellariumGeneralDataManager(BaseDataManager):
         query_result = self.block_coo_matrix_db_client.query(sql_query).result()
         return [schemas.FeatureSchemaInfo(schema_name=row["table_name"]) for row in query_result]
 
-    def get_feature_schema_by(self, schema_name: str) -> t.List[str]:
+    def get_feature_schema_by(self, schema_name: str) -> list[str]:
         """
         Get a specific feature schema by its unique name and return a list of features in a correct order
 
@@ -67,7 +65,7 @@ class CellariumGeneralDataManager(BaseDataManager):
         query_result = self.block_coo_matrix_db_client.query(sql_query).result()
         return [row["feature_name"] for row in query_result]
 
-    def get_models_all(self) -> t.List[models.CASModel]:
+    def get_models_all(self) -> list[models.CASModel]:
         """
         Retrieve query with all available models
 
@@ -76,7 +74,7 @@ class CellariumGeneralDataManager(BaseDataManager):
         with self.system_data_db_session_maker() as session:
             return session.query(models.CASModel).all()
 
-    def get_models_non_admin(self) -> t.List[models.CASModel]:
+    def get_models_non_admin(self) -> list[models.CASModel]:
         """
         Retrieve query with available models only for non-admin use (admin_use_only=False)
 

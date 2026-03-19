@@ -17,7 +17,7 @@ from cellarium.cas_backend.apps.compute.services import consensus_engine
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 
 
-def load_ontology_resource_from_file() -> t.Dict[str, t.Any]:
+def load_ontology_resource_from_file() -> dict[str, t.Any]:
     """
     Load the ontology resource from a predefined JSON file.
 
@@ -36,13 +36,13 @@ def load_expected_response_ontology_aware() -> list[schemas.QueryCellNeighborhoo
     """
     filepath = "tests/unit/test_consensus_engine_fixtures/ontology_aware_expected_response.json"
 
-    with open(filepath, "r") as file:
+    with open(filepath) as file:
         json_data = json.load(file)
 
     return [schemas.QueryCellNeighborhoodOntologyAware(**item) for item in json_data]
 
 
-def load_expected_response_summary_stats() -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
+def load_expected_response_summary_stats() -> list[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
     """
     Load the expected response for summary stats strategy from a predefined JSON file.
 
@@ -50,7 +50,7 @@ def load_expected_response_summary_stats() -> t.List[schemas.QueryCellNeighborho
     """
     filepath = "tests/unit/test_consensus_engine_fixtures/summary_stats_expected_response.json"
 
-    with open(filepath, "r") as file:
+    with open(filepath) as file:
         json_data = json.load(file)
 
     return [schemas.QueryCellNeighborhoodCellTypeSummaryStatistics(**item) for item in json_data]

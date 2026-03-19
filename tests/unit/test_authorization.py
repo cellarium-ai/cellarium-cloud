@@ -1,7 +1,7 @@
 import re
 
-import pytest
 from mockito import mock, unstub, when
+import pytest
 
 from cellarium.cas_backend.apps.compute.services import Authorizer, exceptions
 from cellarium.cas_backend.core.data_managers import exceptions as dm_exc

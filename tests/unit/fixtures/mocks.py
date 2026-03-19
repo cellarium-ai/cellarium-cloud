@@ -57,7 +57,7 @@ class MockMatchingClient(AsyncMock):
     resource (`cell_source`) is used to provide valid neighbors.
     """
 
-    def __init__(self, cell_info_data: t.List[schemas.CellariumCellMetadata], *args, **kwargs) -> None:
+    def __init__(self, cell_info_data: list[schemas.CellariumCellMetadata], *args, **kwargs) -> None:
         """
         Initialize the MockMatchingClient with a centralized cell resource.
 
@@ -72,7 +72,7 @@ class MockMatchingClient(AsyncMock):
         self.cell_info_data = cell_info_data
         self.match = AsyncMock(side_effect=self._match_side_effect)
 
-    async def _match_side_effect(self, queries: t.List[t.Any]) -> MatchResult:
+    async def _match_side_effect(self, queries: list[t.Any]) -> MatchResult:
         """
         Simulates the `match` method of the MatchingClient.
 
@@ -90,7 +90,7 @@ class MockMatchingClient(AsyncMock):
         # List of available cell indices
         cell_indices = list(cell_index_to_metadata.keys())
 
-        for query in queries:
+        for _query in queries:
             num_neighbors = min(3, len(cell_indices))
             neighbors = random.sample(cell_indices, num_neighbors)
 
@@ -126,7 +126,7 @@ class MockModelService(ModelInferenceService):
         # Trackable mock methods with side effects
         self.embed_adata = MagicMock(side_effect=self._mock_embed_adata)
 
-    def _mock_embed_adata(self, adata: anndata.AnnData, model: models.CASModel) -> t.Tuple[t.List[str], np.ndarray]:
+    def _mock_embed_adata(self, adata: anndata.AnnData, model: models.CASModel) -> tuple[list[str], np.ndarray]:
         """
         Side effect method for `embed_adata` to simulate embedding generation.
 

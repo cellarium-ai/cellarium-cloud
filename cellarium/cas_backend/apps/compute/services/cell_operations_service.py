@@ -34,11 +34,11 @@ class CellOperationsService:
 
     def __init__(
         self,
-        cell_operations_dm: t.Optional[CellOperationsDataManager] = None,
-        cellarium_general_dm: t.Optional[CellariumGeneralDataManager] = None,
-        cell_quota_service: t.Optional[CellQuotaService] = None,
-        model_service: t.Optional[services.ModelInferenceService] = None,
-        authorizer: t.Optional[Authorizer] = None,
+        cell_operations_dm: CellOperationsDataManager | None = None,
+        cellarium_general_dm: CellariumGeneralDataManager | None = None,
+        cell_quota_service: CellQuotaService | None = None,
+        model_service: services.ModelInferenceService | None = None,
+        authorizer: Authorizer | None = None,
     ):
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
@@ -75,7 +75,8 @@ class CellOperationsService:
         """
         if adata.X.dtype != np.float32:
             raise exceptions.InvalidAnndataFileException(
-                f"CAS only support anndata matrices with dtype 'float32'. The provided matrix has type '{adata.X.dtype}'."
+                f"CAS only support anndata matrices with dtype 'float32'. "
+                f"The provided matrix has type '{adata.X.dtype}'."
             )
         if "total_mrna_umis" not in adata.obs:
             raise exceptions.InvalidAnndataFileException(
@@ -83,7 +84,8 @@ class CellOperationsService:
             )
         elif adata.obs["total_mrna_umis"].dtype != np.float32:
             raise exceptions.InvalidAnndataFileException(
-                f"Provided matrix column 'total_mrna_umis' should be type 'float32', but has type '{adata.obs['total_mrna_umis'].dtype}'."
+                f"Provided matrix column 'total_mrna_umis' should be type 'float32', "
+                f"but has type '{adata.obs['total_mrna_umis'].dtype}'."
             )
 
     def __read_and_validate_anndata_file(self, file: t.BinaryIO) -> anndata.AnnData:
@@ -117,7 +119,8 @@ class CellOperationsService:
 
         :return: Number of cells in the anndata object.
 
-        :raises exceptions.QuotaExceededException: If the number of cells in the anndata object exceeds the user's quota.
+        :raises exceptions.QuotaExceededException: If the number of cells in the anndata object exceeds
+            the user's quota.
         """
         cell_count = len(adata)
         user_quota = self.cell_quota_service.get_remaining_quota_for_user(user=user)
@@ -136,7 +139,7 @@ class CellOperationsService:
 
         return cell_count
 
-    async def get_embeddings(self, adata: anndata.AnnData, model: models.CASModel) -> t.Tuple[t.List[str], np.array]:
+    async def get_embeddings(self, adata: anndata.AnnData, model: models.CASModel) -> tuple[list[str], np.array]:
         """
         Get embeddings from the specified model.
 
@@ -153,8 +156,8 @@ class CellOperationsService:
     def __validate_knn_response(embeddings: np.array, knn_response: MatchResult) -> None:
         if len(knn_response.matches) != len(embeddings):
             raise exceptions.VectorSearchResponseError(
-                f"Number of query ids ({len(embeddings)}) and knn matches ({len(knn_response.matches)}) does not match. "
-                f"This could probably be caused by Vector Search overload."
+                f"Number of query ids ({len(embeddings)}) and knn matches ({len(knn_response.matches)}) "
+                f"does not match. This could probably be caused by Vector Search overload."
             )
 
         for match in knn_response.matches:
@@ -231,7 +234,7 @@ class CellOperationsService:
         )
 
     @staticmethod
-    def __split_embeddings_into_chunks(embeddings: np.array, chunk_size: int) -> t.List[np.array]:
+    def __split_embeddings_into_chunks(embeddings: np.array, chunk_size: int) -> list[np.array]:
         """
         Splits the embeddings into chunks based on the configured chunk size.
 
@@ -247,9 +250,7 @@ class CellOperationsService:
 
         return [embeddings[i : i + chunk_size] for i in range(0, len(embeddings), chunk_size)]
 
-    async def get_knn_matches(
-        self, adata: anndata.AnnData, model: models.CASModel
-    ) -> t.Tuple[t.List[str], MatchResult]:
+    async def get_knn_matches(self, adata: anndata.AnnData, model: models.CASModel) -> tuple[list[str], MatchResult]:
         """
         Get KNN matches for anndata object.
 
@@ -443,9 +444,7 @@ class CellOperationsService:
         except dm_exc.CellMetadataDatabaseError as e:
             raise exceptions.InvalidInputError(str(e))
 
-    async def search_adata_file(
-        self, user: models.User, file: t.BinaryIO, model_name: str
-    ) -> t.List[t.Dict[str, t.Any]]:
+    async def search_adata_file(self, user: models.User, file: t.BinaryIO, model_name: str) -> list[dict[str, t.Any]]:
         """
         Search for similar cells in a single anndata file with Cellarium CAS. Input file should be validated and
         sanitized according to the model schema.
@@ -481,8 +480,8 @@ class CellOperationsService:
         ]
 
     def get_cells_by_ids_for_user(
-        self, cell_ids: t.List[int], metadata_feature_names: t.List[str]
-    ) -> t.List[schemas.CellariumCellMetadata]:
+        self, cell_ids: list[int], metadata_feature_names: list[str]
+    ) -> list[schemas.CellariumCellMetadata]:
         """
         Get cells by their ids from BigQuery `cas_cell_info` table.
 

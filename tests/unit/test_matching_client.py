@@ -1,12 +1,11 @@
-import typing as t
 from unittest.mock import patch
 
-import pytest
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 from google.cloud.aiplatform_v1 import FindNeighborsRequest, FindNeighborsResponse, IndexDatapoint, MatchServiceClient
 from google.protobuf.json_format import Parse
 from mockito import mock, unstub, when
 from parameterized import parameterized
+import pytest
 
 from cellarium.cas_backend.apps.compute.clients import CustomMatchingEngineIndexEndpointClient, matching_client
 from cellarium.cas_backend.apps.compute.clients.matching_client import (
@@ -146,8 +145,8 @@ class TestMatchingClient:
     @pytest.mark.asyncio
     async def test_rest_client(
         self,
-        queries: t.List[t.List[float]],
-        client_queries: t.List[FindNeighborsRequest.Query],
+        queries: list[list[float]],
+        client_queries: list[FindNeighborsRequest.Query],
         client_response: FindNeighborsResponse,
         expected_response: MatchResult,
     ) -> None:
@@ -242,8 +241,8 @@ class TestMatchingClient:
     @pytest.mark.asyncio
     async def test_grpc_client(
         self,
-        queries: t.List[t.List[float]],
-        client_response: t.List[t.List[MatchNeighbor]],
+        queries: list[list[float]],
+        client_response: list[list[MatchNeighbor]],
         expected_response: MatchResult,
     ) -> None:
         """

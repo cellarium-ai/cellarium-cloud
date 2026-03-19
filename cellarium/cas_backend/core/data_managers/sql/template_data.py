@@ -40,10 +40,10 @@ class TemplateData:
     def __init__(
         self,
         project: str,
-        dataset: t.Optional[str] = None,
-        select: t.Optional[t.List[str]] = None,
-        filters: t.Optional[t.Dict[str, t.Any]] = None,
-        **other_kwargs: t.Union[str, bool, int, float],
+        dataset: str | None = None,
+        select: list[str] | None = None,
+        filters: dict[str, t.Any] | None = None,
+        **other_kwargs: str | bool | int | float,
     ) -> None:
         template_data_validator.validate_not_empty(value=project)
 

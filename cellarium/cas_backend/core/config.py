@@ -1,6 +1,5 @@
 import json
 import os
-import typing as t
 
 import dotenv
 from pydantic_settings import BaseSettings
@@ -27,12 +26,12 @@ ENV_TYPE = os.environ.get("ENVIRONMENT")
 
 class AllEnvSettings(BaseSettings):
     # General
-    GOOGLE_ACCOUNT_CREDENTIALS: t.Dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
+    GOOGLE_ACCOUNT_CREDENTIALS: dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = ENV_TYPE
     APP_VERSION: str = "1.7.3"
     APP_ROOT: str = ROOT_DIR
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
-    PROJECT_BUCKET_NAME: t.Optional[str] = os.environ.get("PROJECT_BUCKET_NAME")
+    PROJECT_BUCKET_NAME: str | None = os.environ.get("PROJECT_BUCKET_NAME")
 
     # Directory paths (new structure)
     CORE_DIR: str = CORE_DIR
@@ -53,13 +52,13 @@ class AllEnvSettings(BaseSettings):
     SCRIPTS_DIR: str = f"{REPO_ROOT}/scripts"
 
     # Sentry
-    SENTRY_DSN: t.Optional[str] = os.environ.get("SENTRY_DSN")
+    SENTRY_DSN: str | None = os.environ.get("SENTRY_DSN")
     SENTRY_ENABLE_TRACING: bool = True
     SENTRY_PROFILES_SAMPLE_RATE: float = 1.0
     SENTRY_TRACES_SAMPLE_RATE: float = 1.0
-    SENTRY_ENVIRONMENT: t.Optional[str] = os.environ.get("SENTRY_ENVIRONMENT")
+    SENTRY_ENVIRONMENT: str | None = os.environ.get("SENTRY_ENVIRONMENT")
     # Model Training
-    NEPTUNE_API_KEY: t.Optional[str] = os.environ.get("NEPTUNE_API_KEY")
+    NEPTUNE_API_KEY: str | None = os.environ.get("NEPTUNE_API_KEY")
     # API
     AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 650  # 350 seconds
     AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 600  # 300 seconds
@@ -88,14 +87,14 @@ class AllEnvSettings(BaseSettings):
     DB_CONNECTION_POOL_TIMEOUT: int = 40  # 40 seconds
     DB_CONNECTION_POOL_RECYCLE: int = 1800  # 30 minutes
     ALEMBIC_CONFIG_FILE_PATH: str = f"{CAS_DIR}/services/db/alembic.ini"
-    DB_CONNECTION_NAME: t.Optional[str] = os.environ.get("DB_CONNECTION_NAME")
-    DB_NAME: t.Optional[str] = os.environ.get("DB_NAME")
-    DB_PASSWORD: t.Optional[str] = os.environ.get("DB_PASSWORD")
-    DB_USER: t.Optional[str] = os.environ.get("DB_USER")
-    DB_INSTANCE_UNIX_SOCKET: t.Optional[str] = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
-    DB_PORT: t.Optional[str] = os.environ.get("DB_PORT")
+    DB_CONNECTION_NAME: str | None = os.environ.get("DB_CONNECTION_NAME")
+    DB_NAME: str | None = os.environ.get("DB_NAME")
+    DB_PASSWORD: str | None = os.environ.get("DB_PASSWORD")
+    DB_USER: str | None = os.environ.get("DB_USER")
+    DB_INSTANCE_UNIX_SOCKET: str | None = os.environ.get("DB_INSTANCE_UNIX_SOCKET")
+    DB_PORT: str | None = os.environ.get("DB_PORT")
     # If this is value is specified, it will be used instead of the unix socket
-    DB_PRIVATE_IP: t.Optional[str] = os.environ.get("DB_PRIVATE_IP")
+    DB_PRIVATE_IP: str | None = os.environ.get("DB_PRIVATE_IP")
     # Stage db connector through unix socket or private IP
     if DB_PRIVATE_IP is None:
         SQLALCHEMY_DATABASE_URI: str = (
@@ -107,11 +106,11 @@ class AllEnvSettings(BaseSettings):
         )
     # Admin
     SECRET_KEY: str = os.environ.get("FLASK_SECRET_KEY")
-    SECURITY_PASSWORD_SALT: t.Optional[str] = os.environ.get("FLASK_SECURITY_PASSWORD_SALT")
+    SECURITY_PASSWORD_SALT: str | None = os.environ.get("FLASK_SECURITY_PASSWORD_SALT")
     FLASK_ADMIN_SWATCH: str = "flatly"
     _FLASK_BASIC_AUTH_USERNAME: str = os.environ.get("FLASK_BASIC_AUTH_USERNAME", "")
     _FLASK_BASIC_AUTH_PASSWORD: str = os.environ.get("FLASK_BASIC_AUTH_PASSWORD", "")
-    ADMIN_BASIC_AUTH_USER: t.Dict[str, str] = {
+    ADMIN_BASIC_AUTH_USER: dict[str, str] = {
         "username": _FLASK_BASIC_AUTH_USERNAME,
         "password": _FLASK_BASIC_AUTH_PASSWORD,
     }
@@ -119,7 +118,7 @@ class AllEnvSettings(BaseSettings):
     # Email settings
     SENDGRID_API_KEY: str = os.environ.get("SENDGRID_API_KEY", "")
     FROM_ADDRESS: str = os.environ.get("FROM_ADDRESS", "Cellarium CAS <no-reply@cellarium.ai>")
-    FEEDBACK_FORM_BASE_URL: t.Optional[str] = os.environ.get("FEEDBACK_FORM_BASE_URL")
+    FEEDBACK_FORM_BASE_URL: str | None = os.environ.get("FEEDBACK_FORM_BASE_URL")
     DB_LOG_QUERIES: bool = os.environ.get("DB_LOG_QUERIES", False)
 
     # Quota settings

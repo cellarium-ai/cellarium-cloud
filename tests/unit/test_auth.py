@@ -1,15 +1,14 @@
-import json
-import typing as t
 from base64 import b64decode, b64encode
 from datetime import datetime, timedelta
+import json
 from unittest import mock
 from uuid import UUID, uuid4
 
-import jwt
-import pytest
 from fastapi.security import HTTPAuthorizationCredentials
+import jwt
 from mockito import unstub, when
 from parameterized import parameterized
+import pytest
 from starlette_context import context, request_cycle_context
 
 from cellarium.cas_backend.apps.compute.dependencies.auth import TokenTypes, authenticate_user
@@ -50,7 +49,7 @@ class TestAuth:
         ]
     )
     def test_token_type_detection(
-        self, token: str, expected_type: TokenTypes, expected_exception: t.Optional[Exception]
+        self, token: str, expected_type: TokenTypes, expected_exception: Exception | None
     ) -> None:
         if expected_exception:
             with pytest.raises(expected_exception):
@@ -81,7 +80,7 @@ class TestAuth:
     )
     @pytest.mark.asyncio
     async def test_authenticate_user(
-        self, auth_token_scheme: HTTPAuthorizationCredentials, expected_exception: t.Optional[Exception]
+        self, auth_token_scheme: HTTPAuthorizationCredentials, expected_exception: Exception | None
     ):
         """
         Test the top level authentication function.
@@ -270,7 +269,7 @@ class TestAuth:
         key_active: bool,
         expires: datetime,
         bad_key_locator: bool,
-        expected_exception: t.Optional[Exception],
+        expected_exception: Exception | None,
     ) -> None:
         """
         Test user authentication with opaque tokens.
@@ -283,7 +282,8 @@ class TestAuth:
         :param key_active: If True, key is active
         :param expires: Expiration date of the key
         :param bad_key_locator: If True, use a bad key locator to test (e.g. a key that does not exist in the DB)
-        :param expected_exception: Expected exception to be raised when authenticating if specified.  If None, then assume successful auth
+        :param expected_exception: Expected exception to be raised when authenticating if specified.
+                                   If None, then assume successful auth
         """
         token: OpaqueToken = opaque_token.generate_opaque_token_for_user(key_locator=key_locator, key=key)
 

@@ -1,5 +1,3 @@
-import typing as t
-
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 
@@ -71,7 +69,7 @@ async def feedback_opt_out(
     )
 
 
-@cellarium_general_router.get("/feature-schemas", response_model=t.List[schemas.FeatureSchemaInfo])
+@cellarium_general_router.get("/feature-schemas", response_model=list[schemas.FeatureSchemaInfo])
 async def get_feature_schemas(
     _: models.User = Depends(dependencies.authenticate_user),
     cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
@@ -84,7 +82,7 @@ async def get_feature_schemas(
     return cellarium_general_service.get_feature_schemas()
 
 
-@cellarium_general_router.get("/feature-schema/{schema_name}", response_model=t.List[str])
+@cellarium_general_router.get("/feature-schema/{schema_name}", response_model=list[str])
 async def get_feature_schema_by(
     schema_name: str,
     _: models.User = Depends(dependencies.authenticate_user),
@@ -100,7 +98,7 @@ async def get_feature_schema_by(
     return cellarium_general_service.get_feature_schema_by(schema_name=schema_name)
 
 
-@cellarium_general_router.get("/list-models", response_model=t.List[schemas.CASModel])
+@cellarium_general_router.get("/list-models", response_model=list[schemas.CASModel])
 async def get_model_list(
     user: models.User = Depends(dependencies.authenticate_user),
     cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),

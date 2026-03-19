@@ -14,7 +14,6 @@ from cellarium.cas_backend.core.db.models.users import User
 
 
 class TestCellQuotaService:
-
     def setup_method(self) -> None:
         # Gotta mock up the google service stuff that gets called in the constructor so the tests
         # don't fail when you run them on a system without credentials set up

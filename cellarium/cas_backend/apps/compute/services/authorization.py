@@ -1,5 +1,3 @@
-import typing as t
-
 from cellarium.cas_backend.apps.compute.services import exceptions
 from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager
 from cellarium.cas_backend.core.data_managers import exceptions as dm_exc
@@ -11,7 +9,7 @@ class Authorizer:
     Service for authorizing users to access certain resources.
     """
 
-    def __init__(self, cellarium_general_dm: t.Optional[CellariumGeneralDataManager] = None):
+    def __init__(self, cellarium_general_dm: CellariumGeneralDataManager | None = None):
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
 
     def authorize_model_for_user(self, user: models.User, model_name: str) -> models.CASModel:

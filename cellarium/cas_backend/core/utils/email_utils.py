@@ -1,5 +1,4 @@
 import logging
-import typing as t
 
 import sendgrid
 from sendgrid.helpers.mail import Mail
@@ -12,17 +11,17 @@ TEMPLATE_DIR = f"{settings.APP_ROOT}/casp/services/admin/templates"
 
 
 class EmailSender:
-
     def __init__(
         self,
         from_address: str,
-        sendgrid_key: t.Optional[str] = None,
+        sendgrid_key: str | None = None,
         template_dir: str = TEMPLATE_DIR,
     ) -> None:
         """
         Initialize EmailSender class.
 
-        :param sendgrid_client: SendGrid API key or client object. If this value is empty, the class will not send emails.
+        :param sendgrid_client: SendGrid API key or client object. If this value is empty, the class
+                                will not send emails.
         :param from_address: Email address to send emails from.
         """
         if sendgrid_key is None:
@@ -35,26 +34,33 @@ class EmailSender:
         self.template_dir = template_dir
 
     def _send_email(
-        self, to: str, subject: str, content_path_html: str, content_path_plain: str, sub_values: dict[str, object] = {}
+        self,
+        to: str,
+        subject: str,
+        content_path_html: str,
+        content_path_plain: str,
+        sub_values: dict[str, object] = None,
     ) -> None:
         """
         Send an email with the given content to the specified recipient.
 
         :param to: The email address to send the email to.
         :param subject: The subject of the email.
-        :param content_path_html: The relative path to the HTML content of the email where the working directory's default is
-                                ``src/casp/services/admin/templates/email``
-        :param content_path_plain: The relative path to the plain text content of the email where the working directory's default is
-                                ``src/casp/services/admin/templates/email``
+        :param content_path_html: The relative path to the HTML content of the email where the working
+                                directory's default is ``src/casp/services/admin/templates/email``
+        :param content_path_plain: The relative path to the plain text content of the email where the
+                                working directory's default is ``src/casp/services/admin/templates/email``
         :param sub_values: The values to substitute into the email template.
         """
+        if sub_values is None:
+            sub_values = {}
         if not self.sg:
             logger.warning("No SendGrid key provided.  Email not sent.")
             return
 
-        with open(f"{self.template_dir}/email/{content_path_html}", "r") as f:
+        with open(f"{self.template_dir}/email/{content_path_html}") as f:
             html_content = f.read().format(**sub_values)
-        with open(f"{self.template_dir}/email/{content_path_plain}", "r") as f:
+        with open(f"{self.template_dir}/email/{content_path_plain}") as f:
             plain_text_content = f.read().format(**sub_values)
 
         message = Mail(

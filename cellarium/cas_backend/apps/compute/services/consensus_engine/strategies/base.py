@@ -1,13 +1,11 @@
-import typing as t
-
 from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
 
 
 class ConsensusStrategyInterface:
     def summarize(
-        self, query_cell_ids: t.List[str], knn_query: MatchResult
-    ) -> t.List[schemas.QueryCellNeighborhoodAbstract]:
+        self, query_cell_ids: list[str], knn_query: MatchResult
+    ) -> list[schemas.QueryCellNeighborhoodAbstract]:
         """
         Define the method signature for the consensus strategy, which is responsible for summarizing query neighbor
 

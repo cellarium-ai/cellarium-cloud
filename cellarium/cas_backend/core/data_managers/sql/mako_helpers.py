@@ -68,11 +68,11 @@ def _process_equality_operator_filter_value(filter_value: t.Any, filter_type: st
         return _string_value_processor(v=filter_value)
     elif isinstance(filter_value, bool):
         return _bool_value_processor(v=filter_value)
-    elif isinstance(filter_value, (int, float)):
+    elif isinstance(filter_value, int | float):
         return _numeric_value_processor(v=filter_value)
     else:
         raise exceptions.UnsupportedSQLTypeException(
-            f"Unsupported type {type(filter_value)} for `{filter_type}`. " f"Value should be a primitive python type."
+            f"Unsupported type {type(filter_value)} for `{filter_type}`. Value should be a primitive python type."
         )
 
 
@@ -84,7 +84,7 @@ def _process_relational_operator_filter_value(filter_value: t.Any, filter_type: 
 
     :return: The processed value in string format.
     """
-    if isinstance(filter_value, (int, float)):
+    if isinstance(filter_value, int | float):
         return _numeric_value_processor(v=filter_value)
     else:
         raise exceptions.UnsupportedSQLTypeException(
@@ -101,12 +101,11 @@ def _process_membership_operator_filter_value(filter_value: t.Any, filter_type: 
 
     :return: The processed value in string format.
     """
-    if isinstance(filter_value, (list, tuple)):
+    if isinstance(filter_value, list | tuple):
         return _list_value_processor(v=filter_value)
     else:
         raise exceptions.UnsupportedSQLTypeException(
-            f"Unsupported type {type(filter_type)} for `{filter_type}`. "
-            f"Value should be a list of numbers or strings."
+            f"Unsupported type {type(filter_type)} for `{filter_type}`. Value should be a list of numbers or strings."
         )
 
 
@@ -133,7 +132,7 @@ SQL_OPERATORS_MAPPING = {
 }
 
 
-def _normalize_column_names(column_names: t.List[str]) -> t.List[str]:
+def _normalize_column_names(column_names: list[str]) -> list[str]:
     """
     Convert all column names to lowercase
 
@@ -143,7 +142,7 @@ def _normalize_column_names(column_names: t.List[str]) -> t.List[str]:
     return [column_name.lower() for column_name in column_names]
 
 
-def _remove_duplicates(column_names: t.List[str]) -> t.List[str]:
+def _remove_duplicates(column_names: list[str]) -> list[str]:
     """
     Remove duplicates from a list of column names. Case-sensitive, so it is recommended to normalize the column names
     list before using it
@@ -162,7 +161,7 @@ def _remove_duplicates(column_names: t.List[str]) -> t.List[str]:
     return unique_items
 
 
-def _process_column_names(column_names: t.List[str]) -> t.List[str]:
+def _process_column_names(column_names: list[str]) -> list[str]:
     """
     Normalize column names, get rid of duplicates and validate the output list
 
@@ -179,7 +178,7 @@ def _process_column_names(column_names: t.List[str]) -> t.List[str]:
     return column_names_normalized_unique
 
 
-def select(column_names: t.List[str]) -> str:
+def select(column_names: list[str]) -> str:
     """
     Construct a SQL SELECT body from the provided list of columns.
 
@@ -208,7 +207,7 @@ def select(column_names: t.List[str]) -> str:
     return f"select {', '.join(processed_columns)}" if processed_columns else "*"
 
 
-def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
+def where(filters: dict[str, t.Any] | None) -> str:
     """
     Construct a SQL where clause from the provided filters.
 
@@ -277,7 +276,7 @@ def where(filters: t.Optional[t.Dict[str, t.Any]]) -> str:
     return f"where\n    {where_clause_body}" if where_clause_body else ""
 
 
-def add_cell_info_required_columns(column_names: t.List[str]) -> t.List[str]:
+def add_cell_info_required_columns(column_names: list[str]) -> list[str]:
     """
     Add required columns to the provided list of columns. Recommended to use before :func:`_process_column_names` to
     make sure all the columns are valid and unique
@@ -288,7 +287,7 @@ def add_cell_info_required_columns(column_names: t.List[str]) -> t.List[str]:
     return [*CAS_CELL_INFO_REQUIRED_COLUMN_NAMES, *column_names]
 
 
-def remove_leading_alias(column_names: t.List[str]) -> t.List[str]:
+def remove_leading_alias(column_names: list[str]) -> list[str]:
     """
     Process a list of column names by removing leading aliases.
 

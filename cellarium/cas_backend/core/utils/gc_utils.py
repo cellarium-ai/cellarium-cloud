@@ -10,7 +10,7 @@ from cellarium.cas_backend.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-def get_google_service_credentials() -> t.Tuple[Credentials, str]:
+def get_google_service_credentials() -> tuple[Credentials, str]:
     if settings.GOOGLE_ACCOUNT_CREDENTIALS != {}:
         logger.warning(
             "Google auth performed using the GOOGLE_ACCOUNT_CREDENTIALS env setting. "
@@ -25,7 +25,8 @@ def get_google_service_credentials() -> t.Tuple[Credentials, str]:
     if "get_project_id" in project_id and project_id != credentials.get_project_id():
         logger.warning(
             (
-                f"Active project {project_id} is different than the default credential's project {credentials.project_id}.",
+                f"Active project {project_id} is different than the default credential's project "
+                f"{credentials.project_id}.",
                 f"Using {credentials.project_id} to auth to Google service",
             )
         )
@@ -67,7 +68,7 @@ def upload_file_to_bucket(local_file_name: str, bucket: str, blob_name: str) -> 
     blob.upload_from_filename(local_file_name)
 
 
-def list_blobs(bucket_name: str, prefix: t.Optional[str] = None) -> storage.Blob:
+def list_blobs(bucket_name: str, prefix: str | None = None) -> storage.Blob:
     """Lists all the blobs in the bucket"""
     credentials, project_id = get_google_service_credentials()
     storage_client = storage.Client(credentials=credentials, project=project_id)

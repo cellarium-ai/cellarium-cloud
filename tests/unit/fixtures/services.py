@@ -51,7 +51,7 @@ def cell_operations_service_with_mocks(
     return service
 
 
-def load_ontology_resource_from_file() -> t.Dict[str, t.Any]:
+def load_ontology_resource_from_file() -> dict[str, t.Any]:
     """
     Load the ontology resource from a predefined JSON file.
 

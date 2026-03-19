@@ -1,9 +1,9 @@
 import typing as t
 
-import grpc
 from google.cloud import aiplatform
 from google.cloud.aiplatform.matching_engine._protos import match_service_pb2, match_service_pb2_grpc
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
+import grpc
 
 from cellarium.cas_backend.core.config import settings
 
@@ -27,8 +27,8 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
     def __init__(
         self,
         index_endpoint_name: str,
-        project: t.Optional[str] = None,
-        location: t.Optional[str] = None,
+        project: str | None = None,
+        location: str | None = None,
         credentials: t.Optional["auth_credentials.Credentials"] = None,
         grpc_message_max_size: int = GRPC_MESSAGE_MAX_SIZE_DEFAULT,
     ):
@@ -68,10 +68,10 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
     def __prepare_stub_batch_request(
         self,
         deployed_index_id: str,
-        queries: t.List[t.List[float]],
+        queries: list[list[float]],
         num_neighbors: int = 1,
-        filter: t.Optional[t.List["Namespace"]] = None,
-    ) -> t.Tuple[match_service_pb2_grpc.MatchServiceStub, match_service_pb2.BatchMatchRequest]:
+        filter: list["Namespace"] | None = None,
+    ) -> tuple[match_service_pb2_grpc.MatchServiceStub, match_service_pb2.BatchMatchRequest]:
         # ==== Overriden fix: make an input argument immutable ====
         if filter is None:
             filter = []
@@ -133,9 +133,9 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
     def __get_match_response(
         self,
         deployed_index_id: str,
-        queries: t.List[t.List[float]],
+        queries: list[list[float]],
         num_neighbors: int = 1,
-        filter: t.Optional[t.List["Namespace"]] = None,
+        filter: list["Namespace"] | None = None,
     ):
         stub, batch_request = self.__prepare_stub_batch_request(
             deployed_index_id=deployed_index_id, queries=queries, num_neighbors=num_neighbors, filter=filter
@@ -145,7 +145,7 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
     @staticmethod
     def __process_batch_match_response(
         response: match_service_pb2.BatchMatchResponse,
-    ) -> t.List[t.List["MatchNeighbor"]]:
+    ) -> list[list["MatchNeighbor"]]:
         """
         Process the response from the BatchMatch call and return the results.
 
@@ -162,10 +162,10 @@ class CustomMatchingEngineIndexEndpointClient(aiplatform.MatchingEngineIndexEndp
     def match(
         self,
         deployed_index_id: str,
-        queries: t.List[t.List[float]],
+        queries: list[list[float]],
         num_neighbors: int = 1,
-        filter: t.Optional[t.List["Namespace"]] = None,
-    ) -> t.List[t.List["MatchNeighbor"]]:
+        filter: list["Namespace"] | None = None,
+    ) -> list[list["MatchNeighbor"]]:
         """
         Method is overriden to be capable of larger request sizes. For more info refer to:
         :class:`aiplatform.MatchingEngineIndexEndpoint`.

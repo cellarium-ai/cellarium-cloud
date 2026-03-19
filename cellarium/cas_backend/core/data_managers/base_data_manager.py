@@ -1,7 +1,7 @@
 import typing as t
 
-import sqlalchemy as sa
 from google.cloud import bigquery
+import sqlalchemy as sa
 
 from cellarium.cas_backend.core import utils
 from cellarium.cas_backend.core.db import get_db_session_maker
@@ -32,7 +32,7 @@ class BaseDataManager:
     @staticmethod
     def batch_bulk_insert(
         table: sa.Table,
-        rows_to_insert: t.List[t.Dict[str, t.Any]],
+        rows_to_insert: list[dict[str, t.Any]],
         connection: sa.engine.Connection,
         batch_size: int = 10000,
     ):

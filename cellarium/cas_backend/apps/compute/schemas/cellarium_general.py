@@ -1,5 +1,4 @@
 import datetime
-import typing as t
 
 from pydantic import BaseModel, Field, validator
 
@@ -13,7 +12,7 @@ class CASModel(BaseModel):
 
     # Set the default value for description if it is provided as None
     @validator("description", pre=True, always=True)
-    def set_description_default(cls, v):
+    def set_description_default(self, v):
         return v or ""
 
     class Config:
@@ -40,8 +39,8 @@ class UserQuota(BaseModel):
     weekly_quota: int
     remaining_weekly_quota: int
     quota_reset_date: datetime.datetime
-    lifetime_quota: t.Optional[int]
-    remaining_lifetime_quota: t.Optional[int]
+    lifetime_quota: int | None
+    remaining_lifetime_quota: int | None
     quota_increased: bool
 
 

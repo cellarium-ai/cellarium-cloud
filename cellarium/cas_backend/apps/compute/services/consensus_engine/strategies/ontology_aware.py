@@ -24,7 +24,7 @@ class CellOntologyResource:
             provided dictionary.
     """
 
-    def __init__(self, cell_ontology_resource_dict: t.Optional[t.Dict[str, t.Any]] = None):
+    def __init__(self, cell_ontology_resource_dict: dict[str, t.Any] | None = None):
         if cell_ontology_resource_dict is None:
             with open(settings.GCS_CELL_ONTOLOGY_RESOURCE_FILE, "rb") as f:
                 cell_ontology_resource_dict = json.loads(f.read())
@@ -67,8 +67,8 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         self,
         prune_threshold: float,
         weighting_prefactor: float,
-        cell_ontology_resource: t.Optional[CellOntologyResource] = None,
-        cell_operations_dm: t.Optional[CellOperationsDataManager] = None,
+        cell_ontology_resource: CellOntologyResource | None = None,
+        cell_operations_dm: CellOperationsDataManager | None = None,
     ):
         self.cell_ontology_resource = cell_ontology_resource or CellOntologyResource()
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
@@ -78,8 +78,8 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
     def _calculate_cell_type_ontology_aware_scores(
         self,
         query_cell_id: str,
-        neighbors: t.List[MatchResult.Neighbor],
-        neighbors_metadata_dict: t.Dict[str, schemas.CellariumCellMetadata],
+        neighbors: list[MatchResult.Neighbor],
+        neighbors_metadata_dict: dict[str, schemas.CellariumCellMetadata],
     ) -> schemas.QueryCellNeighborhoodOntologyAware:
         """
         Utilize the ontology-aware method to assign weights to neighbor cells based on their distance and cell type
@@ -103,9 +103,9 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         total_weight = 0
         total_neighbors = 0
         total_neighbors_unrecognized = 0
-        scores_dict = {k: 0 for k in self.cell_ontology_resource.ancestors_dictionary.keys()}
+        scores_dict = dict.fromkeys(self.cell_ontology_resource.ancestors_dictionary.keys(), 0)
 
-        for neighbor_metadata, weight in zip(neighbor_metadata, weights):
+        for neighbor_metadata, weight in zip(neighbor_metadata, weights, strict=False):
             # Cell Ontology IDs have the formats: CL:0000000 (in our database) and CL_0000000 (in the ontology graph)
             neighbor_cell_type_ontology_id = neighbor_metadata.cell_type_ontology_term_id.replace(":", "_")
 
@@ -147,9 +147,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
             total_neighbors_unrecognized=total_neighbors_unrecognized,
         )
 
-    def summarize(
-        self, query_cell_ids: t.List[str], knn_query: MatchResult
-    ) -> schemas.QueryAnnotationOntologyAwareType:
+    def summarize(self, query_cell_ids: list[str], knn_query: MatchResult) -> schemas.QueryAnnotationOntologyAwareType:
         """
         Summarize the query neighbor context using the ontology-aware method, assigning weights to each neighbor cell
         type and propagating the weights to their ancestors in the cell type ontology.
@@ -168,7 +166,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         neighbors_metadata_dict = {str(neighbor.cas_cell_index): neighbor for neighbor in neighbors_metadata}
 
         result = []
-        for query_cell_id, query_neighbors in zip(query_cell_ids, knn_query.matches):
+        for query_cell_id, query_neighbors in zip(query_cell_ids, knn_query.matches, strict=False):
             query_cell_neighborhood = self._calculate_cell_type_ontology_aware_scores(
                 query_cell_id=query_cell_id,
                 neighbors=query_neighbors.neighbors,

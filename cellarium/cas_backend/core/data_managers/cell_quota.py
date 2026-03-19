@@ -8,12 +8,11 @@ from cellarium.cas_backend.core.db import models
 
 
 class CellQuotaDataManager(BaseDataManager):
-
     # SQL query directory
     SQL_QUERY_DIR = f"{settings.CORE_DIR}/data_managers/sql_queries"
 
     # SQL queries from files
-    with open(f"{SQL_QUERY_DIR}/get_cells_processed_this_week_for_user.sql.sa", "r") as f:
+    with open(f"{SQL_QUERY_DIR}/get_cells_processed_this_week_for_user.sql.sa") as f:
         SQL_GET_CELLS_PROCESSED_THIS_WEEK = f.read()
 
     def get_cells_processed_this_week_for_user(self, user: models.User) -> int:

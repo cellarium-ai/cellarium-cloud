@@ -1,5 +1,3 @@
-import typing as t
-
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from cellarium.cas_backend.apps.compute import dependencies, schemas, services
@@ -14,7 +12,7 @@ cell_operations_router = APIRouter(prefix="/cellarium-cell-operations")
 async def annotate(
     file: UploadFile = File(),
     model_name: str = Form(),
-    include_dev_metadata: t.Optional[bool] = Form(default=False),
+    include_dev_metadata: bool | None = Form(default=False),
     request_user: models.User = Depends(dependencies.authenticate_user),
     cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
@@ -119,7 +117,7 @@ def get_cache_info(
     return cell_operations_service.get_cache_info(user=user)
 
 
-@cell_operations_router.post(path="/nearest-neighbor-search", response_model=t.List[schemas.SearchQueryCellResult])
+@cell_operations_router.post(path="/nearest-neighbor-search", response_model=list[schemas.SearchQueryCellResult])
 async def nearest_neighbor_search(
     file: UploadFile = File(),
     model_name: str = Form(),
@@ -135,7 +133,7 @@ async def nearest_neighbor_search(
     return await cell_operations_service.search_adata_file(file=file.file, model_name=model_name, user=user)
 
 
-@cell_operations_router.post(path="/query-cells-by-ids", response_model=t.List[schemas.CellariumCellMetadata])
+@cell_operations_router.post(path="/query-cells-by-ids", response_model=list[schemas.CellariumCellMetadata])
 def get_cells_by_ids(
     item: schemas.CellariumCellByIdsInput,
     _: models.User = Depends(dependencies.authenticate_user),

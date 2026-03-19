@@ -2,7 +2,6 @@ import logging
 import tempfile
 from uuid import UUID, uuid4
 
-import typing_extensions as tx
 from flask import Response, flash, redirect, request, send_file
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.babel import gettext
@@ -13,6 +12,7 @@ from flask_admin.form import BaseForm, FormOpts, RenderTemplateWidget
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
+import typing_extensions as tx
 from werkzeug.exceptions import HTTPException
 
 from cellarium.cas_backend.apps.admin import basic_auth, db_session, flask_app
@@ -173,7 +173,7 @@ class UserAdminView(CellariumCloudAdminModelView):
     inline_models = [
         (
             models.UserKey,
-            dict(form_label="User Keys", form_excluded_columns=["created_date", "key_hash", "key_locator"]),
+            {"form_label": "User Keys", "form_excluded_columns": ["created_date", "key_hash", "key_locator"]},
         )
     ]
     inline_model_form_converter = UserKeyInlineModelConverter
@@ -184,7 +184,6 @@ class UserAdminView(CellariumCloudAdminModelView):
 
     @tx.override
     def on_model_change(self, _: BaseForm, model: models.User, is_created: bool):
-
         if is_created and len(model.user_keys) == 0:
             # Expiration and id are created when inserting into the database
             key_locator: UUID = uuid4()

@@ -1,15 +1,15 @@
-import typing as t
 from functools import cache
 from io import BytesIO
+import typing as t
 
 import anndata
 import numpy as np
-from cellarium.ml import CellariumAnnDataDataModule, CellariumModule
 from smart_open import open
 
 from cellarium.cas_backend.apps.model_inference import exceptions
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.db import models
+from cellarium.ml import CellariumAnnDataDataModule, CellariumModule
 
 
 class ModelInferenceService:
@@ -57,7 +57,7 @@ class ModelInferenceService:
         return CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
 
     @staticmethod
-    def get_cache_info() -> t.Dict[str, t.Tuple[int, int, t.Optional[int], int]]:
+    def get_cache_info() -> dict[str, tuple[int, int, int | None, int]]:
         """
         Returns the cache info for the file and module cache.
 
@@ -72,9 +72,7 @@ class ModelInferenceService:
             "module_cache_info": module_cache_info,
         }
 
-    def _get_output_from_model(
-        self, model: models.CASModel, adata: anndata.AnnData
-    ) -> t.Tuple[np.ndarray, t.List[str]]:
+    def _get_output_from_model(self, model: models.CASModel, adata: anndata.AnnData) -> tuple[np.ndarray, list[str]]:
         """
         Get output from cellarium-ml model that predicts embeddings given an input adata.
 
@@ -101,7 +99,7 @@ class ModelInferenceService:
         return embeddings, obs_ids
 
     @staticmethod
-    def _validate_model_output(embeddings: np.ndarray, obs_ids: t.List[str], model_info: models.CASModel) -> None:
+    def _validate_model_output(embeddings: np.ndarray, obs_ids: list[str], model_info: models.CASModel) -> None:
         """
         Validate model output.
 
@@ -125,7 +123,7 @@ class ModelInferenceService:
                 f"Ensure that the model is configured to produce embeddings of the correct dimensionality."
             )
 
-    def embed_adata(self, adata: anndata.AnnData, model: models.CASModel) -> t.Tuple[np.ndarray, t.List[str]]:
+    def embed_adata(self, adata: anndata.AnnData, model: models.CASModel) -> tuple[np.ndarray, list[str]]:
         """
         Embed adata using a specific model using Cellarium-ML model and pytorch.
 

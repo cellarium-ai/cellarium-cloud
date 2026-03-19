@@ -2,15 +2,15 @@ import logging
 import multiprocessing
 import typing as t
 
-import sentry_sdk
-import uvicorn
-import uvicorn.config
 from fastapi import APIRouter, FastAPI, Request, Response
+import sentry_sdk
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
 from starlette_context import context, plugins
 from starlette_context.middleware import RawContextMiddleware
 from starlette_context.plugins import Plugin
+import uvicorn
+import uvicorn.config
 
 from cellarium.cas_backend.apps.compute import exception_handlers
 from cellarium.cas_backend.apps.compute.services.exceptions import APIBaseException
@@ -29,7 +29,7 @@ class RouterDef(t.NamedTuple):
 
     router: APIRouter
     prefix: str = "/api"
-    tags: t.List[str] = []
+    tags: list[str] = []
 
 
 class ExceptionHandlerDef(t.NamedTuple):
@@ -71,7 +71,7 @@ BASE_PLUGGINS: t.Sequence[Plugin] = (
 )
 
 
-BASE_ERROR_HANDLERS: t.List[ExceptionHandlerDef] = [
+BASE_ERROR_HANDLERS: list[ExceptionHandlerDef] = [
     # Default error handler for APIBaseException.  Handles most API-thrown exceptions.
     ExceptionHandlerDef(exception=APIBaseException, handler=exception_handlers.api_base_exception_handler),
     # Special error handler for data_mananger not found exceptions in case they are not caught.
@@ -173,10 +173,10 @@ class CASService(FastAPI):
     def __init__(
         self,
         port: int,
-        plugins: t.Optional[t.Sequence[Plugin]] = None,
-        routers: t.List[RouterDef] = None,
-        exception_handlers: t.Optional[t.List[ExceptionHandlerDef]] = None,
-        sentry_application_id: t.Optional[str] = None,
+        plugins: t.Sequence[Plugin] | None = None,
+        routers: list[RouterDef] = None,
+        exception_handlers: list[ExceptionHandlerDef] | None = None,
+        sentry_application_id: str | None = None,
         *args,
         **kwargs,
     ):
@@ -186,8 +186,8 @@ class CASService(FastAPI):
         :param port: The port to use when running the service.
         :param plugins: A list of middleware plugins to use for the service.
         :param routers: A list of routers to include in the service.
-        :param exception_handlers: A list of exception handlers to include in the service in addition to the default ones
-                                   as defined in BASE_ERROR_HANDLERS
+        :param exception_handlers: A list of exception handlers to include in the service in addition to
+                                   the default ones as defined in BASE_ERROR_HANDLERS
         :param sentry_application_id: The application ID to use when reporting errors to Sentry. If left as None, Sentry
                                       integration will not be enabled.
         """

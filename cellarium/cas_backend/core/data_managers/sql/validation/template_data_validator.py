@@ -1,10 +1,8 @@
-import typing as t
-
 from cellarium.cas_backend.core.data_managers.sql.constants import ComparisonOperators
 from cellarium.cas_backend.core.data_managers.sql.validation import exceptions
 
 
-def validate_not_empty(value: t.Union[str, t.List, t.Dict]) -> None:
+def validate_not_empty(value: str | list | dict) -> None:
     """
      Validate that a given `value` is not empty.
 
@@ -16,7 +14,7 @@ def validate_not_empty(value: t.Union[str, t.List, t.Dict]) -> None:
         raise exceptions.TemplateDataValidationError("Value should not be an empty")
 
 
-def validate_sql_filter(filter_name: str, filter_value: t.Union[t.List, str, bool, int, float]) -> None:
+def validate_sql_filter(filter_name: str, filter_value: list | str | bool | int | float) -> None:
     """
     Validates the SQL filter parameters based on the type of filter applied, ensuring adherence to the supported
     filter types and value constraints.
@@ -41,7 +39,7 @@ def validate_sql_filter(filter_name: str, filter_value: t.Union[t.List, str, boo
         )
 
     if filter_type == ComparisonOperators.EQUAL:
-        if not isinstance(filter_value, (int, str, float, bool)):
+        if not isinstance(filter_value, int | str | float | bool):
             raise exceptions.TemplateDataValidationError(
                 f"When filtering by the exact value, `filter_value` supposed to be a python basic "
                 f"data type in {filter_name} filter"
@@ -49,8 +47,8 @@ def validate_sql_filter(filter_name: str, filter_value: t.Union[t.List, str, boo
     elif filter_type == ComparisonOperators.IN:
         if not isinstance(filter_value, list):
             raise exceptions.TemplateDataValidationError(
-                f"When filtering by the range of values, `filter_value` supposed to be a list with elements of the same "
-                f"type in {filter_name} filter"
+                f"When filtering by the range of values, `filter_value` supposed to be a list with "
+                f"elements of the same type in {filter_name} filter"
             )
 
         types = set(map(type, filter_value))
@@ -69,7 +67,7 @@ def validate_sql_filter(filter_name: str, filter_value: t.Union[t.List, str, boo
             )
 
 
-def validate_filters(filters: t.Dict[str, str]) -> None:
+def validate_filters(filters: dict[str, str]) -> None:
     """
     Validate the structure and contents of filter statements provided for SQL query generation.
 

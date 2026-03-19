@@ -29,14 +29,13 @@ test:
 
 # Run linting
 lint:
-	poetry run black --line-length 120 --check cellarium tests
-	poetry run isort --check-only --diff --line-length 120 --profile black tests cellarium
-	poetry run flake8 cellarium tests
+	poetry run ruff check --diff cellarium tests
+	poetry run ruff format --diff cellarium tests
 
 # Format code
 format:
-	poetry run black --line-length 120 cellarium tests
-	poetry run isort --line-length 120 --profile black tests cellarium
+	poetry run ruff check --fix --unsafe-fixes cellarium tests
+	poetry run ruff format cellarium tests
 
 # Clean generated files
 clean:

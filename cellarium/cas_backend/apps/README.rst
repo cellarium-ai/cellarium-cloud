@@ -1,7 +1,7 @@
-Cellarium Cloud Services
-========================
+CAS Backend Apps
+================
 
-This section provides an overview of the various services within the Cellarium Cloud platform.
+This section provides an overview of the various services within the CAS Backend.
 
 Below is the list of individual services:
 

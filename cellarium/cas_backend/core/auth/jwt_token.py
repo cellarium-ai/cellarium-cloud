@@ -1,5 +1,5 @@
-import logging
 from datetime import datetime, timedelta
+import logging
 
 import jwt
 from sqlalchemy.exc import IntegrityError

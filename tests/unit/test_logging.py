@@ -1,7 +1,7 @@
 import re
 
-import pytest
 from parameterized import parameterized
+import pytest
 
 from cellarium.cas_backend.apps.compute.services.exceptions import InvalidInputError
 from cellarium.cas_backend.core.logging import CloudTraceContext

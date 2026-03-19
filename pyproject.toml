@@ -62,10 +62,8 @@ networkx = "3.3"
 setuptools = "<82"
 
 [tool.poetry.group.dev.dependencies]
-isort = ">=5,<6"
 wheel = "*"
-black = "24.4.2"
-flake8 = "7.0.0"
+ruff = "^0.8.0"
 pylint = "3.2.0"
 cython = "3.0.10"
 requests = "2.31.0"
@@ -101,15 +99,38 @@ setuptools-git-versioning = "1.13.5"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ['py310']
-include = '\.pyi?$'
+target-version = "py310"
 
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+]
+ignore = [
+    "N806",  # Allow uppercase variable names (common in ML: X, Y, etc.)
+    "N818",  # Exception naming convention (requires Error suffix)
+    "B008",  # Function call in argument defaults (FastAPI pattern)
+    "B904",  # Raise from within except (not always needed)
+    "B020",  # Loop control variable overrides (intentional in some cases)
+    "B026",  # Star-arg unpacking after keyword (valid pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cellarium"]
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

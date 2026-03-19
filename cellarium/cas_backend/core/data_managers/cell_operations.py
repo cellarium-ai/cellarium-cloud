@@ -1,5 +1,3 @@
-import typing as t
-
 import sqlalchemy as sa
 
 from cellarium.cas_backend.apps.compute import schemas
@@ -14,7 +12,7 @@ class CellOperationsDataManager(BaseDataManager):
     """
 
     @classmethod
-    def create_temporary_table_with_cell_ids(cls, cell_ids: t.List[int], connection: sa.engine.Connection) -> sa.Table:
+    def create_temporary_table_with_cell_ids(cls, cell_ids: list[int], connection: sa.engine.Connection) -> sa.Table:
         """
         Create a temporary table in postgres database and populate it with cell indexes for further joining.
         This tables acts as intermediate cache table to make receiving cell metadata query lighter and faster.
@@ -46,9 +44,9 @@ class CellOperationsDataManager(BaseDataManager):
 
     def _get_cell_metadata_by_ids(
         self,
-        cell_ids: t.List[int],
-        feature_names: t.List[str],
-    ) -> t.List[schemas.CellariumCellMetadata]:
+        cell_ids: list[int],
+        feature_names: list[str],
+    ) -> list[schemas.CellariumCellMetadata]:
         """
         Get cells by CAS IDs, maintaining the order of `cell_ids`. Preserves the order of `cell_ids` in the query
         results.
@@ -83,8 +81,8 @@ class CellOperationsDataManager(BaseDataManager):
         return [schemas.CellariumCellMetadata(**cell_metadata_row) for cell_metadata_row in ordered_metadata]
 
     def get_cell_metadata_by_ids(
-        self, cell_ids: t.List[int], metadata_feature_names: t.List[str]
-    ) -> t.List[schemas.CellariumCellMetadata]:
+        self, cell_ids: list[int], metadata_feature_names: list[str]
+    ) -> list[schemas.CellariumCellMetadata]:
         """
         Get cells by CAS IDs, maintaining the order of `cell_ids`. If the number of querying cell IDs exceeds the
         maximum allowed, split the query into multiple queries. Database gets overwhelmed when querying a large number

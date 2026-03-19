@@ -1,8 +1,8 @@
 import logging
 import typing as t
 
-import sqlparse
 from mako.template import Template
+import sqlparse
 
 from cellarium.cas_backend.core.data_managers.sql.template_data import TemplateData
 from cellarium.cas_backend.core.data_managers.sql.validation.query_validators import BigQuerySQLSyntaxValidator

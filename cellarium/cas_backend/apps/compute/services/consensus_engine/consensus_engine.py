@@ -1,5 +1,4 @@
 import asyncio
-import typing as t
 
 from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
@@ -14,7 +13,7 @@ class ConsensusEngine:
     def __init__(self, strategy: ConsensusStrategyInterface):
         self.strategy = strategy
 
-    def summarize(self, query_ids: t.List[str], knn_query: MatchResult) -> schemas.QueryAnnotationAbstractType:
+    def summarize(self, query_ids: list[str], knn_query: MatchResult) -> schemas.QueryAnnotationAbstractType:
         """
         Summarize query neighbor context using the specified strategy.
 
@@ -26,7 +25,7 @@ class ConsensusEngine:
         return self.strategy.summarize(query_ids, knn_query)
 
     async def summarize_async(
-        self, query_ids: t.List[str], knn_query: MatchResult
+        self, query_ids: list[str], knn_query: MatchResult
     ) -> schemas.QueryAnnotationAbstractType:
         """
         Call :meth:`summarize` in a separate thread to avoid blocking the event loop.

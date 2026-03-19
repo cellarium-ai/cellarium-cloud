@@ -1,5 +1,3 @@
-import typing as t
-
 from packaging.version import Version
 
 from cellarium.cas_backend.apps.compute import schemas
@@ -44,7 +42,7 @@ class CellariumGeneralService:
         """
         return self.cellarium_general_dm.feedback_opt_out(user=user)
 
-    def get_feature_schemas(self) -> t.List[schemas.FeatureSchemaInfo]:
+    def get_feature_schemas(self) -> list[schemas.FeatureSchemaInfo]:
         """
         Get all available feature schemas
 
@@ -52,7 +50,7 @@ class CellariumGeneralService:
         """
         return self.cellarium_general_dm.get_feature_schemas()
 
-    def get_model_list_for_user(self, user: models.User) -> t.List[models.CASModel]:
+    def get_model_list_for_user(self, user: models.User) -> list[models.CASModel]:
         """
         Get query with available models for a specific user based on their permissions.
 
@@ -65,7 +63,7 @@ class CellariumGeneralService:
 
         return self.cellarium_general_dm.get_models_non_admin()
 
-    def get_feature_schema_by(self, schema_name: str) -> t.List[str]:
+    def get_feature_schema_by(self, schema_name: str) -> list[str]:
         """
         Get a specific feature schema by its unique name
 

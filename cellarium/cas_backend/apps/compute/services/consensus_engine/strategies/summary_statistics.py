@@ -1,4 +1,3 @@
-import typing as t
 from collections import OrderedDict, defaultdict
 
 import numpy as np
@@ -22,8 +21,8 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
     @staticmethod
     def calculate_cell_type_summary_stats_for_query_cell(
         query_cell_id: str,
-        neighbors: t.List[MatchResult.Neighbor],
-        neighbors_metadata_dict: t.Dict[str, schemas.CellariumCellMetadata],
+        neighbors: list[MatchResult.Neighbor],
+        neighbors_metadata_dict: dict[str, schemas.CellariumCellMetadata],
     ) -> schemas.QueryCellNeighborhoodCellTypeSummaryStatistics:
         """
         Calculate summary statistics for each cell_type based on nearest neighbor search
@@ -65,8 +64,8 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
         )
 
     def summarize(
-        self, query_cell_ids: t.List[str], knn_response: MatchResult
-    ) -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
+        self, query_cell_ids: list[str], knn_response: MatchResult
+    ) -> list[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
         """
         Summarize query neighbor context by cell type distribution, querying a database for the distribution.
 
@@ -84,7 +83,7 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
         neighbors_metadata_dict = {str(neighbor.cas_cell_index): neighbor for neighbor in neighbors_metadata}
 
         results = []
-        for query_cell_id, query_neighbors in zip(query_cell_ids, knn_response.matches):
+        for query_cell_id, query_neighbors in zip(query_cell_ids, knn_response.matches, strict=False):
             query_cell_neighborhood = self.calculate_cell_type_summary_stats_for_query_cell(
                 query_cell_id=query_cell_id,
                 neighbors=query_neighbors.neighbors,

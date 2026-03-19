@@ -6,8 +6,8 @@ Create Date: 2023-11-07 14:55:10.188743
 
 """
 
-import sqlalchemy as sa
 from alembic import op
+import sqlalchemy as sa
 
 from cellarium.cas_backend.core.config import settings
 

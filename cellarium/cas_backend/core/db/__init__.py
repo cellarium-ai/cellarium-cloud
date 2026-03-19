@@ -1,7 +1,7 @@
-import pg8000
-import sqlalchemy.orm
 from google.cloud.sql.connector import Connector, IPTypes
 from google.cloud.sql.connector.enums import RefreshStrategy
+import pg8000
+import sqlalchemy.orm
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from cellarium.cas_backend.core.config import settings

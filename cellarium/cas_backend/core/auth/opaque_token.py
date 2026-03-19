@@ -1,5 +1,5 @@
-import typing as t
 from datetime import datetime
+import typing as t
 from uuid import UUID
 
 from argon2 import PasswordHasher
@@ -23,7 +23,8 @@ class OpaqueToken(t.NamedTuple):
 
 def generate_opaque_token_for_user(key_locator: UUID, key: UUID) -> OpaqueToken:
     """
-    Generate an opaque token for the user. The token is a concatenation of the key locator and a key value (e.g. the secret).
+    Generate an opaque token for the user. The token is a concatenation of the key locator and a
+    key value (e.g. the secret).
 
     :param key_locator: A UUID key locator to find the key in the database.
     :param key: A UUID key value to authenticate the user.
