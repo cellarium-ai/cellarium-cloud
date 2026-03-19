@@ -25,7 +25,7 @@ install:
 
 # Run tests
 test:
-	poetry run pytest tests/unit
+	ENVIRONMENT=test poetry run pytest tests/unit
 
 # Run linting
 lint:
