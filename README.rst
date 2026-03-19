@@ -1,14 +1,14 @@
-Cellarium Cloud
-===============
+CAS Backend
+===========
 
-**What's Cellarium Cloud?** Cellarium Cloud contains the service code that supports the Cellarium Cloud platform by providing APIs for the Cellarium Client tool.
+CAS Backend contains the service code that supports the CAS Backend platform by providing APIs for the Cellarium Client tool.
 The APIs can be access with direct REST access or, preferably, via the cellarium-cas Python client.
 
 Repository Structure
 --------------------
 Each module of the repository contains its own `README.rst` file that explains the purpose of the module and how to run
 it. These files are united together in a documentation website that is available at
-`Cellarium Cloud Documentation <https://cellarium-cloud.readthedocs.io>`_.
+`CAS Backend Documentation <https://cellarium-cloud.readthedocs.io>`_.
 
 
 Prerequisites / Installation

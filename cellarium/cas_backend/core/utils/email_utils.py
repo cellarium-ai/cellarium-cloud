@@ -7,7 +7,7 @@ from cellarium.cas_backend.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-TEMPLATE_DIR = f"{settings.APP_ROOT}/casp/services/admin/templates"
+TEMPLATE_DIR = f"{settings.APP_ROOT}/cellarium/cas_backend/apps/admin/templates"
 
 
 class EmailSender:
