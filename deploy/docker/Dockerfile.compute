@@ -35,9 +35,9 @@ WORKDIR /app
 RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch==2.2.0
 
 # Copy and install dependencies
-COPY requirements.txt .
+COPY deploy/requirements.txt.lock .
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt.lock
 
 # Copy application code
 COPY cellarium/ ./cellarium/

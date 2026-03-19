@@ -80,7 +80,9 @@ update_imports.py
 poetry.lock
 
 # Deployment (don't copy deploy dir into images)
-deploy/
+deploy/scripts
+deploy/cloudrun
+deploy/docker
 
 # Tests
 tests/

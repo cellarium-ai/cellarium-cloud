@@ -14,14 +14,14 @@ This directory contains Dockerfiles for building CAS Backend services.
 
 ### Prerequisites
 
-Generate `requirements.txt` from `pyproject.toml` using Poetry:
+Generate `deploy/requirements.txt.lock` from `pyproject.toml` using Poetry:
 
 ```bash
 # From repo root
 make requirements
 ```
 
-This creates `requirements.txt` from Poetry dependencies (production only, no dev/test deps).
+This creates `deploy/requirements.txt.lock` from Poetry dependencies (production only, no dev/test deps).
 
 ### Build Commands
 
@@ -96,7 +96,7 @@ Example GitHub Actions workflow:
 Old Dockerfiles referenced:
 - `COPY src .` → Now: `COPY cellarium/ ./cellarium/`
 - `ENV PYTHONPATH=/app` → Now: `ENV PYTHONPATH=/app` (same, but imports use `cellarium.cas_backend`)
-- `requirements.txt` manually maintained → Now: Generated via `make requirements` from `pyproject.toml`
+- `requirements.lock` manually maintained → Now: Generated via `make requirements` from `pyproject.toml` as `requirements.txt.lock`
 
 ## Troubleshooting
 
@@ -109,7 +109,7 @@ from cellarium.cas_backend.apps.compute import main
 from cas_backend.apps.compute import main
 ```
 
-**Missing dependencies**: Regenerate requirements.txt:
+**Missing dependencies**: Regenerate requirements.txt.lock:
 ```bash
 make requirements
 docker build --no-cache ...
