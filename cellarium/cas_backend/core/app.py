@@ -173,6 +173,7 @@ class CASService(FastAPI):
     def __init__(
         self,
         port: int,
+        app_module_path: str,
         plugins: t.Sequence[Plugin] | None = None,
         routers: list[RouterDef] = None,
         exception_handlers: list[ExceptionHandlerDef] | None = None,
@@ -190,9 +191,12 @@ class CASService(FastAPI):
                                    the default ones as defined in BASE_ERROR_HANDLERS
         :param sentry_application_id: The application ID to use when reporting errors to Sentry. If left as None, Sentry
                                       integration will not be enabled.
+        :param app_module_path: The full module path to the application (e.g., "cellarium.cas_backend.apps.compute.main:application").
+                                Required for uvicorn workers to function properly.
         """
 
         self.port = port
+        self.app_module_path = app_module_path
 
         # Configure Sentry integration
         if (
@@ -248,7 +252,7 @@ class CASService(FastAPI):
         num_workers = 2 if settings.ENVIRONMENT == "local" else multiprocessing.cpu_count() * 2 + 1
 
         uvicorn.run(
-            "main:application",
+            self.app_module_path,
             host=settings.DEFAULT_SERVICE_HOST,
             port=self.port,
             workers=num_workers,

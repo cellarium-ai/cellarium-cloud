@@ -11,7 +11,7 @@ from cellarium.cas_backend.core.db import models
 
 class CellariumGeneralDataManager(BaseDataManager):
     """
-    Data Access Object for managing data within the scope of general Cellarium Cloud information.
+    Data Access Object for managing data within the scope of general CAS Backend information.
     """
 
     # Directories for SQL templates

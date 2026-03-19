@@ -9,7 +9,7 @@ from cellarium.cas_backend.core.db import models
 
 class CellariumGeneralService:
     """
-    Cellarium General Service. Service for managing data and access to general Cellarium Cloud information.
+    Cellarium General Service. Service for managing data and access to general CAS Backend information.
     """
 
     def __init__(self, cellarium_general_dm: CellariumGeneralDataManager = None):

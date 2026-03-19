@@ -76,7 +76,7 @@ class ModelInferenceService:
         """
         Get output from cellarium-ml model that predicts embeddings given an input adata.
 
-        :param model: Cellarium Cloud model db object
+        :param model: CAS Backend model db object
         :param adata: Object of :class:`anndata.AnnData` to embed.
 
         :return: Tuple of embeddings and obs_ids.
@@ -105,7 +105,7 @@ class ModelInferenceService:
 
         :param embeddings: Embeddings
         :param obs_ids: List of observation ids
-        :param model_info: Cellarium Cloud model db object
+        :param model_info: CAS Backend model db object
 
         :raises ModelOutputError: If the length of obs_ids and embeddings are not the same or if the number of embedding
             dimensions is not equal to the model's embedding dimensions.

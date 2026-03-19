@@ -1,5 +1,5 @@
 """
-Cellarium Service Controller. It provides methods to communicate with services in Cellarium Cloud
+Cellarium Service Controller. It provides methods to communicate with services in CAS Backend
 infrastructure over different protocols in async manner.
 """
 
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class CellOperationsService:
     """
-    Cell Analysis Service. It provides methods to communicate with services in Cellarium Cloud infrastructure.
+    Cell Analysis Service. It provides methods to communicate with services in CAS Backend infrastructure.
     It leverages async communication with services and uses data access objects to communicate with
     datastore.
     """

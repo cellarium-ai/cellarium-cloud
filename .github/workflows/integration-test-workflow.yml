@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       cellarium-cloud-image-tag:
-        description: 'Docker image tag for the Cellarium Cloud image. Will use the short hash of the last commit in the branch if nothing is passed in.'
+        description: 'Docker image tag for the CAS Backend. Will use the short hash of the last commit in the branch if nothing is passed in.'
         required: false
         default: ''
       cellarium-cas-revision:
@@ -11,7 +11,7 @@ on:
         required: false
         default: ''
       service-account-email:
-        description: 'Service account email used as the identity for the deployment of the Cellarium Cloud test images.'
+        description: 'Service account email used as the identity for the deployment of the CAS Backend test images.'
         required: true
         default: ''
       sql-instance:

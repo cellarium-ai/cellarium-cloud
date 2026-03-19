@@ -21,4 +21,4 @@ RUN useradd -r -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Run admin service
-CMD ["python", "-m", "cellarium.cas_backend.apps.admin.server"]
+ENTRYPOINT ["cellarium/cas_backend/apps/admin/entrypoint.sh"]

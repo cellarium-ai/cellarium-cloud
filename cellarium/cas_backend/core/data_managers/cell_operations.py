@@ -8,7 +8,7 @@ from cellarium.cas_backend.core.db import models
 
 class CellOperationsDataManager(BaseDataManager):
     """
-    Data Manager for making data operations in Cellarium Cloud storage.
+    Data Manager for making data operations in CAS Backend storage.
     """
 
     @classmethod

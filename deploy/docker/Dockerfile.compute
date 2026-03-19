@@ -21,4 +21,4 @@ RUN useradd -r -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Run compute service
-CMD ["python", "-m", "cellarium.cas_backend.apps.compute.main"]
+ENTRYPOINT ["cellarium/cas_backend/apps/compute/entrypoint.sh"]

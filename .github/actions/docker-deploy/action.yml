@@ -88,8 +88,8 @@ runs:
             echo "INGRESS=internal" >> $GITHUB_ENV
             ;;
           cas-api)
-            echo "COMMAND=python" >> $GITHUB_ENV
-            echo "ARGS=-m cellarium.cas_backend.apps.compute.main" >> $GITHUB_ENV
+            echo "COMMAND=cellarium/cas_backend/apps/compute/entrypoint.sh" >> $GITHUB_ENV
+            echo "ARGS=" >> $GITHUB_ENV
             echo "INGRESS=all" >> $GITHUB_ENV
             ;;
           *)

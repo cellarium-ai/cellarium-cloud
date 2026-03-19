@@ -430,7 +430,7 @@ class CellIngestInfoAdminView(CellariumCloudAdminModelView):
 
 admin = Admin(
     flask_app,
-    name="Cellarium Cloud Admin",
+    name="CAS Admin",
     template_mode="bootstrap3",
     index_view=CellariumCloudAdminIndexView(url="/", template="admin/main_page.html"),
 )
