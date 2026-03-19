@@ -39,8 +39,8 @@ lint:
 
 # Format code
 format:
-	poetry run ruff check --fix --unsafe-fixes cellarium tests
 	poetry run ruff format cellarium tests
+	poetry run ruff check --fix --unsafe-fixes cellarium tests
 
 # Clean generated files
 clean:

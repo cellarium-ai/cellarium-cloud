@@ -188,11 +188,12 @@ class CASService(FastAPI):
         :param plugins: A list of middleware plugins to use for the service.
         :param routers: A list of routers to include in the service.
         :param exception_handlers: A list of exception handlers to include in the service in addition to
-                                   the default ones as defined in BASE_ERROR_HANDLERS
+             the default ones as defined in BASE_ERROR_HANDLERS
         :param sentry_application_id: The application ID to use when reporting errors to Sentry. If left as None, Sentry
-                                      integration will not be enabled.
-        :param app_module_path: The full module path to the application (e.g., "cellarium.cas_backend.apps.compute.main:application").
-                                Required for uvicorn workers to function properly.
+             integration will not be enabled.
+        :param app_module_path: The full module path to the application
+            (e.g., "cellarium.cas_backend.apps.compute.main:application"). Required for uvicorn workers to function
+            properly.
         """
 
         self.port = port
