@@ -3,7 +3,7 @@
 help:
 	@echo "Available commands:"
 	@echo "  make requirements         - Export Poetry dependencies to deploy/requirements.txt.lock for production"
-	@echo "  make docker-requirements  - Export all dependencies (including dev) for Docker builds"
+	@echo "  make docker-requirements  - Export production dependencies for Docker builds"
 	@echo "  make setup                - Install Poetry"
 	@echo "  make install              - Install dependencies with Poetry"
 	@echo "  make test                 - Run unit tests"
@@ -15,10 +15,9 @@ help:
 requirements:
 	poetry export -f requirements.txt --output deploy/requirements.txt.lock --without-hashes --without dev,test,docs
 
-# Export requirements-dev.txt with all dependencies for development Docker builds
+# Export requirements.txt.lock for Docker builds
 docker-requirements:
 	poetry export -f requirements.txt --output deploy/requirements.txt.lock --without-hashes --without dev,docs
-	poetry export -f requirements.txt --output deploy/requirements-dev.lock --without-hashes --with dev,test
 
 # Install Poetry
 setup:

@@ -14,20 +14,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Add deadsnakes PPA and install Python 3.11
+# Add deadsnakes PPA and install Python 3.12
 RUN add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-    python3.11 \
-    python3.11-dev \
-    python3.11-distutils \
+    python3.12 \
+    python3.12-dev \
+    python3.12-distutils \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pip for Python 3.11
+# Install pip for Python 3.12
 RUN wget --https-only --max-redirect=0 "https://bootstrap.pypa.io/get-pip.py" -O /tmp/get-pip.py \
-    && python3.11 /tmp/get-pip.py \
+    && python3.12 /tmp/get-pip.py \
     && rm /tmp/get-pip.py \
-    && ln -s /usr/bin/python3.11 /usr/local/bin/python
+    && ln -s /usr/bin/python3.12 /usr/local/bin/python
 
 WORKDIR /app
 

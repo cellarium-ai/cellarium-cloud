@@ -14,40 +14,79 @@ it. These files are united together in a documentation website that is available
 Prerequisites / Installation
 ----------------------------
 
- - Python 3.10+
+ - Python 3.12+
+ - Poetry (Python dependency management tool)
 
 Developer Setup
 ~~~~~~~~~~~~~~~
 
-To create a virtual python environment:
+To set up the development environment, first install Poetry:
 
 .. code-block:: shell
 
-    python3 -mvenv python
-    source python/bin/activate
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    pip install -r dev-requirements.txt
-    pip install -e .
+    make setup
 
-
-To run unit tests:
+Then install all dependencies (including dev and test dependencies):
 
 .. code-block:: shell
 
-    tox -e unit
+    make install
 
-To lint:
+Available Make Commands
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The project uses Make commands to streamline common development tasks:
+
+**Setup and Installation:**
 
 .. code-block:: shell
 
-    tox -e lint
+    make setup    # Install Poetry
+    make install  # Install all dependencies with Poetry
 
-To automatically fix formatting issues:
+**Testing:**
 
 .. code-block:: shell
 
-    tox -e format
+    make test     # Run unit tests with pytest
+
+**Code Quality:**
+
+.. code-block:: shell
+
+    make lint     # Run ruff linting (check only)
+    make format   # Auto-format code with ruff
+
+**Dependency Management:**
+
+.. code-block:: shell
+
+    make requirements        # Export production dependencies to deploy/requirements.txt.lock
+    make docker-requirements # Export all dependencies for Docker builds
+
+**Cleanup:**
+
+.. code-block:: shell
+
+    make clean    # Remove generated files (coverage, cache, etc.)
+
+For a full list of available commands, run:
+
+.. code-block:: shell
+
+    make help
+
+Using Poetry Directly
+~~~~~~~~~~~~~~~~~~~~~
+
+You can also use Poetry commands directly:
+
+.. code-block:: shell
+
+    poetry install --with dev,test           # Install dependencies
+    poetry run pytest tests/unit             # Run tests
+    poetry run ruff check cellarium tests    # Lint code
+    poetry run ruff format cellarium tests   # Format code
 
 Repository Versioning
 ---------------------
