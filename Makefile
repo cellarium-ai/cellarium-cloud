@@ -1,9 +1,10 @@
-.PHONY: help requirements docker-requirements clean install test lint format
+.PHONY: help requirements docker-requirements clean install setup test lint format
 
 help:
 	@echo "Available commands:"
 	@echo "  make requirements         - Export Poetry dependencies to deploy/requirements.txt.lock for production"
 	@echo "  make docker-requirements  - Export all dependencies (including dev) for Docker builds"
+	@echo "  make setup                - Install Poetry"
 	@echo "  make install              - Install dependencies with Poetry"
 	@echo "  make test                 - Run unit tests"
 	@echo "  make lint                 - Run linting"
@@ -18,6 +19,11 @@ requirements:
 docker-requirements:
 	poetry export -f requirements.txt --output deploy/requirements.txt.lock --without-hashes --without dev,docs
 	poetry export -f requirements.txt --output deploy/requirements-dev.lock --without-hashes --with dev,test
+
+# Install Poetry
+setup:
+	pip install --upgrade pip
+	pip install poetry
 
 # Install dependencies
 install:
