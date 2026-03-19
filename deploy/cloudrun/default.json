@@ -7,7 +7,7 @@
     "concurrency": 80
 
   },
-  "cas-api": {
+  "cas-compute": {
     "cpu": "4000m",
     "memory": "16Gi",
     "max-instances": 200,

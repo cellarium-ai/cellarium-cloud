@@ -18,7 +18,7 @@ inputs:
     description: Tag of the image to deploy
   deployment-type:
     required: true
-    description: The type of deployment to create (cas-model, cas-admin, cas-api)
+    description: The type of deployment to create (cas-model, cas-admin, cas-compute)
   deployment-prefix:
     required: true
     description: The prefix to add to the deployment name
@@ -87,7 +87,7 @@ runs:
             echo "ARGS=-m cellarium.cas_backend.apps.model_inference.main" >> $GITHUB_ENV
             echo "INGRESS=internal" >> $GITHUB_ENV
             ;;
-          cas-api)
+          cas-compute)
             echo "COMMAND=cellarium/cas_backend/apps/compute/entrypoint.sh" >> $GITHUB_ENV
             echo "ARGS=" >> $GITHUB_ENV
             echo "INGRESS=all" >> $GITHUB_ENV
@@ -175,7 +175,7 @@ runs:
     - id: set-api-url
       name: We need to stash the URL for the api server in case it's needed by other jobs
       run: |
-        if [[ "${{ inputs.deployment-type }}" == "cas-api" ]]; then
+        if [[ "${{ inputs.deployment-type }}" == "cas-compute" ]]; then
           echo "API_SERVER_URL=${{ steps.deploy.outputs.url }}" >> $GITHUB_ENV
         fi
       shell: bash
