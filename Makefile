@@ -45,4 +45,3 @@ clean:
 	rm -rf .coverage coverage.xml
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
-	rm -f deploy/requirements.txt.lock deploy/requirements-dev.lock
