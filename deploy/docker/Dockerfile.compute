@@ -1,60 +1,21 @@
-FROM ubuntu:22.04
-
-# Prevent interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    build-essential \
-    wget \
-    ca-certificates \
-    gnupg \
-    dirmngr \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Add deadsnakes PPA and install Python 3.12
-RUN add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-    python3.12 \
-    python3.12-dev \
-    python3.12-distutils \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pip for Python 3.12
-RUN wget --https-only --max-redirect=0 "https://bootstrap.pypa.io/get-pip.py" -O /tmp/get-pip.py \
-    && python3.12 /tmp/get-pip.py \
-    && rm /tmp/get-pip.py \
-    && ln -s /usr/bin/python3.12 /usr/local/bin/python
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install PyTorch (CPU version for smaller image)
-RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch==2.2.0
-
 # Copy and install dependencies
 COPY deploy/requirements.txt.lock .
-RUN pip install --upgrade pip && \
+RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt.lock
 
 # Copy application code
 COPY cellarium/ ./cellarium/
-COPY scripts/ ./scripts/
-COPY src/settings/ ./src/settings/
 
-# Set Python path to find cellarium package
+# Set Python path
 ENV PYTHONPATH="/app"
-
-# Clean up
-RUN apt-get remove -y build-essential && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
 RUN useradd -r -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Default command - run compute service
+# Run compute service
 CMD ["python", "-m", "cellarium.cas_backend.apps.compute.main"]

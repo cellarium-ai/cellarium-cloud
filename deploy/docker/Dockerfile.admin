@@ -1,46 +1,21 @@
-FROM ubuntu:22.04
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    build-essential \
-    wget \
-    ca-certificates \
-    gnupg \
-    dirmngr \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-    python3.12 \
-    python3.12-dev \
-    python3.12-distutils \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN wget --https-only --max-redirect=0 "https://bootstrap.pypa.io/get-pip.py" -O /tmp/get-pip.py \
-    && python3.12 /tmp/get-pip.py \
-    && rm /tmp/get-pip.py \
-    && ln -s /usr/bin/python3.12 /usr/local/bin/python
+FROM python:3.12-slim
 
 WORKDIR /app
 
+# Copy and install dependencies
 COPY deploy/requirements.txt.lock .
-RUN pip install --upgrade pip && \
+RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt.lock
 
+# Copy application code
 COPY cellarium/ ./cellarium/
-COPY src/settings/ ./src/settings/
 
+# Set Python path
 ENV PYTHONPATH="/app"
 
-RUN apt-get remove -y build-essential && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
-
+# Create non-root user
 RUN useradd -r -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
+# Run admin service
 CMD ["python", "-m", "cellarium.cas_backend.apps.admin.server"]
