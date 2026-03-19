@@ -2,6 +2,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Create settings directory for mounted .env file
+RUN mkdir -p /app/settings
+
 # Copy and install dependencies
 COPY deploy/requirements.txt.lock .
 RUN pip install --no-cache-dir --upgrade pip && \

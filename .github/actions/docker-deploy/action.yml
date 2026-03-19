@@ -78,18 +78,18 @@ runs:
       run: |
         case "${{ inputs.deployment-type }}" in
           cas-admin)
-            echo "COMMAMD=casp/services/admin/entrypoint.sh" >> $GITHUB_ENV
+            echo "COMMAND=cellarium/cas_backend/apps/admin/entrypoint.sh" >> $GITHUB_ENV
             echo "ARGS=" >> $GITHUB_ENV
             echo "INGRESS=internal" >> $GITHUB_ENV
             ;;
           cas-model)
-            echo "COMMAMD=python" >> $GITHUB_ENV
-            echo "ARGS=casp/services/model_inference/main.py" >> $GITHUB_ENV
+            echo "COMMAND=python" >> $GITHUB_ENV
+            echo "ARGS=-m cellarium.cas_backend.apps.model_inference.main" >> $GITHUB_ENV
             echo "INGRESS=internal" >> $GITHUB_ENV
             ;;
           cas-api)
-            echo "COMMAMD=python" >> $GITHUB_ENV
-            echo "ARGS=casp/services/api/main.py" >> $GITHUB_ENV
+            echo "COMMAND=python" >> $GITHUB_ENV
+            echo "ARGS=-m cellarium.cas_backend.apps.compute.main" >> $GITHUB_ENV
             echo "INGRESS=all" >> $GITHUB_ENV
             ;;
           *)
@@ -110,7 +110,7 @@ runs:
           return value
 
         try:
-          with open("src/casp/services/deploy/cloudrun/${{ inputs.deployment-flavor }}.json", "r") as file:
+          with open("deploy/cloudrun/${{ inputs.deployment-flavor }}.json", "r") as file:
             data = json.load(file)
             deployment_type = get_strict(data, "${{ inputs.deployment-type }}")
           with open(os.getenv("GITHUB_ENV"), "a") as file_env:
@@ -163,7 +163,7 @@ runs:
           --port 8000
           --service-account ${{ inputs.deployment-service-account-email }}
           --ingress ${{ env.INGRESS }}
-          --command ${{ env.COMMAMD }}
+          --command ${{ env.COMMAND }}
           --args "${{ env.ARGS }}"
 
     - id: log-information-summary

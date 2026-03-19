@@ -13,11 +13,6 @@ CELLARIUM_DIR = os.path.dirname(CAS_BACKEND_DIR)
 # Repository root directory
 REPO_ROOT = os.path.dirname(CELLARIUM_DIR)
 
-# For backwards compatibility
-SERVICES_DIR = CORE_DIR
-CAS_DIR = CAS_BACKEND_DIR
-ROOT_DIR = REPO_ROOT
-
 # Load .env from settings/.env
 dotenv.load_dotenv(dotenv_path=os.path.join(REPO_ROOT, "settings", ".env"))
 
@@ -29,19 +24,15 @@ class AllEnvSettings(BaseSettings):
     GOOGLE_ACCOUNT_CREDENTIALS: dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = ENV_TYPE
     APP_VERSION: str = "1.7.3"
-    APP_ROOT: str = ROOT_DIR
+    APP_ROOT: str = REPO_ROOT
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str | None = os.environ.get("PROJECT_BUCKET_NAME")
 
-    # Directory paths (new structure)
+    # Directory paths
     CORE_DIR: str = CORE_DIR
     CAS_BACKEND_DIR: str = CAS_BACKEND_DIR
     CELLARIUM_DIR: str = CELLARIUM_DIR
     REPO_ROOT: str = REPO_ROOT
-
-    # Directory paths (backwards compatibility)
-    SERVICES_DIR: str = SERVICES_DIR
-    CAS_DIR: str = CAS_DIR
 
     DEFAULT_SERVICE_HOST: str = "0.0.0.0"
     DEFAULT_SERVICE_PORT: int = 8000
@@ -86,7 +77,7 @@ class AllEnvSettings(BaseSettings):
     DB_CONNECTION_POOL_MAX_OVERFLOW: int = 10  # 10 connections
     DB_CONNECTION_POOL_TIMEOUT: int = 40  # 40 seconds
     DB_CONNECTION_POOL_RECYCLE: int = 1800  # 30 minutes
-    ALEMBIC_CONFIG_FILE_PATH: str = f"{CAS_DIR}/services/db/alembic.ini"
+    ALEMBIC_CONFIG_FILE_PATH: str = f"{CORE_DIR}/db/alembic.ini"
     DB_CONNECTION_NAME: str | None = os.environ.get("DB_CONNECTION_NAME")
     DB_NAME: str | None = os.environ.get("DB_NAME")
     DB_PASSWORD: str | None = os.environ.get("DB_PASSWORD")
@@ -151,7 +142,7 @@ class LocalSettings(AllEnvSettings):
 
 class TestSettings(AllEnvSettings):
     SECRET_KEY: str = "test"
-    TEST_DB_FILE_PATH: str = os.getenv("TEST_DB_FILE_PATH", f"{ROOT_DIR}/settings/test_db.sqlite")
+    TEST_DB_FILE_PATH: str = os.getenv("TEST_DB_FILE_PATH", f"{REPO_ROOT}/settings/test_db.sqlite")
     SQLALCHEMY_DATABASE_URI: str = f"sqlite:///{TEST_DB_FILE_PATH}"
 
 
