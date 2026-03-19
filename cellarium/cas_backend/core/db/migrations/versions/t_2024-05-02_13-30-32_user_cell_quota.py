@@ -25,7 +25,7 @@ def upgrade() -> None:
 
     op.add_column(
         "users_user",
-        sa.Column("created_at", sa.DateTime(), nullable=True, default=datetime.datetime.now(datetime.timezone.utc)),
+        sa.Column("created_at", sa.DateTime(), nullable=True, default=datetime.datetime.now(datetime.UTC)),
     )
     op.execute("update users_user set created_at = now()")
     op.alter_column("users_user", "created_at", existing_type=sa.DateTime(), nullable=False)
