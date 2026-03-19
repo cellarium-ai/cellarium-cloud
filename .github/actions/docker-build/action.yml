@@ -16,9 +16,9 @@ inputs:
   image-tag:
     required: true
     description: Tag for the created image
-  image-type:
+  service-type:
     required: true
-    description: Image types to build (standard, cuda)
+    description: Service type to build (compute, admin)
   add-latest-tag:
     required: true
     description: Push a `latest` tag to the artifact registry
@@ -33,10 +33,10 @@ runs:
     - id: get-dockerfile
       name: Get Dockerfile
       run: |
-        if [[ "${{ inputs.image-type }}" == "standard" ]]; then
-          echo "DOCKERFILE=Dockerfile.ns.pytorch" >> $GITHUB_ENV
-        elif [[ "${{ inputs.image-type }}" == "cuda" ]]; then
-          echo "DOCKERFILE=Dockerfile.ns.pytorch_cuda" >> $GITHUB_ENV
+        if [[ "${{ inputs.service-type }}" == "compute" ]]; then
+          echo "DOCKERFILE=Dockerfile.compute" >> $GITHUB_ENV
+        elif [[ "${{ inputs.service-type }}" == "admin" ]]; then
+          echo "DOCKERFILE=Dockerfile.admin" >> $GITHUB_ENV
         fi
       shell: bash
     - id: google-login
@@ -61,7 +61,7 @@ runs:
       uses: docker/build-push-action@v5
       with:
         push: true
-        file: ./src/casp/services/deploy/${{ env.DOCKERFILE }}
+        file: ./deploy/docker/${{ env.DOCKERFILE }}
         tags: |
           ${{ inputs.image-name }}:${{ inputs.image-tag }}
           ${{ inputs.add-latest-tag && format('{0}:{1}', inputs.image-name, 'latest') || ''}}
@@ -69,8 +69,8 @@ runs:
     - id: log-information
       name: Log image information
       run: |
-        echo "::notice title=Image type ${{inputs.image-type}}:: Docker image: ${{ inputs.image-name }}:${{ inputs.image-tag }} has been pushed to Google Artifact Registry"
+        echo "::notice title=Service type ${{inputs.service-type}}:: Docker image: ${{ inputs.image-name }}:${{ inputs.image-tag }} has been pushed to Google Artifact Registry"
         if [[ "${{ inputs.add-latest-tag }}" == "true" ]]; then
-          echo "::notice title=Image type ${{inputs.image-type}}:: Docker image: ${{ inputs.image-name }}:latest has been pushed to Google Artifact Registry"
+          echo "::notice title=Service type ${{inputs.service-type}}:: Docker image: ${{ inputs.image-name }}:latest has been pushed to Google Artifact Registry"
         fi
       shell: bash
