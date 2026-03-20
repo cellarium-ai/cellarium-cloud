@@ -1,12 +1,10 @@
 from flask import Flask
 from flask_httpauth import HTTPBasicAuth
-from flask_wtf.csrf import CSRFProtect
 
 from cellarium.cas_backend.core import db, settings
 
 flask_app = Flask(__name__)
 flask_app.config.from_object(settings)
-csrf = CSRFProtect(flask_app)
 basic_auth = HTTPBasicAuth()
 db_session = db.get_db_session_maker()()
 
