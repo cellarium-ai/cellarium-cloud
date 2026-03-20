@@ -1,5 +1,7 @@
 .PHONY: help requirements docker-requirements clean install setup test lint format docs
 
+DOCS_OUTPUT_DIR ?= docs/build/html
+
 help:
 	@echo "Available commands:"
 	@echo "  make requirements         - Export Poetry dependencies to deploy/requirements.txt.lock for production"
@@ -45,7 +47,7 @@ format:
 
 # Build documentation
 docs:
-	poetry run sphinx-build -W -b html docs/source docs/build/html
+	poetry run sphinx-build -W -b html docs/source $(DOCS_OUTPUT_DIR)
 
 # Clean generated files
 clean:
