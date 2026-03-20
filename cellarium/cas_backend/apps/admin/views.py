@@ -8,7 +8,7 @@ from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import InlineModelFormList
 from flask_admin.contrib.sqla.form import InlineModelConverter
-from flask_admin.form import BaseForm, FormOpts, RenderTemplateWidget
+from flask_admin.form import BaseForm, FormOpts, RenderTemplateWidget, SecureForm
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
@@ -72,6 +72,8 @@ class CellariumCloudAdminModelView(BasicHTTPAuthMixin, ModelView):
     Model View class for Admin Dashboard.
     Inherits a Basic HTTP protection rule from `BasicHTTPAuthMixin`
     """
+
+    form_base_class = SecureForm
 
     @expose("/clone/", methods=("GET", "POST"))
     def clone_view(self):
