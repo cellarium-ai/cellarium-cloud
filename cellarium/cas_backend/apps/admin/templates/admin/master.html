@@ -43,7 +43,10 @@
 <script type="text/javascript">
     $.initialize(".alert-key", function() {
         // When an key alert is shown on screen, add a copy button to copy the user's key
-        const key = ($(this).text().match(/(?<=\[)[^\]]+(?=\])/g) || [null])[0];
+        const alertText = $(this).text();
+        const keyStart = alertText.indexOf('[');
+        const keyEnd = keyStart === -1 ? -1 : alertText.indexOf(']', keyStart + 1);
+        const key = keyStart === -1 || keyEnd === -1 ? null : alertText.slice(keyStart + 1, keyEnd);
         const copy_button = $(`<span class="copy-key">
           <button type="button" class="btn btn-default btn-xs">
              <span class="glyphicon glyphicon-copy"></span>
