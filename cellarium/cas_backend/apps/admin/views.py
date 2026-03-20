@@ -169,6 +169,8 @@ class UserAdminView(CellariumCloudAdminModelView):
         "total_cells_processed",
         "created_at",
     )
+    searchable_columns = ("username", "email")
+    column_filters = ("created_at",)
     column_editable_list = ("is_admin",)
     form_excluded_columns = ("requests_processed", "cells_processed")
 
