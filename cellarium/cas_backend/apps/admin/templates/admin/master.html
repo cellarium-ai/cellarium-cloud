@@ -38,10 +38,35 @@
 
 {% block tail_js %}
 {{ super() }}
-<!--  DOM Listener plugin for jQuery -->
-<script src="https://cdn.jsdelivr.net/npm/jquery.initialize@1.3.2/jquery.initialize.min.js" type="text/javascript"></script>
 <script type="text/javascript">
-    $.initialize(".alert-key", function() {
+    function initialize(selector, callback) {
+        const initializedAttribute = "data-initialized";
+
+        function applyCallback(root) {
+            $(root).find(selector).addBack(selector).each(function() {
+                if (!this.hasAttribute(initializedAttribute)) {
+                    this.setAttribute(initializedAttribute, "true");
+                    callback.call(this);
+                }
+            });
+        }
+
+        applyCallback(document.body);
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        applyCallback(node);
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.body, {childList: true, subtree: true});
+    }
+
+    initialize(".alert-key", function() {
         // When an key alert is shown on screen, add a copy button to copy the user's key
         const alertText = $(this).text();
         const keyStart = alertText.indexOf('[');
