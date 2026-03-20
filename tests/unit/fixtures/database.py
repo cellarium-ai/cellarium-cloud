@@ -6,17 +6,17 @@ resetting the database schema between tests, and populating the database with in
 The fixtures also include necessary session management and integration with SQLAlchemy.
 """
 
+from datetime import datetime
 import os
 import typing as t
-from datetime import datetime
 
 import pytest
 import sqlalchemy as sa
 from sqlalchemy.orm import Session, sessionmaker
 
-from casp.services import settings
-from casp.services.api import schemas
-from casp.services.db import Base, create_engine, models
+from cellarium.cas_backend.apps.compute import schemas
+from cellarium.cas_backend.core.config import settings
+from cellarium.cas_backend.core.db import Base, create_engine, models
 from tests.unit.fixtures import constants
 
 
@@ -77,7 +77,7 @@ def reset_db(test_engine: sa.engine.Engine) -> t.Generator[None, None, None]:
 
 @pytest.fixture
 def populate_db(
-    db_session: Session, reset_db: None, cell_info_data: t.List[schemas.CellariumCellMetadata]
+    db_session: Session, reset_db: None, cell_info_data: list[schemas.CellariumCellMetadata]
 ) -> t.Generator[None, None, None]:
     """
     Fixture to populate the database with initial data for tests. The database schema is reset before adding the data.

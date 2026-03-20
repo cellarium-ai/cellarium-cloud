@@ -1,20 +1,48 @@
 Deploying in Cloud
 ==================
-Cellarium Cloud services are deployed on `Google Cloud Run <https://cloud.google.com/run/docs>`_.
-These services are containerized and built and deployed through GitHub Actions. :ref:`More info <ci-cd>`.
 
-.. code-block::
+CAS Backend services are deployed on `Google Cloud Run <https://cloud.google.com/run/docs>`_ using the shared GitHub
+Actions workflows and the deployment assets under ``deploy/``.
 
-    gcloud run deploy <service_name> --project $PROJECT_ID --image $IMAGE_NAME
+Deployment Assets
+-----------------
 
-Instructions on how to update a particular service are provided in the respective service's documentation. :ref:`More info <services>`.
+- ``deploy/docker/`` contains service Dockerfiles
+- ``deploy/cloudrun/`` contains flavor-specific Cloud Run sizing
+- ``deploy/scripts/`` contains supporting deployment scripts
+- ``.github/actions/docker-build`` and ``.github/actions/docker-deploy`` contain the reusable CI/CD actions
 
-Once the services are deployed, they will appear in the `Google Cloud Run Console <https://console.cloud.google.com/run>`_
-as a new instance, or an existing one will be updated if the service name already exists.
+Service Images
+--------------
 
-Accessing the Services
-++++++++++++++++++++++
+Current deployable service images:
 
-To get access to the deployed services, you can check the URL in the
-`Google Cloud Run Console <https://console.cloud.google.com/run>`_. The dashboard provides logs, metrics, and error
-reporting.
+- compute: ``deploy/docker/Dockerfile.compute``
+- admin: ``deploy/docker/Dockerfile.admin``
+
+Deployment Flow
+---------------
+
+1. Export runtime dependencies into ``deploy/requirements.txt.lock`` with ``make requirements``.
+2. Build and push the service image.
+3. Deploy the image to Cloud Run using the configured flavor, service account, VPC connector, SQL instance, and secret.
+
+The repository GitHub workflows automate this flow for standard deployments.
+
+Configuration
+-------------
+
+Cloud Run sizing and concurrency settings are selected from the JSON files in ``deploy/cloudrun/``.
+Secrets are mounted into the container at ``/app/settings/.env``.
+
+Related Documentation
+---------------------
+
+- :doc:`readme_modules/cloudrun`
+- :doc:`cicd`
+- :doc:`secrets`
+
+.. toctree::
+   :maxdepth: 1
+
+   readme_modules/cloudrun

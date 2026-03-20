@@ -1,0 +1,3 @@
+# Mark auto-generated files
+requirements.txt linguist-generated=true
+poetry.lock linguist-generated=true

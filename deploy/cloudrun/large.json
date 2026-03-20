@@ -1,0 +1,17 @@
+{
+  "cas-admin": {
+    "cpu": "2000m",
+    "memory": "2Gi",
+    "max-instances": 100,
+    "min-instances": 1,
+    "concurrency": 80
+
+  },
+  "cas-compute": {
+    "cpu": "8000m",
+    "memory": "32Gi",
+    "max-instances": 200,
+    "min-instances": 1,
+    "concurrency": 32
+  }
+}

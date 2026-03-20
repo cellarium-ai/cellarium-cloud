@@ -3,10 +3,10 @@ import typing as t
 
 import pytest
 
-from casp.services.api import services
-from casp.services.api.services.cell_operations_service import CellOperationsService
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
-from casp.services.model_inference.services import ModelInferenceService
+from cellarium.cas_backend.apps.compute import services
+from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
+from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
+from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
 from tests.unit.fixtures import mocks
 
 
@@ -51,7 +51,7 @@ def cell_operations_service_with_mocks(
     return service
 
 
-def load_ontology_resource_from_file() -> t.Dict[str, t.Any]:
+def load_ontology_resource_from_file() -> dict[str, t.Any]:
     """
     Load the ontology resource from a predefined JSON file.
 

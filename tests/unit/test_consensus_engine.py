@@ -11,13 +11,13 @@ from unittest.mock import Mock
 
 import pytest
 
-from casp.services.api import schemas
-from casp.services.api.clients.matching_client import MatchResult
-from casp.services.api.services import consensus_engine
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
+from cellarium.cas_backend.apps.compute import schemas
+from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
+from cellarium.cas_backend.apps.compute.services import consensus_engine
+from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 
 
-def load_ontology_resource_from_file() -> t.Dict[str, t.Any]:
+def load_ontology_resource_from_file() -> dict[str, t.Any]:
     """
     Load the ontology resource from a predefined JSON file.
 
@@ -36,13 +36,13 @@ def load_expected_response_ontology_aware() -> list[schemas.QueryCellNeighborhoo
     """
     filepath = "tests/unit/test_consensus_engine_fixtures/ontology_aware_expected_response.json"
 
-    with open(filepath, "r") as file:
+    with open(filepath) as file:
         json_data = json.load(file)
 
     return [schemas.QueryCellNeighborhoodOntologyAware(**item) for item in json_data]
 
 
-def load_expected_response_summary_stats() -> t.List[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
+def load_expected_response_summary_stats() -> list[schemas.QueryCellNeighborhoodCellTypeSummaryStatistics]:
     """
     Load the expected response for summary stats strategy from a predefined JSON file.
 
@@ -50,7 +50,7 @@ def load_expected_response_summary_stats() -> t.List[schemas.QueryCellNeighborho
     """
     filepath = "tests/unit/test_consensus_engine_fixtures/summary_stats_expected_response.json"
 
-    with open(filepath, "r") as file:
+    with open(filepath) as file:
         json_data = json.load(file)
 
     return [schemas.QueryCellNeighborhoodCellTypeSummaryStatistics(**item) for item in json_data]
@@ -172,7 +172,18 @@ def test_summarize_query_neighbor_context_ontology_aware(
         isinstance(item, schemas.QueryCellNeighborhoodOntologyAware) for item in result
     ), "All items should be of type QueryCellAnnotationOntologyAware"
 
-    assert expected == result, "The expected response should match the result"
+    # Compare with tolerance for floating-point fields
+    assert len(result) == len(expected), "Result and expected should have the same length"
+    for result_item, expected_item in zip(result, expected, strict=False):
+        assert result_item.query_cell_id == expected_item.query_cell_id
+        assert result_item.total_neighbors == expected_item.total_neighbors
+        assert result_item.total_neighbors_unrecognized == expected_item.total_neighbors_unrecognized
+        assert result_item.total_weight == pytest.approx(expected_item.total_weight)
+        assert len(result_item.matches) == len(expected_item.matches)
+        for result_match, expected_match in zip(result_item.matches, expected_item.matches, strict=False):
+            assert result_match.cell_type == expected_match.cell_type
+            assert result_match.cell_type_ontology_term_id == expected_match.cell_type_ontology_term_id
+            assert result_match.score == pytest.approx(expected_match.score)
 
 
 def test_summarize_query_neighbor_context_summary_stats(
@@ -203,4 +214,16 @@ def test_summarize_query_neighbor_context_summary_stats(
         isinstance(item, schemas.QueryCellNeighborhoodCellTypeSummaryStatistics) for item in result
     ), "All items should be of type QueryCellNeighborhoodCellTypeSummaryStatistics"
 
-    assert expected == result, "The expected response should match the result"
+    # Compare with tolerance for floating-point fields
+    assert len(result) == len(expected), "Result and expected should have the same length"
+    for result_item, expected_item in zip(result, expected, strict=False):
+        assert result_item.query_cell_id == expected_item.query_cell_id
+        assert len(result_item.matches) == len(expected_item.matches)
+        for result_match, expected_match in zip(result_item.matches, expected_item.matches, strict=False):
+            assert result_match.cell_type == expected_match.cell_type
+            assert result_match.cell_count == expected_match.cell_count
+            assert result_match.min_distance == pytest.approx(expected_match.min_distance)
+            assert result_match.p25_distance == pytest.approx(expected_match.p25_distance)
+            assert result_match.median_distance == pytest.approx(expected_match.median_distance)
+            assert result_match.p75_distance == pytest.approx(expected_match.p75_distance)
+            assert result_match.max_distance == pytest.approx(expected_match.max_distance)

@@ -1,1 +1,0 @@
-.. include:: ../../../../src/casp/wdl_workflows/README.rst

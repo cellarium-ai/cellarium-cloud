@@ -1,26 +1,26 @@
 name: CAS Repository Docker Build Workflow
-on: 
+on:
   workflow_dispatch:
     inputs:
-      image-types:
-        description: 'Image types to build. Can be `standard`, `cuda` or `both`. Default is `both`.'
+      service-type:
+        description: 'Service type to build. Can be `compute`, `admin` or `both`. Default is `both`.'
         required: false
         default: 'both'
         type: choice
         options:
           - both
-          - standard
-          - cuda
+          - compute
+          - admin
       image-tag:
         description: 'Docker image tag. Will use the short hash of the last commit in the branch if nothing is passed in.'
         required: false
         default: ''
       add-latest-tag:
-        description: 'Push a `latest` tag to the artifact registry.  Default is `true`.'
+        description: 'Push a `latest` tag to the artifact registry. Default is `true`.'
         required: false
         default: true
         type: boolean
-      
+
 jobs:
 
   update-docker-images:
@@ -32,12 +32,12 @@ jobs:
 
     strategy:
       matrix:
-        image-type: [ 'standard', 'cuda' ]
+        service-type: [ 'compute', 'admin' ]
 
     env:
       DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
-      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
-      PYTORCH_CUDA_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch-cuda
+      COMPUTE_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-compute
+      ADMIN_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-admin
     steps:
       - uses: actions/checkout@v4
 
@@ -50,26 +50,26 @@ jobs:
             echo "IMAGE_TAG=${{ inputs.image-tag }}" >> $GITHUB_ENV
           fi
         shell: bash
-      - id: build-standard
+      - id: build-compute
         uses: ./.github/actions/docker-build
-        if: matrix.image-type == 'standard' && (inputs.image-types == 'standard' || inputs.image-types == 'both')
+        if: matrix.service-type == 'compute' && (inputs.service-type == 'compute' || inputs.service-type == 'both')
         with:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
-          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-name: ${{ env.COMPUTE_IMAGE_NAME }}
           image-tag: ${{ env.IMAGE_TAG }}
-          image-type: ${{ matrix.image-type }}
+          service-type: ${{ matrix.service-type }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
           add-latest-tag: ${{ inputs.add-latest-tag }}
 
-      - id: build-cuda
+      - id: build-admin
         uses: ./.github/actions/docker-build
-        if: matrix.image-type == 'cuda' && (inputs.image-types == 'cuda' || inputs.image-types == 'both')
+        if: matrix.service-type == 'admin' && (inputs.service-type == 'admin' || inputs.service-type == 'both')
         with:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
-          image-name: ${{ env.PYTORCH_CUDA_IMAGE_NAME }}
+          image-name: ${{ env.ADMIN_IMAGE_NAME }}
           image-tag: ${{ env.IMAGE_TAG }}
-          image-type: ${{ matrix.image-type }}
+          service-type: ${{ matrix.service-type }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
           add-latest-tag: ${{ inputs.add-latest-tag }}

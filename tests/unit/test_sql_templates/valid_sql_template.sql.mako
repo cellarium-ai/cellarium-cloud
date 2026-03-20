@@ -1,5 +1,5 @@
 <%!
-    from casp.data_manager.sql import mako_helpers as mh
+    from cellarium.cas_backend.core.data_managers.sql import mako_helpers as mh
 %>
 ${mh.select(select_columns)}
 from `${project}.${dataset}.test_table_name` ttn

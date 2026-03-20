@@ -1,11 +1,11 @@
 from itertools import groupby
 
-import sendgrid
 from mockito import captor, mock, unstub, verify, when
 from mockito.matchers import ArgumentCaptor
 from python_http_client.client import Response
+import sendgrid
 
-from casp.services.utils.email_utils import EmailSender
+from cellarium.cas_backend.core.utils.email_utils import EmailSender
 
 BASE_TEMPLATE_DIR: str = "tests/unit/test_email_templates"
 

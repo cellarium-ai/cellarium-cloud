@@ -18,7 +18,7 @@ inputs:
     description: Tag of the image to deploy
   deployment-type:
     required: true
-    description: The type of deployment to create (cas-model, cas-admin, cas-api)
+    description: The type of deployment to create (cas-model, cas-admin, cas-compute)
   deployment-prefix:
     required: true
     description: The prefix to add to the deployment name
@@ -26,7 +26,7 @@ inputs:
     required: true
     description: |
       The nature of the deployment set.  E.g. is is a default or large deployment.  Configurations are set based on this value and
-      the values can be configured in the src/casp/services/deploy/cloudrun/{flavor}.json files.
+      the values can be configured in the deploy/cloudrun/{flavor}.json files.
   deployment-project:
     required: true
     description: The project to deploy the image to
@@ -78,18 +78,18 @@ runs:
       run: |
         case "${{ inputs.deployment-type }}" in
           cas-admin)
-            echo "COMMAMD=casp/services/admin/entrypoint.sh" >> $GITHUB_ENV
+            echo "COMMAND=cellarium/cas_backend/apps/admin/entrypoint.sh" >> $GITHUB_ENV
             echo "ARGS=" >> $GITHUB_ENV
             echo "INGRESS=internal" >> $GITHUB_ENV
             ;;
           cas-model)
-            echo "COMMAMD=python" >> $GITHUB_ENV
-            echo "ARGS=casp/services/model_inference/main.py" >> $GITHUB_ENV
+            echo "COMMAND=python" >> $GITHUB_ENV
+            echo "ARGS=-m cellarium.cas_backend.apps.model_inference.main" >> $GITHUB_ENV
             echo "INGRESS=internal" >> $GITHUB_ENV
             ;;
-          cas-api)
-            echo "COMMAMD=python" >> $GITHUB_ENV
-            echo "ARGS=casp/services/api/main.py" >> $GITHUB_ENV
+          cas-compute)
+            echo "COMMAND=cellarium/cas_backend/apps/compute/entrypoint.sh" >> $GITHUB_ENV
+            echo "ARGS=" >> $GITHUB_ENV
             echo "INGRESS=all" >> $GITHUB_ENV
             ;;
           *)
@@ -110,7 +110,7 @@ runs:
           return value
 
         try:
-          with open("src/casp/services/deploy/cloudrun/${{ inputs.deployment-flavor }}.json", "r") as file:
+          with open("deploy/cloudrun/${{ inputs.deployment-flavor }}.json", "r") as file:
             data = json.load(file)
             deployment_type = get_strict(data, "${{ inputs.deployment-type }}")
           with open(os.getenv("GITHUB_ENV"), "a") as file_env:
@@ -163,7 +163,7 @@ runs:
           --port 8000
           --service-account ${{ inputs.deployment-service-account-email }}
           --ingress ${{ env.INGRESS }}
-          --command ${{ env.COMMAMD }}
+          --command ${{ env.COMMAND }}
           --args "${{ env.ARGS }}"
 
     - id: log-information-summary
@@ -175,7 +175,7 @@ runs:
     - id: set-api-url
       name: We need to stash the URL for the api server in case it's needed by other jobs
       run: |
-        if [[ "${{ inputs.deployment-type }}" == "cas-api" ]]; then
+        if [[ "${{ inputs.deployment-type }}" == "cas-compute" ]]; then
           echo "API_SERVER_URL=${{ steps.deploy.outputs.url }}" >> $GITHUB_ENV
         fi
       shell: bash

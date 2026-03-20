@@ -1,0 +1,169 @@
+[tool.poetry]
+name = "cas-backend"
+version = "1.8.0"
+description = "Cellarium Cell Annotation Service Backend"
+authors = ["Cellarium Team <cas-support@cellarium.ai>"]
+readme = "README.rst"
+packages = [
+    {include = "cellarium"},
+    {include = "cellarium/cas_backend"}
+]
+license = "LICENSE"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+anndata = "~0.8.0"
+google-api-python-client = "2.127.0"
+google-cloud-aiplatform = "1.38.1"
+google-cloud-bigquery = "3.9.0"
+google-cloud-bigquery-storage = "2.19.1"
+google-cloud-storage = "2.16.0"
+scipy = "1.13.0"
+fastapi = "0.115.4"
+uvicorn = {extras = ["standard"], version = "0.29.0"}
+python-dotenv = "1.0.1"
+pyarrow = ">=17,<19"
+python-multipart = "0.0.9"
+aiohttp = "3.9.4"
+SQLAlchemy = "1.4.46"
+Flask = "2.2.5"
+Flask-Admin = "1.6.0"
+Flask-HTTPAuth = "4.7.0"
+Flask-WTF = "1.2.2"
+WTForms = "3.1.2"
+PyJWT = "2.6.0"
+alembic = "1.9.2"
+gunicorn = "22.0.0"
+pg8000 = "1.31.2"
+cloud-sql-python-connector = "1.11.0"
+pandas = "2.2.3"
+google-cloud-run = "0.7.1"
+scikit-learn = "1.4.2"
+cellarium-ml = "0.0.7"
+db-dtypes = "1.1.1"
+Mako = "1.2.4"
+smart-open = "7.0.4"
+sqlparse = "0.5.0"
+werkzeug = "3.0.6"
+sentry-sdk = "1.39.2"
+gcsfs = "2023.9.2"
+tenacity = "8.2.3"
+lightning= ">=2.2.0,<=2.3.0"
+torch = [
+  { version = ">=2.2.0,<2.3.0", markers = "sys_platform == 'darwin'" },
+  { version = ">=2.2.0,<2.3.0", markers = "sys_platform == 'linux'", source = "pytorch-cpu" }
+]
+starlette = "0.41.2"
+starlette-context = "0.3.6"
+argon2-cffi = "23.1.0"
+sendgrid = "6.11.0"
+packaging = "24.2"
+pydantic = "2.8.2"
+pydantic-settings = "2.3.4"
+numpy = "1.26.4"
+owlready2 = "0.46"
+networkx = "3.3"
+setuptools = "<82"
+
+[tool.poetry.group.dev.dependencies]
+wheel = "*"
+ruff = "^0.8.0"
+pylint = "3.2.0"
+cython = "3.0.10"
+requests = "2.31.0"
+pip-audit = "2.7.3"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.1.1"
+pytest-asyncio = ">=0.23.6"
+pytest-cov = ">=5.0.0"
+pytest-dependency = ">=0.6.0"
+parameterized = ">=0.9.0"
+mockito = ">=1.5.0"
+coverage = ">=4.5"
+click = ">=8.0.0"
+requests = ">=2.31.0"
+termcolor = ">=2.4.0"
+pygments = ">=2.17.2"
+scikit-learn = ">=1.4.0"
+mock-alchemy = "0.2.4"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+Sphinx = "~7.2"
+sphinx-gallery = "~0.14"
+sphinx-rtd-theme = "~1.3"
+setuptools-git-versioning = "1.13.5"
+pillow = "^12.1.1"
+
+
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+]
+ignore = [
+    "N806",  # Allow uppercase variable names (common in ML: X, Y, etc.)
+    "N818",  # Exception naming convention (requires Error suffix)
+    "B008",  # Function call in argument defaults (FastAPI pattern)
+    "B904",  # Raise from within except (not always needed)
+    "B020",  # Loop control variable overrides (intentional in some cases)
+    "B026",  # Star-arg unpacking after keyword (valid pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cellarium"]
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--cov=cellarium.cas_backend",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+
+[tool.coverage.run]
+source = ["cellarium/cas_backend"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

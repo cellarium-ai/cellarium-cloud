@@ -1,0 +1,89 @@
+{% extends admin_base_template %}
+<!-- I don't like the name of this file but it's hard coded into the flask admin templates -->
+
+{% block head_css %}
+{{ super() }}
+<style>
+
+    .inline-wrapper small {
+        display: block;
+    }
+    .inline-wrapper .inline {
+        display: flex;
+    }
+
+    .copy-key button{
+        border-color: #2284c1;
+        background-color: #1c6ea0;
+        border-width: 1px;
+    }
+
+    .copy-key button.copied{
+        border-color: #319731;
+        background-color: #2dac2d;
+    }
+
+    .copy-key button span {
+        pointer-events:none
+    }
+    
+    .alert-key {
+        background-color: #38a8ee;
+        border-color: #2795d8;
+        color: #ffffff;
+    }
+</style>
+{% endblock %}
+
+
+{% block tail_js %}
+{{ super() }}
+<script type="text/javascript">
+    function initialize(selector, callback) {
+        const initializedAttribute = "data-initialized";
+
+        function applyCallback(root) {
+            $(root).find(selector).addBack(selector).each(function() {
+                if (!this.hasAttribute(initializedAttribute)) {
+                    this.setAttribute(initializedAttribute, "true");
+                    callback.call(this);
+                }
+            });
+        }
+
+        applyCallback(document.body);
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        applyCallback(node);
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.body, {childList: true, subtree: true});
+    }
+
+    initialize(".alert-key", function() {
+        // When an key alert is shown on screen, add a copy button to copy the user's key
+        const alertText = $(this).text();
+        const keyStart = alertText.indexOf('[');
+        const keyEnd = keyStart === -1 ? -1 : alertText.indexOf(']', keyStart + 1);
+        const key = keyStart === -1 || keyEnd === -1 ? null : alertText.slice(keyStart + 1, keyEnd);
+        const copy_button = $(`<span class="copy-key">
+          <button type="button" class="btn btn-default btn-xs">
+             <span class="glyphicon glyphicon-copy"></span>
+          </button>
+        </span>`).click(async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            await navigator.clipboard.writeText(key);
+            $(e.target).addClass('copied');
+        });
+        $(this).append(copy_button);
+    });
+</script>
+{% endblock %}

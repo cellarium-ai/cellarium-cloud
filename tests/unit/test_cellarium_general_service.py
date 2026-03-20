@@ -2,16 +2,15 @@
 Tests things in the cellarium_general_service that can reasonably be tested with a unit test.
 """
 
-import pytest
 from mockito import mock, unstub
+import pytest
 
-from casp.services import constants
-from casp.services.api.services.cellarium_general_service import CellariumGeneralService
-from casp.services.api.services.exceptions import InvalidClientVersionException
+from cellarium.cas_backend.apps.compute.services.cellarium_general_service import CellariumGeneralService
+from cellarium.cas_backend.apps.compute.services.exceptions import InvalidClientVersionException
+from cellarium.cas_backend.core import constants
 
 
 class TestCellariumGeneralService:
-
     def setup_method(self) -> None:
         self.cellarium_general_service = CellariumGeneralService(cellarium_general_dm=mock())
 

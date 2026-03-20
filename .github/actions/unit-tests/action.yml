@@ -12,32 +12,29 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Install Dev Requirements
+    - name: Install Poetry
       run: |
         python -m pip install --upgrade pip
-        pip install -r dev-requirements.txt
+        pip install poetry
       shell: bash
 
-    - name: Install Tox
-      run: pip install tox
+    - name: Install Dependencies
+      run: poetry install --with dev,test
       shell: bash
 
-    - name: Run Tox lint commands
-      # Run tox using the version of Python in `PATH`
-      run: tox -e lint
+    - name: Run Linting
+      run: make lint
       shell: bash
 
-    - name: Run Pytest through Tox
-      # Run tox using the version of Python in `PATH`
-      run: tox -e unit
+    - name: Run Unit Tests
+      run: make test
       shell: bash
 
     - name: Run pip-audit command through GHA
       # Check dependencies for security vulnerabilities
       uses: pypa/gh-action-pip-audit@v1.0.8
       with:
-        inputs: requirements.txt
-        # GHSA-mr7h-w2qc-ffc2 is ignored because it is a false positive. 
+        # GHSA-mr7h-w2qc-ffc2 is ignored because it is a false positive.
         # The vulnerability was patched in lightning 2.3.3 but the CVE database has not been updated yet
         ignore-vulns: |
           GHSA-mr7h-w2qc-ffc2

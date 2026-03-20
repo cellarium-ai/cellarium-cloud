@@ -1,1 +1,0 @@
-.. include:: ../../../../src/casp/data_manager/README.rst

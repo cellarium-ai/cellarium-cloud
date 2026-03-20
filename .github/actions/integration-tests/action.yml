@@ -6,10 +6,10 @@ inputs:
     required: false
     default: main
   api-key:
-    description: The API key for connecting to the CAS API
+    description: The API key for connecting to the CAS compute service
     required: true
   api-url:
-    description: The URL of the CAS API service
+    description: The URL of the CAS compute service
     required: true
 
 runs:

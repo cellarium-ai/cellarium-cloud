@@ -8,24 +8,23 @@ and help simulate different scenarios for testing functionalities that rely on b
 import io
 import random
 import tempfile
-import typing as t
 
 import anndata
 import numpy as np
 import pandas as pd
 import pytest
 
-from casp.services.api import schemas
+from cellarium.cas_backend.apps.compute import schemas
 
 
 @pytest.fixture
-def cell_info_data() -> t.List[schemas.CellariumCellMetadata]:
+def cell_info_data() -> list[schemas.CellariumCellMetadata]:
     """
     Centralized fixture that represents the source of cell data. It is needed for adding cells into the database and to
     use the same cells for mocking MatchingEngine.
 
-    :return: A list of instances of :class:`~casp.services.api.schemas.CellariumCellMetadata` with 'cell_type' and
-        'cell_type_ontology_term_id'.
+    :return: A list of instances of :class:`~cellarium.cas_backend.services.api.schemas.CellariumCellMetadata`
+        with 'cell_type' and 'cell_type_ontology_term_id'.
     """
     # Define a mapping between cell types and their ontology term IDs
     cell_type_to_ontology_id_map = {

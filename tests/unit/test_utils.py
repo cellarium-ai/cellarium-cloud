@@ -1,20 +1,21 @@
 import asyncio
-import typing as t
 from importlib import reload
+import typing as t
 
 from mock_alchemy.mocking import UnifiedAlchemyMagicMock
 from mockito import mock, unstub, when
 from sqlalchemy import orm
 from sqlalchemy.orm import sessionmaker
 
-from casp.services import db
+from cellarium.cas_backend.core import db
 
 
 def read_resource(resource_path: str) -> str:
     """
     Read a resource file and return its content as a string.
 
-    :param resource_path: The relative path to the resource file. (e.g. tests/unit/test_query_responses/rest_response_0.json)
+    :param resource_path: The relative path to the resource file.
+                          (e.g. tests/unit/test_query_responses/rest_response_0.json)
     :return: The content of the resource file as a string.
 
     """
@@ -34,9 +35,10 @@ def async_return(result: t.Any) -> asyncio.Future:
     return f
 
 
-def mock_sqlalchemy(data: t.Optional[list[t.Any]] = None) -> UnifiedAlchemyMagicMock:
+def mock_sqlalchemy(data: list[t.Any] | None = None) -> UnifiedAlchemyMagicMock:
     """
-    Mock the SQLAlchemy session for unit tests.  Be sure to call unmock_sqlalchemy() in the teardown_method of the test to reset mocks.
+    Mock the SQLAlchemy session for unit tests. Be sure to call unmock_sqlalchemy() in the
+    teardown_method of the test to reset mocks.
 
     See documentation for mock_alchemy at https://mock-alchemy.readthedocs.io/en/latest/user_guide/index.html#stub-data
     for more information on how to pass data in.
@@ -63,7 +65,8 @@ def mock_sqlalchemy(data: t.Optional[list[t.Any]] = None) -> UnifiedAlchemyMagic
 
 def unmock_sqlalchemy() -> None:
     """
-    Unmock the SQLAlchemy session for unit tests.  This should be called in the teardown_method of the test to reset the mocks.
+    Unmock the SQLAlchemy session for unit tests. This should be called in the teardown_method of
+    the test to reset the mocks.
     """
     unstub()
     reload(db)

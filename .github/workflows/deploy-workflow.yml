@@ -31,7 +31,7 @@ on:
         required: false
         default: 'us-central1'
       flavor:
-        description: 'The nature of the deployment set.  E.g. is it a default or large deployment.  Configurations are set based on this value and the values can be configured in the src/casp/services/deploy/cloudrun/{flavor}.json files.'
+        description: 'The nature of the deployment set.  E.g. is it a default or large deployment.  Configurations are set based on this value and the values can be configured in the deploy/cloudrun/{flavor}.json files.'
         required: true
         default: 'default'
 jobs:
@@ -46,7 +46,8 @@ jobs:
 
     env:
       DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
-      PYTORCH_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-pytorch
+      COMPUTE_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-compute
+      ADMIN_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-admin
     steps:
       - uses: actions/checkout@v4
 
@@ -64,7 +65,7 @@ jobs:
         uses: ./.github/actions/docker-deploy
         with:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
-          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-name: ${{ env.ADMIN_IMAGE_NAME }}
           image-tag: ${{ env.IMAGE_TAG }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
@@ -79,15 +80,15 @@ jobs:
           deployment-flavor: ${{ inputs.flavor }}
 
       - id: deploy-api
-        name: Deploy the CAS API Service
+        name: Deploy the CAS Compute Service
         uses: ./.github/actions/docker-deploy
         with:
           docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
-          image-name: ${{ env.PYTORCH_IMAGE_NAME }}
+          image-name: ${{ env.COMPUTE_IMAGE_NAME }}
           image-tag: ${{ env.IMAGE_TAG }}
           gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
           gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
-          deployment-type: cas-api
+          deployment-type: cas-compute
           deployment-prefix: ${{ inputs.deployment-prefix }}
           deployment-project: ${{ secrets.GCP_PROJECT_ID }}
           deployment-service-account-email: ${{ inputs.service-account-email }}

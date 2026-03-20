@@ -2,8 +2,8 @@ import typing as t
 
 import pytest
 
-from casp.data_manager import sql
-from casp.data_manager.sql.validation import exceptions, template_data_validator
+from cellarium.cas_backend.core.data_managers import sql
+from cellarium.cas_backend.core.data_managers.sql.validation import exceptions, template_data_validator
 
 
 @pytest.fixture
@@ -27,12 +27,12 @@ def valid_template_data_without_filters() -> sql.TemplateData:
 
 
 @pytest.fixture
-def valid_filter_statements() -> t.Dict[str, t.Any]:
+def valid_filter_statements() -> dict[str, t.Any]:
     return {"test_column_3__eq": 5, "test_column__in": ["foo", "buz", "ex"]}
 
 
 @pytest.fixture
-def invalid_filter_statements() -> t.Dict[str, t.Any]:
+def invalid_filter_statements() -> dict[str, t.Any]:
     return {"test_column__llk": "some_value"}
 
 
@@ -60,7 +60,7 @@ def test_validate_sql_filter_invalid() -> None:
         template_data_validator.validate_sql_filter("column_name__invalid", 42)
 
 
-def test_validate_filter_statements(valid_filter_statements: t.Dict[str, t.Any]) -> None:
+def test_validate_filter_statements(valid_filter_statements: dict[str, t.Any]) -> None:
     """
     Test the validation of valid filter statements.
 
@@ -71,7 +71,7 @@ def test_validate_filter_statements(valid_filter_statements: t.Dict[str, t.Any])
     template_data_validator.validate_filters(valid_filter_statements)
 
 
-def test_validate_filter_statements_invalid(invalid_filter_statements: t.Dict[str, t.Any]) -> None:
+def test_validate_filter_statements_invalid(invalid_filter_statements: dict[str, t.Any]) -> None:
     """
     Test the validation of invalid filter statements.
 

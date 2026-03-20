@@ -17,18 +17,18 @@ import pytest
 from sqlalchemy.orm import Session
 from starlette_context.ctx import _request_scope_context_storage
 
-from casp.services import settings
-from casp.services.api.clients.matching_client import MatchResult
-from casp.services.api.services import exceptions
-from casp.services.api.services.cell_operations_service import CellOperationsService
-from casp.services.api.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
-from casp.services.constants import ContextKeys
-from casp.services.db import models
+from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
+from cellarium.cas_backend.apps.compute.services import exceptions
+from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
+from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
+from cellarium.cas_backend.core.config import settings
+from cellarium.cas_backend.core.constants import ContextKeys
+from cellarium.cas_backend.core.db import models
 from tests.unit.fixtures import constants, mocks
 
 
 @pytest.fixture
-def patch_starlette_context() -> t.Generator[t.Dict[str, str], None, None]:
+def patch_starlette_context() -> t.Generator[dict[str, str], None, None]:
     """
     Fixture to patch the `starlette_context`'s `_request_scope_context_storage` globally during tests.
 
@@ -94,7 +94,7 @@ def user_without_quota(db_session: Session) -> models.User:
         (np.random.rand(11, 32), 4, 3),  # Irregular chunks
     ]
 )
-def embedding_test_data(request: pytest.FixtureRequest) -> t.Tuple[np.ndarray, int, int]:
+def embedding_test_data(request: pytest.FixtureRequest) -> tuple[np.ndarray, int, int]:
     """
     Fixture to provide test data for chunk splitting tests.
 
@@ -104,7 +104,7 @@ def embedding_test_data(request: pytest.FixtureRequest) -> t.Tuple[np.ndarray, i
     return request.param
 
 
-def test__split_embeddings_into_chunks(embedding_test_data: t.Tuple[np.ndarray, int, int]):
+def test__split_embeddings_into_chunks(embedding_test_data: tuple[np.ndarray, int, int]):
     """
     Test the static method `_split_embeddings_into_chunks` for correctness.
 
@@ -139,7 +139,7 @@ async def test__get_knn_matches_for_chunk(
     patch_bigquery_client: None,
     mock_matching_client: mocks.MockMatchingClient,
     cell_operations_service_with_mocks: CellOperationsService,
-    embedding_test_data: t.Tuple[np.ndarray, int, int],
+    embedding_test_data: tuple[np.ndarray, int, int],
 ):
     """
     Test the private `_get_knn_matches_for_chunk` method.
@@ -174,7 +174,7 @@ async def test_get_knn_matches_from_embeddings(
     patch_bigquery_client: None,
     mock_matching_client: mocks.MockMatchingClient,
     cell_operations_service_with_mocks: CellOperationsService,
-    embedding_test_data: t.Tuple[np.ndarray, int, int],
+    embedding_test_data: tuple[np.ndarray, int, int],
     cas_model: models.CASModel,
 ):
     """
@@ -302,7 +302,8 @@ async def test_annotate_cell_type_summary_statistics_strategy_with_activity_logg
     user_without_quota: models.User,
 ):
     """
-    Tests the `annotate_cell_type_summary_statistics_strategy_with_activity_logging` method for a user without sufficient quota.
+    Tests the `annotate_cell_type_summary_statistics_strategy_with_activity_logging` method for a user
+    without sufficient quota.
 
     Ensure that:
     - The method raises a `QuotaExceededException` when the user's quota is exceeded.
@@ -351,7 +352,9 @@ def patch_strategy_init_with_resource(
 
     :param cell_ontology_resource_mock: Mocked ontology resource for the consensus strategy.
     """
-    patch_ref = "casp.services.api.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
+    patch_ref = (
+        "cellarium.cas_backend.apps.compute.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
+    )
 
     with patch(patch_ref, autospec=True) as mock_init:
         # Define a side effect that injects the mocked resource

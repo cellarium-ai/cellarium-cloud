@@ -10,12 +10,12 @@ from unittest.mock import patch
 
 import pytest
 
-from casp.services.api import schemas
+from cellarium.cas_backend.apps.compute import schemas
 from tests.unit.fixtures import constants, mocks
 
 
 @pytest.fixture
-def mock_matching_client(cell_info_data: t.List[schemas.CellariumCellMetadata]) -> mocks.MockMatchingClient:
+def mock_matching_client(cell_info_data: list[schemas.CellariumCellMetadata]) -> mocks.MockMatchingClient:
     """
     Fixture for a simplified mocked `MatchingClient` that uses the mock_cell_source.
 
