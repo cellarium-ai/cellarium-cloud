@@ -26,7 +26,7 @@ inputs:
     required: true
     description: |
       The nature of the deployment set.  E.g. is is a default or large deployment.  Configurations are set based on this value and
-      the values can be configured in the src/casp/services/deploy/cloudrun/{flavor}.json files.
+      the values can be configured in the deploy/cloudrun/{flavor}.json files.
   deployment-project:
     required: true
     description: The project to deploy the image to

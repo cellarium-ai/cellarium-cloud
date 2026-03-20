@@ -31,7 +31,7 @@ on:
         required: false
         default: 'us-central1'
       flavor:
-        description: 'The nature of the deployment set.  E.g. is it a default or large deployment.  Configurations are set based on this value and the values can be configured in the src/casp/services/deploy/cloudrun/{flavor}.json files.'
+        description: 'The nature of the deployment set.  E.g. is it a default or large deployment.  Configurations are set based on this value and the values can be configured in the deploy/cloudrun/{flavor}.json files.'
         required: true
         default: 'default'
 jobs:

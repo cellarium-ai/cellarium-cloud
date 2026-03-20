@@ -1,1 +1,0 @@
-.. include:: ../../../../src/casp/scripts/README.rst

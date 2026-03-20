@@ -46,10 +46,10 @@ class EmailSender:
 
         :param to: The email address to send the email to.
         :param subject: The subject of the email.
-        :param content_path_html: The relative path to the HTML content of the email where the working
-                                directory's default is ``src/casp/services/admin/templates/email``
-        :param content_path_plain: The relative path to the plain text content of the email where the
-                                working directory's default is ``src/casp/services/admin/templates/email``
+        :param content_path_html: The relative path to the HTML content of the email under
+                                ``cellarium/cas_backend/apps/admin/templates/email``
+        :param content_path_plain: The relative path to the plain text content of the email under
+                                ``cellarium/cas_backend/apps/admin/templates/email``
         :param sub_values: The values to substitute into the email template.
         """
         if sub_values is None:

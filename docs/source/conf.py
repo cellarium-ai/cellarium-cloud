@@ -9,7 +9,7 @@ import os
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "Cellarium Cloud"
+project = "CAS Backend"
 copyright = "2024, Cellarium AI"
 author = "Cellarium AI"
 

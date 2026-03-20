@@ -1,59 +1,59 @@
 Running Locally
 ===============
-To run Cellarium Cloud services locally, you will need to have the following installed:
 
-- Python 3.10
-- `Local Postgres Database cluster <https://www.docker.com/blog/how-to-use-the-postgres-docker-official-image>`_
-- Project Environment variables in a `src/settings/.env` file. :ref:`More info <Project Secrets>`.
-- Project dependencies installed. ``pip install -r requirements.txt``
-- `src` directory added to your ``PYTHONPATH`` environment variable. E.g. ``export PYTHONPATH=$PYTHONPATH:/path/to/cellarium-cloud/src``
+This page covers the cross-cutting local setup for CAS Backend. Module-specific details stay in the module READMEs.
 
+Prerequisites
+-------------
 
-Once you have the above installed, you can run the services locally using the following command:
+- Python 3.12
+- Poetry
+- A local or reachable PostgreSQL instance
+- A populated ``settings/.env`` file at the repository root
 
-.. code-block:: bash
+Initial Setup
+-------------
 
-    python src/casp/services/<service_name>/main.py
+.. code-block:: shell
 
-To check the API methods that exist and their documentation, you can visit `API docs page <http://localhost:8000/api/docs>`_
+    make setup
+    make install
+    cp settings/sample_env settings/.env
 
-Most of the methods will require you to be authenticated. To do this, you'd need to deploy Admin service:
+Fill in the values required for your environment before starting services.
 
-.. code-block:: bash
+Running the Compute Service
+---------------------------
 
-    python src/casp/services/admin/server.py
+.. code-block:: shell
 
+    poetry run python -m cellarium.cas_backend.apps.compute.main
 
-Once the Admin service is running, you can visit `Admin Dashboard <http://127.0.0.1:5000>`_ to create a user and token.
+OpenAPI docs are available at `http://localhost:8000/api/docs <http://localhost:8000/api/docs>`_.
 
-To run commands that require accessing the vector search API using gRPC, you will need to create a tunnel.  To do this you
-must:
-- log into the gcloud cli with the command ``gcloud auth login``
+Running the Admin Service
+-------------------------
 
-You can then run the following command to create a tunnel:
+.. code-block:: shell
 
-.. code-block:: bash
+    poetry run python -m cellarium.cas_backend.apps.admin.server
+
+Testing and Linting
+-------------------
+
+.. code-block:: shell
+
+    make test
+    make lint
+
+Vertex AI Access
+----------------
+
+Some compute flows depend on network access to Vertex AI Matching Engine. For local debugging in an environment that
+requires a bastion, authenticate with ``gcloud auth login`` and then create the tunnel:
+
+.. code-block:: shell
 
     gcloud compute ssh --zone "us-central1-a" "bastion" --project "dsp-cell-annotation-service" -- -NL 10000:localhost:10000
 
-In local development mode, the user agent header sent to the vector search API contains information on what vector API endpoint
-to route to.
-
-The bastion server is a proxy server that routes requests to the vector search API and is configured using nginx with a reverse
-proxy that is configured in file ``/etc/nginx/sites-available/vertex``:
-
-.. code-block:: nginx
-
-    map $http_user_agent $forward_ip {
-    "~target_ip\:([^\s]+)" $1;
-    default "no-ip-to-forward-to";
-    }
-
-    server {
-        listen 10000 http2;
-
-        location / {
-            grpc_pass grpc://$forward_ip:10000;
-            include proxy_params;
-        }
-    }
+See :doc:`vertex_ai_matching_engine` for the broader Matching Engine background.

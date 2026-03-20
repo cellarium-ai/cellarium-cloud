@@ -1,4 +1,4 @@
-.PHONY: help requirements docker-requirements clean install setup test lint format
+.PHONY: help requirements docker-requirements clean install setup test lint format docs
 
 help:
 	@echo "Available commands:"
@@ -9,6 +9,7 @@ help:
 	@echo "  make test                 - Run unit tests"
 	@echo "  make lint                 - Run linting"
 	@echo "  make format               - Format code"
+	@echo "  make docs                 - Build Sphinx documentation"
 	@echo "  make clean                - Remove generated files"
 
 # Export requirements.txt.lock for production (Docker, etc.)
@@ -41,6 +42,10 @@ lint:
 format:
 	poetry run ruff format cellarium tests
 	poetry run ruff check --fix --unsafe-fixes cellarium tests
+
+# Build documentation
+docs:
+	poetry run sphinx-build -W -b html docs/source docs/build/html
 
 # Clean generated files
 clean:

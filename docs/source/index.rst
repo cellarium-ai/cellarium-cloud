@@ -1,26 +1,28 @@
 .. include:: ../../README.rst
 
-This documentation is intended for developers and administrators who want
-to maintain, extend, or deploy the Cellarium Cloud. The documentation is organized into the following sections:
+Developer Documentation
+=======================
 
-Table of Contents
-*****************
+This site combines module-local READMEs with a smaller set of cross-cutting operational guides.
+
+Module Guides
+-------------
 
 .. toctree::
    :maxdepth: 2
 
-   modules/readme_modules/services
+   modules/readme_modules/apps
+   modules/readme_modules/core
+
+Operations Guides
+-----------------
 
 .. toctree::
    :maxdepth: 1
 
-   modules/vertex_ai_matching_engine
-   modules/cicd
-   modules/secrets
-   modules/readme_modules/db_service
-   modules/readme_modules/wdl_workflows
-   modules/readme_modules/data_manager
-   modules/changelog
    modules/running_locally
    modules/deploying_in_cloud
-   modules/readme_modules/scripts
+   modules/cicd
+   modules/secrets
+   modules/vertex_ai_matching_engine
+   modules/changelog

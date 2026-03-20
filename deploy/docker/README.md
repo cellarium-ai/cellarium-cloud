@@ -6,9 +6,7 @@ This directory contains Dockerfiles for building CAS Backend services.
 
 - **Dockerfile.compute** - Main computational API service (formerly "api")
 - **Dockerfile.admin** - Flask admin interface
-- **Dockerfile.model_inference** - ML model serving
-- **Dockerfile.pytorch** - Legacy PyTorch base (deprecated, use Dockerfile.model_inference)
-- **Dockerfile.pytorch_cuda** - Legacy PyTorch with CUDA (deprecated)
+- Cloud Run flavor settings live separately in `deploy/cloudrun/`
 
 ## Building Images
 
@@ -31,39 +29,29 @@ docker build -f deploy/docker/Dockerfile.compute -t cas-backend-compute:latest .
 
 # Admin service
 docker build -f deploy/docker/Dockerfile.admin -t cas-backend-admin:latest .
-
-# Model inference service
-docker build -f deploy/docker/Dockerfile.model_inference -t cas-backend-model-inference:latest .
 ```
 
 ### Image Structure
 
 All images:
-- Use Python 3.11
+- Use Python 3.12
 - Copy `cellarium/` package to `/app/cellarium/`
-- Copy `scripts/` to `/app/scripts/` (compute service only)
-- Copy `src/settings/` for environment configuration
 - Set `PYTHONPATH=/app` for module imports
 - Run as non-root user `appuser` (UID 1000)
+- Expect runtime configuration to be mounted at `/app/settings/.env`
 
 ## Running Containers
 
 ```bash
 # Compute service (default port 8000)
 docker run -p 8000:8000 \
-  -v $(pwd)/src/settings/.env:/app/src/settings/.env \
+  -v $(pwd)/settings/.env:/app/settings/.env \
   cas-backend-compute:latest
 
 # Admin service (default port 5000)
 docker run -p 5000:5000 \
-  -v $(pwd)/src/settings/.env:/app/src/settings/.env \
+  -v $(pwd)/settings/.env:/app/settings/.env \
   cas-backend-admin:latest
-
-# Model inference service
-docker run -p 8001:8001 \
-  -v $(pwd)/src/settings/.env:/app/src/settings/.env \
-  --gpus all \  # If using CUDA
-  cas-backend-model-inference:latest
 ```
 
 ## CI/CD Integration
@@ -117,5 +105,5 @@ docker build --no-cache ...
 
 **Settings not found**: Mount settings volume or copy into image:
 ```bash
-docker run -v $(pwd)/src/settings/.env:/app/src/settings/.env ...
+docker run -v $(pwd)/settings/.env:/app/settings/.env ...
 ```
