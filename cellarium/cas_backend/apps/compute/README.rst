@@ -14,6 +14,7 @@ What Lives Here
 - ``dependencies/``: FastAPI dependency providers, including auth and service wiring
 - ``services/``: domain logic for compute workflows
 - ``clients/``: clients for external compute-facing integrations
+- ``vector_search/``: provider-specific vector search adapters used by compute
 - ``entrypoint.sh``: container startup command
 
 Public Entrypoints
@@ -32,7 +33,7 @@ The compute service depends on:
 - ``cellarium.cas_backend.core.auth`` for authentication helpers
 - ``cellarium.cas_backend.core.data_managers`` for BigQuery and warehouse access
 - ``cellarium.cas_backend.core.db`` for quota, user, and metadata persistence
-- Vertex AI Matching Engine and other configured Google Cloud resources for production workloads
+- vector search backends such as Vertex AI Matching Engine and TileDB for production workloads
 
 Local Development
 -----------------

@@ -4,10 +4,13 @@ import typing as t
 import pytest
 
 from cellarium.cas_backend.apps.compute import services
-from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
-from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
-from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
 from tests.unit.fixtures import mocks
+
+if t.TYPE_CHECKING:
+    from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
+    from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import (
+        CellOntologyResource,
+    )
 
 
 @pytest.fixture
@@ -33,8 +36,8 @@ def mock_model_service() -> mocks.MockModelService:
 @pytest.fixture
 def cell_operations_service_with_mocks(
     mock_cell_quota_service: services.CellQuotaService,
-    mock_model_service: ModelInferenceService,
-) -> CellOperationsService:
+    mock_model_service: mocks.MockModelService,
+) -> "CellOperationsService":
     """
     Fixture to provide a `CellOperationsService` with all mocked dependencies.
 
@@ -43,6 +46,8 @@ def cell_operations_service_with_mocks(
 
     :return: An instance of `CellOperationsService` with all dependencies mocked.
     """
+    from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
+
     service = CellOperationsService(
         cell_quota_service=mock_cell_quota_service,
         model_service=mock_model_service,
@@ -63,11 +68,15 @@ def load_ontology_resource_from_file() -> dict[str, t.Any]:
 
 
 @pytest.fixture
-def cell_ontology_resource_mock() -> CellOntologyResource:
+def cell_ontology_resource_mock() -> "CellOntologyResource":
     """
     Fixture to provide a mocked `CellOntologyResource` instance.
 
     :return: A `CellOntologyResource` mock instance.
     """
+    from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import (
+        CellOntologyResource,
+    )
+
     resource_dict = load_ontology_resource_from_file()
     return CellOntologyResource(cell_ontology_resource_dict=resource_dict)

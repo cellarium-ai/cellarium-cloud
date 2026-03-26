@@ -119,6 +119,18 @@ def populate_db(
         embedding_dimension=constants.TEST_EMBEDDING_DIMENSION,
         endpoint_id=constants.TEST_INDEX_ENDPOINT_ID,
     )
+    cas_vector_index = models.CASVectorIndex(
+        id=1,
+        index_name=constants.TEST_VECTOR_INDEX_NAME,
+        model_id=cas_model.id,
+        num_neighbors=constants.TEST_INDEX_NUM_NEIGHBORS,
+        embedding_dimension=constants.TEST_EMBEDDING_DIMENSION,
+        index_uri=constants.TEST_VECTOR_INDEX_URI,
+        index_type=constants.TEST_VECTOR_INDEX_TYPE,
+        distance_metric=constants.TEST_VECTOR_DISTANCE_METRIC,
+        nprobe=constants.TEST_VECTOR_INDEX_NPROBE,
+        l_search=constants.TEST_VECTOR_INDEX_L_SEARCH,
+    )
     # Add User Activity, so that quota of user `user_without_quota` is reached.
     activity_1 = models.UserActivity(
         user_id=user_without_quota.id,
@@ -161,6 +173,7 @@ def populate_db(
             user_without_quota,
             cas_model,
             cas_matching_engine_index,
+            cas_vector_index,
             activity_1,
             activity_2,
             ingest_info,

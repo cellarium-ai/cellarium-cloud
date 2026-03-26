@@ -96,8 +96,11 @@ class CellariumGeneralDataManager(BaseDataManager):
         with self.system_data_db_session_maker() as session:
             model = (
                 session.query(models.CASModel)
-                # Load the matching engine eagerly to be able to access outside of a session
-                .options(orm.joinedload(models.CASModel.cas_matching_engine))
+                # Load vector search relations eagerly to be able to access outside of a session.
+                .options(
+                    orm.joinedload(models.CASModel.cas_matching_engine),
+                    orm.joinedload(models.CASModel.cas_vector_index),
+                )
                 .filter_by(model_name=model_name)
                 .first()
             )

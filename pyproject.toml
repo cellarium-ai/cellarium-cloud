@@ -64,6 +64,7 @@ numpy = "1.26.4"
 owlready2 = "0.46"
 networkx = "3.3"
 setuptools = "<82"
+tiledb-vector-search = "0.16.0"
 
 [tool.poetry.group.dev.dependencies]
 wheel = "*"

@@ -11,6 +11,12 @@ TEST_EMBEDDING_DIMENSION = 32
 TEST_INDEX_NAME = "test-index-name"
 TEST_INDEX_ENDPOINT_ID = "test_endpoint_id/123123/test/123123"
 TEST_INDEX_NUM_NEIGHBORS = 3
+TEST_VECTOR_INDEX_NAME = "test-vector-index-name"
+TEST_VECTOR_INDEX_URI = "tiledb://cellarium/test-vector-index"
+TEST_VECTOR_INDEX_TYPE = "IVF_FLAT"
+TEST_VECTOR_DISTANCE_METRIC = "cosine"
+TEST_VECTOR_INDEX_NPROBE = 8
+TEST_VECTOR_INDEX_L_SEARCH = 16
 TEST_REQUEST_ID = "req_123"
 TEST_REQUEST_ID_NEW = "req_1232223"
 TEST_CAS_INGEST_ID = "ingest_123"
@@ -21,6 +27,6 @@ EVENT_SUCCEEDED_STR = "SUCCEEDED"
 TEST_USER_ACTIVITY_METHOD = "test_method"
 SUMMARY_STATS_METHOD = "annotate_cell_type_summary_statistics_strategy"
 ONTOLOGY_AWARE_METHOD = "annotate_cell_type_ontology_aware_strategy"
-MATCHING_CLIENT_FROM_INDEX_TARGET = (
-    "cellarium.cas_backend.apps.compute.clients.matching_client.MatchingClient.from_index"
+VECTOR_SEARCH_FROM_MODEL_TARGET = (
+    "cellarium.cas_backend.apps.compute.services.cell_operations_service.vector_search.from_model"
 )

@@ -17,10 +17,10 @@ import pytest
 from sqlalchemy.orm import Session
 from starlette_context.ctx import _request_scope_context_storage
 
-from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
 from cellarium.cas_backend.apps.compute.services import exceptions
 from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
+from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.constants import ContextKeys
 from cellarium.cas_backend.core.db import models

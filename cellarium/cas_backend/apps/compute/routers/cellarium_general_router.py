@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 
-from cellarium.cas_backend.apps.compute import dependencies, schemas, services
+from cellarium.cas_backend.apps.compute import dependencies, schemas
+from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
+from cellarium.cas_backend.apps.compute.services.cellarium_general_service import CellariumGeneralService
 from cellarium.cas_backend.core import constants, settings
 from cellarium.cas_backend.core.db import models
 
@@ -10,7 +12,7 @@ cellarium_general_router = APIRouter(prefix="/cellarium-general")
 
 @cellarium_general_router.get("/application-info", response_model=schemas.ApplicationInfo)
 async def application_info(
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cellarium_general_service: CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
 ):
     """
     Get Cellarium CAS application info such as version, default feature schema name.
@@ -21,7 +23,7 @@ async def application_info(
 @cellarium_general_router.post("/validate-client-version", response_model=schemas.ClientVersionOutput)
 async def validate_client_version(
     client_version_info: schemas.ClientVersionInput,
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cellarium_general_service: CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
 ):
     """
     Check whether the client version is new enough to work with the server
@@ -56,7 +58,7 @@ async def feedback_answer(client_session_id: str, client_action_id: str):
 @cellarium_general_router.post("/feedback/opt-out", response_model=schemas.UserInfo)
 async def feedback_opt_out(
     user: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cellarium_general_service: CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
 ):
     """
     Allow user to opt out of feedback requests
@@ -72,7 +74,7 @@ async def feedback_opt_out(
 @cellarium_general_router.get("/feature-schemas", response_model=list[schemas.FeatureSchemaInfo])
 async def get_feature_schemas(
     _: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cellarium_general_service: CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
 ):
     """
     Get list of all Cellarium CAS feature schemas
@@ -86,7 +88,7 @@ async def get_feature_schemas(
 async def get_feature_schema_by(
     schema_name: str,
     _: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cellarium_general_service: CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
 ):
     """
     Get a specific feature schema by its unique name
@@ -101,7 +103,7 @@ async def get_feature_schema_by(
 @cellarium_general_router.get("/list-models", response_model=list[schemas.CASModel])
 async def get_model_list(
     user: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cellarium_general_service: CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
 ):
     """
     Get list of all Cellarium CAS models for a specific user based on their permissions.
@@ -114,7 +116,7 @@ async def get_model_list(
 @cellarium_general_router.get("/quota", response_model=schemas.UserQuota)
 async def get_user_quota(
     user: models.User = Depends(dependencies.authenticate_user),
-    cell_quota_service: services.CellQuotaService = Depends(dependencies.get_cell_quota_service),
+    cell_quota_service: CellQuotaService = Depends(dependencies.get_cell_quota_service),
 ):
     """
     Get user quota information
@@ -128,8 +130,8 @@ async def get_user_quota(
 async def increase_quota_for_user_by_email(
     user_email: str,
     admin_user: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
-    cell_quota_service: services.CellQuotaService = Depends(dependencies.get_cell_quota_service),
+    cellarium_general_service: CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cell_quota_service: CellQuotaService = Depends(dependencies.get_cell_quota_service),
 ):
     """
     Increase the lifetime cell quota for the user specified by user_email if their lifetime quota

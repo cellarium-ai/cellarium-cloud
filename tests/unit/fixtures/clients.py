@@ -29,9 +29,9 @@ def mock_matching_client(cell_info_data: list[schemas.CellariumCellMetadata]) ->
 @pytest.fixture
 def patch_matching_client(mock_matching_client) -> t.Generator[None, None, None]:
     """
-    Fixture to automatically patch the `MatchingClient.from_index` method with a mocked instance.
+    Fixture to automatically patch the `vector_search.from_model` method with a mocked instance.
 
-    This fixture ensures that any test using the `MatchingClient.from_index` method will automatically
+    This fixture ensures that any test using the vector search factory will automatically
     receive the mocked instance provided by the `mock_matching_client` fixture. When this fixture is used by a test
     it will be applied before its execution.
 
@@ -42,5 +42,5 @@ def patch_matching_client(mock_matching_client) -> t.Generator[None, None, None]
     :param mock_matching_client: The mocked instance of `MatchingClient` provided by the `mock_matching_client` fixture.
     """
 
-    with patch(target=constants.MATCHING_CLIENT_FROM_INDEX_TARGET, return_value=mock_matching_client):
+    with patch(target=constants.VECTOR_SEARCH_FROM_MODEL_TARGET, return_value=mock_matching_client):
         yield

@@ -1,8 +1,8 @@
 import asyncio
 
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies import ConsensusStrategyInterface
+from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 
 
 class ConsensusEngine:

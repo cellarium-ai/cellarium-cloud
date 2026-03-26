@@ -1,14 +1,6 @@
 from fastapi import status
 
-
-class APIBaseException(Exception):
-    """Base class for all API service exceptions"""
-
-    http_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
-
-
-class APIInternalError(APIBaseException):
-    http_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+from cellarium.cas_backend.apps.compute.exceptions import APIBaseException, APIInternalError
 
 
 class InvalidInputError(APIBaseException):

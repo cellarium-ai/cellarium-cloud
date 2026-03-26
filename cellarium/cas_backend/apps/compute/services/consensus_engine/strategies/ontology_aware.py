@@ -5,8 +5,8 @@ import numpy as np
 from smart_open import open
 
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.base import ConsensusStrategyInterface
+from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.data_managers import CellOperationsDataManager
 

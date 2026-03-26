@@ -14,8 +14,10 @@ from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
 import typing_extensions as tx
 from werkzeug.exceptions import HTTPException
+from wtforms.validators import ValidationError
 
 from cellarium.cas_backend.apps.admin import basic_auth, db_session, flask_app
+from cellarium.cas_backend.apps.compute.vector_search.tiledb import validate_tiledb_index
 from cellarium.cas_backend.core import auth, settings
 from cellarium.cas_backend.core.db import models, ops
 from cellarium.cas_backend.core.utils.email_utils import EmailSender
@@ -357,6 +359,57 @@ class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
     ]
 
 
+class CASVectorIndexAdminView(CellariumCloudAdminModelView):
+    column_list = (
+        "index_name",
+        "description",
+        "embedding_dimension",
+        "num_neighbors",
+        "index_uri",
+        "index_type",
+        "distance_metric",
+        "model",
+    )
+    form_columns = (
+        "index_name",
+        "description",
+        "embedding_dimension",
+        "num_neighbors",
+        "index_uri",
+        "index_type",
+        "distance_metric",
+        "nprobe",
+        "l_search",
+        "model",
+    )
+    column_descriptions = {
+        "index_name": ("A unique name used to identify the vector index. " "Example: cas-pca-001-tiledb-index."),
+        "embedding_dimension": "Configured embedding dimension for the vector index.",
+        "num_neighbors": "Number of neighbors returned for each query.",
+        "index_uri": "TileDB index URI.",
+        "index_type": "TileDB index type. Supported values: FLAT, IVF_FLAT, VAMANA.",
+        "distance_metric": "Distance metric used when the index was built: cosine, l2, or dot_product.",
+        "nprobe": "Required for IVF_FLAT indexes. Must be empty otherwise.",
+        "l_search": "Required for VAMANA indexes. Must be empty otherwise.",
+    }
+    column_extra_row_actions = [
+        LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
+    ]
+
+    @tx.override
+    def on_model_change(self, form: BaseForm, model: models.CASVectorIndex, is_created: bool):
+        if model.num_neighbors <= 0:
+            raise ValidationError("num_neighbors must be greater than 0.")
+
+        if model.model is not None and model.embedding_dimension != model.model.embedding_dimension:
+            raise ValidationError("embedding_dimension must match the linked model embedding_dimension.")
+
+        try:
+            validate_tiledb_index(model)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+
 def shorten_value_formatter(view, context, model, name) -> str:
     """
     Shorten the value to 20 characters plus ellipsis or return empty string if None
@@ -443,6 +496,7 @@ admin.add_view(
         models.CASMatchingEngineIndex, db_session, name="MatchingEngine", category="ML Management"
     )
 )
+admin.add_view(CASVectorIndexAdminView(models.CASVectorIndex, db_session, name="VectorIndex", category="ML Management"))
 admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category="Cell Data Management"))
 admin.add_view(
     CellFeatureInfoAdminView(models.FeatureInfo, db_session, name="CellFeature", category="Cell Data Management")

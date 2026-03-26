@@ -41,3 +41,23 @@ class CASMatchingEngineIndex(db.Base):
         return self.index_name
 
     __tablename__ = "ml_management_matchingengineindex"
+
+
+class CASVectorIndex(db.Base):
+    id = sa.Column(sa.Integer, primary_key=True)
+    index_name = sa.Column(sa.String(255), unique=True, nullable=False)
+    description = sa.Column(sa.String(511), nullable=True)
+    embedding_dimension = sa.Column(sa.Integer, nullable=False)
+    num_neighbors = sa.Column(sa.Integer, nullable=False)
+    index_uri = sa.Column(sa.String(1023), nullable=False)
+    index_type = sa.Column(sa.String(255), nullable=False)
+    distance_metric = sa.Column(sa.String(255), nullable=False)
+    nprobe = sa.Column(sa.Integer, nullable=True)
+    l_search = sa.Column(sa.Integer, nullable=True)
+    model_id = sa.Column(sa.Integer, sa.ForeignKey(f"{CASModel.__tablename__}.id"), nullable=False, unique=True)
+    model = relationship("CASModel", backref=backref("cas_vector_index", uselist=False))
+
+    def __str__(self):
+        return self.index_name
+
+    __tablename__ = "ml_management_vectorindex"

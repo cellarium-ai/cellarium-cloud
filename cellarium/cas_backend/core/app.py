@@ -13,7 +13,7 @@ import uvicorn
 import uvicorn.config
 
 from cellarium.cas_backend.apps.compute import exception_handlers
-from cellarium.cas_backend.apps.compute.services.exceptions import APIBaseException
+from cellarium.cas_backend.apps.compute.exceptions import APIBaseException
 from cellarium.cas_backend.core.auth.exceptions import TokenException
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.constants import ContextKeys, HeaderKeys, SentryTags

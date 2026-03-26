@@ -10,11 +10,11 @@ import anndata
 import numpy as np
 from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_random
 
-from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.clients.matching_client import MatchingClient, MatchResult
-from cellarium.cas_backend.apps.compute.services import Authorizer, consensus_engine, exceptions
+from cellarium.cas_backend.apps.compute import schemas, vector_search
+from cellarium.cas_backend.apps.compute.services import consensus_engine, exceptions
+from cellarium.cas_backend.apps.compute.services.authorization import Authorizer
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
-from cellarium.cas_backend.apps.model_inference import services
+from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager, CellOperationsDataManager
 from cellarium.cas_backend.core.data_managers import exceptions as dm_exc
@@ -37,13 +37,13 @@ class CellOperationsService:
         cell_operations_dm: CellOperationsDataManager | None = None,
         cellarium_general_dm: CellariumGeneralDataManager | None = None,
         cell_quota_service: CellQuotaService | None = None,
-        model_service: services.ModelInferenceService | None = None,
+        model_service: ModelInferenceService | None = None,
         authorizer: Authorizer | None = None,
     ):
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
         self.cell_quota_service = cell_quota_service or CellQuotaService()
-        self.model_service = model_service or services.ModelInferenceService()
+        self.model_service = model_service or ModelInferenceService()
         self.authorizer = authorizer or Authorizer(cellarium_general_dm=self.cellarium_general_dm)
 
     @staticmethod
@@ -57,7 +57,7 @@ class CellOperationsService:
         if not user.is_admin:
             raise exceptions.AccessDeniedError("Access denied.  This is an admin-only endpoint.")
 
-        cache_info = services.ModelInferenceService.get_cache_info()
+        cache_info = ModelInferenceService.get_cache_info()
 
         return schemas.CacheInfo(
             file_cache_info=cache_info["file_cache_info"],
@@ -153,7 +153,7 @@ class CellOperationsService:
         return query_ids, embeddings
 
     @staticmethod
-    def __validate_knn_response(embeddings: np.array, knn_response: MatchResult) -> None:
+    def __validate_knn_response(embeddings: np.array, knn_response: vector_search.MatchResult) -> None:
         if len(knn_response.matches) != len(embeddings):
             raise exceptions.VectorSearchResponseError(
                 f"Number of query ids ({len(embeddings)}) and knn matches ({len(knn_response.matches)}) "
@@ -166,7 +166,7 @@ class CellOperationsService:
 
     async def __get_knn_matches_from_embeddings_with_retry(
         self, embeddings: np.array, model: models.CASModel, chunk_matches_function: t.Callable
-    ) -> MatchResult:
+    ) -> vector_search.MatchResult:
         """
         Get KNN matches for embeddings broken into chunks with retry logic
 
@@ -175,14 +175,14 @@ class CellOperationsService:
 
         :return: List of lists of MatchNeighbor objects.
         """
-        matching_client = MatchingClient.from_index(model.cas_matching_engine)
+        matching_client = vector_search.from_model(model)
 
         # Break embeddings into chunks so we don't overload the matching engine
         embeddings_chunks = CellOperationsService.__split_embeddings_into_chunks(
             embeddings=embeddings, chunk_size=settings.GET_MATCHES_CHUNK_SIZE
         )
 
-        all_matches = MatchResult()
+        all_matches = vector_search.MatchResult()
         for i in range(0, len(embeddings_chunks)):
             # Set up retry logic for the matching engine requests
             retryer = AsyncRetrying(
@@ -203,7 +203,9 @@ class CellOperationsService:
         return all_matches
 
     @staticmethod
-    async def __get_knn_matches_for_chunk(embeddings_chunk: np.array, client: MatchingClient) -> MatchResult:
+    async def __get_knn_matches_for_chunk(
+        embeddings_chunk: np.array, client: vector_search.VectorSearchProtocol
+    ) -> vector_search.MatchResult:
         """
         Get KNN matches for a chunk of embeddings (split out from get_knn_matches, so it can be
         retried and called in chunks).
@@ -217,7 +219,9 @@ class CellOperationsService:
         CellOperationsService.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
 
-    async def get_knn_matches_from_embeddings(self, embeddings: np.array, model: models.CASModel) -> MatchResult:
+    async def get_knn_matches_from_embeddings(
+        self, embeddings: np.array, model: models.CASModel
+    ) -> vector_search.MatchResult:
         """
         Run KNN matching synchronously using Matching Engine client over gRPC.
 
@@ -250,7 +254,9 @@ class CellOperationsService:
 
         return [embeddings[i : i + chunk_size] for i in range(0, len(embeddings), chunk_size)]
 
-    async def get_knn_matches(self, adata: anndata.AnnData, model: models.CASModel) -> tuple[list[str], MatchResult]:
+    async def get_knn_matches(
+        self, adata: anndata.AnnData, model: models.CASModel
+    ) -> tuple[list[str], vector_search.MatchResult]:
         """
         Get KNN matches for anndata object.
 
@@ -264,7 +270,7 @@ class CellOperationsService:
 
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings, return empty match result
-            return [], MatchResult()
+            return [], vector_search.MatchResult()
 
         logger.info("Getting KNN matches")
         knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)

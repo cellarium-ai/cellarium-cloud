@@ -6,8 +6,7 @@ import anndata
 import numpy as np
 
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
-from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
+from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 from cellarium.cas_backend.core import data_managers
 from cellarium.cas_backend.core.db import models
 from tests.unit.fixtures import constants
@@ -108,7 +107,7 @@ class MockMatchingClient(AsyncMock):
         return MatchResult(matches=matches)
 
 
-class MockModelService(ModelInferenceService):
+class MockModelService:
     """
     Mocked version of `ModelInferenceService` to simulate embedding behavior for unit tests.
 
@@ -121,8 +120,6 @@ class MockModelService(ModelInferenceService):
 
         The `embed_adata` method is mocked with a realistic side effect to simulate embedding generation.
         """
-        super().__init__()  # Safely call the base class initializer if needed.
-
         # Trackable mock methods with side effects
         self.embed_adata = MagicMock(side_effect=self._mock_embed_adata)
 

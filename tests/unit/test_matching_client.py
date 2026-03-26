@@ -7,12 +7,12 @@ from mockito import mock, unstub, when
 from parameterized import parameterized
 import pytest
 
-from cellarium.cas_backend.apps.compute.clients import CustomMatchingEngineIndexEndpointClient, matching_client
-from cellarium.cas_backend.apps.compute.clients.matching_client import (
-    MatchingClient,
-    MatchingClientGRPC,
-    MatchingClientREST,
-    MatchResult,
+from cellarium.cas_backend.apps.compute.vector_search import MatchResult
+from cellarium.cas_backend.apps.compute.vector_search.factory import from_index
+from cellarium.cas_backend.apps.compute.vector_search.vertex_ai import (
+    VertexVectorSearchClientGRPC,
+    VertexVectorSearchClientREST,
+    _matching_engine,
 )
 from cellarium.cas_backend.core.db import models
 from tests.unit.test_utils import async_return, read_resource
@@ -29,7 +29,7 @@ REST_INDEX = models.CASMatchingEngineIndex(
 )
 
 
-class TestMatchingClient:
+class TestVertexVectorSearchClient:
     """
     Test the MatchingClient class.
 
@@ -43,15 +43,15 @@ class TestMatchingClient:
         Test the creation of a matching clients from gRPC and REST indexes.
 
         """
-        with patch.object(MatchingClientGRPC, "__init__", lambda x, index: None):
+        with patch.object(VertexVectorSearchClientGRPC, "__init__", lambda x, index: None):
             assert isinstance(
-                MatchingClient.from_index(GRPC_INDEX), MatchingClientGRPC
-            ), "MatchingClient.from_index should return a MatchingClientGRPC instance when the index is gRPC."
+                from_index(GRPC_INDEX), VertexVectorSearchClientGRPC
+            ), "from_index should return a VertexVectorSearchClientGRPC instance when the index is gRPC."
 
-        with patch.object(MatchingClientREST, "__init__", lambda x, index: None):
+        with patch.object(VertexVectorSearchClientREST, "__init__", lambda x, index: None):
             assert isinstance(
-                MatchingClient.from_index(REST_INDEX), MatchingClientREST
-            ), "MatchingClient.from_index should return a MatchingClientREST instance when the index is not gRPC."
+                from_index(REST_INDEX), VertexVectorSearchClientREST
+            ), "from_index should return a VertexVectorSearchClientREST instance when the index is not gRPC."
 
     def test_concat_matches(self) -> None:
         """
@@ -101,11 +101,11 @@ class TestMatchingClient:
                 ),
                 MatchResult(
                     matches=[
-                        matching_client.MatchResult.NearestNeighbors(
+                        MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(cas_cell_index="0", distance=0.1),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="1", distance=0.2),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
+                                MatchResult.Neighbor(cas_cell_index="0", distance=0.1),
+                                MatchResult.Neighbor(cas_cell_index="1", distance=0.2),
+                                MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
                             ]
                         )
                     ]
@@ -123,18 +123,18 @@ class TestMatchingClient:
                 ),
                 MatchResult(
                     matches=[
-                        matching_client.MatchResult.NearestNeighbors(
+                        MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(cas_cell_index="0", distance=0.1),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="1", distance=0.2),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
+                                MatchResult.Neighbor(cas_cell_index="0", distance=0.1),
+                                MatchResult.Neighbor(cas_cell_index="1", distance=0.2),
+                                MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
                             ]
                         ),
-                        matching_client.MatchResult.NearestNeighbors(
+                        MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(cas_cell_index="10", distance=0.4),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="11", distance=0.5),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="12", distance=0.6),
+                                MatchResult.Neighbor(cas_cell_index="10", distance=0.4),
+                                MatchResult.Neighbor(cas_cell_index="11", distance=0.5),
+                                MatchResult.Neighbor(cas_cell_index="12", distance=0.6),
                             ]
                         ),
                     ]
@@ -160,7 +160,7 @@ class TestMatchingClient:
 
         """
         rest_client = mock(MatchServiceClient)
-        match_client = mock(MatchingClientREST)
+        match_client = mock(VertexVectorSearchClientREST)
 
         match_client.index = REST_INDEX
         match_client.vector_search_client = rest_client
@@ -174,7 +174,7 @@ class TestMatchingClient:
             )
         ).thenReturn(async_return(client_response))
 
-        when(match_client)._MatchingClientREST__adapt_result(client_response).thenCallOriginalImplementation()
+        when(match_client)._VertexVectorSearchClientREST__adapt_result(client_response).thenCallOriginalImplementation()
         when(match_client).match(queries).thenCallOriginalImplementation()
 
         assert await match_client.match(queries) == expected_response
@@ -193,11 +193,11 @@ class TestMatchingClient:
                 ],
                 MatchResult(
                     matches=[
-                        matching_client.MatchResult.NearestNeighbors(
+                        MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(cas_cell_index="0", distance=0.1),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="1", distance=0.2),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
+                                MatchResult.Neighbor(cas_cell_index="0", distance=0.1),
+                                MatchResult.Neighbor(cas_cell_index="1", distance=0.2),
+                                MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
                             ]
                         )
                     ]
@@ -219,18 +219,18 @@ class TestMatchingClient:
                 ],
                 MatchResult(
                     matches=[
-                        matching_client.MatchResult.NearestNeighbors(
+                        MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(cas_cell_index="0", distance=0.1),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="1", distance=0.2),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
+                                MatchResult.Neighbor(cas_cell_index="0", distance=0.1),
+                                MatchResult.Neighbor(cas_cell_index="1", distance=0.2),
+                                MatchResult.Neighbor(cas_cell_index="2", distance=0.3),
                             ]
                         ),
-                        matching_client.MatchResult.NearestNeighbors(
+                        MatchResult.NearestNeighbors(
                             neighbors=[
-                                matching_client.MatchResult.Neighbor(cas_cell_index="10", distance=0.5),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="11", distance=0.6),
-                                matching_client.MatchResult.Neighbor(cas_cell_index="12", distance=0.7),
+                                MatchResult.Neighbor(cas_cell_index="10", distance=0.5),
+                                MatchResult.Neighbor(cas_cell_index="11", distance=0.6),
+                                MatchResult.Neighbor(cas_cell_index="12", distance=0.7),
                             ]
                         ),
                     ]
@@ -253,8 +253,8 @@ class TestMatchingClient:
         :param expected_response: The expected response from the match method.
 
         """
-        grpc_client = mock(CustomMatchingEngineIndexEndpointClient)
-        match_client = mock(MatchingClientGRPC)
+        grpc_client = mock(_matching_engine.CustomMatchingEngineIndexEndpointClient)
+        match_client = mock(VertexVectorSearchClientGRPC)
 
         match_client.index_endpoint_client = grpc_client
         match_client.index = GRPC_INDEX
@@ -265,6 +265,6 @@ class TestMatchingClient:
             num_neighbors=GRPC_INDEX.num_neighbors,
         ).thenReturn(client_response)
 
-        when(match_client)._MatchingClientGRPC__adapt_result(client_response).thenCallOriginalImplementation()
+        when(match_client)._VertexVectorSearchClientGRPC__adapt_result(client_response).thenCallOriginalImplementation()
         when(match_client).match(queries).thenCallOriginalImplementation()
         assert await match_client.match(queries) == expected_response

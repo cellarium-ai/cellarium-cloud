@@ -12,9 +12,9 @@ from unittest.mock import Mock
 import pytest
 
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
 from cellarium.cas_backend.apps.compute.services import consensus_engine
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
+from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 
 
 def load_ontology_resource_from_file() -> dict[str, t.Any]:
