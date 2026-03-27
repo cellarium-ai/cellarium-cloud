@@ -71,13 +71,13 @@ class MockMatchingClient(AsyncMock):
         self.cell_info_data = cell_info_data
         self.match = AsyncMock(side_effect=self._match_side_effect)
 
-    async def _match_side_effect(self, queries: list[t.Any]) -> MatchResult:
+    async def _match_side_effect(self, embeddings: t.Any) -> MatchResult:
         """
         Simulates the `match` method of the MatchingClient.
 
-        For each query, it returns up to 3 unique neighbors randomly sampled from the centralized `cell_source`.
+        For each embedding, it returns up to 3 unique neighbors randomly sampled from the centralized `cell_source`.
 
-        :param queries: A list of query embeddings or identifiers for which neighbors are retrieved.
+        :param embeddings: A 2D array of embeddings for which neighbors are retrieved.
 
         :return: A MatchResult object containing nearest neighbors for each query.
         """
@@ -89,7 +89,7 @@ class MockMatchingClient(AsyncMock):
         # List of available cell indices
         cell_indices = list(cell_index_to_metadata.keys())
 
-        for _query in queries:
+        for _embedding in embeddings:
             num_neighbors = min(3, len(cell_indices))
             neighbors = random.sample(cell_indices, num_neighbors)
 

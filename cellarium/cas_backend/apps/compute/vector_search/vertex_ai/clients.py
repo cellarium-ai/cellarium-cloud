@@ -1,5 +1,6 @@
 from google.cloud import aiplatform_v1
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
+import numpy as np
 
 from cellarium.cas_backend.apps.compute.vector_search.protocol import VectorSearchProtocol
 from cellarium.cas_backend.apps.compute.vector_search.schemas import MatchResult
@@ -33,9 +34,11 @@ class VertexVectorSearchClientGRPC(VectorSearchProtocol):
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
         return MatchResult(matches=matches)
 
-    async def match(self, queries: list[list[float]]) -> MatchResult:
+    async def match(self, embeddings: np.ndarray) -> MatchResult:
         matches = self.index_endpoint_client.match(
-            deployed_index_id=self.index.deployed_index_id, queries=queries, num_neighbors=self.index.num_neighbors
+            deployed_index_id=self.index.deployed_index_id,
+            queries=embeddings.tolist(),
+            num_neighbors=self.index.num_neighbors,
         )
         return self.__adapt_result(matches)
 
@@ -65,12 +68,12 @@ class VertexVectorSearchClientREST(VectorSearchProtocol):
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
         return MatchResult(matches=matches)
 
-    async def match(self, queries: list[list[float]]) -> MatchResult:
+    async def match(self, embeddings: np.ndarray) -> MatchResult:
         query_objects = [
             aiplatform_v1.FindNeighborsRequest.Query(
                 datapoint=aiplatform_v1.IndexDatapoint(feature_vector=e), neighbor_count=self.index.num_neighbors
             )
-            for e in queries
+            for e in embeddings.tolist()
         ]
 
         request = aiplatform_v1.FindNeighborsRequest(

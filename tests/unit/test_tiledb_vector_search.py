@@ -82,9 +82,11 @@ async def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch)
     )
 
     client = TileDBVectorSearch(index=_build_vector_index())
-    queries = [[0.0] * constants.TEST_EMBEDDING_DIMENSION, [1.0] * constants.TEST_EMBEDDING_DIMENSION]
+    embeddings = np.array(
+        [[0.0] * constants.TEST_EMBEDDING_DIMENSION, [1.0] * constants.TEST_EMBEDDING_DIMENSION], dtype=np.float32
+    )
 
-    result = await client.match(queries=queries)
+    result = await client.match(embeddings=embeddings)
 
     assert len(result.matches) == 2
     assert [neighbor.cas_cell_index for neighbor in result.matches[0].neighbors] == ["1", "2", "3"]
@@ -101,5 +103,5 @@ async def test_match_raises_for_query_dimension_mismatch(monkeypatch: pytest.Mon
     )
     client = TileDBVectorSearch(index=_build_vector_index())
 
-    with pytest.raises(VectorSearchConfigurationError, match="Query dimension"):
-        await client.match(queries=[[1.0, 2.0, 3.0]])
+    with pytest.raises(VectorSearchConfigurationError, match="Embedding dimension"):
+        await client.match(embeddings=np.array([[1.0, 2.0, 3.0]], dtype=np.float32))

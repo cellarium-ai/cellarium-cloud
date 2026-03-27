@@ -164,7 +164,7 @@ async def test__get_knn_matches_for_chunk(
     assert len(result.matches) == len(embeddings_chunk)
 
     # Ensure `match` was called with the correct arguments
-    mock_matching_client.match.assert_awaited_once_with(queries=embeddings_chunk)
+    mock_matching_client.match.assert_awaited_once_with(embeddings=embeddings_chunk)
 
 
 @pytest.mark.asyncio

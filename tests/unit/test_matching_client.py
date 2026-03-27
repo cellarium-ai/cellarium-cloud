@@ -3,7 +3,8 @@ from unittest.mock import patch
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import MatchNeighbor
 from google.cloud.aiplatform_v1 import FindNeighborsRequest, FindNeighborsResponse, IndexDatapoint, MatchServiceClient
 from google.protobuf.json_format import Parse
-from mockito import mock, unstub, when
+from mockito import any_, mock, unstub, when
+import numpy as np
 from parameterized import parameterized
 import pytest
 
@@ -174,10 +175,11 @@ class TestVertexVectorSearchClient:
             )
         ).thenReturn(async_return(client_response))
 
+        embeddings = np.array(queries, dtype=np.float32) if queries else np.empty((0, 0), dtype=np.float32)
         when(match_client)._VertexVectorSearchClientREST__adapt_result(client_response).thenCallOriginalImplementation()
-        when(match_client).match(queries).thenCallOriginalImplementation()
+        when(match_client).match(any_()).thenCallOriginalImplementation()
 
-        assert await match_client.match(queries) == expected_response
+        assert await match_client.match(embeddings) == expected_response
 
     @parameterized.expand(
         [
@@ -265,6 +267,7 @@ class TestVertexVectorSearchClient:
             num_neighbors=GRPC_INDEX.num_neighbors,
         ).thenReturn(client_response)
 
+        embeddings = np.array(queries, dtype=np.float32) if queries else np.empty((0, 0), dtype=np.float32)
         when(match_client)._VertexVectorSearchClientGRPC__adapt_result(client_response).thenCallOriginalImplementation()
-        when(match_client).match(queries).thenCallOriginalImplementation()
-        assert await match_client.match(queries) == expected_response
+        when(match_client).match(any_()).thenCallOriginalImplementation()
+        assert await match_client.match(embeddings) == expected_response

@@ -215,7 +215,7 @@ class CellOperationsService:
 
         :return: List of lists of MatchNeighbor objects.
         """
-        matches = await client.match(queries=embeddings_chunk)
+        matches = await client.match(embeddings=embeddings_chunk)
         CellOperationsService.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
         return matches
 
