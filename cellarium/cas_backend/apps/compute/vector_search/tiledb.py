@@ -1,9 +1,9 @@
 import asyncio
 from collections.abc import Mapping
-import importlib
 import typing as t
 
 import numpy as np
+from tiledb import vector_search
 
 from cellarium.cas_backend.apps.compute.vector_search.exceptions import VectorSearchConfigurationError
 from cellarium.cas_backend.apps.compute.vector_search.protocol import VectorSearchProtocol
@@ -19,14 +19,21 @@ SUPPORTED_DISTANCE_METRICS = {"cosine", "l2", "dot_product"}
 _INDEX_CACHE: dict[str, t.Any] = {}
 
 
-def _load_tiledb_vector_search_module():
-    try:
-        return importlib.import_module("tiledb.vector_search")
-    except ModuleNotFoundError as exc:
-        raise RuntimeError("TileDB vector search dependency is not installed.") from exc
+def _get_index_class(index_type: str):
+    match index_type:
+        case "FLAT":
+            index_class = vector_search.flat_index.FlatIndex
+        case "IVF_FLAT":
+            index_class = vector_search.ivf_flat_index.IVFFlatIndex
+        case "VAMANA":
+            index_class = vector_search.vamana_index.VamanaIndex
+        case _:
+            raise ValueError(f"Unsupported TileDB index_type '{index_type}'.")
+
+    return index_class
 
 
-def _normalize_index_type(index_type: t.Any) -> str:
+def _validate_index_type(index_type: t.Any) -> str:
     if not isinstance(index_type, str):
         raise ValueError("TileDB vector index_type must be a string.")
 
@@ -44,8 +51,8 @@ def validate_tiledb_index(index: models.CASVectorIndex) -> dict[str, t.Any]:
     if not isinstance(distance_metric, str) or distance_metric not in SUPPORTED_DISTANCE_METRICS:
         raise ValueError("TileDB distance_metric must be one of: cosine, l2, dot_product.")
 
-    index_type = _normalize_index_type(index.index_type)
-    normalized = {
+    index_type = _validate_index_type(index.index_type)
+    clean = {
         "index_uri": index.index_uri,
         "index_type": index_type,
         "distance_metric": distance_metric,
@@ -62,19 +69,15 @@ def validate_tiledb_index(index: models.CASVectorIndex) -> dict[str, t.Any]:
         if not isinstance(l_search, int) or l_search <= 0:
             raise ValueError("TileDB VAMANA l_search must be a positive integer.")
 
-    return normalized
+    return clean
 
 
-def _get_cached_index(index_uri: str, vector_search_module, index_type: str):
+def _get_cached_index(index_uri: str, index_type: str):
     if index_uri in _INDEX_CACHE:
         return _INDEX_CACHE[index_uri]
 
-    if index_type == INDEX_TYPE_FLAT:
-        index_obj = vector_search_module.flat_index.FlatIndex(uri=index_uri)
-    elif index_type == INDEX_TYPE_IVF_FLAT:
-        index_obj = vector_search_module.ivf_flat_index.IVFFlatIndex(uri=index_uri)
-    else:
-        index_obj = vector_search_module.vamana_index.VamanaIndex(uri=index_uri)
+    index_class = _get_index_class(index_type)
+    index_obj = index_class(uri=index_uri)
 
     _INDEX_CACHE[index_uri] = index_obj
     return index_obj
@@ -117,13 +120,11 @@ class TileDBVectorSearch(VectorSearchProtocol):
         self.index = index
         try:
             self.index_config = validate_tiledb_index(index)
-            self.vector_search_module = _load_tiledb_vector_search_module()
         except (RuntimeError, ValueError) as exc:
             raise VectorSearchConfigurationError(str(exc)) from exc
 
         self.index_obj = _get_cached_index(
             index_uri=self.index_config["index_uri"],
-            vector_search_module=self.vector_search_module,
             index_type=self.index_config["index_type"],
         )
 

@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 import numpy as np
 import pytest
 
@@ -34,14 +32,6 @@ class FakeDimensionMismatchIndex(FakeIVFFlatIndex):
         return constants.TEST_EMBEDDING_DIMENSION + 1
 
 
-def _build_module(index_class) -> SimpleNamespace:
-    return SimpleNamespace(
-        flat_index=SimpleNamespace(FlatIndex=index_class),
-        ivf_flat_index=SimpleNamespace(IVFFlatIndex=index_class),
-        vamana_index=SimpleNamespace(VamanaIndex=index_class),
-    )
-
-
 def _build_vector_index(**overrides) -> models.CASVectorIndex:
     payload = {
         "id": 1,
@@ -73,8 +63,8 @@ def test_init_raises_for_invalid_distance_metric() -> None:
 
 def test_init_raises_for_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "cellarium.cas_backend.apps.compute.vector_search.tiledb._load_tiledb_vector_search_module",
-        lambda: _build_module(FakeDimensionMismatchIndex),
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
+        FakeDimensionMismatchIndex,
     )
 
     with pytest.raises(
@@ -87,8 +77,8 @@ def test_init_raises_for_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> 
 @pytest.mark.asyncio
 async def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "cellarium.cas_backend.apps.compute.vector_search.tiledb._load_tiledb_vector_search_module",
-        lambda: _build_module(FakeIVFFlatIndex),
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
+        FakeIVFFlatIndex,
     )
 
     client = TileDBVectorSearch(index=_build_vector_index())
@@ -106,8 +96,8 @@ async def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch)
 @pytest.mark.asyncio
 async def test_match_raises_for_query_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "cellarium.cas_backend.apps.compute.vector_search.tiledb._load_tiledb_vector_search_module",
-        lambda: _build_module(FakeIVFFlatIndex),
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
+        FakeIVFFlatIndex,
     )
     client = TileDBVectorSearch(index=_build_vector_index())
 
