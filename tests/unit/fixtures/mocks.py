@@ -1,6 +1,6 @@
 import random
 import typing as t
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import anndata
 import numpy as np
@@ -47,7 +47,7 @@ class MockCellQuotaDataManager(data_managers.CellQuotaDataManager):
         return constants.TOTAL_CELLS_PROCESSED_THIS_WEEK_FOR_USER_WITHOUT_QUOTA
 
 
-class MockMatchingClient(AsyncMock):
+class MockMatchingClient(MagicMock):
     """
     Class-based mock for the MatchingClient.
 
@@ -60,18 +60,18 @@ class MockMatchingClient(AsyncMock):
         """
         Initialize the MockMatchingClient with a centralized cell resource.
 
-        The `match` method is configured as an asynchronous mock with `_match_side_effect` as its side effect.
+        The `match` method is configured as a synchronous mock with `_match_side_effect` as its side effect.
 
         :param cell_info_data: A dictionary representing the centralized cell resource where keys are cell indices and
             values are associated metadata.
-        :param kwargs: Additional keyword arguments passed to the parent AsyncMock.
-        :param args: Additional positional arguments passed to the parent AsyncMock.
+        :param kwargs: Additional keyword arguments passed to the parent MagicMock.
+        :param args: Additional positional arguments passed to the parent MagicMock.
         """
         super().__init__(*args, **kwargs)
         self.cell_info_data = cell_info_data
-        self.match = AsyncMock(side_effect=self._match_side_effect)
+        self.match = MagicMock(side_effect=self._match_side_effect)
 
-    async def _match_side_effect(self, embeddings: t.Any) -> MatchResult:
+    def _match_side_effect(self, embeddings: t.Any) -> MatchResult:
         """
         Simulates the `match` method of the MatchingClient.
 

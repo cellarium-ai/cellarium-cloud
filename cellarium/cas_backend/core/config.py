@@ -51,19 +51,13 @@ class AllEnvSettings(BaseSettings):
     # Model Training
     NEPTUNE_API_KEY: str | None = os.environ.get("NEPTUNE_API_KEY")
     # API
-    AIOHTTP_CLIENT_TOTAL_TIMEOUT_SECONDS: int = 650  # 350 seconds
-    AIOHTTP_CLIENT_READ_TIMEOUT_SECONDS: int = 600  # 300 seconds
     DEFAULT_SCHEMA_NAME: str = "refdata-gex-GRCh38-2020-A"
     DEFAULT_MODEL_BQ_DATASET_NAME: str = "cas_50m_dataset"
     API_REQUEST_TEMP_TABLE_DATASET: str = "dsp-cell-annotation-service.cellarium_api_temp_tables"
     API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION: int = 10  # 10 minutes
     KNN_SEARCH_NUM_MATCHES_DEFAULT: int = 100
     ITEMS_PER_USER: int = 50
-    GET_MATCHES_CHUNK_SIZE: int = 5
-    GET_MATCHES_MAX_RETRIES: int = 10
-    GET_MATCHES_RETRY_BACKOFF_MULTIPLIER: int = 2
-    GET_MATCHES_RETRY_BACKOFF_MIN: int = 0
-    GET_MATCHES_RETRY_BACKOFF_MAX: int = 30
+    UVICORN_WORKERS: int = 2
     MAX_CELL_IDS_PER_QUERY: int = 20_000  # Maximum number of cell IDs that can be queried at once
     # Consensus Engine
     GCS_CELL_ONTOLOGY_RESOURCE_FILE: str = (

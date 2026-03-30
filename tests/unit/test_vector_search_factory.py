@@ -18,18 +18,6 @@ def _build_model() -> models.CASModel:
     )
 
 
-def _build_matching_engine() -> models.CASMatchingEngineIndex:
-    return models.CASMatchingEngineIndex(
-        id=1,
-        index_name=constants.TEST_INDEX_NAME,
-        model_id=1,
-        num_neighbors=constants.TEST_INDEX_NUM_NEIGHBORS,
-        embedding_dimension=constants.TEST_EMBEDDING_DIMENSION,
-        endpoint_id=constants.TEST_INDEX_ENDPOINT_ID,
-        is_grpc=True,
-    )
-
-
 def _build_vector_index(**overrides) -> models.CASVectorIndex:
     payload = {
         "id": 1,
@@ -47,37 +35,18 @@ def _build_vector_index(**overrides) -> models.CASVectorIndex:
     return models.CASVectorIndex(**payload)
 
 
-def test_from_model_prefers_tiledb_index() -> None:
+def test_from_model_creates_tiledb_client() -> None:
     model = _build_model()
     model.cas_vector_index = _build_vector_index()
-    model.cas_matching_engine = _build_matching_engine()
-
-    expected_client = Mock()
-    with (
-        patch(
-            "cellarium.cas_backend.apps.compute.vector_search.factory.TileDBVectorSearch",
-            return_value=expected_client,
-        ) as tiledb_client,
-        patch("cellarium.cas_backend.apps.compute.vector_search.factory.VertexVectorSearchClientGRPC") as grpc_client,
-    ):
-        assert from_model(model) is expected_client
-
-    tiledb_client.assert_called_once_with(index=model.cas_vector_index)
-    grpc_client.assert_not_called()
-
-
-def test_from_model_uses_vertex_when_no_vector_index() -> None:
-    model = _build_model()
-    model.cas_matching_engine = _build_matching_engine()
 
     expected_client = Mock()
     with patch(
-        "cellarium.cas_backend.apps.compute.vector_search.factory.VertexVectorSearchClientGRPC",
+        "cellarium.cas_backend.apps.compute.vector_search.factory.TileDBVectorSearch",
         return_value=expected_client,
-    ) as grpc_client:
+    ) as tiledb_client:
         assert from_model(model) is expected_client
 
-    grpc_client.assert_called_once_with(index=model.cas_matching_engine)
+    tiledb_client.assert_called_once_with(index=model.cas_vector_index)
 
 
 def test_from_model_raises_when_no_index_exists() -> None:
@@ -87,10 +56,9 @@ def test_from_model_raises_when_no_index_exists() -> None:
         from_model(model)
 
 
-def test_from_model_invalid_vector_index_does_not_fallback() -> None:
+def test_from_model_raises_for_invalid_vector_index() -> None:
     model = _build_model()
     model.cas_vector_index = _build_vector_index(distance_metric="invalid")
-    model.cas_matching_engine = _build_matching_engine()
 
     with pytest.raises(VectorSearchConfigurationError, match="distance_metric"):
         from_model(model)

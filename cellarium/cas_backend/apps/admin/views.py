@@ -340,31 +340,6 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         return redirect("/casmodel/")
 
 
-class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
-    column_list = (
-        "index_name",
-        "description",
-        "embedding_dimension",
-        "endpoint_id",
-        "deployed_index_id",
-        "num_neighbors",
-        "model",
-    )
-    column_descriptions = {
-        "index_name": (
-            "A name that is used to identify the index, must be unique, lowercase. "
-            "No spaces, must end with a character or number. \nExample: cas-pca-001-matching-engine-index."
-        ),
-        "description": "A more verbose description of the index, since the name is not always self-explanatory.",
-        "endpoint_id": "Endpoint ID that is used in GCP in Vertex AI",
-        "deployed_index_id": "Deployed Index ID that is used in GCP in Vertex AI",
-        "num_neighbors": "Number of neighbors that is used for an approximate neighbors search",
-    }
-    column_extra_row_actions = [
-        LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
-    ]
-
-
 class CASVectorIndexAdminView(CellariumCloudAdminModelView):
     column_list = (
         "index_name",
@@ -497,11 +472,6 @@ admin = Admin(
 )
 admin.add_view(UserAdminView(models.User, db_session, name="User", category="Users"))
 admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel", category="ML Management"))
-admin.add_view(
-    CASMatchingEngineAdminView(
-        models.CASMatchingEngineIndex, db_session, name="MatchingEngine", category="ML Management"
-    )
-)
 admin.add_view(CASVectorIndexAdminView(models.CASVectorIndex, db_session, name="VectorIndex", category="ML Management"))
 admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category="Cell Data Management"))
 admin.add_view(

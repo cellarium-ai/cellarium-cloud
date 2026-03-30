@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Mapping
 from dataclasses import dataclass
 import typing as t
@@ -7,7 +6,6 @@ import numpy as np
 from tiledb import vector_search
 
 from cellarium.cas_backend.apps.compute.vector_search.exceptions import VectorSearchConfigurationError
-from cellarium.cas_backend.apps.compute.vector_search.protocol import VectorSearchProtocol
 from cellarium.cas_backend.apps.compute.vector_search.schemas import MatchResult
 from cellarium.cas_backend.core.db import models
 
@@ -120,7 +118,7 @@ def _coerce_result_arrays(result: t.Any) -> tuple[np.ndarray, np.ndarray]:
     return distances_array, ids_array
 
 
-class TileDBVectorSearch(VectorSearchProtocol):
+class TileDBVectorSearch:
     """
     Client for querying TileDB vector indexes from the compute service.
     """
@@ -169,7 +167,7 @@ class TileDBVectorSearch(VectorSearchProtocol):
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
         return MatchResult(matches=matches)
 
-    async def match(self, embeddings: np.ndarray) -> MatchResult:
+    def match(self, embeddings: np.ndarray) -> MatchResult:
         if embeddings.ndim != 2:
             raise VectorSearchConfigurationError("TileDB embeddings must be a 2D array.")
         if embeddings.shape[1] != self.index.embedding_dimension:
@@ -178,5 +176,5 @@ class TileDBVectorSearch(VectorSearchProtocol):
                 f"{self.index.embedding_dimension}."
             )
 
-        result = await asyncio.to_thread(self._query_sync, embeddings)
+        result = self._query_sync(embeddings)
         return self._adapt_result(result)

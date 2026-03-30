@@ -8,14 +8,13 @@ import typing as t
 
 import anndata
 import numpy as np
-from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, wait_random
+from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_random
 
 from cellarium.cas_backend.apps.compute import schemas, vector_search
 from cellarium.cas_backend.apps.compute.services import consensus_engine, exceptions
 from cellarium.cas_backend.apps.compute.services.authorization import Authorizer
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
 from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
-from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager, CellOperationsDataManager
 from cellarium.cas_backend.core.data_managers import exceptions as dm_exc
 from cellarium.cas_backend.core.db import models
@@ -164,95 +163,29 @@ class CellOperationsService:
             if len(match.neighbors) == 0:
                 raise exceptions.VectorSearchResponseError("Vector Search returned a match with 0 neighbors.")
 
-    async def __get_knn_matches_from_embeddings_with_retry(
-        self, embeddings: np.array, model: models.CASModel, chunk_matches_function: t.Callable
-    ) -> vector_search.MatchResult:
-        """
-        Get KNN matches for embeddings broken into chunks with retry logic
-
-        :param embeddings: Embeddings to match.
-        :param model: Model to use for matching.
-
-        :return: List of lists of MatchNeighbor objects.
-        """
-        matching_client = vector_search.from_model(model)
-
-        # Break embeddings into chunks so we don't overload the matching engine
-        embeddings_chunks = CellOperationsService.__split_embeddings_into_chunks(
-            embeddings=embeddings, chunk_size=settings.GET_MATCHES_CHUNK_SIZE
-        )
-
-        all_matches = vector_search.MatchResult()
-        for i in range(0, len(embeddings_chunks)):
-            # Set up retry logic for the matching engine requests
-            retryer = AsyncRetrying(
-                stop=stop_after_attempt(settings.GET_MATCHES_MAX_RETRIES),
-                wait=wait_exponential(
-                    multiplier=settings.GET_MATCHES_RETRY_BACKOFF_MULTIPLIER,
-                    min=settings.GET_MATCHES_RETRY_BACKOFF_MIN,
-                    max=settings.GET_MATCHES_RETRY_BACKOFF_MAX,
-                )
-                + wait_random(0, 2),
-                reraise=True,
-            )
-            matches = await retryer(
-                chunk_matches_function, embeddings_chunk=embeddings_chunks[i], client=matching_client
-            )
-            all_matches = all_matches.concat(matches)
-
-        return all_matches
-
-    @staticmethod
-    async def __get_knn_matches_for_chunk(
-        embeddings_chunk: np.array, client: vector_search.VectorSearchProtocol
-    ) -> vector_search.MatchResult:
-        """
-        Get KNN matches for a chunk of embeddings (split out from get_knn_matches, so it can be
-        retried and called in chunks).
-
-        :param embeddings_chunk: Chunk of embeddings to match.
-        :param client: Matching engine client that will handle communicating with the matching engine.
-
-        :return: List of lists of MatchNeighbor objects.
-        """
-        matches = await client.match(embeddings=embeddings_chunk)
-        CellOperationsService.__validate_knn_response(embeddings=embeddings_chunk, knn_response=matches)
-        return matches
-
-    async def get_knn_matches_from_embeddings(
+    def get_knn_matches_from_embeddings(
         self, embeddings: np.array, model: models.CASModel
     ) -> vector_search.MatchResult:
         """
-        Run KNN matching synchronously using Matching Engine client over gRPC.
+        Run KNN matching against the TileDB vector index.
+
+        TileDB search is CPU-bound and runs synchronously. Tenacity retry handles rare network
+        failures when loading TileDB indexes from remote storage.
 
         :param embeddings: Embeddings from the model.
         :param model: Model to use for matching.
 
         :return: Matches in a MatchResult object
         """
-
-        return await self.__get_knn_matches_from_embeddings_with_retry(
-            embeddings=embeddings,
-            model=model,
-            chunk_matches_function=self.__get_knn_matches_for_chunk,
+        client = vector_search.from_model(model)
+        retryer = Retrying(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=1, max=10) + wait_random(0, 2),
+            reraise=True,
         )
-
-    @staticmethod
-    def __split_embeddings_into_chunks(embeddings: np.array, chunk_size: int) -> list[np.array]:
-        """
-        Splits the embeddings into chunks based on the configured chunk size.
-
-        :param embeddings: The embeddings to split into chunks.
-        :param chunk_size: The number of query embeddings to include in each chunk.
-
-        :return: A list of numpy arrays, each containing a chunk of the embeddings.
-        """
-        if chunk_size <= 0:
-            raise ValueError("chunk_size must be greater than 0.")
-        if len(embeddings) == 0:
-            return []
-
-        return [embeddings[i : i + chunk_size] for i in range(0, len(embeddings), chunk_size)]
+        matches = retryer(client.match, embeddings=embeddings)
+        self.__validate_knn_response(embeddings=embeddings, knn_response=matches)
+        return matches
 
     async def get_knn_matches(
         self, adata: anndata.AnnData, model: models.CASModel
@@ -273,7 +206,7 @@ class CellOperationsService:
             return [], vector_search.MatchResult()
 
         logger.info("Getting KNN matches")
-        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)
+        knn_response = self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)
 
         return query_ids, knn_response
 
@@ -471,7 +404,7 @@ class CellOperationsService:
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
             return []
-        knn_response = await self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)
+        knn_response = self.get_knn_matches_from_embeddings(embeddings=embeddings, model=model)
 
         return [
             {

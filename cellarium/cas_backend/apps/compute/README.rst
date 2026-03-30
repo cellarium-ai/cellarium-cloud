@@ -62,6 +62,5 @@ workflows. Deployment flavor and Cloud Run sizing live under ``deploy/cloudrun/`
 Related Documentation
 ---------------------
 
-- ``docs/source/modules/vertex_ai_matching_engine.rst``
 - ``docs/source/modules/deploying_in_cloud.rst``
 - ``docs/source/modules/secrets.rst``

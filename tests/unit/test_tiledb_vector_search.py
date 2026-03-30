@@ -74,8 +74,7 @@ def test_init_raises_for_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> 
         TileDBVectorSearch(index=_build_vector_index())
 
 
-@pytest.mark.asyncio
-async def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
         FakeIVFFlatIndex,
@@ -86,7 +85,7 @@ async def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch)
         [[0.0] * constants.TEST_EMBEDDING_DIMENSION, [1.0] * constants.TEST_EMBEDDING_DIMENSION], dtype=np.float32
     )
 
-    result = await client.match(embeddings=embeddings)
+    result = client.match(embeddings=embeddings)
 
     assert len(result.matches) == 2
     assert [neighbor.cas_cell_index for neighbor in result.matches[0].neighbors] == [1, 2, 3]
@@ -95,8 +94,7 @@ async def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch)
     assert client.index_obj.query_calls[0][1]["nprobe"] == constants.TEST_VECTOR_INDEX_NPROBE
 
 
-@pytest.mark.asyncio
-async def test_match_raises_for_query_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_match_raises_for_query_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
         FakeIVFFlatIndex,
@@ -104,4 +102,4 @@ async def test_match_raises_for_query_dimension_mismatch(monkeypatch: pytest.Mon
     client = TileDBVectorSearch(index=_build_vector_index())
 
     with pytest.raises(VectorSearchConfigurationError, match="Embedding dimension"):
-        await client.match(embeddings=np.array([[1.0, 2.0, 3.0]], dtype=np.float32))
+        client.match(embeddings=np.array([[1.0, 2.0, 3.0]], dtype=np.float32))

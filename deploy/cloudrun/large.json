@@ -12,6 +12,6 @@
     "memory": "32Gi",
     "max-instances": 200,
     "min-instances": 1,
-    "concurrency": 32
+    "concurrency": 4
   }
 }

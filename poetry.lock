@@ -1843,47 +1843,6 @@ requests-oauthlib = ">=0.7.0"
 tool = ["click (>=6.0.0)"]
 
 [[package]]
-name = "google-cloud-aiplatform"
-version = "1.38.1"
-description = "Vertex AI API client library"
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "google-cloud-aiplatform-1.38.1.tar.gz", hash = "sha256:30439d914bb028443c0506cc0e6dd825cff5401aeb8233e13d8cfd77c3c87da1"},
-    {file = "google_cloud_aiplatform-1.38.1-py2.py3-none-any.whl", hash = "sha256:5e1fcd1068dd2c4f0fc89aa616e34a8b9434eaa72ea6216f5036ef26f08bd448"},
-]
-
-[package.dependencies]
-google-api-core = {version = ">=1.32.0,<2.0.dev0 || >=2.8.dev0,<3.0.0.dev0", extras = ["grpc"]}
-google-cloud-bigquery = ">=1.15.0,<4.0.0.dev0"
-google-cloud-resource-manager = ">=1.3.3,<3.0.0.dev0"
-google-cloud-storage = ">=1.32.0,<3.0.0.dev0"
-packaging = ">=14.3"
-proto-plus = ">=1.22.0,<2.0.0.dev0"
-protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<5.0.0.dev0"
-setuptools = {version = "*", markers = "python_version >= \"3.12\""}
-shapely = "<3.0.0.dev0"
-
-[package.extras]
-autologging = ["mlflow (>=1.27.0,<=2.1.1)"]
-cloud-profiler = ["tensorboard-plugin-profile (>=2.4.0,<3.0.0.dev0)", "tensorflow (>=2.4.0,<3.0.0.dev0)", "werkzeug (>=2.0.0,<2.1.0.dev0)"]
-datasets = ["pyarrow (>=10.0.1) ; python_version >= \"3.11\"", "pyarrow (>=3.0.0,<8.0.dev0) ; python_version < \"3.11\""]
-endpoint = ["requests (>=2.28.1)"]
-full = ["cloudpickle (<3.0)", "docker (>=5.0.3)", "explainable-ai-sdk (>=1.0.0)", "fastapi (>=0.71.0,<0.103.1)", "google-cloud-bigquery", "google-cloud-bigquery-storage", "google-cloud-logging (<4.0)", "google-vizier (==0.0.11) ; python_version == \"3.9\"", "google-vizier (==0.0.4) ; python_version == \"3.8\"", "google-vizier (>=0.0.14) ; python_version == \"3.10\"", "google-vizier (>=0.1.6) ; python_version >= \"3.11\"", "httpx (>=0.23.0,<0.25.0)", "lit-nlp (==0.4.0)", "mlflow (>=1.27.0,<=2.1.1)", "numpy (>=1.15.0)", "pandas (>=1.0.0)", "pyarrow (>=10.0.1) ; python_version >= \"3.11\"", "pyarrow (>=3.0.0,<8.0.dev0) ; python_version < \"3.11\"", "pyarrow (>=6.0.1)", "pydantic (<2)", "pyyaml (==5.3.1)", "ray[default] (>=2.4,<2.5) ; python_version < \"3.11\"", "ray[default] (>=2.5,<2.5.1) ; python_version >= \"3.11\"", "requests (>=2.28.1)", "starlette (>=0.17.1)", "tensorflow (>=2.3.0,<3.0.0.dev0)", "urllib3 (>=1.21.1,<1.27)", "uvicorn[standard] (>=0.16.0)"]
-lit = ["explainable-ai-sdk (>=1.0.0)", "lit-nlp (==0.4.0)", "pandas (>=1.0.0)", "tensorflow (>=2.3.0,<3.0.0.dev0)"]
-metadata = ["numpy (>=1.15.0)", "pandas (>=1.0.0)"]
-pipelines = ["pyyaml (==5.3.1)"]
-prediction = ["docker (>=5.0.3)", "fastapi (>=0.71.0,<0.103.1)", "httpx (>=0.23.0,<0.25.0)", "starlette (>=0.17.1)", "uvicorn[standard] (>=0.16.0)"]
-preview = ["cloudpickle (<3.0)", "google-cloud-logging (<4.0)"]
-private-endpoints = ["requests (>=2.28.1)", "urllib3 (>=1.21.1,<1.27)"]
-ray = ["google-cloud-bigquery", "google-cloud-bigquery-storage", "pandas (>=1.0.0)", "pyarrow (>=6.0.1)", "pydantic (<2)", "ray[default] (>=2.4,<2.5) ; python_version < \"3.11\"", "ray[default] (>=2.5,<2.5.1) ; python_version >= \"3.11\""]
-tensorboard = ["tensorflow (>=2.3.0,<3.0.0.dev0)"]
-testing = ["bigframes ; python_version >= \"3.10\"", "cloudpickle (<3.0)", "docker (>=5.0.3)", "explainable-ai-sdk (>=1.0.0)", "fastapi (>=0.71.0,<0.103.1)", "google-cloud-bigquery", "google-cloud-bigquery-storage", "google-cloud-logging (<4.0)", "google-vizier (==0.0.11) ; python_version == \"3.9\"", "google-vizier (==0.0.4) ; python_version == \"3.8\"", "google-vizier (>=0.0.14) ; python_version == \"3.10\"", "google-vizier (>=0.1.6) ; python_version >= \"3.11\"", "grpcio-testing", "httpx (>=0.23.0,<0.25.0)", "ipython", "kfp", "lit-nlp (==0.4.0)", "mlflow (>=1.27.0,<=2.1.1)", "numpy (>=1.15.0)", "pandas (>=1.0.0)", "pyarrow (>=10.0.1) ; python_version >= \"3.11\"", "pyarrow (>=3.0.0,<8.0.dev0) ; python_version < \"3.11\"", "pyarrow (>=6.0.1)", "pydantic (<2)", "pyfakefs", "pytest-asyncio", "pytest-xdist", "pyyaml (==5.3.1)", "ray[default] (>=2.4,<2.5) ; python_version < \"3.11\"", "ray[default] (>=2.5,<2.5.1) ; python_version >= \"3.11\"", "requests (>=2.28.1)", "requests-toolbelt (<1.0.0)", "scikit-learn", "starlette (>=0.17.1)", "tensorboard-plugin-profile (>=2.4.0,<3.0.0.dev0)", "tensorflow (>=2.3.0,<3.0.0.dev0)", "tensorflow (>=2.3.0,<=2.12.0)", "tensorflow (>=2.4.0,<3.0.0.dev0)", "torch (>=2.0.0,<2.1.0)", "urllib3 (>=1.21.1,<1.27)", "uvicorn[standard] (>=0.16.0)", "werkzeug (>=2.0.0,<2.1.0.dev0)", "xgboost", "xgboost-ray"]
-vizier = ["google-vizier (==0.0.11) ; python_version == \"3.9\"", "google-vizier (==0.0.4) ; python_version == \"3.8\"", "google-vizier (>=0.0.14) ; python_version == \"3.10\"", "google-vizier (>=0.1.6) ; python_version >= \"3.11\""]
-xai = ["tensorflow (>=2.3.0,<3.0.0.dev0)"]
-
-[[package]]
 name = "google-cloud-bigquery"
 version = "3.9.0"
 description = "Google BigQuery API client library"
@@ -1956,32 +1915,6 @@ google-auth = ">=1.25.0,<3.0.0"
 
 [package.extras]
 grpc = ["grpcio (>=1.38.0,<2.0.0) ; python_version < \"3.14\"", "grpcio (>=1.75.1,<2.0.0) ; python_version >= \"3.14\"", "grpcio-status (>=1.38.0,<2.0.0)"]
-
-[[package]]
-name = "google-cloud-resource-manager"
-version = "1.16.0"
-description = "Google Cloud Resource Manager API client library"
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "google_cloud_resource_manager-1.16.0-py3-none-any.whl", hash = "sha256:fb9a2ad2b5053c508e1c407ac31abfd1a22e91c32876c1892830724195819a28"},
-    {file = "google_cloud_resource_manager-1.16.0.tar.gz", hash = "sha256:cc938f87cc36c2672f062b1e541650629e0d954c405a4dac35ceedee70c267c3"},
-]
-
-[package.dependencies]
-google-api-core = {version = ">=1.34.1,<2.0.dev0 || >=2.11.dev0,<3.0.0", extras = ["grpc"]}
-google-auth = ">=2.14.1,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0"
-grpc-google-iam-v1 = ">=0.14.0,<1.0.0"
-grpcio = [
-    {version = ">=1.75.1,<2.0.0", markers = "python_version >= \"3.14\""},
-    {version = ">=1.33.2,<2.0.0"},
-]
-proto-plus = [
-    {version = ">=1.25.0,<2.0.0", markers = "python_version >= \"3.13\""},
-    {version = ">=1.22.3,<2.0.0"},
-]
-protobuf = ">=3.20.2,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<7.0.0"
 
 [[package]]
 name = "google-cloud-run"
@@ -8296,4 +8229,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "96c7f8b8accfb3197160f91ffebbc2cf8a0dc5c3887707a6154075d24c353e5d"
+content-hash = "8b2a48a9822d65b0118a127a4f421636d00db069358b479537ee85e5db457d11"
