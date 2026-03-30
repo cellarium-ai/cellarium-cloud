@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 from pydantic import BaseModel, Field
 
 
@@ -34,10 +36,10 @@ class QueryCellNeighborhoodOntologyAware(QueryCellNeighborhoodAbstract):
     total_neighbors_unrecognized: int = Field(example=5)
 
 
-type QueryAnnotationAbstractType = list[QueryCellNeighborhoodAbstract]
-type QueryAnnotationOntologyAwareType = list[QueryCellNeighborhoodOntologyAware]
-type QueryAnnotationCellTypeSummaryStatisticsType = list[QueryCellNeighborhoodCellTypeSummaryStatistics]
-type QueryAnnotationType = (
+QueryAnnotationAbstractType: TypeAlias = list[QueryCellNeighborhoodAbstract]  # noqa: UP040
+QueryAnnotationOntologyAwareType: TypeAlias = list[QueryCellNeighborhoodOntologyAware]  # noqa: UP040
+QueryAnnotationCellTypeSummaryStatisticsType: TypeAlias = list[QueryCellNeighborhoodCellTypeSummaryStatistics]  # noqa: UP040
+QueryAnnotationType: TypeAlias = (  # noqa: UP040
     list[QueryCellNeighborhoodOntologyAware] | list[QueryCellNeighborhoodCellTypeSummaryStatistics]
 )
 
