@@ -11,7 +11,7 @@ class MatchResult(BaseModel):
         Neighbor represents a neighbor of a feature vector (e.g. a cell) in the matching service.
         """
 
-        cas_cell_index: str = Field(default=None)
+        cas_cell_index: int = Field(default=None)
         distance: float = Field(default=None)
 
     class NearestNeighbors(BaseModel):
@@ -41,7 +41,7 @@ class MatchResult(BaseModel):
         :return: A list with unique indexes of neighbors
         """
         return list(
-            {int(neighbor.cas_cell_index) for query_neighbors in self.matches for neighbor in query_neighbors.neighbors}
+            {neighbor.cas_cell_index for query_neighbors in self.matches for neighbor in query_neighbors.neighbors}
         )
 
 

@@ -16,6 +16,7 @@ class CASModel(db.Base):
     schema_name = sa.Column(sa.String(255), default=settings.DEFAULT_SCHEMA_NAME, nullable=False)
     bq_dataset_name = sa.Column(sa.String(255), default=settings.DEFAULT_MODEL_BQ_DATASET_NAME, nullable=False)
     is_default_model = sa.Column(sa.Boolean(), default=False, nullable=False)
+    cell_metadata_uri = sa.Column(sa.String(1023), nullable=False)
     created_date = sa.Column(sa.DateTime, default=datetime.datetime.utcnow)
 
     __tablename__ = "ml_management_model"

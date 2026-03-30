@@ -284,6 +284,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "schema_name",
         "is_default_model",
         "bq_dataset_name",
+        "cell_metadata_uri",
         "created_date",
     )
     column_descriptions = {
@@ -306,6 +307,10 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "bq_dataset_name": (
             "Bigquery dataset name that is used to store cell information which were used to train the model. "
         ),
+        "cell_metadata_uri": (
+            "GCS URI of the TileDB SOMA DataFrame containing cell metadata for this model's training data. "
+            "Format: gs://bucket-name/path/to/soma_dataframe. Set to gs://unknown until a real path is configured."
+        ),
         "created_date": "Datetime when this record has been created. Differs from when model was trained.",
     }
     column_editable_list = ("admin_use_only",)
@@ -318,6 +323,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "is_default_model",
         "admin_use_only",
         "bq_dataset_name",
+        "cell_metadata_uri",
         "created_date",
     )
     form_widget_args = {"created_date": {"disabled": True}, "is_default_model": {"disabled": True}}

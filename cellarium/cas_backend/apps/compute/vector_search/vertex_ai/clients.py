@@ -27,7 +27,7 @@ class VertexVectorSearchClientGRPC(VectorSearchProtocol):
                 distance = round(1 - neighbor.distance, 9)
                 neighbors.append(
                     MatchResult.Neighbor(
-                        cas_cell_index=neighbor.id,
+                        cas_cell_index=int(neighbor.id),
                         distance=distance,
                     )
                 )
@@ -61,7 +61,7 @@ class VertexVectorSearchClientREST(VectorSearchProtocol):
                 distance = round(1 - neighbor.distance, 9)
                 neighbors.append(
                     MatchResult.Neighbor(
-                        cas_cell_index=neighbor.datapoint.datapoint_id,
+                        cas_cell_index=int(neighbor.datapoint.datapoint_id),
                         distance=distance,
                     )
                 )

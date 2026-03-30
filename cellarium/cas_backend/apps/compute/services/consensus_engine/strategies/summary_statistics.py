@@ -80,7 +80,7 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
             cell_ids=unique_neighbor_ids,
             metadata_feature_names=self.REQUIRED_CELL_INFO_FEATURE_NAMES,
         )
-        neighbors_metadata_dict = {str(neighbor.cas_cell_index): neighbor for neighbor in neighbors_metadata}
+        neighbors_metadata_dict = {neighbor.cas_cell_index: neighbor for neighbor in neighbors_metadata}
 
         results = []
         for query_cell_id, query_neighbors in zip(query_cell_ids, knn_response.matches, strict=False):

@@ -1,107 +1,65 @@
-import sqlalchemy as sa
+import tiledbsoma
 
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.core.config import settings
-from cellarium.cas_backend.core.data_managers import BaseDataManager, exceptions
-from cellarium.cas_backend.core.db import models
+from cellarium.cas_backend.core.data_managers import exceptions
 
 
-class CellOperationsDataManager(BaseDataManager):
+class CellOperationsDataManager:
     """
-    Data Manager for making data operations in CAS Backend storage.
+    Data Manager for retrieving cell metadata from a TileDB SOMA DataFrame stored in GCS.
+
+    The SOMA DataFrame contains the same cell metadata previously held in the Postgres ``cells_cellinfo``
+    table. Using a per-model GCS-backed SOMA store removes the shared Postgres bottleneck and lets Cloud
+    Run scale horizontally without a centralised DB connection limit.
     """
 
-    @classmethod
-    def create_temporary_table_with_cell_ids(cls, cell_ids: list[int], connection: sa.engine.Connection) -> sa.Table:
+    def __init__(self, cell_metadata_uri: str) -> None:
         """
-        Create a temporary table in postgres database and populate it with cell indexes for further joining.
-        This tables acts as intermediate cache table to make receiving cell metadata query lighter and faster.
-
-        :param cell_ids: List of cas_cell_index to insert in a temporary table
-        :param connection: Database connection
-
-        :return: An instance of :class:`sqlalchemy.Table` object
+        :param cell_metadata_uri: GCS URI pointing to the TileDB SOMA DataFrame for this model's cell metadata.
+            Format: ``gs://bucket-name/path/to/soma_dataframe``.
         """
-        metadata = sa.MetaData(bind=connection)
-        cell_info_tmp_table = sa.Table(
-            "cells_cellinfotemptable",
-            metadata,
-            sa.Column("cas_cell_index", sa.Integer),
-            prefixes=["temporary"],
-            postgresql_on_commit="drop",
-        )
-        cell_info_tmp_table.create(bind=connection)
+        self.cell_metadata_uri = cell_metadata_uri
 
-        # Insert values into the temp table
-        rows_to_insert = [{"cas_cell_index": cell_id} for cell_id in cell_ids]
-        cls.batch_bulk_insert(
-            table=cell_info_tmp_table,
-            rows_to_insert=rows_to_insert,
-            connection=connection,
-            batch_size=settings.MAX_CELL_IDS_PER_QUERY,
-        )
-        return cell_info_tmp_table
-
-    def _get_cell_metadata_by_ids(
+    def get_cell_metadata_by_ids(
         self,
         cell_ids: list[int],
-        feature_names: list[str],
+        metadata_feature_names: list[str],
     ) -> list[schemas.CellariumCellMetadata]:
         """
-        Get cells by CAS IDs, maintaining the order of `cell_ids`. Preserves the order of `cell_ids` in the query
-        results.
+        Get cell metadata by CAS cell IDs from the SOMA DataFrame, maintaining the order of ``cell_ids``.
 
         :param cell_ids: CAS cell IDs to retrieve metadata for.
+        :param metadata_feature_names: Column names to retrieve from the SOMA DataFrame.  Must be a subset
+            of the fields defined on :class:`~cellarium.cas_backend.apps.compute.schemas.CellariumCellMetadata`.
+            ``cas_cell_index`` is always included regardless of whether it appears in this list.
 
-        :return: List of dictionaries representing the query results, ordered according to cell_ids.
+        :return: List of :class:`~cellarium.cas_backend.apps.compute.schemas.CellariumCellMetadata` objects
+            ordered according to ``cell_ids``.
+
+        :raises exceptions.CellMetadataDatabaseError: If ``cell_ids`` is empty.
         """
         if not cell_ids:
             raise exceptions.CellMetadataDatabaseError("No cell IDs provided")
 
-        if len(cell_ids) > settings.MAX_CELL_IDS_PER_QUERY:
-            raise exceptions.CellMetadataDatabaseError(
-                f"Number of cell IDs exceeds the maximum of {settings.MAX_CELL_IDS_PER_QUERY}"
-            )
-        with self.system_data_db_session_maker.begin() as session:
-            connection = session.connection()
-            cell_info_tmp_table = self.create_temporary_table_with_cell_ids(cell_ids=cell_ids, connection=connection)
+        # cas_cell_index is stored as soma_joinid (the SOMA index column).
+        # soma_joinid must be explicitly included in column_names — tiledbsoma does not
+        # return it automatically when column_names is restricted.
+        columns_to_read = [col for col in metadata_feature_names if col != "cas_cell_index"]
+        soma_columns_to_read = ["soma_joinid"] + columns_to_read
 
-            # Select values from the temp table, joining with the CellInfo table
-            select_columns = [getattr(models.CellInfo, feature_name) for feature_name in feature_names]
-            statement = sa.select(select_columns).join(
-                cell_info_tmp_table, models.CellInfo.cas_cell_index == cell_info_tmp_table.c.cas_cell_index
-            )
+        with tiledbsoma.open(self.cell_metadata_uri) as soma_df:
+            result_table = soma_df.read(
+                coords=(cell_ids,),
+                column_names=soma_columns_to_read,
+            ).concat()
 
-            query_result = connection.execute(statement).fetchall()
+        result_dict = result_table.to_pydict()
+        # soma_joinid holds the cas_cell_index values; rename it for schema compatibility.
+        index_to_row = {
+            soma_joinid: {"cas_cell_index": soma_joinid, **{col: result_dict[col][i] for col in columns_to_read}}
+            for i, soma_joinid in enumerate(result_dict["soma_joinid"])
+        }
 
-        # Reconstruct the ordered list based on cell_ids
-        index_to_metadata = {row["cas_cell_index"]: row for row in query_result}
-        ordered_metadata = (index_to_metadata[cell_id] for cell_id in cell_ids if cell_id in index_to_metadata)
-
-        return [schemas.CellariumCellMetadata(**cell_metadata_row) for cell_metadata_row in ordered_metadata]
-
-    def get_cell_metadata_by_ids(
-        self, cell_ids: list[int], metadata_feature_names: list[str]
-    ) -> list[schemas.CellariumCellMetadata]:
-        """
-        Get cells by CAS IDs, maintaining the order of `cell_ids`. If the number of querying cell IDs exceeds the
-        maximum allowed, split the query into multiple queries. Database gets overwhelmed when querying a large number
-        of cell.
-
-        :param cell_ids: CAS cell IDs to retrieve metadata for.
-        :param metadata_feature_names: List of feature names to retrieve.
-
-        :return: List of dictionaries representing the query results, ordered according to `cell_ids`.
-        """
-        if len(cell_ids) >= settings.MAX_CELL_IDS_PER_QUERY:
-            cells_metadata = []
-            for i in range(0, len(cell_ids), settings.MAX_CELL_IDS_PER_QUERY):
-                upper_bound_slice_index = min(len(cell_ids), i + settings.MAX_CELL_IDS_PER_QUERY)
-                cells_metadata += self._get_cell_metadata_by_ids(
-                    cell_ids=cell_ids[i:upper_bound_slice_index],
-                    feature_names=metadata_feature_names,
-                )
-        else:
-            cells_metadata = self._get_cell_metadata_by_ids(cell_ids=cell_ids, feature_names=metadata_feature_names)
-
-        return cells_metadata
+        return [
+            schemas.CellariumCellMetadata(**index_to_row[cell_id]) for cell_id in cell_ids if cell_id in index_to_row
+        ]

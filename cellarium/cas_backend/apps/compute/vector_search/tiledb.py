@@ -163,7 +163,7 @@ class TileDBVectorSearch(VectorSearchProtocol):
         matches = []
         for query_ids, query_distances in zip(ids, distances, strict=False):
             neighbors = [
-                MatchResult.Neighbor(cas_cell_index=str(cas_cell_index), distance=round(float(distance), 9))
+                MatchResult.Neighbor(cas_cell_index=int(cas_cell_index), distance=round(float(distance), 9))
                 for cas_cell_index, distance in zip(query_ids, query_distances, strict=False)
             ]
             matches.append(MatchResult.NearestNeighbors(neighbors=neighbors))
