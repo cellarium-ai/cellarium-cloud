@@ -89,7 +89,7 @@ async def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch)
     result = await client.match(embeddings=embeddings)
 
     assert len(result.matches) == 2
-    assert [neighbor.cas_cell_index for neighbor in result.matches[0].neighbors] == ["1", "2", "3"]
+    assert [neighbor.cas_cell_index for neighbor in result.matches[0].neighbors] == [1, 2, 3]
     assert [neighbor.distance for neighbor in result.matches[0].neighbors] == pytest.approx([0.1, 0.2, 0.3])
     assert client.index_obj.query_calls[0][1]["k"] == constants.TEST_INDEX_NUM_NEIGHBORS
     assert client.index_obj.query_calls[0][1]["nprobe"] == constants.TEST_VECTOR_INDEX_NPROBE

@@ -14,6 +14,7 @@ def _build_model() -> models.CASModel:
         model_name=constants.TEST_MODEL_NAME,
         model_file_path=constants.TEST_MODEL_FILE_PATH,
         embedding_dimension=constants.TEST_EMBEDDING_DIMENSION,
+        cell_metadata_uri=constants.TEST_MODEL_CELL_METADATA_URI,
     )
 
 

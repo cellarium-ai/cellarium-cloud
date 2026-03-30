@@ -97,7 +97,7 @@ class MockMatchingClient(AsyncMock):
                 MatchResult.NearestNeighbors(
                     neighbors=[
                         MatchResult.Neighbor(
-                            cas_cell_index=str(neighbor_id),
+                            cas_cell_index=neighbor_id,
                             distance=np.random.rand(),
                         )
                         for neighbor_id in neighbors

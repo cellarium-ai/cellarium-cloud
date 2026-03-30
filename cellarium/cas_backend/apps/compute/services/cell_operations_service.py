@@ -40,7 +40,7 @@ class CellOperationsService:
         model_service: ModelInferenceService | None = None,
         authorizer: Authorizer | None = None,
     ):
-        self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
+        self.cell_operations_dm = cell_operations_dm
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
         self.cell_quota_service = cell_quota_service or CellQuotaService()
         self.model_service = model_service or ModelInferenceService()
@@ -351,7 +351,8 @@ class CellOperationsService:
         query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
-            cell_operations_dm=self.cell_operations_dm,
+            cell_operations_dm=self.cell_operations_dm
+            or CellOperationsDataManager(cell_metadata_uri=model.cell_metadata_uri),
         )
 
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
@@ -436,7 +437,8 @@ class CellOperationsService:
 
         logger.info("Applying CellTypeOntologyAwareConsensusStrategy to the query results")
         strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
-            cell_operations_dm=self.cell_operations_dm,
+            cell_operations_dm=self.cell_operations_dm
+            or CellOperationsDataManager(cell_metadata_uri=model.cell_metadata_uri),
             prune_threshold=prune_threshold,
             weighting_prefactor=weighting_prefactor,
         )
