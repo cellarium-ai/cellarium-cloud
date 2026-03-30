@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cas-backend"
-version = "1.8.0"
+version = "1.8.1"
 description = "Cellarium Cell Annotation Service Backend"
 authors = ["Cellarium Team <cas-support@cellarium.ai>"]
 readme = "README.rst"
