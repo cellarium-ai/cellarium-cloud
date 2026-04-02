@@ -45,8 +45,3 @@ Testing and Linting
 
     make test
     make lint
-
-Vertex AI Access
-----------------
-
-Some compute flows depend on network access to TileDB vector search indexes.

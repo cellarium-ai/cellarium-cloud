@@ -17,7 +17,11 @@ from werkzeug.exceptions import HTTPException
 from wtforms.validators import ValidationError
 
 from cellarium.cas_backend.apps.admin import basic_auth, db_session, flask_app
-from cellarium.cas_backend.apps.compute.vector_search.tiledb import validate_tiledb_index
+from cellarium.cas_backend.apps.compute.vector_search.tiledb import (
+    DistanceMetric,
+    IndexType,
+    validate_tiledb_index,
+)
 from cellarium.cas_backend.core import auth, settings
 from cellarium.cas_backend.core.db import models, ops
 from cellarium.cas_backend.core.utils.email_utils import EmailSender
@@ -364,7 +368,7 @@ class CASVectorIndexAdminView(CellariumCloudAdminModelView):
         "model",
     )
     column_descriptions = {
-        "index_name": ("A unique name used to identify the vector index. " "Example: cas-pca-001-tiledb-index."),
+        "index_name": "A unique name used to identify the vector index. Example: cas-pca-001-tiledb-index.",
         "embedding_dimension": "Configured embedding dimension for the vector index.",
         "num_neighbors": "Number of neighbors returned for each query.",
         "index_uri": "TileDB index URI.",
@@ -372,6 +376,10 @@ class CASVectorIndexAdminView(CellariumCloudAdminModelView):
         "distance_metric": "Distance metric used when the index was built: cosine, l2, or dot_product.",
         "nprobe": "Required for IVF_FLAT indexes. Must be empty otherwise.",
         "l_search": "Required for VAMANA indexes. Must be empty otherwise.",
+    }
+    form_choices = {
+        "index_type": [(m.value, m.value) for m in IndexType],
+        "distance_metric": [(m.value, m.value) for m in DistanceMetric],
     }
     column_extra_row_actions = [
         LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),

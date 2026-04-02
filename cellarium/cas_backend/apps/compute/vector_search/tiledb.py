@@ -1,5 +1,6 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import Enum
 import typing as t
 
 import numpy as np
@@ -9,11 +10,18 @@ from cellarium.cas_backend.apps.compute.vector_search.exceptions import VectorSe
 from cellarium.cas_backend.apps.compute.vector_search.schemas import MatchResult
 from cellarium.cas_backend.core.db import models
 
-INDEX_TYPE_FLAT = "FLAT"
-INDEX_TYPE_IVF_FLAT = "IVF_FLAT"
-INDEX_TYPE_VAMANA = "VAMANA"
-SUPPORTED_INDEX_TYPES = {INDEX_TYPE_FLAT, INDEX_TYPE_IVF_FLAT, INDEX_TYPE_VAMANA}
-SUPPORTED_DISTANCE_METRICS = {"cosine", "l2", "dot_product"}
+
+class IndexType(str, Enum):
+    FLAT = "FLAT"
+    IVF_FLAT = "IVF_FLAT"
+    VAMANA = "VAMANA"
+
+
+class DistanceMetric(str, Enum):
+    COSINE = "cosine"
+    L2 = "l2"
+    DOT_PRODUCT = "dot_product"
+
 
 _INDEX_CACHE: dict[str, t.Any] = {}
 
@@ -21,51 +29,50 @@ _INDEX_CACHE: dict[str, t.Any] = {}
 @dataclass(frozen=True)
 class TileDBIndexConfig:
     index_uri: str
-    index_type: str
-    distance_metric: str
+    index_type: IndexType
+    distance_metric: DistanceMetric
     nprobe: int | None
     l_search: int | None
 
 
-def _get_index_class(index_type: str):
+def _get_index_class(index_type: IndexType):
     match index_type:
-        case "FLAT":
-            index_class = vector_search.flat_index.FlatIndex
-        case "IVF_FLAT":
-            index_class = vector_search.ivf_flat_index.IVFFlatIndex
-        case "VAMANA":
-            index_class = vector_search.vamana_index.VamanaIndex
+        case IndexType.FLAT:
+            return vector_search.flat_index.FlatIndex
+        case IndexType.IVF_FLAT:
+            return vector_search.ivf_flat_index.IVFFlatIndex
+        case IndexType.VAMANA:
+            return vector_search.vamana_index.VamanaIndex
         case _:
             raise ValueError(f"Unsupported TileDB index_type '{index_type}'.")
 
-    return index_class
 
-
-def _validate_index_type(index_type: t.Any) -> str:
+def _validate_index_type(index_type: t.Any) -> IndexType:
     if not isinstance(index_type, str):
         raise ValueError("TileDB vector index_type must be a string.")
 
-    normalized = index_type.upper()
-    if normalized not in SUPPORTED_INDEX_TYPES:
+    try:
+        return IndexType(index_type.upper())
+    except ValueError:
         raise ValueError(f"Unsupported TileDB index_type '{index_type}'.")
-    return normalized
 
 
 def validate_tiledb_index(index: models.CASVectorIndex) -> TileDBIndexConfig:
     if not isinstance(index.index_uri, str) or not index.index_uri.strip():
         raise ValueError("TileDB index_uri must be a non-empty string.")
 
-    distance_metric = index.distance_metric
-    if not isinstance(distance_metric, str) or distance_metric not in SUPPORTED_DISTANCE_METRICS:
+    try:
+        distance_metric = DistanceMetric(index.distance_metric)
+    except (ValueError, TypeError):
         raise ValueError("TileDB distance_metric must be one of: cosine, l2, dot_product.")
 
     index_type = _validate_index_type(index.index_type)
 
-    if index_type == INDEX_TYPE_IVF_FLAT:
+    if index_type == IndexType.IVF_FLAT:
         nprobe = index.nprobe
         if not isinstance(nprobe, int) or nprobe <= 0:
             raise ValueError("TileDB IVF_FLAT nprobe must be a positive integer.")
-    if index_type == INDEX_TYPE_VAMANA:
+    if index_type == IndexType.VAMANA:
         l_search = index.l_search
         if not isinstance(l_search, int) or l_search <= 0:
             raise ValueError("TileDB VAMANA l_search must be a positive integer.")
@@ -145,9 +152,9 @@ class TileDBVectorSearch:
     def _query_sync(self, queries: np.ndarray):
         query_kwargs = {"k": self.index.num_neighbors}
         index_type = self.index_config.index_type
-        if index_type == INDEX_TYPE_IVF_FLAT:
+        if index_type == IndexType.IVF_FLAT:
             query_kwargs["nprobe"] = self.index_config.nprobe
-        elif index_type == INDEX_TYPE_VAMANA:
+        elif index_type == IndexType.VAMANA:
             query_kwargs["l_search"] = self.index_config.l_search
 
         return self.index_obj.query_internal(queries=queries, **query_kwargs)
