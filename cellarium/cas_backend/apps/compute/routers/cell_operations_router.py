@@ -1,7 +1,12 @@
+import typing as t
+
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from cellarium.cas_backend.apps.compute import dependencies, schemas, services
 from cellarium.cas_backend.core.db import models
+
+AuthUser = t.Annotated[models.User, Depends(dependencies.authenticate_user)]
+CellOpsService = t.Annotated[services.CellOperationsService, Depends(dependencies.get_cell_operations_service)]
 
 cell_operations_router = APIRouter(prefix="/cellarium-cell-operations")
 
@@ -10,11 +15,11 @@ cell_operations_router = APIRouter(prefix="/cellarium-cell-operations")
     "/annotate", response_model=schemas.QueryAnnotationCellTypeSummaryStatisticsType, deprecated=True
 )
 async def annotate(
+    request_user: AuthUser,
+    cell_operations_service: CellOpsService,
     file: UploadFile = File(),
     model_name: str = Form(),
     include_dev_metadata: bool | None = Form(default=False),
-    request_user: models.User = Depends(dependencies.authenticate_user),
-    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Deprecated endpoint. Will be removed in the future version.
@@ -43,10 +48,10 @@ async def annotate(
     response_model=schemas.QueryAnnotationCellTypeSummaryStatisticsType,
 )
 async def annotate_cell_type_summary_statistics(
+    request_user: AuthUser,
+    cell_operations_service: CellOpsService,
     file: UploadFile = File(),
     model_name: str = Form(),
-    request_user: models.User = Depends(dependencies.authenticate_user),
-    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -72,12 +77,12 @@ async def annotate_cell_type_summary_statistics(
     "/annotate-cell-type-ontology-aware-strategy", response_model=schemas.QueryAnnotationOntologyAwareType
 )
 async def annotate_cell_type_ontology_aware_strategy(
+    request_user: AuthUser,
+    cell_operations_service: CellOpsService,
     file: UploadFile = File(),
     model_name: str = Form(),
     prune_threshold: float = Form(),
     weighting_prefactor: float = Form(),
-    request_user: models.User = Depends(dependencies.authenticate_user),
-    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Annotate a single anndata file with Cellarium CAS using the cell type statistics strategy. Input file should be
@@ -104,8 +109,8 @@ async def annotate_cell_type_ontology_aware_strategy(
 
 @cell_operations_router.get("/cache-info", response_model=schemas.CacheInfo)
 def get_cache_info(
-    user: models.User = Depends(dependencies.authenticate_user),
-    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
+    user: AuthUser,
+    cell_operations_service: CellOpsService,
 ):
     """
     Return the cache info for the model checkpoint file and module caches.
@@ -119,10 +124,10 @@ def get_cache_info(
 
 @cell_operations_router.post(path="/nearest-neighbor-search", response_model=list[schemas.SearchQueryCellResult])
 async def nearest_neighbor_search(
+    user: AuthUser,
+    cell_operations_service: CellOpsService,
     file: UploadFile = File(),
     model_name: str = Form(),
-    user: models.User = Depends(dependencies.authenticate_user),
-    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
 ):
     """
     Search for similar cells in a single anndata file with Cellarium CAS. Input file should be validated and sanitized
@@ -136,8 +141,8 @@ async def nearest_neighbor_search(
 @cell_operations_router.post(path="/query-cells-by-ids", response_model=list[schemas.CellariumCellMetadata])
 def get_cells_by_ids(
     item: schemas.CellariumCellByIdsInput,
-    _: models.User = Depends(dependencies.authenticate_user),
-    cell_operations_service: services.CellOperationsService = Depends(dependencies.get_cell_operations_service),
+    _: AuthUser,
+    cell_operations_service: CellOpsService,
 ):
     """
     Get cells by their ids from a single anndata file with Cellarium CAS. Input file should be validated and sanitized
