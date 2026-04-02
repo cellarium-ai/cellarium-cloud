@@ -1,5 +1,4 @@
 import logging
-import multiprocessing
 import typing as t
 
 from fastapi import APIRouter, FastAPI, Request, Response
@@ -13,7 +12,7 @@ import uvicorn
 import uvicorn.config
 
 from cellarium.cas_backend.apps.compute import exception_handlers
-from cellarium.cas_backend.apps.compute.services.exceptions import APIBaseException
+from cellarium.cas_backend.apps.compute.exceptions import APIBaseException
 from cellarium.cas_backend.core.auth.exceptions import TokenException
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.constants import ContextKeys, HeaderKeys, SentryTags
@@ -250,13 +249,11 @@ class CASService(FastAPI):
         """
         Launch the service using Uvicorn.
         """
-        num_workers = 2 if settings.ENVIRONMENT == "local" else multiprocessing.cpu_count() * 2 + 1
-
         uvicorn.run(
             self.app_module_path,
             host=settings.DEFAULT_SERVICE_HOST,
             port=self.port,
-            workers=num_workers,
+            workers=settings.UVICORN_WORKERS,
             log_level=settings.LOG_LEVEL,
             log_config=settings.LOG_CONFIG,
         )

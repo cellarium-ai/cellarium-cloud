@@ -5,8 +5,8 @@ import numpy as np
 from smart_open import open
 
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.base import ConsensusStrategyInterface
+from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.data_managers import CellOperationsDataManager
 
@@ -163,7 +163,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
             cell_ids=list(unique_neighbor_ids),
             metadata_feature_names=self.REQUIRED_CELL_INFO_FEATURE_NAMES,
         )
-        neighbors_metadata_dict = {str(neighbor.cas_cell_index): neighbor for neighbor in neighbors_metadata}
+        neighbors_metadata_dict = {neighbor.cas_cell_index: neighbor for neighbor in neighbors_metadata}
 
         result = []
         for query_cell_id, query_neighbors in zip(query_cell_ids, knn_query.matches, strict=False):

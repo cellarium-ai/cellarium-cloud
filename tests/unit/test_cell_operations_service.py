@@ -7,7 +7,6 @@ pytest fixtures to set up the necessary environment for these tests.
 """
 
 import io
-import math
 import typing as t
 from unittest.mock import Mock, patch
 
@@ -17,11 +16,10 @@ import pytest
 from sqlalchemy.orm import Session
 from starlette_context.ctx import _request_scope_context_storage
 
-from cellarium.cas_backend.apps.compute.clients.matching_client import MatchResult
 from cellarium.cas_backend.apps.compute.services import exceptions
 from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
-from cellarium.cas_backend.core.config import settings
+from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 from cellarium.cas_backend.core.constants import ContextKeys
 from cellarium.cas_backend.core.db import models
 from tests.unit.fixtures import constants, mocks
@@ -84,97 +82,12 @@ def user_without_quota(db_session: Session) -> models.User:
     return db_session.query(models.User).filter(models.User.username == constants.USER_EMAIL_WITHOUT_QUOTA).first()
 
 
-@pytest.fixture(
-    params=[
-        (np.random.rand(10, 32), 3, 4),  # 10 embeddings, chunk size 3
-        (np.random.rand(15, 32), 5, 3),  # 15 embeddings, chunk size 5
-        (np.random.rand(10, 32), 10, 1),  # Exactly one chunk
-        (np.random.rand(10, 32), 20, 1),  # Chunk size larger than data
-        (np.random.rand(0, 32), 5, 0),  # Empty embeddings
-        (np.random.rand(11, 32), 4, 3),  # Irregular chunks
-    ]
-)
-def embedding_test_data(request: pytest.FixtureRequest) -> tuple[np.ndarray, int, int]:
-    """
-    Fixture to provide test data for chunk splitting tests.
-
-    :param request: Built-in pytest fixture to iterate through parameters.
-    :return: Tuple of (embeddings, chunk_size, expected_num_chunks).
-    """
-    return request.param
-
-
-def test__split_embeddings_into_chunks(embedding_test_data: tuple[np.ndarray, int, int]):
-    """
-    Test the static method `_split_embeddings_into_chunks` for correctness.
-
-    Validate that the method correctly splits embeddings into the specified chunk size,
-    preserving data integrity and ensuring correct chunk counts.
-
-    :param embedding_test_data: Embedding data for the test.
-    """
-    embeddings, chunk_size, expected_num_chunks = embedding_test_data
-    chunks = CellOperationsService._CellOperationsService__split_embeddings_into_chunks(embeddings, chunk_size)
-
-    # Assert
-    assert len(chunks) == expected_num_chunks
-
-    # Validate the size of each chunk (all except for the last). Don't check if expected_num_chunks == 0
-    if expected_num_chunks > 0:
-        for chunk in chunks[:-1]:
-            assert len(chunk) == chunk_size
-
-        # Validate the size of the last chunk
-        assert len(chunks[-1] <= chunk_size)
-
-    # Validate that the data is correctly preserved across chunks
-    if len(embeddings) > 0:
-        reconstructed = np.vstack(chunks)
-        np.testing.assert_array_equal(reconstructed, embeddings)
-
-
-@pytest.mark.asyncio
-async def test__get_knn_matches_for_chunk(
-    populate_db: None,
-    patch_bigquery_client: None,
-    mock_matching_client: mocks.MockMatchingClient,
-    cell_operations_service_with_mocks: CellOperationsService,
-    embedding_test_data: tuple[np.ndarray, int, int],
-):
-    """
-    Test the private `_get_knn_matches_for_chunk` method.
-
-    Validate that the method retrieves nearest neighbors for a given chunk of embeddings using the mocked
-    `MatchingClient`.
-
-    :param populate_db: Use a fixture to populate the test database.
-    :param mock_matching_client: Mocked MatchingClient instance.
-    :param patch_bigquery_client: Fixture to patch BigQuery client.
-    :param cell_operations_service_with_mocks: Mocked CellOperationsService instance.
-    :param embedding_test_data: Embedding test data.
-    """
-    embeddings_chunk, _, _ = embedding_test_data
-    service = cell_operations_service_with_mocks
-
-    result = await service._CellOperationsService__get_knn_matches_for_chunk(
-        embeddings_chunk=embeddings_chunk, client=mock_matching_client
-    )
-
-    assert isinstance(result, MatchResult)
-    assert len(result.matches) == len(embeddings_chunk)
-
-    # Ensure `match` was called with the correct arguments
-    mock_matching_client.match.assert_awaited_once_with(queries=embeddings_chunk)
-
-
-@pytest.mark.asyncio
-async def test_get_knn_matches_from_embeddings(
+def test_get_knn_matches_from_embeddings(
     populate_db: None,
     patch_matching_client: None,
     patch_bigquery_client: None,
     mock_matching_client: mocks.MockMatchingClient,
     cell_operations_service_with_mocks: CellOperationsService,
-    embedding_test_data: tuple[np.ndarray, int, int],
     cas_model: models.CASModel,
 ):
     """
@@ -190,16 +103,15 @@ async def test_get_knn_matches_from_embeddings(
     :param cell_operations_service_with_mocks: Mocked CellOperationsService instance.
     :param cas_model: CASModel instance from the test database.
     """
-    # embeddings = np.random.rand(10, 64)  # A chunk of 5 embeddings, each of 64 dimensions
-    embeddings, _, _ = embedding_test_data
+    embeddings = np.random.rand(10, 32).astype(np.float32)
     service = cell_operations_service_with_mocks
-    result = await service.get_knn_matches_from_embeddings(embeddings=embeddings, model=cas_model)
+    result = service.get_knn_matches_from_embeddings(embeddings=embeddings, model=cas_model)
 
     assert isinstance(result, MatchResult)
     assert len(result.matches) == len(embeddings)
 
-    # Ensure `match` was called N times (depending on the input size as this is executed in batches under retryer)
-    assert mock_matching_client.match.await_count == math.ceil(len(embeddings) / settings.GET_MATCHES_CHUNK_SIZE)
+    # Ensure `match` was called exactly once with the full batch (no chunking)
+    mock_matching_client.match.assert_called_once_with(embeddings=embeddings)
 
 
 @pytest.mark.asyncio
@@ -234,6 +146,7 @@ async def test_annotate_cell_type_summary_statistics_strategy_with_activity_logg
     populate_db: None,
     patch_matching_client: None,
     patch_bigquery_client: None,
+    patch_cell_operations_dm: None,
     patch_starlette_context: None,
     db_session: Session,
     mock_valid_anndata: anndata.AnnData,
@@ -379,6 +292,7 @@ async def test_annotate_cell_type_ontology_aware_strategy_with_activity_logging(
     populate_db: None,
     patch_matching_client: None,
     patch_bigquery_client: None,
+    patch_cell_operations_dm: None,
     patch_starlette_context: None,
     patch_strategy_init_with_resource: Mock,
     mock_valid_anndata: anndata.AnnData,

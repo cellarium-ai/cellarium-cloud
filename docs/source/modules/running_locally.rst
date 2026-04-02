@@ -45,15 +45,3 @@ Testing and Linting
 
     make test
     make lint
-
-Vertex AI Access
-----------------
-
-Some compute flows depend on network access to Vertex AI Matching Engine. For local debugging in an environment that
-requires a bastion, authenticate with ``gcloud auth login`` and then create the tunnel:
-
-.. code-block:: shell
-
-    gcloud compute ssh --zone "us-central1-a" "bastion" --project "dsp-cell-annotation-service" -- -NL 10000:localhost:10000
-
-See :doc:`vertex_ai_matching_engine` for the broader Matching Engine background.

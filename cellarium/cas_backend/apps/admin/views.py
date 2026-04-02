@@ -14,8 +14,14 @@ from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_admin.model.template import EndpointLinkRowAction, LinkRowAction
 import typing_extensions as tx
 from werkzeug.exceptions import HTTPException
+from wtforms.validators import ValidationError
 
 from cellarium.cas_backend.apps.admin import basic_auth, db_session, flask_app
+from cellarium.cas_backend.apps.compute.vector_search.tiledb import (
+    DistanceMetric,
+    IndexType,
+    validate_tiledb_index,
+)
 from cellarium.cas_backend.core import auth, settings
 from cellarium.cas_backend.core.db import models, ops
 from cellarium.cas_backend.core.utils.email_utils import EmailSender
@@ -282,6 +288,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "schema_name",
         "is_default_model",
         "bq_dataset_name",
+        "cell_metadata_uri",
         "created_date",
     )
     column_descriptions = {
@@ -304,6 +311,10 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "bq_dataset_name": (
             "Bigquery dataset name that is used to store cell information which were used to train the model. "
         ),
+        "cell_metadata_uri": (
+            "GCS URI of the TileDB SOMA DataFrame containing cell metadata for this model's training data. "
+            "Format: gs://bucket-name/path/to/soma_dataframe. Set to gs://unknown until a real path is configured."
+        ),
         "created_date": "Datetime when this record has been created. Differs from when model was trained.",
     }
     column_editable_list = ("admin_use_only",)
@@ -316,6 +327,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "is_default_model",
         "admin_use_only",
         "bq_dataset_name",
+        "cell_metadata_uri",
         "created_date",
     )
     form_widget_args = {"created_date": {"disabled": True}, "is_default_model": {"disabled": True}}
@@ -332,29 +344,59 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         return redirect("/casmodel/")
 
 
-class CASMatchingEngineAdminView(CellariumCloudAdminModelView):
+class CASVectorIndexAdminView(CellariumCloudAdminModelView):
     column_list = (
         "index_name",
         "description",
         "embedding_dimension",
-        "endpoint_id",
-        "deployed_index_id",
         "num_neighbors",
+        "index_uri",
+        "index_type",
+        "distance_metric",
+        "model",
+    )
+    form_columns = (
+        "index_name",
+        "description",
+        "embedding_dimension",
+        "num_neighbors",
+        "index_uri",
+        "index_type",
+        "distance_metric",
+        "nprobe",
+        "l_search",
         "model",
     )
     column_descriptions = {
-        "index_name": (
-            "A name that is used to identify the index, must be unique, lowercase. "
-            "No spaces, must end with a character or number. \nExample: cas-pca-001-matching-engine-index."
-        ),
-        "description": "A more verbose description of the index, since the name is not always self-explanatory.",
-        "endpoint_id": "Endpoint ID that is used in GCP in Vertex AI",
-        "deployed_index_id": "Deployed Index ID that is used in GCP in Vertex AI",
-        "num_neighbors": "Number of neighbors that is used for an approximate neighbors search",
+        "index_name": "A unique name used to identify the vector index. Example: cas-pca-001-tiledb-index.",
+        "embedding_dimension": "Configured embedding dimension for the vector index.",
+        "num_neighbors": "Number of neighbors returned for each query.",
+        "index_uri": "TileDB index URI.",
+        "index_type": "TileDB index type. Supported values: FLAT, IVF_FLAT, VAMANA.",
+        "distance_metric": "Distance metric used when the index was built: cosine, l2, or dot_product.",
+        "nprobe": "Required for IVF_FLAT indexes. Must be empty otherwise.",
+        "l_search": "Required for VAMANA indexes. Must be empty otherwise.",
+    }
+    form_choices = {
+        "index_type": [(m.value, m.value) for m in IndexType],
+        "distance_metric": [(m.value, m.value) for m in DistanceMetric],
     }
     column_extra_row_actions = [
         LinkRowAction("glyphicon glyphicon-duplicate", "clone?id={row_id}"),
     ]
+
+    @tx.override
+    def on_model_change(self, form: BaseForm, model: models.CASVectorIndex, is_created: bool):
+        if model.num_neighbors <= 0:
+            raise ValidationError("num_neighbors must be greater than 0.")
+
+        if model.model is not None and model.embedding_dimension != model.model.embedding_dimension:
+            raise ValidationError("embedding_dimension must match the linked model embedding_dimension.")
+
+        try:
+            validate_tiledb_index(model)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
 
 
 def shorten_value_formatter(view, context, model, name) -> str:
@@ -438,11 +480,7 @@ admin = Admin(
 )
 admin.add_view(UserAdminView(models.User, db_session, name="User", category="Users"))
 admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel", category="ML Management"))
-admin.add_view(
-    CASMatchingEngineAdminView(
-        models.CASMatchingEngineIndex, db_session, name="MatchingEngine", category="ML Management"
-    )
-)
+admin.add_view(CASVectorIndexAdminView(models.CASVectorIndex, db_session, name="VectorIndex", category="ML Management"))
 admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category="Cell Data Management"))
 admin.add_view(
     CellFeatureInfoAdminView(models.FeatureInfo, db_session, name="CellFeature", category="Cell Data Management")

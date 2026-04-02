@@ -36,10 +36,10 @@ class QueryCellNeighborhoodOntologyAware(QueryCellNeighborhoodAbstract):
     total_neighbors_unrecognized: int = Field(example=5)
 
 
-QueryAnnotationAbstractType: TypeAlias = list[QueryCellNeighborhoodAbstract]
-QueryAnnotationOntologyAwareType: TypeAlias = list[QueryCellNeighborhoodOntologyAware]
-QueryAnnotationCellTypeSummaryStatisticsType: TypeAlias = list[QueryCellNeighborhoodCellTypeSummaryStatistics]
-QueryAnnotationType: TypeAlias = (
+QueryAnnotationAbstractType: TypeAlias = list[QueryCellNeighborhoodAbstract]  # noqa: UP040
+QueryAnnotationOntologyAwareType: TypeAlias = list[QueryCellNeighborhoodOntologyAware]  # noqa: UP040
+QueryAnnotationCellTypeSummaryStatisticsType: TypeAlias = list[QueryCellNeighborhoodCellTypeSummaryStatistics]  # noqa: UP040
+QueryAnnotationType: TypeAlias = (  # noqa: UP040
     list[QueryCellNeighborhoodOntologyAware] | list[QueryCellNeighborhoodCellTypeSummaryStatistics]
 )
 

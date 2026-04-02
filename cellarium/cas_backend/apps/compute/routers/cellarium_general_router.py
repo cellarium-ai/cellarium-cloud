@@ -1,16 +1,24 @@
+import typing as t
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 
-from cellarium.cas_backend.apps.compute import dependencies, schemas, services
+from cellarium.cas_backend.apps.compute import dependencies, schemas
+from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
+from cellarium.cas_backend.apps.compute.services.cellarium_general_service import CellariumGeneralService
 from cellarium.cas_backend.core import constants, settings
 from cellarium.cas_backend.core.db import models
+
+AuthUser = t.Annotated[models.User, Depends(dependencies.authenticate_user)]
+GeneralService = t.Annotated[CellariumGeneralService, Depends(dependencies.get_cellarium_general_service)]
+QuotaService = t.Annotated[CellQuotaService, Depends(dependencies.get_cell_quota_service)]
 
 cellarium_general_router = APIRouter(prefix="/cellarium-general")
 
 
 @cellarium_general_router.get("/application-info", response_model=schemas.ApplicationInfo)
 async def application_info(
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cellarium_general_service: GeneralService,
 ):
     """
     Get Cellarium CAS application info such as version, default feature schema name.
@@ -21,7 +29,7 @@ async def application_info(
 @cellarium_general_router.post("/validate-client-version", response_model=schemas.ClientVersionOutput)
 async def validate_client_version(
     client_version_info: schemas.ClientVersionInput,
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    cellarium_general_service: GeneralService,
 ):
     """
     Check whether the client version is new enough to work with the server
@@ -33,7 +41,7 @@ async def validate_client_version(
 
 
 @cellarium_general_router.get("/validate-token", response_model=schemas.UserInfo)
-async def validate_token(user: models.User = Depends(dependencies.authenticate_user)):
+async def validate_token(user: AuthUser):
     """
     Validate authorization token from `Bearer` header
 
@@ -55,8 +63,8 @@ async def feedback_answer(client_session_id: str, client_action_id: str):
 
 @cellarium_general_router.post("/feedback/opt-out", response_model=schemas.UserInfo)
 async def feedback_opt_out(
-    user: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    user: AuthUser,
+    cellarium_general_service: GeneralService,
 ):
     """
     Allow user to opt out of feedback requests
@@ -71,8 +79,8 @@ async def feedback_opt_out(
 
 @cellarium_general_router.get("/feature-schemas", response_model=list[schemas.FeatureSchemaInfo])
 async def get_feature_schemas(
-    _: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    _: AuthUser,
+    cellarium_general_service: GeneralService,
 ):
     """
     Get list of all Cellarium CAS feature schemas
@@ -85,8 +93,8 @@ async def get_feature_schemas(
 @cellarium_general_router.get("/feature-schema/{schema_name}", response_model=list[str])
 async def get_feature_schema_by(
     schema_name: str,
-    _: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    _: AuthUser,
+    cellarium_general_service: GeneralService,
 ):
     """
     Get a specific feature schema by its unique name
@@ -100,8 +108,8 @@ async def get_feature_schema_by(
 
 @cellarium_general_router.get("/list-models", response_model=list[schemas.CASModel])
 async def get_model_list(
-    user: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
+    user: AuthUser,
+    cellarium_general_service: GeneralService,
 ):
     """
     Get list of all Cellarium CAS models for a specific user based on their permissions.
@@ -113,8 +121,8 @@ async def get_model_list(
 
 @cellarium_general_router.get("/quota", response_model=schemas.UserQuota)
 async def get_user_quota(
-    user: models.User = Depends(dependencies.authenticate_user),
-    cell_quota_service: services.CellQuotaService = Depends(dependencies.get_cell_quota_service),
+    user: AuthUser,
+    cell_quota_service: QuotaService,
 ):
     """
     Get user quota information
@@ -127,9 +135,9 @@ async def get_user_quota(
 @cellarium_general_router.post("/increase-quota/{user_email}")
 async def increase_quota_for_user_by_email(
     user_email: str,
-    admin_user: models.User = Depends(dependencies.authenticate_user),
-    cellarium_general_service: services.CellariumGeneralService = Depends(dependencies.get_cellarium_general_service),
-    cell_quota_service: services.CellQuotaService = Depends(dependencies.get_cell_quota_service),
+    admin_user: AuthUser,
+    cellarium_general_service: GeneralService,
+    cell_quota_service: QuotaService,
 ):
     """
     Increase the lifetime cell quota for the user specified by user_email if their lifetime quota

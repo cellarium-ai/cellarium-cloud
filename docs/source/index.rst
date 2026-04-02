@@ -24,5 +24,4 @@ Operations Guides
    modules/deploying_in_cloud
    modules/cicd
    modules/secrets
-   modules/vertex_ai_matching_engine
    modules/changelog
