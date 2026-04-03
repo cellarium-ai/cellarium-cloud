@@ -100,6 +100,9 @@ class CellariumGeneralDataManager(BaseDataManager):
                 .options(
                     orm.joinedload(models.CASModel.cas_matching_engine),
                     orm.joinedload(models.CASModel.cas_vector_index),
+                    orm.joinedload(models.CASModel.cell_info_metadata).joinedload(
+                        models.CellInfoMetadata.ontological_columns
+                    ),
                 )
                 .filter_by(model_name=model_name)
                 .first()

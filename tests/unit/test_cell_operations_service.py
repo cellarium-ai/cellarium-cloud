@@ -265,11 +265,17 @@ def patch_strategy_init_with_resource(
 
     :param cell_ontology_resource_mock: Mocked ontology resource for the consensus strategy.
     """
-    patch_ref = (
+    strategy_patch_ref = (
         "cellarium.cas_backend.apps.compute.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
     )
+    ontology_resource_patch_ref = (
+        "cellarium.cas_backend.apps.compute.services.cell_operations_service.CellOntologyResource"
+    )
 
-    with patch(patch_ref, autospec=True) as mock_init:
+    with (
+        patch(strategy_patch_ref, autospec=True) as mock_init,
+        patch(ontology_resource_patch_ref, return_value=cell_ontology_resource_mock),
+    ):
         # Define a side effect that injects the mocked resource
         def init_side_effect(
             self,

@@ -102,6 +102,18 @@ def populate_db(
         email=constants.USER_EMAIL_WITHOUT_QUOTA,
         lifetime_cell_quota=constants.USER_LIFETIME_CELL_QUOTA_WITHOUT_QUOTA,
     )
+    # Add cell info metadata with ontological column
+    cell_info_metadata = models.CellInfoMetadata(
+        id=1,
+        name=constants.TEST_CELL_INFO_METADATA_NAME,
+        soma_dataframe_uri=constants.TEST_MODEL_CELL_METADATA_URI,
+    )
+    ontological_column = models.OntologicalColumn(
+        id=1,
+        cell_info_metadata=cell_info_metadata,
+        column_name="cell_type",
+        ontology_resource_uri=constants.TEST_CELL_TYPE_ONTOLOGY_RESOURCE_URI,
+    )
     # Add model
     cas_model = models.CASModel(
         id=1,
@@ -109,7 +121,7 @@ def populate_db(
         admin_use_only=constants.TEST_MODEL_ADMIN_USE_ONLY,
         model_file_path=constants.TEST_MODEL_FILE_PATH,
         embedding_dimension=constants.TEST_EMBEDDING_DIMENSION,
-        cell_metadata_uri=constants.TEST_MODEL_CELL_METADATA_URI,
+        cell_info_metadata=cell_info_metadata,
     )
     # Add index
     cas_matching_engine_index = models.CASMatchingEngineIndex(
@@ -172,6 +184,8 @@ def populate_db(
         [
             user_with_quota,
             user_without_quota,
+            cell_info_metadata,
+            ontological_column,
             cas_model,
             cas_matching_engine_index,
             cas_vector_index,

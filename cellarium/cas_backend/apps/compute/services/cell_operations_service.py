@@ -14,6 +14,7 @@ from cellarium.cas_backend.apps.compute import schemas, vector_search
 from cellarium.cas_backend.apps.compute.services import consensus_engine, exceptions
 from cellarium.cas_backend.apps.compute.services.authorization import Authorizer
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
+from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
 from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager, CellOperationsDataManager
 from cellarium.cas_backend.core.data_managers import exceptions as dm_exc
@@ -285,7 +286,7 @@ class CellOperationsService:
 
         strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm
-            or CellOperationsDataManager(cell_metadata_uri=model.cell_metadata_uri),
+            or CellOperationsDataManager(cell_metadata_uri=model.cell_info_metadata.soma_dataframe_uri),
         )
 
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
@@ -369,9 +370,18 @@ class CellOperationsService:
         query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         logger.info("Applying CellTypeOntologyAwareConsensusStrategy to the query results")
+        if not any(col.column_name == "cell_type" for col in model.cell_info_metadata.ontological_columns):
+            raise exceptions.InvalidInputError(
+                f"Model '{model.model_name}' does not have a configured ontology resource for 'cell_type'."
+            )
+        cell_type_column = next(
+            col for col in model.cell_info_metadata.ontological_columns if col.column_name == "cell_type"
+        )
+        cell_ontology_resource = CellOntologyResource(ontology_resource_uri=cell_type_column.ontology_resource_uri)
         strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm
-            or CellOperationsDataManager(cell_metadata_uri=model.cell_metadata_uri),
+            or CellOperationsDataManager(cell_metadata_uri=model.cell_info_metadata.soma_dataframe_uri),
+            cell_ontology_resource=cell_ontology_resource,
             prune_threshold=prune_threshold,
             weighting_prefactor=weighting_prefactor,
         )
