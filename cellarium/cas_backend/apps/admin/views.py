@@ -28,6 +28,9 @@ from cellarium.cas_backend.core.utils.email_utils import EmailSender
 
 email_sender = EmailSender(sendgrid_key=settings.SENDGRID_API_KEY, from_address=settings.FROM_ADDRESS)
 
+ML_MANAGEMENT_CATEGORY = "ML Management"
+CELL_DATA_MANAGEMENT_CATEGORY = "Cell Data Management"
+
 logger = logging.getLogger(__name__)
 
 
@@ -502,14 +505,20 @@ admin = Admin(
 )
 admin.add_view(UserAdminView(models.User, db_session, name="User", category="Users"))
 admin.add_view(
-    CellInfoMetadataAdminView(models.CellInfoMetadata, db_session, name="CellInfoMetadata", category="ML Management")
+    CellInfoMetadataAdminView(
+        models.CellInfoMetadata, db_session, name="CellInfoMetadata", category=ML_MANAGEMENT_CATEGORY
+    )
 )
-admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel", category="ML Management"))
-admin.add_view(CASVectorIndexAdminView(models.CASVectorIndex, db_session, name="VectorIndex", category="ML Management"))
-admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category="Cell Data Management"))
+admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel", category=ML_MANAGEMENT_CATEGORY))
 admin.add_view(
-    CellFeatureInfoAdminView(models.FeatureInfo, db_session, name="CellFeature", category="Cell Data Management")
+    CASVectorIndexAdminView(models.CASVectorIndex, db_session, name="VectorIndex", category=ML_MANAGEMENT_CATEGORY)
+)
+admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category=CELL_DATA_MANAGEMENT_CATEGORY))
+admin.add_view(
+    CellFeatureInfoAdminView(models.FeatureInfo, db_session, name="CellFeature", category=CELL_DATA_MANAGEMENT_CATEGORY)
 )
 admin.add_view(
-    CellIngestInfoAdminView(models.CellIngestInfo, db_session, name="CellIngestInfo", category="Cell Data Management")
+    CellIngestInfoAdminView(
+        models.CellIngestInfo, db_session, name="CellIngestInfo", category=CELL_DATA_MANAGEMENT_CATEGORY
+    )
 )
