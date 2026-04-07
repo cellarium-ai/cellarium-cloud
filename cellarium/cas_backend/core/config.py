@@ -23,7 +23,7 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = ENV_TYPE
-    APP_VERSION: str = "1.8.1"
+    APP_VERSION: str = "1.8.2"
     APP_ROOT: str = REPO_ROOT
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str | None = os.environ.get("PROJECT_BUCKET_NAME")
@@ -60,9 +60,6 @@ class AllEnvSettings(BaseSettings):
     UVICORN_WORKERS: int = 2
     MAX_CELL_IDS_PER_QUERY: int = 20_000  # Maximum number of cell IDs that can be queried at once
     # Consensus Engine
-    GCS_CELL_ONTOLOGY_RESOURCE_FILE: str = (
-        f"gs://{PROJECT_BUCKET_NAME}/consensus_engine/cell_ontology_resources_schema_5.json"
-    )
     # Auth
     JWT_HASHING_ALGORITHM: str = "HS256"
     JWT_DEFAULT_TOKEN_TTL: int = 60 * 60 * 24 * 180  # 180 days

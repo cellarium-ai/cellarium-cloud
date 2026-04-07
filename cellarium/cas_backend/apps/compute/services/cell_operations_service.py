@@ -14,6 +14,7 @@ from cellarium.cas_backend.apps.compute import schemas, vector_search
 from cellarium.cas_backend.apps.compute.services import consensus_engine, exceptions
 from cellarium.cas_backend.apps.compute.services.authorization import Authorizer
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
+from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
 from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager, CellOperationsDataManager
 from cellarium.cas_backend.core.data_managers import exceptions as dm_exc
@@ -39,7 +40,7 @@ class CellOperationsService:
         model_service: ModelInferenceService | None = None,
         authorizer: Authorizer | None = None,
     ):
-        self.cell_operations_dm = cell_operations_dm
+        self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
         self.cell_quota_service = cell_quota_service or CellQuotaService()
         self.model_service = model_service or ModelInferenceService()
@@ -284,8 +285,8 @@ class CellOperationsService:
         query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
-            cell_operations_dm=self.cell_operations_dm
-            or CellOperationsDataManager(cell_metadata_uri=model.cell_metadata_uri),
+            cell_operations_dm=self.cell_operations_dm,
+            cell_metadata_uri=model.cell_info_metadata.soma_dataframe_uri,
         )
 
         engine = consensus_engine.ConsensusEngine(strategy=strategy)
@@ -293,7 +294,13 @@ class CellOperationsService:
         return engine.summarize(query_ids=query_ids, knn_query=knn_response)
 
     async def annotate_cell_type_ontology_aware_strategy_with_activity_logging(
-        self, user: models.User, file: t.BinaryIO, model_name: str, prune_threshold: float, weighting_prefactor: float
+        self,
+        user: models.User,
+        file: t.BinaryIO,
+        model_name: str,
+        prune_threshold: float,
+        weighting_prefactor: float,
+        ontology_column_name: str,
     ) -> schemas.QueryAnnotationOntologyAwareType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
@@ -306,6 +313,7 @@ class CellOperationsService:
         :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
         :param prune_threshold: Prune threshold for the ontology-aware annotation strategy.
         :param weighting_prefactor: Distance exponential weighting prefactor.
+        :param ontology_column_name: Name of the ontological column to use for annotation.
 
         :return: JSON response with annotations.
 
@@ -327,6 +335,7 @@ class CellOperationsService:
                 model=model,
                 prune_threshold=prune_threshold,
                 weighting_prefactor=weighting_prefactor,
+                ontology_column_name=ontology_column_name,
             )
 
             self.cellarium_general_dm.log_user_activity(
@@ -352,26 +361,40 @@ class CellOperationsService:
             raise e
 
     async def __annotate_cell_type_ontology_aware_strategy(
-        self, adata: anndata.AnnData, model: models.CASModel, prune_threshold: float, weighting_prefactor: float
+        self,
+        adata: anndata.AnnData,
+        model: models.CASModel,
+        prune_threshold: float,
+        weighting_prefactor: float,
+        ontology_column_name: str,
     ) -> schemas.QueryAnnotationOntologyAwareType:
         """
         Annotate a single anndata file with Cellarium CAS. Input file should be validated and sanitized according to the
         model schema. Increment user cells processed counter after successful annotation.
 
-        :param user: User object used to increment user cells processed counter.
         :param adata: Object of :class:`anndata.AnnData` to annotate.
         :param model: Model to use for annotation. See `/list-models` endpoint for available models.
         :param prune_threshold: Prune threshold for the ontology-aware annotation strategy.
         :param weighting_prefactor: Distance exponential weighting prefactor.
+        :param ontology_column_name: Name of the ontological column to use for annotation.
 
         :return: JSON response with annotations.
         """
         query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         logger.info("Applying CellTypeOntologyAwareConsensusStrategy to the query results")
+        if not any(col.column_name == ontology_column_name for col in model.cell_info_metadata.ontological_columns):
+            raise exceptions.InvalidInputError(
+                f"Model '{model.model_name}' does not have a configured ontology resource for '{ontology_column_name}'."
+            )
+        ontology_column = next(
+            col for col in model.cell_info_metadata.ontological_columns if col.column_name == ontology_column_name
+        )
+        cell_ontology_resource = CellOntologyResource(ontology_resource_uri=ontology_column.ontology_resource_uri)
         strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
-            cell_operations_dm=self.cell_operations_dm
-            or CellOperationsDataManager(cell_metadata_uri=model.cell_metadata_uri),
+            cell_operations_dm=self.cell_operations_dm,
+            cell_metadata_uri=model.cell_info_metadata.soma_dataframe_uri,
+            cell_ontology_resource=cell_ontology_resource,
             prune_threshold=prune_threshold,
             weighting_prefactor=weighting_prefactor,
         )
@@ -419,32 +442,3 @@ class CellOperationsService:
             }
             for i in range(0, len(query_ids))
         ]
-
-    def get_cells_by_ids_for_user(
-        self, cell_ids: list[int], metadata_feature_names: list[str]
-    ) -> list[schemas.CellariumCellMetadata]:
-        """
-        Get cells by their ids from BigQuery `cas_cell_info` table.
-
-        :param user: User object to check permissions for
-        :param cell_ids: Cas cell indexes from BigQuery
-        :param metadata_feature_names: Metadata features to return from BigQuery `cas_cell_info` table
-
-        :return: List of dictionaries representing the query results.
-        """
-        for feature_name in metadata_feature_names:
-            if feature_name not in AVAILABLE_FIELDS_DICT:
-                raise exceptions.CellMetadataColumnDoesNotExist(
-                    f"Feature {feature_name} is not available for querying. "
-                    + f"Please specify any of the following: {', '.join(AVAILABLE_FIELDS_DICT)}."
-                )
-
-        if "cas_cell_index" not in metadata_feature_names:
-            metadata_feature_names.append("cas_cell_index")
-
-        try:
-            return self.cell_operations_dm.get_cell_metadata_by_ids(
-                cell_ids=cell_ids, metadata_feature_names=metadata_feature_names
-            )
-        except dm_exc.NotFound as e:
-            raise exceptions.InvalidInputError(str(e))

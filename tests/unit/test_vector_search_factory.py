@@ -9,12 +9,17 @@ from tests.unit.fixtures import constants
 
 
 def _build_model() -> models.CASModel:
+    cell_info_metadata = models.CellInfoMetadata(
+        id=1,
+        name=constants.TEST_CELL_INFO_METADATA_NAME,
+        soma_dataframe_uri=constants.TEST_MODEL_CELL_METADATA_URI,
+    )
     return models.CASModel(
         id=1,
         model_name=constants.TEST_MODEL_NAME,
         model_file_path=constants.TEST_MODEL_FILE_PATH,
         embedding_dimension=constants.TEST_EMBEDDING_DIMENSION,
-        cell_metadata_uri=constants.TEST_MODEL_CELL_METADATA_URI,
+        cell_info_metadata=cell_info_metadata,
     )
 
 

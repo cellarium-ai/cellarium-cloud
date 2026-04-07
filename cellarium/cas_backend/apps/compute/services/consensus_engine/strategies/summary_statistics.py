@@ -15,8 +15,9 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
 
     REQUIRED_CELL_INFO_FEATURE_NAMES = ["cas_cell_index", "cell_type"]
 
-    def __init__(self, cell_operations_dm: CellOperationsDataManager):
+    def __init__(self, cell_operations_dm: CellOperationsDataManager, cell_metadata_uri: str):
         self.cell_operations_dm = cell_operations_dm
+        self.cell_metadata_uri = cell_metadata_uri
 
     @staticmethod
     def calculate_cell_type_summary_stats_for_query_cell(
@@ -77,6 +78,7 @@ class CellTypeSummaryStatisticsConsensusStrategy(ConsensusStrategyInterface):
         """
         unique_neighbor_ids = knn_response.get_unique_ids()
         neighbors_metadata = self.cell_operations_dm.get_cell_metadata_by_ids(
+            cell_metadata_uri=self.cell_metadata_uri,
             cell_ids=unique_neighbor_ids,
             metadata_feature_names=self.REQUIRED_CELL_INFO_FEATURE_NAMES,
         )

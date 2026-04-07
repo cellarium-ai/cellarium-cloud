@@ -67,7 +67,7 @@ def patch_cell_operations_dm(
     avoiding real TileDB/GCS reads in unit tests.
     """
 
-    def _mock_get(self, cell_ids: list[int], metadata_feature_names: list[str]):
+    def _mock_get(self, cell_metadata_uri: str, cell_ids: list[int], metadata_feature_names: list[str]):
         id_set = set(cell_ids)
         return [c for c in cell_info_data if c.cas_cell_index in id_set]
 

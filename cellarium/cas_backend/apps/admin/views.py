@@ -28,6 +28,9 @@ from cellarium.cas_backend.core.utils.email_utils import EmailSender
 
 email_sender = EmailSender(sendgrid_key=settings.SENDGRID_API_KEY, from_address=settings.FROM_ADDRESS)
 
+ML_MANAGEMENT_CATEGORY = "ML Management"
+CELL_DATA_MANAGEMENT_CATEGORY = "Cell Data Management"
+
 logger = logging.getLogger(__name__)
 
 
@@ -274,6 +277,28 @@ class UserAdminView(CellariumCloudAdminModelView):
         return send_file(temp, as_attachment=True, download_name=temp.name)
 
 
+class CellInfoMetadataAdminView(CellariumCloudAdminModelView):
+    column_list = ("name", "soma_dataframe_uri", "created_date")
+    column_descriptions = {
+        "name": "Human-readable label for this metadata configuration (e.g. '50M Dataset 2024').",
+        "soma_dataframe_uri": (
+            "GCS URI of the TileDB SOMA DataFrame containing cell metadata. "
+            "Format: gs://bucket-name/path/to/soma_dataframe."
+        ),
+    }
+    form_columns = ("name", "soma_dataframe_uri", "created_date")
+    form_widget_args = {"created_date": {"disabled": True}}
+    inline_models = [
+        (
+            models.OntologicalColumn,
+            {
+                "form_label": "Ontological Columns",
+                "form_excluded_columns": ["cell_info_metadata_id", "cell_info_metadata"],
+            },
+        )
+    ]
+
+
 class CASModelAdminView(CellariumCloudAdminModelView):
     column_extra_row_actions = [
         EndpointLinkRowAction("glyphicon glyphicon-chevron-up", ".set_default_model"),
@@ -288,7 +313,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "schema_name",
         "is_default_model",
         "bq_dataset_name",
-        "cell_metadata_uri",
+        "cell_info_metadata",
         "created_date",
     )
     column_descriptions = {
@@ -311,9 +336,9 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "bq_dataset_name": (
             "Bigquery dataset name that is used to store cell information which were used to train the model. "
         ),
-        "cell_metadata_uri": (
-            "GCS URI of the TileDB SOMA DataFrame containing cell metadata for this model's training data. "
-            "Format: gs://bucket-name/path/to/soma_dataframe. Set to gs://unknown until a real path is configured."
+        "cell_info_metadata": (
+            "Cell info metadata configuration holding the SOMA DataFrame URI and ontological column definitions "
+            "for this model. Manage metadata records and their ontological columns in the CellInfoMetadata view."
         ),
         "created_date": "Datetime when this record has been created. Differs from when model was trained.",
     }
@@ -327,7 +352,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "is_default_model",
         "admin_use_only",
         "bq_dataset_name",
-        "cell_metadata_uri",
+        "cell_info_metadata",
         "created_date",
     )
     form_widget_args = {"created_date": {"disabled": True}, "is_default_model": {"disabled": True}}
@@ -479,12 +504,21 @@ admin = Admin(
     index_view=CellariumCloudAdminIndexView(url="/", template="admin/main_page.html"),
 )
 admin.add_view(UserAdminView(models.User, db_session, name="User", category="Users"))
-admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel", category="ML Management"))
-admin.add_view(CASVectorIndexAdminView(models.CASVectorIndex, db_session, name="VectorIndex", category="ML Management"))
-admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category="Cell Data Management"))
 admin.add_view(
-    CellFeatureInfoAdminView(models.FeatureInfo, db_session, name="CellFeature", category="Cell Data Management")
+    CellInfoMetadataAdminView(
+        models.CellInfoMetadata, db_session, name="CellInfoMetadata", category=ML_MANAGEMENT_CATEGORY
+    )
+)
+admin.add_view(CASModelAdminView(models.CASModel, db_session, name="CASModel", category=ML_MANAGEMENT_CATEGORY))
+admin.add_view(
+    CASVectorIndexAdminView(models.CASVectorIndex, db_session, name="VectorIndex", category=ML_MANAGEMENT_CATEGORY)
+)
+admin.add_view(CellInfoAdminView(models.CellInfo, db_session, name="CellInfo", category=CELL_DATA_MANAGEMENT_CATEGORY))
+admin.add_view(
+    CellFeatureInfoAdminView(models.FeatureInfo, db_session, name="CellFeature", category=CELL_DATA_MANAGEMENT_CATEGORY)
 )
 admin.add_view(
-    CellIngestInfoAdminView(models.CellIngestInfo, db_session, name="CellIngestInfo", category="Cell Data Management")
+    CellIngestInfoAdminView(
+        models.CellIngestInfo, db_session, name="CellIngestInfo", category=CELL_DATA_MANAGEMENT_CATEGORY
+    )
 )

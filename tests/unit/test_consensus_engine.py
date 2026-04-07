@@ -103,6 +103,7 @@ def consensus_engine_ontology_aware_mock(
         prune_threshold=0.1,
         weighting_prefactor=1.0,
         cell_ontology_resource=cell_ontology_resource_mock,
+        cell_metadata_uri="gs://mock-bucket/mock-soma",
         cell_operations_dm=cell_operations_dm_mock,
     )
     return consensus_engine.ConsensusEngine(strategy=strategy)
@@ -119,7 +120,10 @@ def consensus_engine_summary_stats_mock(
     :param cell_operations_dm_mock: A fixture providing a mocked `CellOperationsDataManager` instance.
     :return: instance of :class:`consensus_engine.ConsensusEngine`
     """
-    strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(cell_operations_dm=cell_operations_dm_mock)
+    strategy = consensus_engine.CellTypeSummaryStatisticsConsensusStrategy(
+        cell_operations_dm=cell_operations_dm_mock,
+        cell_metadata_uri="gs://mock-bucket/mock-soma",
+    )
     return consensus_engine.ConsensusEngine(strategy=strategy)
 
 

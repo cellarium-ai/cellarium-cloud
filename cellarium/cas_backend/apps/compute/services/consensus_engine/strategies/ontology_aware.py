@@ -7,7 +7,6 @@ from smart_open import open
 from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.base import ConsensusStrategyInterface
 from cellarium.cas_backend.apps.compute.vector_search import MatchResult
-from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.data_managers import CellOperationsDataManager
 
 
@@ -24,9 +23,17 @@ class CellOntologyResource:
             provided dictionary.
     """
 
-    def __init__(self, cell_ontology_resource_dict: dict[str, t.Any] | None = None):
+    def __init__(
+        self,
+        ontology_resource_uri: str | None = None,
+        cell_ontology_resource_dict: dict[str, t.Any] | None = None,
+    ):
         if cell_ontology_resource_dict is None:
-            with open(settings.GCS_CELL_ONTOLOGY_RESOURCE_FILE, "rb") as f:
+            if ontology_resource_uri is None:
+                raise ValueError(
+                    "`ontology_resource_uri` must be provided when `cell_ontology_resource_dict` is not given"
+                )
+            with open(ontology_resource_uri, "rb") as f:
                 cell_ontology_resource_dict = json.loads(f.read())
 
         if "ancestors_dictionary" not in cell_ontology_resource_dict:
@@ -59,6 +66,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
     :param cell_ontology_resource: Cell ontology resource object.
     :param cell_operations_dm: Cell operations data manager object.
     :param weighting_prefactor: Distance exponential weighting prefactor.
+    :param cell_metadata_uri: GCS URI pointing to the TileDB SOMA DataFrame for this model's cell metadata.
     """
 
     REQUIRED_CELL_INFO_FEATURE_NAMES = ["cas_cell_index", "cell_type", "cell_type_ontology_term_id"]
@@ -67,11 +75,13 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         self,
         prune_threshold: float,
         weighting_prefactor: float,
-        cell_ontology_resource: CellOntologyResource | None = None,
+        cell_ontology_resource: CellOntologyResource,
+        cell_metadata_uri: str,
         cell_operations_dm: CellOperationsDataManager | None = None,
     ):
-        self.cell_ontology_resource = cell_ontology_resource or CellOntologyResource()
+        self.cell_ontology_resource = cell_ontology_resource
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
+        self.cell_metadata_uri = cell_metadata_uri
         self.prune_threshold = prune_threshold
         self.weighting_prefactor = weighting_prefactor
 
@@ -160,6 +170,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         """
         unique_neighbor_ids = knn_query.get_unique_ids()
         neighbors_metadata = self.cell_operations_dm.get_cell_metadata_by_ids(
+            cell_metadata_uri=self.cell_metadata_uri,
             cell_ids=list(unique_neighbor_ids),
             metadata_feature_names=self.REQUIRED_CELL_INFO_FEATURE_NAMES,
         )
