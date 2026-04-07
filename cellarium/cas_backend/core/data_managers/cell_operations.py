@@ -13,21 +13,16 @@ class CellOperationsDataManager:
     Run scale horizontally without a centralised DB connection limit.
     """
 
-    def __init__(self, cell_metadata_uri: str) -> None:
-        """
-        :param cell_metadata_uri: GCS URI pointing to the TileDB SOMA DataFrame for this model's cell metadata.
-            Format: ``gs://bucket-name/path/to/soma_dataframe``.
-        """
-        self.cell_metadata_uri = cell_metadata_uri
-
     def get_cell_metadata_by_ids(
         self,
+        cell_metadata_uri: str,
         cell_ids: list[int],
         metadata_feature_names: list[str],
     ) -> list[schemas.CellariumCellMetadata]:
         """
         Get cell metadata by CAS cell IDs from the SOMA DataFrame, maintaining the order of ``cell_ids``.
 
+        :param cell_metadata_uri: GCS URI pointing to the TileDB SOMA DataFrame for this model's cell metadata.
         :param cell_ids: CAS cell IDs to retrieve metadata for.
         :param metadata_feature_names: Column names to retrieve from the SOMA DataFrame.  Must be a subset
             of the fields defined on :class:`~cellarium.cas_backend.apps.compute.schemas.CellariumCellMetadata`.
@@ -47,7 +42,7 @@ class CellOperationsDataManager:
         columns_to_read = [col for col in metadata_feature_names if col != "cas_cell_index"]
         soma_columns_to_read = ["soma_joinid"] + columns_to_read
 
-        with tiledbsoma.open(self.cell_metadata_uri) as soma_df:
+        with tiledbsoma.open(cell_metadata_uri) as soma_df:
             result_table = soma_df.read(
                 coords=(cell_ids,),
                 column_names=soma_columns_to_read,

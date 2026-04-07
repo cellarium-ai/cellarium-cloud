@@ -83,6 +83,7 @@ async def annotate_cell_type_ontology_aware_strategy(
     model_name: str = Form(),
     prune_threshold: float = Form(),
     weighting_prefactor: float = Form(),
+    ontology_column_name: str = Form(default="cell_type"),
 ):
     """
     Annotate a single anndata file with Cellarium CAS using the cell type statistics strategy. Input file should be
@@ -93,6 +94,8 @@ async def annotate_cell_type_ontology_aware_strategy(
     :param request_user: Authorized user object obtained  by token from `Bearer` header.
     :param prune_threshold: Prune threshold. Threshold for pruning the ontology graph in the response.
     :param weighting_prefactor: Distance exponential weighting prefactor.
+    :param ontology_column_name: Name of the ontological column to use for annotation (e.g. ``cell_type``, ``disease``).
+        Defaults to ``cell_type``.
     :param cell_operations_service: Service controller with domain logic responsible for cell operations
 
     :return: JSON response with annotations.
@@ -104,6 +107,7 @@ async def annotate_cell_type_ontology_aware_strategy(
         model_name=model_name,
         prune_threshold=prune_threshold,
         weighting_prefactor=weighting_prefactor,
+        ontology_column_name=ontology_column_name,
     )
 
 
@@ -136,19 +140,3 @@ async def nearest_neighbor_search(
     that are nearest neighbors to the query cell.
     """
     return await cell_operations_service.search_adata_file(file=file.file, model_name=model_name, user=user)
-
-
-@cell_operations_router.post(path="/query-cells-by-ids", response_model=list[schemas.CellariumCellMetadata])
-def get_cells_by_ids(
-    item: schemas.CellariumCellByIdsInput,
-    _: AuthUser,
-    cell_operations_service: CellOpsService,
-):
-    """
-    Get cells by their ids from a single anndata file with Cellarium CAS. Input file should be validated and sanitized
-    according to the model schema.
-    """
-    return cell_operations_service.get_cells_by_ids_for_user(
-        cell_ids=item.cas_cell_ids,
-        metadata_feature_names=item.metadata_feature_names,
-    )

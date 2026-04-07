@@ -282,11 +282,13 @@ def patch_strategy_init_with_resource(
             prune_threshold: float,
             weighting_prefactor: float,
             cell_ontology_resource=None,
+            cell_metadata_uri=None,
             cell_operations_dm=None,
         ):
             self.prune_threshold = prune_threshold
             self.weighting_prefactor = weighting_prefactor
             self.cell_ontology_resource = cell_ontology_resource_mock
+            self.cell_metadata_uri = cell_metadata_uri
             self.cell_operations_dm = cell_operations_dm
 
         mock_init.side_effect = init_side_effect
@@ -338,6 +340,7 @@ async def test_annotate_cell_type_ontology_aware_strategy_with_activity_logging(
         model_name=cas_model.model_name,
         prune_threshold=0.1,
         weighting_prefactor=1.0,
+        ontology_column_name="cell_type",
     )
 
     # Validate the response has been generated correctly

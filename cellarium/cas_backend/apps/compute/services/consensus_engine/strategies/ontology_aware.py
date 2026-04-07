@@ -66,6 +66,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
     :param cell_ontology_resource: Cell ontology resource object.
     :param cell_operations_dm: Cell operations data manager object.
     :param weighting_prefactor: Distance exponential weighting prefactor.
+    :param cell_metadata_uri: GCS URI pointing to the TileDB SOMA DataFrame for this model's cell metadata.
     """
 
     REQUIRED_CELL_INFO_FEATURE_NAMES = ["cas_cell_index", "cell_type", "cell_type_ontology_term_id"]
@@ -75,10 +76,12 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         prune_threshold: float,
         weighting_prefactor: float,
         cell_ontology_resource: CellOntologyResource,
+        cell_metadata_uri: str,
         cell_operations_dm: CellOperationsDataManager | None = None,
     ):
         self.cell_ontology_resource = cell_ontology_resource
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
+        self.cell_metadata_uri = cell_metadata_uri
         self.prune_threshold = prune_threshold
         self.weighting_prefactor = weighting_prefactor
 
@@ -167,6 +170,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         """
         unique_neighbor_ids = knn_query.get_unique_ids()
         neighbors_metadata = self.cell_operations_dm.get_cell_metadata_by_ids(
+            cell_metadata_uri=self.cell_metadata_uri,
             cell_ids=list(unique_neighbor_ids),
             metadata_feature_names=self.REQUIRED_CELL_INFO_FEATURE_NAMES,
         )
