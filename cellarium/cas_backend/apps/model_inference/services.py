@@ -10,6 +10,7 @@ from cellarium.cas_backend.apps.model_inference import exceptions
 from cellarium.cas_backend.core.config import settings
 from cellarium.cas_backend.core.db import models
 from cellarium.ml import CellariumAnnDataDataModule, CellariumModule
+from cellarium.ml.utilities.data import AnnDataField, densify
 
 
 class ModelInferenceService:
@@ -27,9 +28,9 @@ class ModelInferenceService:
         """
         return f"gs://{settings.PROJECT_BUCKET_NAME}/{model_checkpoint_file_path}"
 
-    @staticmethod
+    @classmethod
     @cache
-    def _get_model_checkpoint_file(model_file_path: str) -> t.BinaryIO:
+    def _get_model_checkpoint_file(cls, model_file_path: str) -> t.BinaryIO:
         """
         Get model checkpoint from either local or GCS and load it using CellariumModule.
 
@@ -37,14 +38,14 @@ class ModelInferenceService:
 
         :return: CellariumModule object
         """
-        model_checkpoint_path = ModelInferenceService._get_model_checkpoint_path(model_file_path)
+        model_checkpoint_path = cls._get_model_checkpoint_path(model_file_path)
 
         with open(model_checkpoint_path, "rb") as model_checkpoint_file:
             return BytesIO(model_checkpoint_file.read())
 
-    @staticmethod
+    @classmethod
     @cache
-    def _load_module_from_checkpoint(model_file_path: str) -> CellariumModule:
+    def _load_module_from_checkpoint(cls, model_file_path: str) -> CellariumModule:
         """
         Load CellariumModule from checkpoint file.
 
@@ -52,7 +53,7 @@ class ModelInferenceService:
 
         :return: CellariumModule object
         """
-        checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model_file_path)
+        checkpoint_file = cls._get_model_checkpoint_file(model_file_path)
 
         return CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
 
@@ -72,6 +73,28 @@ class ModelInferenceService:
             "module_cache_info": module_cache_info,
         }
 
+    @staticmethod
+    def _create_cellarium_data_module(adata: anndata.AnnData) -> CellariumAnnDataDataModule:
+        """
+        Create CellariumAnnDataDataModule from anndata object that is ready to be used for model inference.
+
+        :param adata: Anndata object
+
+        :return: CellariumAnnDataDataModule
+        """
+        data_module = CellariumAnnDataDataModule(
+            dadc=adata,
+            batch_keys={
+                "x_ng": AnnDataField(attr="X", convert_fn=densify),
+                "var_names_g": AnnDataField(attr="var_names"),
+                "total_mrna_umis_n": AnnDataField(attr="obs", key="total_mrna_umis"),
+            },
+            batch_size=len(adata),
+            shuffle=False,
+        )
+        data_module.setup(stage="predict")
+        return data_module
+
     def _get_output_from_model(self, model: models.CASModel, adata: anndata.AnnData) -> tuple[np.ndarray, list[str]]:
         """
         Get output from cellarium-ml model that predicts embeddings given an input adata.
@@ -83,12 +106,7 @@ class ModelInferenceService:
         """
         cellarium_module = ModelInferenceService._load_module_from_checkpoint(model.model_file_path)
 
-        cellarium_checkpoint_file = ModelInferenceService._get_model_checkpoint_file(model.model_file_path)
-        cellarium_checkpoint_file.seek(0)
-        cellarium_data_module = CellariumAnnDataDataModule.load_from_checkpoint(
-            cellarium_checkpoint_file, dadc=adata, batch_size=adata.n_obs, num_workers=0
-        )
-        cellarium_data_module.setup(stage="predict")
+        cellarium_data_module = self._create_cellarium_data_module(adata=adata)
         batch = next(iter(cellarium_data_module.predict_dataloader()))
 
         cellarium_output_dict = cellarium_module(batch)
