@@ -24,6 +24,7 @@ class OntologicalColumn(db.Base):
     cell_info_metadata = relationship(
         "CellInfoMetadata", backref=backref("ontological_columns", uselist=True, cascade="all, delete-orphan")
     )
+    ontology_resource_name = sa.Column(sa.String(255), unique=True, nullable=False)
     column_name = sa.Column(sa.String(255), nullable=False)
     ontology_resource_uri = sa.Column(sa.String(1023), nullable=False)
     description = sa.Column(sa.Text, nullable=True)

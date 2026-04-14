@@ -2,6 +2,7 @@ from packaging.version import Version
 
 from cellarium.cas_backend.apps.compute import schemas
 from cellarium.cas_backend.apps.compute.services import exceptions
+from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 from cellarium.cas_backend.core import constants
 from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager
 from cellarium.cas_backend.core.db import models
@@ -82,3 +83,21 @@ class CellariumGeneralService:
         :return: User object
         """
         return self.cellarium_general_dm.get_user_by_email(user_email=user_email)
+
+    def get_cell_ontology_resource(self, name: str) -> schemas.CellOntologyResourceResponse:
+        """
+        Load and return a precomputed cell ontology resource by its unique name.
+
+        :param name: Unique name of the ontological column
+
+        :return: Precomputed cell ontology resource response
+        """
+        column = self.cellarium_general_dm.get_ontological_column_by_name(ontology_resource_name=name)
+        resource = CellOntologyResource(ontology_resource_uri=column.ontology_resource_uri)
+        return schemas.CellOntologyResourceResponse(
+            cl_names=resource.cl_names,
+            cell_ontology_term_id_to_cell_type=resource.ontology_term_id_to_name_dict,
+            children_dictionary=resource.children_dictionary,
+            shortest_path_lengths_from_cell_root=resource.shortest_path_lengths_from_cell_root,
+            longest_path_lengths_from_cell_root=resource.longest_path_lengths_from_cell_root,
+        )

@@ -149,3 +149,21 @@ class CellariumGeneralDataManager(BaseDataManager):
 
         with self.system_data_db_session_maker.begin() as session:
             session.add(user_activity)
+
+    def get_ontological_column_by_name(self, ontology_resource_name: str) -> models.OntologicalColumn:
+        """
+        Retrieve an ontological column by its unique ontology_resource_name.
+
+        :param ontology_resource_name: Unique name of the ontological column
+
+        :raises: NotFound if no ontological column with this name exists
+
+        :return: OntologicalColumn object
+        """
+        with self.system_data_db_session_maker() as session:
+            column = (
+                session.query(models.OntologicalColumn).filter_by(ontology_resource_name=ontology_resource_name).first()
+            )
+            if column is None:
+                raise exceptions.NotFound(f"Ontological column with name '{ontology_resource_name}' not found")
+            return column

@@ -51,3 +51,11 @@ class ClientVersionInput(BaseModel):
 class ClientVersionOutput(BaseModel):
     is_valid: bool
     min_version: str
+
+
+class CellOntologyResourceResponse(BaseModel):
+    cl_names: list[str]
+    cell_ontology_term_id_to_cell_type: dict[str, str]
+    children_dictionary: dict[str, list[str]]
+    shortest_path_lengths_from_cell_root: dict[str, int]
+    longest_path_lengths_from_cell_root: dict[str, int]

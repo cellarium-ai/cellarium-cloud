@@ -45,6 +45,17 @@ class CellOntologyResource:
 
         self.ancestors_dictionary = cell_ontology_resource_dict["ancestors_dictionary"]
         self.ontology_term_id_to_name_dict = cell_ontology_resource_dict["cell_ontology_term_id_to_cell_type"]
+        self.children_dictionary: dict[str, list[str]] | None = cell_ontology_resource_dict.get("children_dictionary")
+        self.shortest_path_lengths_from_cell_root: dict[str, int] | None = cell_ontology_resource_dict.get(
+            "shortest_path_lengths_from_cell_root"
+        )
+        self.longest_path_lengths_from_cell_root: dict[str, int] | None = cell_ontology_resource_dict.get(
+            "longest_path_lengths_from_cell_root"
+        )
+
+    @property
+    def cl_names(self) -> list[str]:
+        return sorted(self.ontology_term_id_to_name_dict.keys())
 
 
 class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):

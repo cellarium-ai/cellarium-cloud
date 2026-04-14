@@ -1,7 +1,7 @@
 import typing as t
 
 from fastapi import APIRouter, Depends
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from cellarium.cas_backend.apps.compute import dependencies, schemas
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
@@ -147,3 +147,26 @@ async def increase_quota_for_user_by_email(
     """
     user_for_increase = cellarium_general_service.get_user_by_email(user_email=user_email)
     cell_quota_service.increase_quota(admin_user=admin_user, user_for_increase=user_for_increase)
+
+
+@cellarium_general_router.get("/cell-ontology-resource/{name}", response_model=schemas.CellOntologyResourceResponse)
+async def get_cell_ontology_resource(
+    name: str,
+    _: AuthUser,
+    cellarium_general_service: GeneralService,
+):
+    """
+    Get a precomputed cell ontology resource by its unique name.
+
+    Returns precomputed graph-derived fields so the client can skip building the ontology graph locally.
+
+    :param name: Unique name of the ontological column resource
+
+    :return: Precomputed cell ontology resource with cl_names, term-to-type mapping,
+        children dictionary, shortest and longest path lengths from root
+    """
+    result = cellarium_general_service.get_cell_ontology_resource(name=name)
+    return JSONResponse(
+        content=result.model_dump(),
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
