@@ -85,6 +85,7 @@ class CASVectorIndex(db.Base):
     distance_metric = sa.Column(sa.String(255), nullable=False)
     nprobe = sa.Column(sa.Integer, nullable=True)
     l_search = sa.Column(sa.Integer, nullable=True)
+    memory_budget = sa.Column(sa.Integer, nullable=True)
     model_id = sa.Column(sa.Integer, sa.ForeignKey(f"{CASModel.__tablename__}.id"), nullable=False, unique=True)
     model = relationship("CASModel", backref=backref("cas_vector_index", uselist=False))
 

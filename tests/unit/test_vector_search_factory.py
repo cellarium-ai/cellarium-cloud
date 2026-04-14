@@ -35,6 +35,7 @@ def _build_vector_index(**overrides) -> models.CASVectorIndex:
         "distance_metric": constants.TEST_VECTOR_DISTANCE_METRIC,
         "nprobe": constants.TEST_VECTOR_INDEX_NPROBE,
         "l_search": constants.TEST_VECTOR_INDEX_L_SEARCH,
+        "memory_budget": None,
     }
     payload.update(overrides)
     return models.CASVectorIndex(**payload)

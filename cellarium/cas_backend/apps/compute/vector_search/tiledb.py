@@ -33,6 +33,7 @@ class TileDBIndexConfig:
     distance_metric: DistanceMetric
     nprobe: int | None
     l_search: int | None
+    memory_budget: int | None
 
 
 def _get_index_class(index_type: IndexType):
@@ -83,15 +84,19 @@ def validate_tiledb_index(index: models.CASVectorIndex) -> TileDBIndexConfig:
         distance_metric=distance_metric,
         nprobe=index.nprobe,
         l_search=index.l_search,
+        memory_budget=index.memory_budget,
     )
 
 
-def _get_cached_index(index_uri: str, index_type: str):
+def _get_cached_index(index_uri: str, index_type: str, memory_budget: int | None):
     if index_uri in _INDEX_CACHE:
         return _INDEX_CACHE[index_uri]
 
     index_class = _get_index_class(index_type)
-    index_obj = index_class(uri=index_uri)
+    kwargs: dict[str, t.Any] = {"uri": index_uri}
+    if memory_budget is not None:
+        kwargs["memory_budget"] = memory_budget
+    index_obj = index_class(**kwargs)
 
     _INDEX_CACHE[index_uri] = index_obj
     return index_obj
@@ -140,6 +145,7 @@ class TileDBVectorSearch:
         self.index_obj = _get_cached_index(
             index_uri=self.index_config.index_uri,
             index_type=self.index_config.index_type,
+            memory_budget=self.index_config.memory_budget,
         )
 
         dimensions = self.index_obj.get_dimensions()
