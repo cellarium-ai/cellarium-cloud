@@ -16,11 +16,7 @@ help:
 
 # Export requirements.txt.lock for production (Docker, etc.)
 requirements:
-	poetry export -f requirements.txt --output deploy/requirements.txt.lock --without-hashes --without dev,test,docs
-
-# Export requirements.txt.lock for Docker builds
-docker-requirements:
-	poetry export -f requirements.txt --output deploy/requirements.txt.lock --without-hashes --without dev,docs
+	poetry export -f requirements.txt --output deploy/requirements.txt.lock --without-hashes --without dev,test,docs,scripts
 
 # Install Poetry
 setup:

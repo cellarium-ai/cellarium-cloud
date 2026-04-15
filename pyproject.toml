@@ -58,11 +58,17 @@ packaging = "24.2"
 pydantic = "2.8.2"
 pydantic-settings = "2.3.4"
 numpy = "1.26.4"
-owlready2 = "0.46"
-networkx = "3.3"
 setuptools = "<82"
 tiledb-vector-search = "0.16.0"
 tiledbsoma = ">=2.3.0,<2.4.0"
+
+[tool.poetry.group.scripts]
+optional = true
+
+[tool.poetry.group.scripts.dependencies]
+owlready2 = "0.46"
+networkx = "3.3"
+click = ">=8.0.0"
 
 [tool.poetry.group.dev.dependencies]
 wheel = "*"

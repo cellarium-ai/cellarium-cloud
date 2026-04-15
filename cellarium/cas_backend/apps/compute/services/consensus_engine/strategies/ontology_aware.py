@@ -127,8 +127,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         scores_dict = dict.fromkeys(self.cell_ontology_resource.ancestors_dictionary.keys(), 0)
 
         for neighbor_metadata, weight in zip(neighbor_metadata, weights, strict=False):
-            # Cell Ontology IDs have the formats: CL:0000000 (in our database) and CL_0000000 (in the ontology graph)
-            neighbor_cell_type_ontology_id = neighbor_metadata.cell_type_ontology_term_id.replace(":", "_")
+            neighbor_cell_type_ontology_id = neighbor_metadata.cell_type_ontology_term_id
 
             total_weight += weight
             total_neighbors += 1
