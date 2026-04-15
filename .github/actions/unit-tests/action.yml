@@ -19,7 +19,7 @@ runs:
       shell: bash
 
     - name: Install Dependencies
-      run: poetry install --with dev,test
+      run: poetry install --with dev,test,scripts
       shell: bash
 
     - name: Run Linting
