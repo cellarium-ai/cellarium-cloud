@@ -390,6 +390,7 @@ class CASVectorIndexAdminView(CellariumCloudAdminModelView):
         "distance_metric",
         "nprobe",
         "l_search",
+        "memory_budget",
         "model",
     )
     column_descriptions = {
@@ -401,6 +402,9 @@ class CASVectorIndexAdminView(CellariumCloudAdminModelView):
         "distance_metric": "Distance metric used when the index was built: cosine, l2, or dot_product.",
         "nprobe": "Required for IVF_FLAT indexes. Must be empty otherwise.",
         "l_search": "Required for VAMANA indexes. Must be empty otherwise.",
+        "memory_budget": (
+            "Optional memory budget in bytes for loading the TileDB index. Leave empty to use the TileDB default."
+        ),
     }
     form_choices = {
         "index_type": [(m.value, m.value) for m in IndexType],

@@ -11,8 +11,9 @@ from tests.unit.fixtures import constants
 
 
 class FakeIVFFlatIndex:
-    def __init__(self, uri):
+    def __init__(self, uri, **kwargs):
         self.uri = uri
+        self.init_kwargs = kwargs
         self.query_calls = []
 
     def get_dimensions(self):
@@ -44,6 +45,7 @@ def _build_vector_index(**overrides) -> models.CASVectorIndex:
         "distance_metric": constants.TEST_VECTOR_DISTANCE_METRIC,
         "nprobe": constants.TEST_VECTOR_INDEX_NPROBE,
         "l_search": constants.TEST_VECTOR_INDEX_L_SEARCH,
+        "memory_budget": None,
     }
     payload.update(overrides)
     return models.CASVectorIndex(**payload)
@@ -103,3 +105,25 @@ def test_match_raises_for_query_dimension_mismatch(monkeypatch: pytest.MonkeyPat
 
     with pytest.raises(VectorSearchConfigurationError, match="Embedding dimension"):
         client.match(embeddings=np.array([[1.0, 2.0, 3.0]], dtype=np.float32))
+
+
+def test_memory_budget_none_does_not_pass_kwarg(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
+        FakeIVFFlatIndex,
+    )
+
+    client = TileDBVectorSearch(index=_build_vector_index(memory_budget=None))
+
+    assert "memory_budget" not in client.index_obj.init_kwargs
+
+
+def test_memory_budget_provided_passes_kwarg(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
+        FakeIVFFlatIndex,
+    )
+
+    client = TileDBVectorSearch(index=_build_vector_index(memory_budget=4_000_000))
+
+    assert client.index_obj.init_kwargs["memory_budget"] == 4_000_000
