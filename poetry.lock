@@ -416,14 +416,14 @@ redis = ["redis (>=2.10.5)"]
 
 [[package]]
 name = "cellarium-ml"
-version = "0.0.8"
+version = "0.0.7"
 description = "Machine learning library for single-cell data analysis"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "cellarium_ml-0.0.8-py3-none-any.whl", hash = "sha256:d7ddb813f8a2391a0ad5e2ce3debb058d2964d50f525edbc33df3960254a6ae3"},
-    {file = "cellarium_ml-0.0.8.tar.gz", hash = "sha256:3ad2b68f772af0910211b58650543f05468aa0e243462561f15574bf457f8115"},
+    {file = "cellarium_ml-0.0.7-py3-none-any.whl", hash = "sha256:69ff679dade637cd087162f30b8f28c14a27d7a8a889c8f1f4b82c09babb6509"},
+    {file = "cellarium_ml-0.0.7.tar.gz", hash = "sha256:14cd59afd8ddbb83d55c65d042dab55128ca8e899f9f72117e535beaa888393b"},
 ]
 
 [package.dependencies]
@@ -433,20 +433,18 @@ braceexpand = "*"
 crick = ">=0.0.4"
 google-cloud-storage = "*"
 jsonargparse = {version = "4.27.7", extras = ["signatures"]}
-lightning = ">=2.2.0,<=2.5.2"
-numpy = "<=1.26.4"
-pyro-ppl = ">=1.9.1"
+lightning = ">=2.2.0"
+pyro-ppl = "*"
 pytest = "*"
-scikit-misc = "0.5.1"
 torch = ">=2.2.0"
 transformers = "*"
 
 [package.extras]
 dev = ["cellarium-ml[docs,lint,mypy,test]"]
-docs = ["Pillow", "nbsphinx", "seaborn (>=0.13.0)", "sphinx", "sphinx-copybutton", "sphinx_rtd_theme"]
+docs = ["Pillow", "nbsphinx", "seaborn (>=0.13.0)", "sphinx", "sphinx-copybutton", "sphinx-rtd-theme"]
 lint = ["ruff"]
 mypy = ["mypy", "types-PyYAML"]
-test = ["pytest-xdist", "scanpy", "tenacity", "tensorboard", "torchvision"]
+test = ["pytest-xdist", "tensorboard", "torchvision"]
 
 [[package]]
 name = "certifi"
@@ -5942,45 +5940,6 @@ maintenance = ["conda-lock (==3.0.1)"]
 tests = ["matplotlib (>=3.6.1)", "mypy (>=1.15)", "numpydoc (>=1.2.0)", "pandas (>=1.5.0)", "polars (>=0.20.30)", "pooch (>=1.8.0)", "pyamg (>=5.0.0)", "pyarrow (>=12.0.0)", "pytest (>=7.1.2)", "pytest-cov (>=2.9.0)", "ruff (>=0.11.7)"]
 
 [[package]]
-name = "scikit-misc"
-version = "0.5.1"
-description = "Miscellaneous tools for scientific computing."
-optional = false
-python-versions = ">=3.10"
-groups = ["main"]
-files = [
-    {file = "scikit_misc-0.5.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b68d9fc6c71471256b7dedc5ddb7927d3dd874a90260e80662f0f78087bf78c1"},
-    {file = "scikit_misc-0.5.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:b2a77003b5a6ae4b608900a6ad30caf4fffa52001abd730dde196b789ef30b8b"},
-    {file = "scikit_misc-0.5.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c4f983014e2ae971d30379e7f0204a90dbca96f726d33ed7d19de3a69ddee4f8"},
-    {file = "scikit_misc-0.5.1-cp310-cp310-win_amd64.whl", hash = "sha256:17e5cb78422ed75a39904f4cd57ae545ae15b2e83c807ca59b2634e8ed9d2f4d"},
-    {file = "scikit_misc-0.5.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:ab7ee6c79ad16e5fc2db80b55fd35da91fccfc65ba40596a85069e1e241ae20e"},
-    {file = "scikit_misc-0.5.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:496a65c0ed0903deca80aa641102f3d8dca1acd2ed5fafc98d2101e7bbbfde90"},
-    {file = "scikit_misc-0.5.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bd9a12ab92725b69eccacff033179597d46b4c45378eb127d8db400236ee6aae"},
-    {file = "scikit_misc-0.5.1-cp311-cp311-win_amd64.whl", hash = "sha256:cf4a26d901157fa820a2da5b15ddc8aef18d6c17395f18b5cf5cc9663b81aac3"},
-    {file = "scikit_misc-0.5.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:266ff5f0eb4889eb9ec5d9c94e1900d93b8b96500c3b120134bff04cd986e8ad"},
-    {file = "scikit_misc-0.5.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:e036e0f57cb7317ef7499497d2c0506274eb1b18513d54fe188c9e5619e3cef3"},
-    {file = "scikit_misc-0.5.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:34aa6f468234be81f70374bc22b1ec159991c72148ea664308c2b194d7255a95"},
-    {file = "scikit_misc-0.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8237509cbb1c4420d99d2d3cccfde8a2ca45ca6ea86fbd17516e5d6a0867d8b4"},
-    {file = "scikit_misc-0.5.1-cp312-cp312-win_amd64.whl", hash = "sha256:fd350ade48b79b930d8d7bdc8bd659349193afc319cb34f2ddbedada6f2464e0"},
-    {file = "scikit_misc-0.5.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:1132a5b1fe249791afea00a6454e0ef921883f1c40af4a3bd7648aa78e6d1b27"},
-    {file = "scikit_misc-0.5.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:718873b355ab4b78e167c7a27a3f413e00f54a2399ec1a68050016273d03f0f5"},
-    {file = "scikit_misc-0.5.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fdccf8bf3588f95c0dc38098456740e5939614b697ce041951f4a20df56034f0"},
-    {file = "scikit_misc-0.5.1-cp313-cp313-win_amd64.whl", hash = "sha256:5d7b7dceb88bebd09faa57bf2162d98da806d384d6b904529e695f291fba8691"},
-    {file = "scikit_misc-0.5.1.tar.gz", hash = "sha256:c5c1f69ac5f84e0103f40525c7d28ecc0ee028314cbc9f07c497cc39143e52a3"},
-]
-
-[package.dependencies]
-numpy = ">=1.23.5"
-
-[package.extras]
-all = ["scikit-misc[build]", "scikit-misc[dev]", "scikit-misc[doc]", "scikit-misc[lint]", "scikit-misc[test]"]
-build = ["build", "cython", "meson", "meson-python", "ninja", "spin"]
-dev = ["twine", "wheel"]
-doc = ["numpydoc", "sphinx"]
-lint = ["ruff"]
-test = ["pytest-cov"]
-
-[[package]]
 name = "scipy"
 version = "1.17.1"
 description = "Fundamental algorithms for scientific computing in Python"
@@ -8167,4 +8126,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "156675f530a0a0321fda22ec9d81bbf657f5a1b59dc2b2971b1383ad11f90bb4"
+content-hash = "a24bfa9fec407b81db20dc9512186fc7768bc071bd15946ad4808442172d55ec"

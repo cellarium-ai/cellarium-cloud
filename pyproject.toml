@@ -36,7 +36,7 @@ pg8000 = "1.31.2"
 cloud-sql-python-connector = "1.11.0"
 pandas = "2.2.3"
 google-cloud-run = "0.7.1"
-cellarium-ml = "0.0.8"
+cellarium-ml = "0.0.7"
 db-dtypes = "1.1.1"
 Mako = "1.2.4"
 smart-open = "7.0.4"
@@ -47,8 +47,8 @@ gcsfs = "2023.9.2"
 tenacity = "8.2.3"
 lightning= ">=2.2.0,<=2.3.0"
 torch = [
-  { version = ">=2.4.0,<2.7.0", markers = "sys_platform == 'darwin'", source = "pytorch-cpu" },
-  { version = ">=2.4.0,<2.7.0", markers = "sys_platform == 'linux'", source = "pytorch-cpu" }
+  { version = ">=2.2.0,<2.7.0", markers = "sys_platform == 'darwin'", source = "pytorch-cpu" },
+  { version = ">=2.2.0,<2.7.0", markers = "sys_platform == 'linux'", source = "pytorch-cpu" }
 ]
 starlette = "0.41.2"
 starlette-context = "0.3.6"
