@@ -183,8 +183,7 @@ starkbank-ecdsa==2.2.0 ; python_version >= "3.12" and python_version < "4.0"
 starlette-context==0.3.6 ; python_version >= "3.12" and python_version < "4.0"
 starlette==0.41.2 ; python_version >= "3.12" and python_version < "4.0"
 statsmodels==0.14.6 ; python_version >= "3.12" and python_version < "4.0"
-sympy==1.13.1 ; python_version >= "3.12" and python_version < "4.0" and (sys_platform == "darwin" or sys_platform == "linux")
-sympy==1.14.0 ; python_version >= "3.12" and python_version < "4.0" and sys_platform != "darwin" and sys_platform != "linux"
+sympy==1.14.0 ; python_version >= "3.12" and python_version < "4.0"
 tblib==3.2.2 ; python_version >= "3.12" and python_version < "4.0"
 tenacity==8.2.3 ; python_version >= "3.12" and python_version < "4.0"
 threadpoolctl==3.6.0 ; python_version >= "3.12" and python_version < "4.0"
@@ -194,7 +193,7 @@ tiledb==0.36.1 ; python_version >= "3.12" and python_version < "4.0"
 tiledbsoma==2.3.0 ; python_version >= "3.12" and python_version < "4.0"
 tokenizers==0.22.2 ; python_version >= "3.12" and python_version < "4.0"
 torch==2.11.0 ; python_version >= "3.12" and python_version < "3.14" and sys_platform != "darwin" and sys_platform != "linux"
-torch==2.6.0+cpu ; python_version >= "3.12" and python_version < "4.0" and (sys_platform == "darwin" or sys_platform == "linux")
+torch==2.4.1+cpu ; python_version >= "3.12" and python_version < "4.0" and (sys_platform == "darwin" or sys_platform == "linux")
 torch==2.7.1 ; python_version >= "3.14" and python_version < "4.0" and sys_platform != "darwin" and sys_platform != "linux"
 torchmetrics==1.9.0 ; python_version >= "3.12" and python_version < "4.0"
 tqdm==4.67.3 ; python_version >= "3.12" and python_version < "4.0"
