@@ -131,7 +131,23 @@ def compute_longest_path_lengths_from_root(cl_graph: nx.DiGraph) -> t.Dict[str, 
 def main(owl_url: str, output: str) -> None:
     """Create the Cell Type Ontology resource JSON for Cellarium CAS."""
     logging.info("Generating cell type ontology resource from CL ontology...")
-    cl_ontology = owlready2.get_ontology(owl_url).load()
+
+    # cl.owl imports ontologies (e.g. STATO) that define entities as both a property and
+    # a class, which owlready2 rejects in _load_properties. Those entities are outside the
+    # CL namespace and do not affect output, so we silence the specific TypeError.
+    _orig = owlready2.Ontology._load_properties
+
+    def _safe_load_properties(self: owlready2.Ontology) -> None:
+        try:
+            _orig(self)
+        except TypeError as exc:
+            logging.warning("Skipping property-loading error (imported ontology): %s", exc)
+
+    owlready2.Ontology._load_properties = _safe_load_properties
+    try:
+        cl_ontology = owlready2.get_ontology(owl_url).load()
+    finally:
+        owlready2.Ontology._load_properties = _orig
 
     cl_classes = [
         _class
