@@ -72,7 +72,15 @@ class CellariumGeneralDataManager(BaseDataManager):
         :return: List of CAS models
         """
         with self.system_data_db_session_maker() as session:
-            return session.query(models.CASModel).all()
+            return (
+                session.query(models.CASModel)
+                .options(
+                    orm.joinedload(models.CASModel.cell_info_metadata).joinedload(
+                        models.CellInfoMetadata.ontological_columns
+                    )
+                )
+                .all()
+            )
 
     def get_models_non_admin(self) -> list[models.CASModel]:
         """
@@ -81,7 +89,16 @@ class CellariumGeneralDataManager(BaseDataManager):
         :return: List of CAS models
         """
         with self.system_data_db_session_maker() as session:
-            return session.query(models.CASModel).filter_by(admin_use_only=False).all()
+            return (
+                session.query(models.CASModel)
+                .options(
+                    orm.joinedload(models.CASModel.cell_info_metadata).joinedload(
+                        models.CellInfoMetadata.ontological_columns
+                    )
+                )
+                .filter_by(admin_use_only=False)
+                .all()
+            )
 
     def get_model_by_name(self, model_name: str) -> models.CASModel:
         """
