@@ -61,11 +61,13 @@ jobs:
 
       - id: get-tag
         name: Get image tag
+        env:
+          IMAGE_TAG: ${{ inputs.image-tag }}
         run: |
-          if [[ "${{ inputs.image-tag }}" == "" ]]; then
+          if [[ "$IMAGE_TAG" == "" ]]; then
             echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           else
-            echo "tag=${{ inputs.image-tag }}" >> $GITHUB_OUTPUT
+            echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           fi
         shell: bash
 
