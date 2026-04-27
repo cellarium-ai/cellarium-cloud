@@ -57,7 +57,7 @@ class AllEnvSettings(BaseSettings):
     API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION: int = 10  # 10 minutes
     KNN_SEARCH_NUM_MATCHES_DEFAULT: int = 100
     ITEMS_PER_USER: int = 50
-    UVICORN_WORKERS: int = 4
+    UVICORN_WORKERS: int = 2
     MAX_CELL_IDS_PER_QUERY: int = 20_000  # Maximum number of cell IDs that can be queried at once
     # Consensus Engine
     # Auth
