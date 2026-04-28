@@ -151,7 +151,7 @@ runs:
         flags: |
           --add-cloudsql-instances ${{ inputs.deployment-sql-instance }}
           --vpc-connector ${{ inputs.deployment-vpc-connector }}
-          --vpc-egress all
+          --vpc-egress private-ranges-only
           --allow-unauthenticated
           --memory ${{ env.MEMORY }}
           --cpu ${{ env.CPU }}
