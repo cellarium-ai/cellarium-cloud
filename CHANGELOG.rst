@@ -7,6 +7,72 @@ The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
 
+1.8.4 - 2026-04-29
+------------------
+
+Added
+~~~~~
+- Added API endpoint for serving precomputed Cell Ontology (CL) resources (#214)
+- Added ``OntologicalColumnInfo`` model and API response fields for ontology column metadata (#214)
+- Added script to generate and upload CL ontology resources (#214)
+- Added unified build-and-deploy GitHub Actions workflow for CAS services
+- Increased Uvicorn worker count and Cloud Run concurrency settings
+
+Fixed
+~~~~~
+- Fixed VPC egress setting to ``private-ranges-only`` in deploy action
+- Fixed image tag handling in build and deploy workflows
+
+Changed
+~~~~~~~
+- Raised the minimum supported client version to ``1.8.0``
+- Updated dependencies: unpinned ``numpy`` (now resolved transitively), bumped ``torch`` lower bound to ``>=2.4.0``
+- Temporarily downgraded ``torch`` and ``cellarium-ml`` for compatibility, then re-pinned to stable versions
+
+
+1.8.3 - 2026-04-15
+------------------
+
+Added
+~~~~~
+- Added ``memory_budget`` configuration option for the TileDB vector index
+
+Fixed
+~~~~~
+- Fixed incorrect batch key handling in model inference (#212, #213)
+
+Changed
+~~~~~~~
+- Updated Cloud Run deployment configuration
+
+
+1.8.2 - 2026-04-07
+------------------
+
+Added
+~~~~~
+- Added TileDB Vector Search integration as the vector search backend (#209)
+- Added support for querying cell metadata directly from the SOMA table
+- Added support for multiple ontologies in cell annotation requests (#211)
+
+Removed
+~~~~~~~
+- Removed Vertex AI Matching Engine client and all related vector search code (#209)
+
+Changed
+~~~~~~~
+- Updated minimum required client version to 1.7.5
+- Refactored vector search layer with a factory pattern and type aliases
+
+
+1.8.1 - 2026-03-20
+------------------
+
+Fixed
+~~~~~
+- Fixed Read the Docs configuration for Python 3.12 (#207)
+
+
 1.8.0 - 2026-03-20
 ------------------
 
