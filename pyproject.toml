@@ -47,8 +47,8 @@ gcsfs = "2023.9.2"
 tenacity = "8.2.3"
 lightning= ">=2.2.0,<=2.3.0"
 torch = [
-  { version = ">=2.2.0,<2.7.0", markers = "sys_platform == 'darwin'" },
-  { version = ">=2.2.0,<2.7.0", markers = "sys_platform == 'linux'", source = "pytorch-cpu" }
+  { version = ">=2.2.0,<2.5.0", markers = "sys_platform == 'darwin'"},
+  { version = ">=2.2.0,<2.5.0", markers = "sys_platform == 'linux'", source = "pytorch-cpu" }
 ]
 starlette = "0.41.2"
 starlette-context = "0.3.6"
@@ -57,12 +57,17 @@ sendgrid = "6.11.0"
 packaging = "24.2"
 pydantic = "2.8.2"
 pydantic-settings = "2.3.4"
-numpy = "1.26.4"
-owlready2 = "0.46"
-networkx = "3.3"
 setuptools = "<82"
 tiledb-vector-search = "0.16.0"
 tiledbsoma = ">=2.3.0,<2.4.0"
+
+[tool.poetry.group.scripts]
+optional = true
+
+[tool.poetry.group.scripts.dependencies]
+owlready2 = "0.46"
+networkx = "3.3"
+click = ">=8.0.0"
 
 [tool.poetry.group.dev.dependencies]
 wheel = "*"
@@ -100,7 +105,8 @@ pillow = "^12.1.1"
 
 [[tool.poetry.source]]
 name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
+#url = "https://download.pytorch.org/whl/cpu"
+url = "https://download-r2.pytorch.org/whl/cpu"
 priority = "explicit"
 
 [build-system]

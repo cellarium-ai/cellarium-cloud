@@ -1,6 +1,14 @@
 import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasPath, BaseModel, ConfigDict, Field, field_validator
+
+
+class OntologicalColumnInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    ontology_resource_name: str
+    column_name: str
+    description: str | None = None
 
 
 class CASModel(BaseModel):
@@ -11,6 +19,10 @@ class CASModel(BaseModel):
     schema_name: str = Field(example="refdata-gex-mm10-2020-A")
     is_default_model: bool = Field(example=False)
     embedding_dimension: int = Field(example=512)
+    ontological_columns: list[OntologicalColumnInfo] = Field(
+        default_factory=list,
+        validation_alias=AliasPath("cell_info_metadata", "ontological_columns"),
+    )
 
     # Set the default value for description if it is provided as None
     @field_validator("description", mode="before")
@@ -51,3 +63,11 @@ class ClientVersionInput(BaseModel):
 class ClientVersionOutput(BaseModel):
     is_valid: bool
     min_version: str
+
+
+class CellOntologyResourceResponse(BaseModel):
+    cl_names: list[str]
+    cell_ontology_term_id_to_cell_type: dict[str, str]
+    children_dictionary: dict[str, list[str]]
+    shortest_path_lengths_from_cell_root: dict[str, int]
+    longest_path_lengths_from_cell_root: dict[str, int]

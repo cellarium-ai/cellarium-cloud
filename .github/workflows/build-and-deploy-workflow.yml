@@ -1,0 +1,174 @@
+name: CAS Repository Build and Deploy Workflow
+on:
+  workflow_dispatch:
+    inputs:
+      service-type:
+        description: 'Service type to build and deploy. Can be `compute`, `admin` or `both`. Default is `both`.'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - compute
+          - admin
+      image-tag:
+        description: 'Docker image tag. Will use the short hash of the last commit in the branch if nothing is passed in.'
+        required: false
+        default: ''
+      add-latest-tag:
+        description: 'Push a `latest` tag to the artifact registry. Default is `true`.'
+        required: false
+        default: true
+        type: boolean
+      deployment-prefix:
+        description: 'The prefix to add to the deployment names'
+        required: true
+        default: ''
+      service-account-email:
+        description: 'Service account email used as the identity for the deployment.'
+        required: true
+        default: ''
+      sql-instance:
+        description: 'The SQL instance to connect to in the form [project]:[region]:[instance]'
+        required: true
+        default: ''
+      vpc-connector:
+        description: 'The VPC connector to use for the deployment in the form projects/[project]/locations/[region]/connectors/[connector]'
+        required: true
+        default: ''
+      config-secret:
+        description: 'The Google secret to use for the deployment configuration in the form [secret-name]:[version (or "latest")]'
+        required: true
+        default: ''
+      region:
+        description: 'The region to deploy the image to'
+        required: false
+        default: 'us-central1'
+      flavor:
+        description: 'The nature of the deployment set. Configurations are set based on this value and the values can be configured in the deploy/cloudrun/{flavor}.json files.'
+        required: true
+        default: 'default'
+
+jobs:
+
+  prepare:
+    name: Resolve Image Tag
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.get-tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: get-tag
+        name: Get image tag
+        env:
+          IMAGE_TAG: ${{ inputs.image-tag }}
+        run: |
+          if [[ "$IMAGE_TAG" == "" ]]; then
+            echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+  build-images:
+    name: Build Docker Images
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    strategy:
+      matrix:
+        service-type: [ 'compute', 'admin' ]
+
+    env:
+      DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
+      COMPUTE_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-compute
+      ADMIN_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-admin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: build-compute
+        uses: ./.github/actions/docker-build
+        if: matrix.service-type == 'compute' && (inputs.service-type == 'compute' || inputs.service-type == 'both')
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.COMPUTE_IMAGE_NAME }}
+          image-tag: ${{ needs.prepare.outputs.image-tag }}
+          service-type: ${{ matrix.service-type }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          add-latest-tag: ${{ inputs.add-latest-tag }}
+
+      - id: build-admin
+        uses: ./.github/actions/docker-build
+        if: matrix.service-type == 'admin' && (inputs.service-type == 'admin' || inputs.service-type == 'both')
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.ADMIN_IMAGE_NAME }}
+          image-tag: ${{ needs.prepare.outputs.image-tag }}
+          service-type: ${{ matrix.service-type }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          add-latest-tag: ${{ inputs.add-latest-tag }}
+
+  deploy-services:
+    name: Deploy CAS Services
+    needs: [ prepare, build-images ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    env:
+      DOCKER_REGISTRY_NAME: us-central1-docker.pkg.dev
+      COMPUTE_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-compute
+      ADMIN_IMAGE_NAME: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cas-services-cicd/cas-admin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: deploy-admin
+        name: Deploy the CAS Admin Service
+        uses: ./.github/actions/docker-deploy
+        if: inputs.service-type == 'admin' || inputs.service-type == 'both'
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.ADMIN_IMAGE_NAME }}
+          image-tag: ${{ needs.prepare.outputs.image-tag }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          deployment-type: cas-admin
+          deployment-prefix: ${{ inputs.deployment-prefix }}
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
+          deployment-sql-instance: ${{ inputs.sql-instance }}
+          deployment-vpc-connector: ${{ inputs.vpc-connector }}
+          deployment-config-secret: ${{ inputs.config-secret }}
+          deployment-region: ${{ inputs.region }}
+          deployment-flavor: ${{ inputs.flavor }}
+
+      - id: deploy-compute
+        name: Deploy the CAS Compute Service
+        uses: ./.github/actions/docker-deploy
+        if: inputs.service-type == 'compute' || inputs.service-type == 'both'
+        with:
+          docker-registry-name: ${{ env.DOCKER_REGISTRY_NAME }}
+          image-name: ${{ env.COMPUTE_IMAGE_NAME }}
+          image-tag: ${{ needs.prepare.outputs.image-tag }}
+          gcp-provider-id: ${{ secrets.GCP_PROVIDER_ID }}
+          gcp-service-account-email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          deployment-type: cas-compute
+          deployment-prefix: ${{ inputs.deployment-prefix }}
+          deployment-project: ${{ secrets.GCP_PROJECT_ID }}
+          deployment-service-account-email: ${{ inputs.service-account-email }}
+          deployment-sql-instance: ${{ inputs.sql-instance }}
+          deployment-vpc-connector: ${{ inputs.vpc-connector }}
+          deployment-config-secret: ${{ inputs.config-secret }}
+          deployment-region: ${{ inputs.region }}
+          deployment-flavor: ${{ inputs.flavor }}

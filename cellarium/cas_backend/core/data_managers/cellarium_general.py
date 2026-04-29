@@ -72,7 +72,15 @@ class CellariumGeneralDataManager(BaseDataManager):
         :return: List of CAS models
         """
         with self.system_data_db_session_maker() as session:
-            return session.query(models.CASModel).all()
+            return (
+                session.query(models.CASModel)
+                .options(
+                    orm.joinedload(models.CASModel.cell_info_metadata).joinedload(
+                        models.CellInfoMetadata.ontological_columns
+                    )
+                )
+                .all()
+            )
 
     def get_models_non_admin(self) -> list[models.CASModel]:
         """
@@ -81,7 +89,16 @@ class CellariumGeneralDataManager(BaseDataManager):
         :return: List of CAS models
         """
         with self.system_data_db_session_maker() as session:
-            return session.query(models.CASModel).filter_by(admin_use_only=False).all()
+            return (
+                session.query(models.CASModel)
+                .options(
+                    orm.joinedload(models.CASModel.cell_info_metadata).joinedload(
+                        models.CellInfoMetadata.ontological_columns
+                    )
+                )
+                .filter_by(admin_use_only=False)
+                .all()
+            )
 
     def get_model_by_name(self, model_name: str) -> models.CASModel:
         """
@@ -149,3 +166,21 @@ class CellariumGeneralDataManager(BaseDataManager):
 
         with self.system_data_db_session_maker.begin() as session:
             session.add(user_activity)
+
+    def get_ontological_column_by_name(self, ontology_resource_name: str) -> models.OntologicalColumn:
+        """
+        Retrieve an ontological column by its unique ontology_resource_name.
+
+        :param ontology_resource_name: Unique name of the ontological column
+
+        :raises: NotFound if no ontological column with this name exists
+
+        :return: OntologicalColumn object
+        """
+        with self.system_data_db_session_maker() as session:
+            column = (
+                session.query(models.OntologicalColumn).filter_by(ontology_resource_name=ontology_resource_name).first()
+            )
+            if column is None:
+                raise exceptions.NotFound(f"Ontological column with name '{ontology_resource_name}' not found")
+            return column

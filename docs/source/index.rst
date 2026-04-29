@@ -20,6 +20,7 @@ Operations Guides
 .. toctree::
    :maxdepth: 1
 
+   modules/scripts
    modules/running_locally
    modules/deploying_in_cloud
    modules/cicd

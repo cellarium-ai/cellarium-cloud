@@ -23,7 +23,7 @@ class AllEnvSettings(BaseSettings):
     # General
     GOOGLE_ACCOUNT_CREDENTIALS: dict = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT_CREDENTIALS", "{}"))
     ENVIRONMENT: str = ENV_TYPE
-    APP_VERSION: str = "1.8.3"
+    APP_VERSION: str = "1.8.4"
     APP_ROOT: str = REPO_ROOT
     DEFAULT_FEATURE_SCHEMA: str = "refdata-gex-GRCh38-2020-A"
     PROJECT_BUCKET_NAME: str | None = os.environ.get("PROJECT_BUCKET_NAME")
@@ -57,7 +57,7 @@ class AllEnvSettings(BaseSettings):
     API_REQUEST_TEMP_TABLE_DATASET_EXPIRATION: int = 10  # 10 minutes
     KNN_SEARCH_NUM_MATCHES_DEFAULT: int = 100
     ITEMS_PER_USER: int = 50
-    UVICORN_WORKERS: int = 1
+    UVICORN_WORKERS: int = 2
     MAX_CELL_IDS_PER_QUERY: int = 20_000  # Maximum number of cell IDs that can be queried at once
     # Consensus Engine
     # Auth

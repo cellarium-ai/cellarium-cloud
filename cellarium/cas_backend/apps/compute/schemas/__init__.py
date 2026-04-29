@@ -16,6 +16,7 @@ from cellarium.cas_backend.apps.compute.schemas.cell_operations import (  # noqa
 from cellarium.cas_backend.apps.compute.schemas.cellarium_general import (  # noqa
     ApplicationInfo,
     CASModel,
+    CellOntologyResourceResponse,
     ClientVersionInput,
     ClientVersionOutput,
     FeatureSchemaInfo,

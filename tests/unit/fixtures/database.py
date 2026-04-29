@@ -111,6 +111,7 @@ def populate_db(
     ontological_column = models.OntologicalColumn(
         id=1,
         cell_info_metadata=cell_info_metadata,
+        ontology_resource_name=constants.TEST_ONTOLOGICAL_COLUMN_NAME,
         column_name="cell_type",
         ontology_resource_uri=constants.TEST_CELL_TYPE_ONTOLOGY_RESOURCE_URI,
     )

@@ -9,6 +9,7 @@ TEST_MODEL_FILE_PATH = "dummy.ckpt"
 TEST_MODEL_CELL_METADATA_URI = "gs://unknown"
 TEST_CELL_INFO_METADATA_NAME = "test-cell-info-metadata"
 TEST_CELL_TYPE_ONTOLOGY_RESOURCE_URI = "gs://unknown/cell_ontology_resource.json"
+TEST_ONTOLOGICAL_COLUMN_NAME = "cell-type-ontology-v1"
 TEST_MODEL_ADMIN_USE_ONLY = False
 TEST_EMBEDDING_DIMENSION = 32
 TEST_INDEX_NAME = "test-index-name"

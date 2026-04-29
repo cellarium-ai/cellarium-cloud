@@ -45,6 +45,17 @@ class CellOntologyResource:
 
         self.ancestors_dictionary = cell_ontology_resource_dict["ancestors_dictionary"]
         self.ontology_term_id_to_name_dict = cell_ontology_resource_dict["cell_ontology_term_id_to_cell_type"]
+        self.children_dictionary: dict[str, list[str]] | None = cell_ontology_resource_dict.get("children_dictionary")
+        self.shortest_path_lengths_from_cell_root: dict[str, int] | None = cell_ontology_resource_dict.get(
+            "shortest_path_lengths_from_cell_root"
+        )
+        self.longest_path_lengths_from_cell_root: dict[str, int] | None = cell_ontology_resource_dict.get(
+            "longest_path_lengths_from_cell_root"
+        )
+
+    @property
+    def cl_names(self) -> list[str]:
+        return sorted(self.ontology_term_id_to_name_dict.keys())
 
 
 class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
@@ -116,8 +127,7 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         scores_dict = dict.fromkeys(self.cell_ontology_resource.ancestors_dictionary.keys(), 0)
 
         for neighbor_metadata, weight in zip(neighbor_metadata, weights, strict=False):
-            # Cell Ontology IDs have the formats: CL:0000000 (in our database) and CL_0000000 (in the ontology graph)
-            neighbor_cell_type_ontology_id = neighbor_metadata.cell_type_ontology_term_id.replace(":", "_")
+            neighbor_cell_type_ontology_id = neighbor_metadata.cell_type_ontology_term_id
 
             total_weight += weight
             total_neighbors += 1
