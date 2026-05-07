@@ -65,8 +65,8 @@ def test_init_raises_for_invalid_distance_metric() -> None:
 
 def test_init_raises_for_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
-        FakeDimensionMismatchIndex,
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb._get_index_class",
+        lambda index_type: FakeDimensionMismatchIndex,
     )
 
     with pytest.raises(
@@ -78,8 +78,8 @@ def test_init_raises_for_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
-        FakeIVFFlatIndex,
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb._get_index_class",
+        lambda index_type: FakeIVFFlatIndex,
     )
 
     client = TileDBVectorSearch(index=_build_vector_index())
@@ -98,8 +98,8 @@ def test_match_adapts_multi_query_results(monkeypatch: pytest.MonkeyPatch) -> No
 
 def test_match_raises_for_query_dimension_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
-        FakeIVFFlatIndex,
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb._get_index_class",
+        lambda index_type: FakeIVFFlatIndex,
     )
     client = TileDBVectorSearch(index=_build_vector_index())
 
@@ -109,8 +109,8 @@ def test_match_raises_for_query_dimension_mismatch(monkeypatch: pytest.MonkeyPat
 
 def test_memory_budget_none_does_not_pass_kwarg(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
-        FakeIVFFlatIndex,
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb._get_index_class",
+        lambda index_type: FakeIVFFlatIndex,
     )
 
     client = TileDBVectorSearch(index=_build_vector_index(memory_budget=None))
@@ -120,8 +120,8 @@ def test_memory_budget_none_does_not_pass_kwarg(monkeypatch: pytest.MonkeyPatch)
 
 def test_memory_budget_provided_passes_kwarg(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "cellarium.cas_backend.apps.compute.vector_search.tiledb.vector_search.ivf_flat_index.IVFFlatIndex",
-        FakeIVFFlatIndex,
+        "cellarium.cas_backend.apps.compute.vector_search.tiledb._get_index_class",
+        lambda index_type: FakeIVFFlatIndex,
     )
 
     client = TileDBVectorSearch(index=_build_vector_index(memory_budget=4_000_000))

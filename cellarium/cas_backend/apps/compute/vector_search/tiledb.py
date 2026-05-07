@@ -4,7 +4,6 @@ from enum import Enum
 import typing as t
 
 import numpy as np
-from tiledb import vector_search
 
 from cellarium.cas_backend.apps.compute.vector_search.exceptions import VectorSearchConfigurationError
 from cellarium.cas_backend.apps.compute.vector_search.schemas import MatchResult
@@ -37,6 +36,8 @@ class TileDBIndexConfig:
 
 
 def _get_index_class(index_type: IndexType):
+    from tiledb import vector_search
+
     match index_type:
         case IndexType.FLAT:
             return vector_search.flat_index.FlatIndex

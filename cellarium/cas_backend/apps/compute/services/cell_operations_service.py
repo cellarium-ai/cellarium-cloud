@@ -3,6 +3,8 @@ Cellarium Service Controller. It provides methods to communicate with services i
 infrastructure over different protocols in async manner.
 """
 
+from __future__ import annotations
+
 import logging
 import typing as t
 
@@ -15,10 +17,12 @@ from cellarium.cas_backend.apps.compute.services import consensus_engine, except
 from cellarium.cas_backend.apps.compute.services.authorization import Authorizer
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
 from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
-from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
 from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager, CellOperationsDataManager
 from cellarium.cas_backend.core.data_managers import exceptions as dm_exc
 from cellarium.cas_backend.core.db import models
+
+if t.TYPE_CHECKING:
+    from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
 
 AVAILABLE_FIELDS_DICT = set(schemas.CellariumCellMetadata.__fields__.keys())
 
@@ -40,6 +44,8 @@ class CellOperationsService:
         model_service: ModelInferenceService | None = None,
         authorizer: Authorizer | None = None,
     ):
+        from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
+
         self.cell_operations_dm = cell_operations_dm or CellOperationsDataManager()
         self.cellarium_general_dm = cellarium_general_dm or CellariumGeneralDataManager()
         self.cell_quota_service = cell_quota_service or CellQuotaService()
