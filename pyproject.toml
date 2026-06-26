@@ -36,7 +36,7 @@ pg8000 = "1.31.2"
 cloud-sql-python-connector = "1.11.0"
 pandas = "2.2.3"
 google-cloud-run = "0.7.1"
-cellarium-ml = "0.0.7"
+cellarium-ml = "0.0.10"
 db-dtypes = "1.1.1"
 Mako = "1.2.4"
 smart-open = "7.0.4"
@@ -105,7 +105,6 @@ pillow = "^12.1.1"
 
 [[tool.poetry.source]]
 name = "pytorch-cpu"
-#url = "https://download.pytorch.org/whl/cpu"
 url = "https://download-r2.pytorch.org/whl/cpu"
 priority = "explicit"
 
