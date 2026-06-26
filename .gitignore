@@ -136,3 +136,5 @@ src/data/
 .DS_Store
 .idea/
 .vscode/
+.omp/
+.omp-review/
