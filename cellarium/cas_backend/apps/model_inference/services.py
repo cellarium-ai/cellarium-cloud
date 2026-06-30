@@ -82,12 +82,15 @@ class ModelInferenceService:
 
         :return: CellariumAnnDataDataModule
         """
+        # This dummy value is only used by scVI and ignored by other models
+        adata.obs["_scvi_batch_index_n"] = 0
         data_module = CellariumAnnDataDataModule(
             dadc=adata,
             batch_keys={
                 "x_ng": AnnDataField(attr="X", convert_fn=densify),
                 "var_names_g": AnnDataField(attr="var_names"),
                 "total_mrna_umis_n": AnnDataField(attr="obs", key="total_mrna_umis"),
+                "batch_index_n": AnnDataField(attr="obs", key="_scvi_batch_index_n"),
             },
             batch_size=len(adata),
             shuffle=False,
