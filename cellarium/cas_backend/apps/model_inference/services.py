@@ -114,7 +114,7 @@ class ModelInferenceService:
 
         cellarium_output_dict = cellarium_module(batch)
 
-        embeddings = cellarium_output_dict["x_ng"].numpy()
+        embeddings = cellarium_output_dict["x_ng"].detach().numpy()
 
         obs_ids = adata.obs.index.tolist()
         return embeddings, obs_ids
