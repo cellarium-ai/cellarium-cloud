@@ -14,16 +14,22 @@ Example::
     python scripts/create_cell_ontology_resource.py \\
         --owl-url https://github.com/obophenotype/cell-ontology/releases/download/v2025-07-30/cl.owl \\
         --output gs://your-bucket/path/to/cell_ontology_resource.json
+
+Can also be called directly from pipeline code (requires the ``scripts`` extras,
+since ``owlready2`` and ``networkx`` are not in the base dependencies)::
+
+    from cellarium.cas_backend.scripts.create_cell_ontology_resource import create_cell_ontology_resource
+    create_cell_ontology_resource(owl_url=..., output=...)
+
 """
 
 import json
 import logging
-import typing as t
 
 import click
 import networkx as nx
 import owlready2
-from smart_open import open
+from smart_open import open  # noqa: A001
 
 CELL_ROOT = "CL:0000000"
 _OWL_NAME_PREFIX = "CL_"
@@ -37,7 +43,7 @@ def _owl_name_to_cl_id(owl_name: str) -> str:
 
 
 def build_nx_graph_from_cl_ontology(
-    cl_ontology: owlready2.Ontology, cl_classes: t.List[owlready2.EntityClass]
+    cl_ontology: owlready2.Ontology, cl_classes: list[owlready2.EntityClass]
 ) -> nx.DiGraph:
     """
     Build a directed graph from a CL ontology. Edges go from parent to child.
@@ -63,8 +69,8 @@ def build_nx_graph_from_cl_ontology(
 
 
 def build_ancestors_dictionary(
-    cl_graph: nx.DiGraph, cl_names: t.List[str], cl_names_to_idx_map: t.Dict[str, int]
-) -> t.Dict[str, t.List[str]]:
+    cl_graph: nx.DiGraph, cl_names: list[str], cl_names_to_idx_map: dict[str, int]
+) -> dict[str, list[str]]:
     """
     Build ancestor dictionary mapping each CL term to an ordered list of all its ancestors.
     Ordering follows the original index ordering of cl_names.
@@ -73,15 +79,18 @@ def build_ancestors_dictionary(
     ancestors_dictionary = {}
 
     for cl_name in cl_names:
-        current_ancestors = list(sorted(nx.ancestors(cl_graph, cl_name)))
+        current_ancestors = sorted(nx.ancestors(cl_graph, cl_name))
         ancestors_dictionary[cl_name] = [
-            a for _, a in sorted(zip([cl_names_to_idx_map[a] for a in current_ancestors], current_ancestors))
+            a
+            for _, a in sorted(
+                zip([cl_names_to_idx_map[a] for a in current_ancestors], current_ancestors, strict=False)
+            )
         ]
 
     return ancestors_dictionary
 
 
-def build_children_dictionary(cl_graph: nx.DiGraph, cl_names: t.List[str]) -> t.Dict[str, t.List[str]]:
+def build_children_dictionary(cl_graph: nx.DiGraph, cl_names: list[str]) -> dict[str, list[str]]:
     """
     Build children dictionary mapping each CL term to its direct (non-transitive) children.
     """
@@ -89,7 +98,7 @@ def build_children_dictionary(cl_graph: nx.DiGraph, cl_names: t.List[str]) -> t.
     return {cl_name: sorted(cl_graph.successors(cl_name)) for cl_name in cl_names}
 
 
-def compute_shortest_path_lengths_from_root(cl_graph: nx.DiGraph) -> t.Dict[str, int]:
+def compute_shortest_path_lengths_from_root(cl_graph: nx.DiGraph) -> dict[str, int]:
     """
     Compute the shortest path length from CL:0000000 to every reachable descendant. Root = 0.
     """
@@ -97,13 +106,13 @@ def compute_shortest_path_lengths_from_root(cl_graph: nx.DiGraph) -> t.Dict[str,
     return dict(nx.single_source_shortest_path_length(cl_graph, CELL_ROOT))
 
 
-def compute_longest_path_lengths_from_root(cl_graph: nx.DiGraph) -> t.Dict[str, int]:
+def compute_longest_path_lengths_from_root(cl_graph: nx.DiGraph) -> dict[str, int]:
     """
     Compute the longest path length from CL:0000000 to every reachable descendant using
     topological-order dynamic programming. Root = 0. Unreachable nodes are excluded.
     """
     logging.info("Computing longest path lengths from root...")
-    dist: t.Dict[str, int] = {}
+    dist: dict[str, int] = {}
 
     for node in nx.topological_sort(cl_graph):
         if node == CELL_ROOT:
@@ -117,24 +126,10 @@ def compute_longest_path_lengths_from_root(cl_graph: nx.DiGraph) -> t.Dict[str, 
     return dist
 
 
-@click.command()
-@click.option(
-    "--owl-url",
-    required=True,
-    help="URL or local path to the CL OWL file.",
-)
-@click.option(
-    "--output",
-    required=True,
-    help="Output file path (local or GCS, e.g. gs://bucket/path/resource.json).",
-)
-def main(owl_url: str, output: str) -> None:
+def create_cell_ontology_resource(owl_url: str, output: str) -> None:
     """Create the Cell Type Ontology resource JSON for Cellarium CAS."""
     logging.info("Generating cell type ontology resource from CL ontology...")
 
-    # cl.owl imports ontologies (e.g. STATO) that define entities as both a property and
-    # a class, which owlready2 rejects in _load_properties. Those entities are outside the
-    # CL namespace and do not affect output, so we silence the specific TypeError.
     _orig = owlready2.Ontology._load_properties
 
     def _safe_load_properties(self: owlready2.Ontology) -> None:
@@ -155,8 +150,7 @@ def main(owl_url: str, output: str) -> None:
         if _class.name.startswith(_OWL_NAME_PREFIX) and len(_class.label) == 1
     ]
 
-    # Build id->label mapping directly from class objects to avoid set-ordering bugs
-    seen: t.Dict[str, str] = {}
+    seen: dict[str, str] = {}
     for _class in cl_classes:
         cl_id = _owl_name_to_cl_id(_class.name)
         if cl_id not in seen:
@@ -181,6 +175,22 @@ def main(owl_url: str, output: str) -> None:
     logging.info(f"Writing output file to {output}")
     with open(output, "w") as output_file:
         json.dump(cell_ontology_resource, output_file)
+
+
+@click.command()
+@click.option(
+    "--owl-url",
+    required=True,
+    help="URL or local path to the CL OWL file.",
+)
+@click.option(
+    "--output",
+    required=True,
+    help="Output file path (local or GCS, e.g. gs://bucket/path/resource.json).",
+)
+def main(owl_url: str, output: str) -> None:
+    """Create the Cell Type Ontology resource JSON for Cellarium CAS."""
+    create_cell_ontology_resource(owl_url=owl_url, output=output)
 
 
 if __name__ == "__main__":
