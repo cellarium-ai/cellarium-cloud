@@ -36,7 +36,7 @@ pg8000 = "1.31.2"
 cloud-sql-python-connector = "1.11.0"
 pandas = "2.2.3"
 google-cloud-run = "0.7.1"
-cellarium-ml = "0.0.7"
+cellarium-ml = "0.0.10"
 db-dtypes = "1.1.1"
 Mako = "1.2.4"
 smart-open = "7.0.4"
@@ -45,10 +45,11 @@ werkzeug = "3.0.6"
 sentry-sdk = "1.39.2"
 gcsfs = "2023.9.2"
 tenacity = "8.2.3"
-lightning= ">=2.2.0,<=2.3.0"
+lightning= ">=2.4.0,<=2.5.2"
 torch = [
-  { version = ">=2.2.0,<2.5.0", markers = "sys_platform == 'darwin'"},
-  { version = ">=2.2.0,<2.5.0", markers = "sys_platform == 'linux'", source = "pytorch-cpu" }
+  { version = ">=2.5.0,<2.7.0", markers = "sys_platform == 'darwin'" },
+  { version = ">=2.5.0,<2.7.0", markers = "sys_platform == 'linux' and platform_machine != 'aarch64'", source = "pytorch-cpu" },
+  { version = ">=2.5.0,<2.7.0", markers = "sys_platform == 'linux' and platform_machine == 'aarch64'" },
 ]
 starlette = "0.41.2"
 starlette-context = "0.3.6"
@@ -105,7 +106,6 @@ pillow = "^12.1.1"
 
 [[tool.poetry.source]]
 name = "pytorch-cpu"
-#url = "https://download.pytorch.org/whl/cpu"
 url = "https://download-r2.pytorch.org/whl/cpu"
 priority = "explicit"
 
