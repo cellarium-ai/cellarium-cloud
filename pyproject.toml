@@ -61,6 +61,10 @@ setuptools = "<82"
 tiledb-vector-search = "0.16.0"
 tiledbsoma = ">=2.3.0,<2.4.0"
 
+[tool.poetry.scripts]
+create-vsindex = "cellarium.cas_backend.scripts.create_vsindex_cli:main"
+create-cell-ontology-resource = "cellarium.cas_backend.scripts.create_cell_ontology_resource:main"
+
 [tool.poetry.group.scripts]
 optional = true
 

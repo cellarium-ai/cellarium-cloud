@@ -1,5 +1,6 @@
 """
-Unit tests for scripts/create_cell_ontology_resource.py.
+Unit tests for cellarium.cas_backend.scripts.create_cell_ontology_resource (library)
+and scripts/create_cell_ontology_resource.py (CLI shim).
 
 These tests exercise every function in the script using a small hand-crafted
 networkx graph so that owlready2 and a real OWL file are not required.
@@ -14,7 +15,7 @@ from click.testing import CliRunner
 import networkx as nx
 import pytest
 
-from scripts.create_cell_ontology_resource import (
+from cellarium.cas_backend.scripts.create_cell_ontology_resource import (
     CELL_ROOT,
     _owl_name_to_cl_id,
     build_ancestors_dictionary,
@@ -330,7 +331,7 @@ def test_main_writes_valid_json(minimal_ontology_mock):
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = str(Path(tmpdir) / "resource.json")
-        with patch("scripts.create_cell_ontology_resource.owlready2") as mock_owlready2:
+        with patch("cellarium.cas_backend.scripts.create_cell_ontology_resource.owlready2") as mock_owlready2:
             mock_owlready2.get_ontology.return_value.load.return_value = minimal_ontology_mock
             result = runner.invoke(main, ["--owl-url", "fake://cl.owl", "--output", output_path])
 
@@ -352,7 +353,7 @@ def test_main_output_uses_cl_colon_format(minimal_ontology_mock):
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = str(Path(tmpdir) / "resource.json")
-        with patch("scripts.create_cell_ontology_resource.owlready2") as mock_owlready2:
+        with patch("cellarium.cas_backend.scripts.create_cell_ontology_resource.owlready2") as mock_owlready2:
             mock_owlready2.get_ontology.return_value.load.return_value = minimal_ontology_mock
             runner.invoke(main, ["--owl-url", "fake://cl.owl", "--output", output_path])
 
@@ -370,7 +371,7 @@ def test_main_ancestors_of_root_are_empty(minimal_ontology_mock):
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = str(Path(tmpdir) / "resource.json")
-        with patch("scripts.create_cell_ontology_resource.owlready2") as mock_owlready2:
+        with patch("cellarium.cas_backend.scripts.create_cell_ontology_resource.owlready2") as mock_owlready2:
             mock_owlready2.get_ontology.return_value.load.return_value = minimal_ontology_mock
             runner.invoke(main, ["--owl-url", "fake://cl.owl", "--output", output_path])
 
@@ -385,7 +386,7 @@ def test_main_shortest_and_longest_agree_on_linear_chain(minimal_ontology_mock):
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = str(Path(tmpdir) / "resource.json")
-        with patch("scripts.create_cell_ontology_resource.owlready2") as mock_owlready2:
+        with patch("cellarium.cas_backend.scripts.create_cell_ontology_resource.owlready2") as mock_owlready2:
             mock_owlready2.get_ontology.return_value.load.return_value = minimal_ontology_mock
             runner.invoke(main, ["--owl-url", "fake://cl.owl", "--output", output_path])
 
