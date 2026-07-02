@@ -7,6 +7,20 @@ The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
 
+1.8.5 - 2026-07-01
+------------------
+
+Added
+~~~~~
+- Added ``create_vsindex`` script and CLI for building vector search indexes, moved from the external pipeline repository (#220, #221)
+- Added unit tests for the ``create_vsindex`` script
+
+Changed
+~~~~~~~
+- Bumped ``cellarium-ml`` to ``0.0.10`` with updated ``torch`` and ``lightning`` dependencies (#218, #219)
+- Updated model inference service to support scVI models (``detach().numpy()`` on pipeline output)
+- Decreased Cloud Run ``cas-compute`` CPU from 8 to 4 vCPUs and memory from 32 GiB to 16 GiB in all deployment configurations (#222)
+
 1.8.4 - 2026-04-29
 ------------------
 
