@@ -97,18 +97,24 @@ def _read_csv_gz(path: str) -> pd.DataFrame:
 
 
 @_transport_retry
-def _load_allowed_ids(path: str) -> set[int]:
+def _load_allowed_ids(path: str) -> pd.Index:
     """
-    Read the allow-list CSV (single 'soma_joinid' column, header included) into a set.
+    Read the allow-list CSV (single 'soma_joinid' column, header included) into a pd.Index.
+
+    Returns a pd.Index (int64) whose internal hash table is built once here and reused by
+    every per-batch isin() call. Passing a plain Python set to isin() forces pandas to
+    re-iterate the entire set and rebuild a temporary object array on EVERY call — for
+    millions of IDs across thousands of batches that overhead compounds to hours. A pd.Index
+    avoids that entirely: isin() routes through values._engine.ismember() which reuses the
+    pre-built C-level hash table with zero per-call setup overhead.
 
     Unlike _read_csv_gz (header-less embedding batches), this CSV has a header row so
-    pandas infers it. smart_open transparently decompresses a .gz path. The set is built
-    once here and reused for every per-batch membership check.
+    pandas infers it. smart_open transparently decompresses a .gz path.
     """
     with open(path, "rb") as f:
         buf = io.BytesIO(f.read())
     df = pd.read_csv(buf)
-    return set(df["soma_joinid"].to_numpy(dtype=np.int64).tolist())
+    return pd.Index(df["soma_joinid"].to_numpy(dtype=np.int64))
 
 
 def _normalize_in_place(arr: np.ndarray) -> None:
@@ -147,7 +153,7 @@ def _load_training_data(
     embedding_dim: int,
     training_sample_size: int,
     normalize: bool,
-    allowed_ids: set[int] | None = None,
+    allowed_ids: pd.Index | None = None,
 ) -> tuple[np.ndarray, np.ndarray, int, int, tuple[np.ndarray, np.ndarray] | None]:
     """
     Phase 1 (loading): Read batch files until training_sample_size vectors are collected.
@@ -295,7 +301,7 @@ def _process_chunk(
     embeddings_prefix: str,
     embedding_dim: int,
     normalize: bool,
-    allowed_ids: set[int] | None = None,
+    allowed_ids: pd.Index | None = None,
 ) -> int:
     """
     Read a chunk of batches and write them to the index via update_batch.
@@ -356,7 +362,7 @@ def _stream_updates(
     remaining_batches: list[int],
     normalize: bool,
     update_chunk_size: int,
-    allowed_ids: set[int] | None = None,
+    allowed_ids: pd.Index | None = None,
     carryover: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> int:
     """

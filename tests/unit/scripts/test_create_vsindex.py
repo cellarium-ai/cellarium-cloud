@@ -393,11 +393,13 @@ def test_main_passes_allow_list_csv(monkeypatch, tmp_path):
 
 
 def test_load_allowed_ids_reads_soma_joinid_column(monkeypatch):
-    """_load_allowed_ids parses the 'soma_joinid' header column into a set of ints."""
+    """_load_allowed_ids parses the 'soma_joinid' header column into a pd.Index of int64."""
     import cellarium.cas_backend.scripts.create_vsindex as mod
 
     monkeypatch.setattr(mod, "open", _make_open_stub(b"soma_joinid\n0\n2\n5\n"))
-    assert _load_allowed_ids("/fake") == {0, 2, 5}
+    result = _load_allowed_ids("/fake")
+    assert isinstance(result, pd.Index)
+    assert set(result.tolist()) == {0, 2, 5}
 
 
 def test_load_training_data_thinning_caps_and_carries_over(monkeypatch):
@@ -412,7 +414,7 @@ def test_load_training_data_thinning_caps_and_carries_over(monkeypatch):
         embedding_dim=2,
         training_sample_size=3,
         normalize=False,
-        allowed_ids={0, 2, 3, 5, 6, 8},
+        allowed_ids=pd.Index([0, 2, 3, 5, 6, 8]),
     )
 
     assert ids.tolist() == [0, 2, 3]
@@ -435,7 +437,7 @@ def test_load_training_data_empty_allow_list_raises(monkeypatch):
             embedding_dim=2,
             training_sample_size=3,
             normalize=False,
-            allowed_ids={999},
+            allowed_ids=pd.Index([999]),
         )
 
 
@@ -470,7 +472,7 @@ def test_create_vsindex_thinning_no_allowed_cell_lost(monkeypatch):
     fake_ingest = _CapIngest()
 
     monkeypatch.setattr(mod, "_read_csv_gz", _fake_batch_read)
-    monkeypatch.setattr(mod, "_load_allowed_ids", lambda path: {0, 2, 3, 5, 6, 8})
+    monkeypatch.setattr(mod, "_load_allowed_ids", lambda path: pd.Index([0, 2, 3, 5, 6, 8]))
     monkeypatch.setattr(mod, "_resolve_distance_metric", lambda _: object())
     monkeypatch.setattr(mod.tiledb, "VFS", lambda: _FakeVFS(exists=False))
     monkeypatch.setattr(mod.vs, "ingest", fake_ingest, raising=False)
