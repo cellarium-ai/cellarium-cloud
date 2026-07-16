@@ -3,10 +3,13 @@ Create a TileDB IVF_FLAT vector search index from .csv.gz embedding batches.
 
 Operates in three phases:
   1. Training      — read batch files until training_sample_size vectors are collected,
-                     then create the IVF_FLAT index from those vectors.
-  2. Streaming     — append all remaining batch files to the index in chunks.
+                     then create the IVF_FLAT index from those vectors. With an allow-list,
+                     only cells whose soma_joinid is in the list are kept, and the training
+                     set is filled to exactly training_sample_size allowed cells.
+  2. Streaming     — append all remaining batch files to the index in chunks, plus any allowed
+                     cells left over from the boundary batch when an allow-list is used.
   3. Consolidation — merge updates, retrain centroids, vacuum.
-                     Skipped if Phase 1 consumed all batches.
+                     Skipped if no vectors were written in the streaming phase.
 
 Example::
 
@@ -93,6 +96,27 @@ def _read_csv_gz(path: str) -> pd.DataFrame:
         return pd.read_csv(buf, header=None)
 
 
+@_transport_retry
+def _load_allowed_ids(path: str) -> pd.Index:
+    """
+    Read the allow-list CSV (single 'soma_joinid' column, header included) into a pd.Index.
+
+    Returns a pd.Index (int64) whose internal hash table is built once here and reused by
+    every per-batch isin() call. Passing a plain Python set to isin() forces pandas to
+    re-iterate the entire set and rebuild a temporary object array on EVERY call — for
+    millions of IDs across thousands of batches that overhead compounds to hours. A pd.Index
+    avoids that entirely: isin() routes through values._engine.ismember() which reuses the
+    pre-built C-level hash table with zero per-call setup overhead.
+
+    Unlike _read_csv_gz (header-less embedding batches), this CSV has a header row so
+    pandas infers it. smart_open transparently decompresses a .gz path.
+    """
+    with open(path, "rb") as f:
+        buf = io.BytesIO(f.read())
+    df = pd.read_csv(buf)
+    return pd.Index(df["soma_joinid"].to_numpy(dtype=np.int64))
+
+
 def _normalize_in_place(arr: np.ndarray) -> None:
     """L2-normalize rows of arr in-place. Clamps norms to >= 1e-12 to avoid division by zero."""
     norms = np.linalg.norm(arr, axis=1, keepdims=True)
@@ -129,40 +153,76 @@ def _load_training_data(
     embedding_dim: int,
     training_sample_size: int,
     normalize: bool,
-) -> tuple[np.ndarray, np.ndarray, int, int]:
+    allowed_ids: pd.Index | None = None,
+) -> tuple[np.ndarray, np.ndarray, int, int, tuple[np.ndarray, np.ndarray] | None]:
     """
     Phase 1 (loading): Read batch files until training_sample_size vectors are collected.
 
-    Returns (ids [uint64], embeddings [float32], training_batches_used, total_training_rows).
+    When allowed_ids is supplied, each batch is filtered to allow-listed soma_joinids and the
+    training set is filled to exactly training_sample_size allowed cells; the boundary batch's
+    leftover allowed cells are returned as a carryover for the update set (never dropped).
+
+    Returns (ids [uint64], embeddings [float32], training_batches_used, total_training_rows,
+    carryover) where carryover is None or a (ids [uint64], embeddings [float32]) pair of raw
+    (un-normalized) leftover cells.
     """
     t0 = time.time()
     logging.info("Phase 1: Loading training data …")
 
-    dfs = []
+    train_dfs = []
+    carry_df = None
     total_training_rows = 0
     training_batches_used = 0
 
     for i in range(total_batches):
         df = _read_csv_gz(f"{embeddings_prefix}/batch_{i}.csv.gz")
-        dfs.append(df)
-        total_training_rows += len(df)
         training_batches_used = i + 1
-        if i % 100 == 0 and i > 0:
-            logging.info(f"  Loaded {training_batches_used} batches, {total_training_rows} vectors so far …")
-        if total_training_rows >= training_sample_size:
-            break
+        if allowed_ids is None:
+            # No thinning: whole-batch fill — original behavior, unchanged.
+            train_dfs.append(df)
+            total_training_rows += len(df)
+            if i % 100 == 0 and i > 0:
+                logging.info(f"  Loaded {training_batches_used} batches, {total_training_rows} vectors so far …")
+            if total_training_rows >= training_sample_size:
+                break
+        else:
+            # Thinning: filter by allow-list, then fill to EXACTLY training_sample_size,
+            # carrying the boundary batch's leftover allowed cells into the update set.
+            df = df[df.iloc[:, 0].isin(allowed_ids)]
+            if total_training_rows + len(df) >= training_sample_size:
+                need = training_sample_size - total_training_rows
+                train_dfs.append(df.iloc[:need])
+                carry_df = df.iloc[need:]
+                total_training_rows += need
+                break
+            train_dfs.append(df)
+            total_training_rows += len(df)
+            if i % 100 == 0 and i > 0:
+                logging.info(f"  Loaded {training_batches_used} batches, {total_training_rows} vectors so far …")
+
+    if total_training_rows == 0:
+        raise ValueError(
+            "No training vectors collected. When an allow-list is supplied, it must match at least "
+            "one cell in the input batches."
+        )
 
     ids = np.empty(total_training_rows, dtype=np.uint64)
     embeddings = np.empty((total_training_rows, embedding_dim), dtype=np.float32)
 
     offset = 0
-    for df in dfs:
+    for df in train_dfs:
         n = len(df)
         ids[offset : offset + n] = df.iloc[:, 0].to_numpy(dtype=np.uint64)
         embeddings[offset : offset + n] = df.iloc[:, 1:].to_numpy(dtype=np.float32)
         offset += n
 
-    del dfs
+    carryover = None
+    if carry_df is not None and len(carry_df):
+        carry_ids = carry_df.iloc[:, 0].to_numpy(dtype=np.uint64)
+        carry_emb = carry_df.iloc[:, 1:].to_numpy(dtype=np.float32)
+        carryover = (carry_ids, carry_emb)
+
+    del train_dfs
     gc.collect()
 
     if normalize:
@@ -172,7 +232,7 @@ def _load_training_data(
         f"Training data loaded: {total_training_rows} vectors from {training_batches_used} batches "
         f"in {time.time()-t0:.1f}s"
     )
-    return ids, embeddings, training_batches_used, total_training_rows
+    return ids, embeddings, training_batches_used, total_training_rows, carryover
 
 
 @_tiledb_retry
@@ -225,6 +285,15 @@ def _create_index(
     return index
 
 
+def _pack_and_update(index: vs.IVFFlatIndex, ids: np.ndarray, emb: np.ndarray) -> None:
+    """Pack row embeddings into a TileDB object array and write them via update_batch."""
+    n = len(ids)
+    emb_obj = np.empty(n, dtype=object)
+    for j in range(n):
+        emb_obj[j] = emb[j]
+    index.update_batch(vectors=emb_obj, external_ids=ids.astype(np.int64))
+
+
 @_tiledb_retry
 def _process_chunk(
     index: vs.IVFFlatIndex,
@@ -232,6 +301,7 @@ def _process_chunk(
     embeddings_prefix: str,
     embedding_dim: int,
     normalize: bool,
+    allowed_ids: pd.Index | None = None,
 ) -> int:
     """
     Read a chunk of batches and write them to the index via update_batch.
@@ -241,7 +311,11 @@ def _process_chunk(
     supersedes the earlier write, so re-running the same chunk is idempotent.
     """
     chunk_dfs = [_read_csv_gz(f"{embeddings_prefix}/batch_{i}.csv.gz") for i in chunk_indices]
+    if allowed_ids is not None:
+        chunk_dfs = [df[df.iloc[:, 0].isin(allowed_ids)] for df in chunk_dfs]
     chunk_rows = sum(len(df) for df in chunk_dfs)
+    if chunk_rows == 0:
+        return 0
 
     chunk_ids = np.empty(chunk_rows, dtype=np.uint64)
     chunk_emb = np.empty((chunk_rows, embedding_dim), dtype=np.float32)
@@ -259,16 +333,26 @@ def _process_chunk(
     if normalize:
         _normalize_in_place(chunk_emb)
 
-    emb_obj = np.empty(chunk_rows, dtype=object)
-    for j in range(chunk_rows):
-        emb_obj[j] = chunk_emb[j]
+    _pack_and_update(index, chunk_ids, chunk_emb)
 
-    index.update_batch(vectors=emb_obj, external_ids=chunk_ids.astype(np.int64))
-
-    del chunk_ids, chunk_emb, emb_obj
+    del chunk_ids, chunk_emb
     gc.collect()
 
     return chunk_rows
+
+
+@_tiledb_retry
+def _write_carryover(index: vs.IVFFlatIndex, ids: np.ndarray, emb: np.ndarray, normalize: bool) -> int:
+    """
+    Write the boundary batch's leftover allowed cells (carried from Phase 1) to the update set.
+
+    Retry-safe for the same reason as _process_chunk (update_batch is idempotent under a later
+    timestamp). Returns rows written.
+    """
+    if normalize:
+        _normalize_in_place(emb)
+    _pack_and_update(index, ids, emb)
+    return len(ids)
 
 
 def _stream_updates(
@@ -278,23 +362,35 @@ def _stream_updates(
     remaining_batches: list[int],
     normalize: bool,
     update_chunk_size: int,
+    allowed_ids: pd.Index | None = None,
+    carryover: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> int:
     """
     Phase 2: Stream remaining batches into the index in chunks.
 
-    Returns total_vectors_written (0 if remaining_batches is empty, no index mutation).
+    Writes any boundary-batch carryover first (leftover allowed cells from Phase 1), then the
+    remaining batches (each filtered by allowed_ids when thinning). Returns the total number of
+    vectors written across carryover and chunks.
     """
+    total_updated = 0
+
+    if carryover is not None:
+        c_ids, c_emb = carryover
+        if len(c_ids):
+            logging.info(f"Phase 2: writing {len(c_ids)} carried-over boundary-batch cells …")
+            total_updated += _write_carryover(index, c_ids, c_emb, normalize)
+
     if not remaining_batches:
-        logging.info("Phase 2: No remaining batches; skipping.")
-        return 0
+        if total_updated == 0:
+            logging.info("Phase 2: No remaining batches; skipping.")
+        return total_updated
 
     t0 = time.time()
     logging.info(f"Phase 2: Streaming {len(remaining_batches)} update batches …")
-    total_updated = 0
 
     for chunk_num, chunk_start in enumerate(range(0, len(remaining_batches), update_chunk_size)):
         chunk_indices = remaining_batches[chunk_start : chunk_start + update_chunk_size]
-        total_updated += _process_chunk(index, chunk_indices, embeddings_prefix, embedding_dim, normalize)
+        total_updated += _process_chunk(index, chunk_indices, embeddings_prefix, embedding_dim, normalize, allowed_ids)
         if chunk_num % 5 == 4:
             batches_done = chunk_start + len(chunk_indices)
             logging.info(
@@ -345,10 +441,15 @@ def create_vsindex(
     normalize: bool = True,
     max_partitions: int = 65536,
     update_chunk_size: int = 50,
+    allow_list_csv: str | None = None,
 ) -> None:
     """
     Create a TileDB IVF_FLAT vector search index from .csv.gz embedding batches.
     Callable directly from pipeline code without going through the CLI.
+
+    When allow_list_csv is given, only cells whose soma_joinid appears in that CSV are indexed;
+    the training set is filled to exactly training_sample_size allowed cells and every remaining
+    allowed cell (including the boundary batch's leftover) is streamed into the update set.
     """
     t0 = time.time()
     logging.info(
@@ -356,8 +457,12 @@ def create_vsindex(
         f"metric={distance_metric}, normalize={normalize}"
     )
 
-    ids, embeddings, training_batches_used, total_training_rows = _load_training_data(
-        embeddings_prefix, total_batches, embedding_dim, training_sample_size, normalize
+    allowed_ids = _load_allowed_ids(allow_list_csv) if allow_list_csv else None
+    if allowed_ids is not None:
+        logging.info(f"Thinning enabled: {len(allowed_ids)} allowed cell IDs from {allow_list_csv}")
+
+    ids, embeddings, training_batches_used, total_training_rows, carryover = _load_training_data(
+        embeddings_prefix, total_batches, embedding_dim, training_sample_size, normalize, allowed_ids
     )
     index = _create_index(
         ids,
@@ -374,9 +479,18 @@ def create_vsindex(
     gc.collect()
 
     remaining_batches = list(range(training_batches_used, total_batches))
-    _stream_updates(index, embeddings_prefix, embedding_dim, remaining_batches, normalize, update_chunk_size)
+    total_updated = _stream_updates(
+        index,
+        embeddings_prefix,
+        embedding_dim,
+        remaining_batches,
+        normalize,
+        update_chunk_size,
+        allowed_ids,
+        carryover,
+    )
 
-    if remaining_batches:
+    if total_updated > 0:
         index = _consolidate(index, index_path, normalize)
 
     logging.info(f"vsindex creation complete in {time.time()-t0:.1f}s — final size: {index.size}")

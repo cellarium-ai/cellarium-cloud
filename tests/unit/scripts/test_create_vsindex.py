@@ -11,6 +11,7 @@ import io
 
 from click.testing import CliRunner
 import numpy as np
+import pandas as pd
 import pytest
 import tenacity
 import tiledb
@@ -18,9 +19,12 @@ import tiledb
 from cellarium.cas_backend.scripts.create_vsindex import (
     _choose_partitions,
     _create_index,
+    _load_allowed_ids,
+    _load_training_data,
     _normalize_in_place,
     _process_chunk,
     _read_csv_gz,
+    create_vsindex,
 )
 from cellarium.cas_backend.scripts.create_vsindex_cli import main
 
@@ -47,6 +51,13 @@ def _make_open_stub(raw: bytes):
         return _FakeCtxMgr(raw)
 
     return _open
+
+
+def _fake_batch_read(path):
+    """Fake _read_csv_gz: batch i → 3 rows, ids [3i, 3i+1, 3i+2], two embedding columns."""
+    i = int(path.split("batch_")[1].split(".")[0])
+    b = i * 3
+    return pd.DataFrame({0: [b, b + 1, b + 2], 1: [0.1, 0.2, 0.3], 2: [0.4, 0.5, 0.6]})
 
 
 class _FakeIndex:
@@ -346,4 +357,141 @@ def test_main_calls_create_vsindex_with_correct_kwargs(monkeypatch, tmp_path):
         "normalize": False,
         "max_partitions": 8192,
         "update_chunk_size": 50,
+        "allow_list_csv": None,
     }
+
+
+# Thinning / allow-list
+
+
+def test_main_passes_allow_list_csv(monkeypatch, tmp_path):
+    """CLI forwards --allow-list-csv to create_vsindex as the allow_list_csv kwarg."""
+    import cellarium.cas_backend.scripts.create_vsindex_cli as cli_mod
+
+    captured = _FakeCreateVsindex()
+    monkeypatch.setattr(cli_mod, "create_vsindex", captured)
+    allow = str(tmp_path / "allow.csv")
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "--embeddings-prefix",
+            str(tmp_path / "emb"),
+            "--index-path",
+            str(tmp_path / "idx"),
+            "--total-batches",
+            "10",
+            "--embedding-dim",
+            "64",
+            "--allow-list-csv",
+            allow,
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured.called_kwargs["allow_list_csv"] == allow
+
+
+def test_load_allowed_ids_reads_soma_joinid_column(monkeypatch):
+    """_load_allowed_ids parses the 'soma_joinid' header column into a pd.Index of int64."""
+    import cellarium.cas_backend.scripts.create_vsindex as mod
+
+    monkeypatch.setattr(mod, "open", _make_open_stub(b"soma_joinid\n0\n2\n5\n"))
+    result = _load_allowed_ids("/fake")
+    assert isinstance(result, pd.Index)
+    assert set(result.tolist()) == {0, 2, 5}
+
+
+def test_load_training_data_thinning_caps_and_carries_over(monkeypatch):
+    """Thinning fills training to exactly training_sample_size and carries the boundary leftover."""
+    import cellarium.cas_backend.scripts.create_vsindex as mod
+
+    monkeypatch.setattr(mod, "_read_csv_gz", _fake_batch_read)
+
+    ids, _embeddings, training_batches_used, total_training_rows, carryover = _load_training_data(
+        "/p",
+        total_batches=3,
+        embedding_dim=2,
+        training_sample_size=3,
+        normalize=False,
+        allowed_ids=pd.Index([0, 2, 3, 5, 6, 8]),
+    )
+
+    assert ids.tolist() == [0, 2, 3]
+    assert training_batches_used == 2
+    assert total_training_rows == 3
+    assert carryover is not None
+    assert carryover[0].tolist() == [5]
+
+
+def test_load_training_data_empty_allow_list_raises(monkeypatch):
+    """An allow-list matching no input cell yields zero training rows and raises ValueError."""
+    import cellarium.cas_backend.scripts.create_vsindex as mod
+
+    monkeypatch.setattr(mod, "_read_csv_gz", _fake_batch_read)
+
+    with pytest.raises(ValueError):
+        _load_training_data(
+            "/p",
+            total_batches=3,
+            embedding_dim=2,
+            training_sample_size=3,
+            normalize=False,
+            allowed_ids=pd.Index([999]),
+        )
+
+
+def test_create_vsindex_thinning_no_allowed_cell_lost(monkeypatch):
+    """End-to-end (stubbed): each allow-listed cell lands in exactly one of train/update; none lost."""
+    import cellarium.cas_backend.scripts.create_vsindex as mod
+
+    class _CapIndex:
+        def __init__(self):
+            self.update_ids = []
+            self.size = 0
+
+        def update_batch(self, **kw):
+            self.update_ids.append(np.asarray(kw["external_ids"]))
+
+        def consolidate_updates(self, **kw):
+            pass
+
+        def vacuum(self):
+            pass
+
+    fake_index = _CapIndex()
+
+    class _CapIngest:
+        def __init__(self):
+            self.external_ids = None
+
+        def __call__(self, **kw):
+            self.external_ids = np.asarray(kw["external_ids"])
+            return fake_index
+
+    fake_ingest = _CapIngest()
+
+    monkeypatch.setattr(mod, "_read_csv_gz", _fake_batch_read)
+    monkeypatch.setattr(mod, "_load_allowed_ids", lambda path: pd.Index([0, 2, 3, 5, 6, 8]))
+    monkeypatch.setattr(mod, "_resolve_distance_metric", lambda _: object())
+    monkeypatch.setattr(mod.tiledb, "VFS", lambda: _FakeVFS(exists=False))
+    monkeypatch.setattr(mod.vs, "ingest", fake_ingest, raising=False)
+    monkeypatch.setattr(mod.vs, "IVFFlatIndex", lambda _path: fake_index, raising=False)
+
+    create_vsindex(
+        "/p",
+        "/idx",
+        total_batches=3,
+        embedding_dim=2,
+        training_sample_size=3,
+        normalize=False,
+        allow_list_csv="/fake",
+    )
+
+    train = [int(x) for x in fake_ingest.external_ids.tolist()]
+    updates = [int(x) for arr in fake_index.update_ids for x in arr.tolist()]
+
+    assert set(train) | set(updates) == {0, 2, 3, 5, 6, 8}
+    assert len(train) + len(updates) == 6
+    assert 5 in set(updates)
+    assert set(train) & set(updates) == set()
