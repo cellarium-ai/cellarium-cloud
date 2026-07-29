@@ -402,13 +402,14 @@ def test_load_allowed_ids_reads_soma_joinid_column(monkeypatch):
     assert set(result.tolist()) == {0, 2, 5}
 
 
-def test_load_training_data_thinning_caps_and_carries_over(monkeypatch):
-    """Thinning fills training to exactly training_sample_size and carries the boundary leftover."""
+def test_load_training_data_thinning_overshoots_boundary(monkeypatch):
+    """With an allow-list, the boundary batch is appended whole so training may slightly exceed
+    training_sample_size — no carryover, no mid-batch split."""
     import cellarium.cas_backend.scripts.create_vsindex as mod
 
     monkeypatch.setattr(mod, "_read_csv_gz", _fake_batch_read)
 
-    ids, _embeddings, training_batches_used, total_training_rows, carryover = _load_training_data(
+    ids, _embeddings, training_batches_used, total_training_rows = _load_training_data(
         "/p",
         total_batches=3,
         embedding_dim=2,
@@ -417,11 +418,11 @@ def test_load_training_data_thinning_caps_and_carries_over(monkeypatch):
         allowed_ids=pd.Index([0, 2, 3, 5, 6, 8]),
     )
 
-    assert ids.tolist() == [0, 2, 3]
+    # Batch 0 filtered → [0,2] (total=2 < 3, continue).
+    # Batch 1 filtered → [3,5] (total=4 ≥ 3 → append whole and break).
+    assert set(ids.tolist()) == {0, 2, 3, 5}
     assert training_batches_used == 2
-    assert total_training_rows == 3
-    assert carryover is not None
-    assert carryover[0].tolist() == [5]
+    assert total_training_rows == 4
 
 
 def test_load_training_data_empty_allow_list_raises(monkeypatch):
@@ -429,15 +430,11 @@ def test_load_training_data_empty_allow_list_raises(monkeypatch):
     import cellarium.cas_backend.scripts.create_vsindex as mod
 
     monkeypatch.setattr(mod, "_read_csv_gz", _fake_batch_read)
+    allowed_ids = pd.Index([999])
 
     with pytest.raises(ValueError):
         _load_training_data(
-            "/p",
-            total_batches=3,
-            embedding_dim=2,
-            training_sample_size=3,
-            normalize=False,
-            allowed_ids=pd.Index([999]),
+            "/p", total_batches=3, embedding_dim=2, training_sample_size=3, normalize=False, allowed_ids=allowed_ids
         )
 
 
@@ -454,9 +451,11 @@ def test_create_vsindex_thinning_no_allowed_cell_lost(monkeypatch):
             self.update_ids.append(np.asarray(kw["external_ids"]))
 
         def consolidate_updates(self, **kw):
+            # Intentional no-op stub: this test only verifies update_batch routing, not consolidation.
             pass
 
         def vacuum(self):
+            # Intentional no-op stub: vacuum behaviour is not under test here.
             pass
 
     fake_index = _CapIndex()
@@ -493,5 +492,4 @@ def test_create_vsindex_thinning_no_allowed_cell_lost(monkeypatch):
 
     assert set(train) | set(updates) == {0, 2, 3, 5, 6, 8}
     assert len(train) + len(updates) == 6
-    assert 5 in set(updates)
     assert set(train) & set(updates) == set()

@@ -2,12 +2,12 @@
 Create a TileDB IVF_FLAT vector search index from .csv.gz embedding batches.
 
 Operates in three phases:
-  1. Training      — read batch files until training_sample_size vectors are collected,
-                     then create the IVF_FLAT index from those vectors. With an allow-list,
-                     only cells whose soma_joinid is in the list are kept, and the training
-                     set is filled to exactly training_sample_size allowed cells.
-  2. Streaming     — append all remaining batch files to the index in chunks, plus any allowed
-                     cells left over from the boundary batch when an allow-list is used.
+  1. Training      — read batch files until at least training_sample_size vectors are collected,
+                     then create the IVF_FLAT index from those vectors. With an allow-list, each
+                     batch is filtered before appending; the boundary batch may overshoot
+                     training_sample_size slightly (same behaviour as the no-filter path).
+  2. Streaming     — append all remaining batch files to the index in chunks, filtered by the
+                     allow-list when thinning is enabled.
   3. Consolidation — merge updates, retrain centroids, vacuum.
                      Skipped if no vectors were written in the streaming phase.
 
@@ -154,51 +154,33 @@ def _load_training_data(
     training_sample_size: int,
     normalize: bool,
     allowed_ids: pd.Index | None = None,
-) -> tuple[np.ndarray, np.ndarray, int, int, tuple[np.ndarray, np.ndarray] | None]:
+) -> tuple[np.ndarray, np.ndarray, int, int]:
     """
-    Phase 1 (loading): Read batch files until training_sample_size vectors are collected.
+    Phase 1 (loading): Read batch files until at least training_sample_size vectors are collected.
 
-    When allowed_ids is supplied, each batch is filtered to allow-listed soma_joinids and the
-    training set is filled to exactly training_sample_size allowed cells; the boundary batch's
-    leftover allowed cells are returned as a carryover for the update set (never dropped).
+    When allowed_ids is supplied, each batch is filtered before appending; the boundary batch
+    is appended whole (may slightly overshoot training_sample_size), matching the no-filter path.
 
-    Returns (ids [uint64], embeddings [float32], training_batches_used, total_training_rows,
-    carryover) where carryover is None or a (ids [uint64], embeddings [float32]) pair of raw
-    (un-normalized) leftover cells.
+    Returns (ids [uint64], embeddings [float32], training_batches_used, total_training_rows).
     """
     t0 = time.time()
     logging.info("Phase 1: Loading training data …")
 
     train_dfs = []
-    carry_df = None
     total_training_rows = 0
     training_batches_used = 0
 
     for i in range(total_batches):
         df = _read_csv_gz(f"{embeddings_prefix}/batch_{i}.csv.gz")
         training_batches_used = i + 1
-        if allowed_ids is None:
-            # No thinning: whole-batch fill — original behavior, unchanged.
-            train_dfs.append(df)
-            total_training_rows += len(df)
-            if i % 100 == 0 and i > 0:
-                logging.info(f"  Loaded {training_batches_used} batches, {total_training_rows} vectors so far …")
-            if total_training_rows >= training_sample_size:
-                break
-        else:
-            # Thinning: filter by allow-list, then fill to EXACTLY training_sample_size,
-            # carrying the boundary batch's leftover allowed cells into the update set.
+        if allowed_ids is not None:
             df = df[df.iloc[:, 0].isin(allowed_ids)]
-            if total_training_rows + len(df) >= training_sample_size:
-                need = training_sample_size - total_training_rows
-                train_dfs.append(df.iloc[:need])
-                carry_df = df.iloc[need:]
-                total_training_rows += need
-                break
-            train_dfs.append(df)
-            total_training_rows += len(df)
-            if i % 100 == 0 and i > 0:
-                logging.info(f"  Loaded {training_batches_used} batches, {total_training_rows} vectors so far …")
+        train_dfs.append(df)
+        total_training_rows += len(df)
+        if i % 100 == 0 and i > 0:
+            logging.info(f"  Loaded {training_batches_used} batches, {total_training_rows} vectors so far …")
+        if total_training_rows >= training_sample_size:
+            break
 
     if total_training_rows == 0:
         raise ValueError(
@@ -216,12 +198,6 @@ def _load_training_data(
         embeddings[offset : offset + n] = df.iloc[:, 1:].to_numpy(dtype=np.float32)
         offset += n
 
-    carryover = None
-    if carry_df is not None and len(carry_df):
-        carry_ids = carry_df.iloc[:, 0].to_numpy(dtype=np.uint64)
-        carry_emb = carry_df.iloc[:, 1:].to_numpy(dtype=np.float32)
-        carryover = (carry_ids, carry_emb)
-
     del train_dfs
     gc.collect()
 
@@ -232,7 +208,7 @@ def _load_training_data(
         f"Training data loaded: {total_training_rows} vectors from {training_batches_used} batches "
         f"in {time.time()-t0:.1f}s"
     )
-    return ids, embeddings, training_batches_used, total_training_rows, carryover
+    return ids, embeddings, training_batches_used, total_training_rows
 
 
 @_tiledb_retry
@@ -341,20 +317,6 @@ def _process_chunk(
     return chunk_rows
 
 
-@_tiledb_retry
-def _write_carryover(index: vs.IVFFlatIndex, ids: np.ndarray, emb: np.ndarray, normalize: bool) -> int:
-    """
-    Write the boundary batch's leftover allowed cells (carried from Phase 1) to the update set.
-
-    Retry-safe for the same reason as _process_chunk (update_batch is idempotent under a later
-    timestamp). Returns rows written.
-    """
-    if normalize:
-        _normalize_in_place(emb)
-    _pack_and_update(index, ids, emb)
-    return len(ids)
-
-
 def _stream_updates(
     index: vs.IVFFlatIndex,
     embeddings_prefix: str,
@@ -363,28 +325,16 @@ def _stream_updates(
     normalize: bool,
     update_chunk_size: int,
     allowed_ids: pd.Index | None = None,
-    carryover: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> int:
     """
-    Phase 2: Stream remaining batches into the index in chunks.
-
-    Writes any boundary-batch carryover first (leftover allowed cells from Phase 1), then the
-    remaining batches (each filtered by allowed_ids when thinning). Returns the total number of
-    vectors written across carryover and chunks.
+    Phase 2: Stream remaining batches into the index in chunks, filtered by allowed_ids when
+    thinning. Returns the total number of vectors written.
     """
-    total_updated = 0
-
-    if carryover is not None:
-        c_ids, c_emb = carryover
-        if len(c_ids):
-            logging.info(f"Phase 2: writing {len(c_ids)} carried-over boundary-batch cells …")
-            total_updated += _write_carryover(index, c_ids, c_emb, normalize)
-
     if not remaining_batches:
-        if total_updated == 0:
-            logging.info("Phase 2: No remaining batches; skipping.")
-        return total_updated
+        logging.info("Phase 2: No remaining batches; skipping.")
+        return 0
 
+    total_updated = 0
     t0 = time.time()
     logging.info(f"Phase 2: Streaming {len(remaining_batches)} update batches …")
 
@@ -447,9 +397,7 @@ def create_vsindex(
     Create a TileDB IVF_FLAT vector search index from .csv.gz embedding batches.
     Callable directly from pipeline code without going through the CLI.
 
-    When allow_list_csv is given, only cells whose soma_joinid appears in that CSV are indexed;
-    the training set is filled to exactly training_sample_size allowed cells and every remaining
-    allowed cell (including the boundary batch's leftover) is streamed into the update set.
+    When allow_list_csv is given, only cells whose soma_joinid appears in that CSV are indexed.
     """
     t0 = time.time()
     logging.info(
@@ -461,7 +409,7 @@ def create_vsindex(
     if allowed_ids is not None:
         logging.info(f"Thinning enabled: {len(allowed_ids)} allowed cell IDs from {allow_list_csv}")
 
-    ids, embeddings, training_batches_used, total_training_rows, carryover = _load_training_data(
+    ids, embeddings, training_batches_used, total_training_rows = _load_training_data(
         embeddings_prefix, total_batches, embedding_dim, training_sample_size, normalize, allowed_ids
     )
     index = _create_index(
@@ -487,7 +435,6 @@ def create_vsindex(
         normalize,
         update_chunk_size,
         allowed_ids,
-        carryover,
     )
 
     if total_updated > 0:
