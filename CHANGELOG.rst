@@ -7,7 +7,7 @@ The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
 
-1.8.5 - 2026-07-01
+1.8.5 - UNRELEASED
 ------------------
 
 Added
@@ -15,6 +15,10 @@ Added
 - Added ``create_vsindex`` script and CLI for building vector search indexes, moved from the external pipeline repository (#220, #221)
 - Added unit tests for the ``create_vsindex`` script
 - Added an allow-list (thinning) option to ``create_vsindex`` that filters cells by ``soma_joinid``, indexing only allowed cells while preserving the train/update split (#225)
+
+Fixed
+~~~~~
+- Fixed model inference service running query embeddings with dropout active and BatchNorm using per-chunk statistics: ``_load_module_from_checkpoint`` now calls ``.eval()`` before caching the module, and the forward pass is wrapped in ``torch.inference_mode()`` (#230)
 
 Changed
 ~~~~~~~

@@ -5,6 +5,7 @@ import typing as t
 import anndata
 import numpy as np
 from smart_open import open
+import torch
 
 from cellarium.cas_backend.apps.model_inference import exceptions
 from cellarium.cas_backend.core.config import settings
@@ -47,15 +48,24 @@ class ModelInferenceService:
     @cache
     def _load_module_from_checkpoint(cls, model_file_path: str) -> CellariumModule:
         """
-        Load CellariumModule from checkpoint file.
+        Load CellariumModule from checkpoint file and place it in eval mode.
+
+        Lightning's ``load_from_checkpoint`` does not call ``.eval()`` and
+        ``CellariumModule.configure_model`` does not either, so the module
+        defaults to ``training=True``.  Calling ``.eval()`` here ensures that
+        dropout layers are disabled and BatchNorm uses its running statistics
+        (rather than per-batch statistics) for every request served from the
+        cached module.
 
         :param model_file_path: Model checkpoint file path (from model db object)
 
-        :return: CellariumModule object
+        :return: CellariumModule in eval mode
         """
         checkpoint_file = cls._get_model_checkpoint_file(model_file_path)
 
-        return CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
+        module = CellariumModule.load_from_checkpoint(checkpoint_file, map_location="cpu")
+        module.eval()
+        return module
 
     @staticmethod
     def get_cache_info() -> dict[str, tuple[int, int, int | None, int]]:
@@ -112,7 +122,8 @@ class ModelInferenceService:
         cellarium_data_module = self._create_cellarium_data_module(adata=adata)
         batch = next(iter(cellarium_data_module.predict_dataloader()))
 
-        cellarium_output_dict = cellarium_module(batch)
+        with torch.inference_mode():
+            cellarium_output_dict = cellarium_module(batch)
 
         embeddings = cellarium_output_dict["x_ng"].detach().numpy()
 
