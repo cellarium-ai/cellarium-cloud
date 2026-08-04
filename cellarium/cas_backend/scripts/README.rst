@@ -140,3 +140,13 @@ Arguments
 .. option:: --update-chunk-size
 
    Number of batches per streaming-update chunk. Default: 50.
+
+.. option:: --allow-list-csv
+
+   Optional path (local or ``gs://``) to a CSV file with a single ``soma_joinid``
+   column (header included). When provided, only cells whose ID appears in the
+   allow-list are indexed; all other cells are dropped. The training set is filled to
+   ``--training-sample-size`` allowed cells and the remaining allowed cells (including
+   the leftover of the boundary batch) form the update set, so every allowed cell is
+   indexed exactly once. The script does not verify the allow-list is a genuine
+   subsample of the embeddings — that is the caller's responsibility.

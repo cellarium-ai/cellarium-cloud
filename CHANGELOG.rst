@@ -14,6 +14,7 @@ Added
 ~~~~~
 - Added ``create_vsindex`` script and CLI for building vector search indexes, moved from the external pipeline repository (#220, #221)
 - Added unit tests for the ``create_vsindex`` script
+- Added an allow-list (thinning) option to ``create_vsindex`` that filters cells by ``soma_joinid``, indexing only allowed cells while preserving the train/update split (#225)
 
 Changed
 ~~~~~~~

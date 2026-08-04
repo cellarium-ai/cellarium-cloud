@@ -44,6 +44,16 @@ from cellarium.cas_backend.scripts.create_vsindex import create_vsindex
 @click.option(
     "--update-chunk-size", default=50, show_default=True, type=int, help="Number of batches per streaming-update chunk."
 )
+@click.option(
+    "--allow-list-csv",
+    default=None,
+    type=str,
+    help=(
+        "Optional path (local or gs://) to a CSV with a single 'soma_joinid' column (header "
+        "included). When provided, only cells whose ID appears in the allow-list are indexed; "
+        "all others are dropped."
+    ),
+)
 def main(
     embeddings_prefix: str,
     index_path: str,
@@ -54,6 +64,7 @@ def main(
     normalize: bool,
     max_partitions: int,
     update_chunk_size: int,
+    allow_list_csv: str | None,
 ) -> None:
     """Create a TileDB IVF_FLAT vector search index from .csv.gz embedding batches."""
     create_vsindex(
@@ -66,6 +77,7 @@ def main(
         normalize=normalize,
         max_partitions=max_partitions,
         update_chunk_size=update_chunk_size,
+        allow_list_csv=allow_list_csv,
     )
 
 
