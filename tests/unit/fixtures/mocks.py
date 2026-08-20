@@ -122,6 +122,7 @@ class MockModelService:
         """
         # Trackable mock methods with side effects
         self.embed_adata = MagicMock(side_effect=self._mock_embed_adata)
+        self.predict_adata = MagicMock(side_effect=self._mock_predict_adata)
 
     def _mock_embed_adata(self, adata: anndata.AnnData, model: models.CASModel) -> tuple[list[str], np.ndarray]:
         """
@@ -137,3 +138,23 @@ class MockModelService:
         obs_ids = adata.obs_names.tolist()
         random_embeddings = np.random.rand(len(obs_ids), 32)
         return obs_ids, random_embeddings
+
+    def _mock_predict_adata(
+        self, adata: anndata.AnnData, model: models.CASModel
+    ) -> tuple[list[str], np.ndarray, list[str]]:
+        """
+        Side effect method for `predict_adata` to simulate classification output.
+
+        :param adata: Anndata object containing cell data.
+        :param model: CASModel instance specifying the model to use.
+
+        :return: A tuple containing:
+                 - List of observation IDs from `adata.obs_names`.
+                 - Row-normalized random class probabilities as a NumPy array of shape (n_cells, 3).
+                 - Class labels corresponding to the probability columns.
+        """
+        obs_ids = adata.obs_names.tolist()
+        random_probabilities = np.random.rand(len(obs_ids), 3)
+        random_probabilities /= random_probabilities.sum(axis=1, keepdims=True)
+        labels = ["CL:0000789", "CL:0000084", "CL:9999999"]
+        return obs_ids, random_probabilities, labels

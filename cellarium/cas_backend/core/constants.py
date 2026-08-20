@@ -60,3 +60,14 @@ class LogRecordKeys(str, Enum):
     user_email = "user_email"
     # The browser/client of the requestor.
     user_agent = "user_agent"
+
+
+class ModelType(str, Enum):
+    """
+    Kind of model served by CAS.
+    """
+
+    # A model that produces embeddings, searched via a vector index (kNN consensus).
+    REPRESENTATION = "representation"
+    # A model that predicts cell-type class probabilities directly.
+    CLASSIFICATION = "classification"
