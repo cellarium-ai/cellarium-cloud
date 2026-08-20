@@ -86,14 +86,23 @@ async def annotate_cell_type_ontology_aware_strategy(
     ontology_column_name: str = Form(default="cell_type"),
 ):
     """
-    Annotate a single anndata file with Cellarium CAS using the cell type statistics strategy. Input file should be
+    Annotate a single anndata file with Cellarium CAS using the ontology-aware strategy. Input file should be
     validated and sanitized according to the model schema.
+
+    Serves both model kinds. For representation models, embeddings are matched against the model's vector
+    index and summarized via the kNN consensus strategy. For classification models, the model's predict
+    path is run directly and its class probabilities are uplifted over the cell type ontology; in that
+    case `weighting_prefactor` is accepted but ignored, since there are no neighbour distances to weight.
+
+    For classification models, `total_weight` is the total probability mass considered (1.0 up to
+    floating point error), `total_neighbors` is the number of model class labels, and
+    `total_neighbors_unrecognized` is the number of labels absent from the configured ontology resource.
 
     :param file: Byte object of :class:`anndata.AnnData` file to annotate.
     :param model_name: Model name to use for annotation. See `/list-models` endpoint for available models.
     :param request_user: Authorized user object obtained  by token from `Bearer` header.
     :param prune_threshold: Prune threshold. Threshold for pruning the ontology graph in the response.
-    :param weighting_prefactor: Distance exponential weighting prefactor.
+    :param weighting_prefactor: Distance exponential weighting prefactor. Ignored for classification models.
     :param ontology_column_name: Name of the ontological column to use for annotation (e.g. ``cell_type``, ``disease``).
         Defaults to ``cell_type``.
     :param cell_operations_service: Service controller with domain logic responsible for cell operations

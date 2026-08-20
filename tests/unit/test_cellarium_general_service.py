@@ -11,8 +11,8 @@ import pytest
 from cellarium.cas_backend.apps.compute.schemas import CellOntologyResourceResponse
 from cellarium.cas_backend.apps.compute.schemas.cellarium_general import CASModel as CASModelSchema
 from cellarium.cas_backend.apps.compute.schemas.cellarium_general import OntologicalColumnInfo
+from cellarium.cas_backend.apps.compute.services.annotation.ontology import CellOntologyResource
 from cellarium.cas_backend.apps.compute.services.cellarium_general_service import CellariumGeneralService
-from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 from cellarium.cas_backend.apps.compute.services.exceptions import InvalidClientVersionException
 from cellarium.cas_backend.core import constants
 
@@ -167,6 +167,7 @@ def test_cas_model_ontological_columns_populated():
         schema_name = "refdata-gex-GRCh38-2020-A"
         is_default_model = False
         embedding_dimension = 512
+        model_type = "representation"
         cell_info_metadata = FakeCellInfoMetadata()
 
     schema = CASModelSchema.model_validate(FakeCASModel(), from_attributes=True)
@@ -188,6 +189,7 @@ def test_cas_model_ontological_columns_empty_list():
         schema_name = "refdata-gex-GRCh38-2020-A"
         is_default_model = False
         embedding_dimension = 512
+        model_type = "representation"
         cell_info_metadata = FakeCellInfoMetadata()
 
     schema = CASModelSchema.model_validate(FakeCASModel(), from_attributes=True)
@@ -215,9 +217,30 @@ def test_cas_model_multiple_ontological_columns():
         schema_name = "refdata-gex-GRCh38-2020-A"
         is_default_model = False
         embedding_dimension = 512
+        model_type = "representation"
         cell_info_metadata = FakeCellInfoMetadata()
 
     schema = CASModelSchema.model_validate(FakeCASModel(), from_attributes=True)
     assert len(schema.ontological_columns) == 2
     names = {c.ontology_resource_name for c in schema.ontological_columns}
     assert names == {"cell_type", "disease"}
+
+
+def test_cas_model_classification_projection_allows_null_embedding_dimension():
+    """CASModel projects a classification model with embedding_dimension=None and model_type='classification'."""
+
+    class FakeCellInfoMetadata:
+        ontological_columns = []
+
+    class FakeCASModel:
+        model_name = "test-classification-model"
+        description = "Test classification model"
+        schema_name = "refdata-gex-GRCh38-2020-A"
+        is_default_model = False
+        embedding_dimension = None
+        model_type = "classification"
+        cell_info_metadata = FakeCellInfoMetadata()
+
+    schema = CASModelSchema.model_validate(FakeCASModel(), from_attributes=True)
+    assert schema.embedding_dimension is None
+    assert schema.model_type == "classification"

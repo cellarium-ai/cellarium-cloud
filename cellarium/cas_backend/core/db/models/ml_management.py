@@ -3,7 +3,7 @@ import datetime
 import sqlalchemy as sa
 from sqlalchemy.orm import backref, relationship
 
-from cellarium.cas_backend.core import db, settings
+from cellarium.cas_backend.core import constants, db, settings
 
 
 class CellInfoMetadata(db.Base):
@@ -41,7 +41,8 @@ class CASModel(db.Base):
     model_name = sa.Column(sa.String(255), unique=True, nullable=False)
     model_file_path = sa.Column(sa.String(255), unique=False, nullable=False)
     description = sa.Column(sa.String(511), nullable=True)
-    embedding_dimension = sa.Column(sa.Integer, nullable=False)
+    embedding_dimension = sa.Column(sa.Integer, nullable=True)
+    model_type = sa.Column(sa.String(255), default=constants.ModelType.REPRESENTATION.value, nullable=False)
     admin_use_only = sa.Column(sa.Boolean(), default=True, nullable=False)
     schema_name = sa.Column(sa.String(255), default=settings.DEFAULT_SCHEMA_NAME, nullable=False)
     bq_dataset_name = sa.Column(sa.String(255), default=settings.DEFAULT_MODEL_BQ_DATASET_NAME, nullable=False)

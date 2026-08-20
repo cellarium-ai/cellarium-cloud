@@ -15,6 +15,10 @@ class VectorSearchResponseError(APIInternalError):
     http_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
+class ClassificationLabelSpaceError(APIInternalError):
+    http_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
 class CellMetadataColumnDoesNotExist(InvalidInputError):
     http_code: int = status.HTTP_400_BAD_REQUEST
 

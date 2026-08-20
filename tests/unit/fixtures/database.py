@@ -122,6 +122,17 @@ def populate_db(
         admin_use_only=constants.TEST_MODEL_ADMIN_USE_ONLY,
         model_file_path=constants.TEST_MODEL_FILE_PATH,
         embedding_dimension=constants.TEST_EMBEDDING_DIMENSION,
+        model_type=constants.TEST_MODEL_TYPE_REPRESENTATION,
+        cell_info_metadata=cell_info_metadata,
+    )
+    # Add a classification model (no vector index, no embedding dimension)
+    cas_classification_model = models.CASModel(
+        id=2,
+        model_name=constants.TEST_CLASSIFICATION_MODEL_NAME,
+        admin_use_only=False,
+        model_file_path=constants.TEST_CLASSIFICATION_MODEL_FILE_PATH,
+        model_type=constants.TEST_MODEL_TYPE_CLASSIFICATION,
+        embedding_dimension=None,
         cell_info_metadata=cell_info_metadata,
     )
     # Add index
@@ -188,6 +199,7 @@ def populate_db(
             cell_info_metadata,
             ontological_column,
             cas_model,
+            cas_classification_model,
             cas_matching_engine_index,
             cas_vector_index,
             activity_1,
