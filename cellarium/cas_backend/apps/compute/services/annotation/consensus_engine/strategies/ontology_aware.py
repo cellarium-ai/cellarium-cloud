@@ -1,61 +1,16 @@
-import json
-import typing as t
-
 import numpy as np
-from smart_open import open
 
 from cellarium.cas_backend.apps.compute import schemas
-from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.base import ConsensusStrategyInterface
+from cellarium.cas_backend.apps.compute.services.annotation.consensus_engine.strategies.base import (
+    ConsensusStrategyInterface,
+)
+from cellarium.cas_backend.apps.compute.services.annotation.ontology import (
+    CellOntologyResource,
+    accumulate_ontology_scores,
+    build_ontology_matches,
+)
 from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 from cellarium.cas_backend.core.data_managers import CellOperationsDataManager
-
-
-class CellOntologyResource:
-    """
-    Handles cell ontology resource data, such as the ancestors dictionary and cell ontology term ID mappings.
-
-    Attributes:
-        ancestors_dictionary: Maps cell ontology term IDs to their ancestor IDs.
-        ontology_term_id_to_name_dict: Maps cell ontology term IDs to cell type names.
-
-    Raises:
-        ValueError: If either ``ancestors_dictionary`` or ``cell_ontology_term_id_to_cell_type`` is missing from the
-            provided dictionary.
-    """
-
-    def __init__(
-        self,
-        ontology_resource_uri: str | None = None,
-        cell_ontology_resource_dict: dict[str, t.Any] | None = None,
-    ):
-        if cell_ontology_resource_dict is None:
-            if ontology_resource_uri is None:
-                raise ValueError(
-                    "`ontology_resource_uri` must be provided when `cell_ontology_resource_dict` is not given"
-                )
-            with open(ontology_resource_uri, "rb") as f:
-                cell_ontology_resource_dict = json.loads(f.read())
-
-        if "ancestors_dictionary" not in cell_ontology_resource_dict:
-            raise ValueError("`ancestors_dictionary` is not found in the cell ontology resource dictionary")
-        if "cell_ontology_term_id_to_cell_type" not in cell_ontology_resource_dict:
-            raise ValueError(
-                "`cell_ontology_term_id_to_cell_type` mapping is not found in the cell ontology resource dictionary"
-            )
-
-        self.ancestors_dictionary = cell_ontology_resource_dict["ancestors_dictionary"]
-        self.ontology_term_id_to_name_dict = cell_ontology_resource_dict["cell_ontology_term_id_to_cell_type"]
-        self.children_dictionary: dict[str, list[str]] | None = cell_ontology_resource_dict.get("children_dictionary")
-        self.shortest_path_lengths_from_cell_root: dict[str, int] | None = cell_ontology_resource_dict.get(
-            "shortest_path_lengths_from_cell_root"
-        )
-        self.longest_path_lengths_from_cell_root: dict[str, int] | None = cell_ontology_resource_dict.get(
-            "longest_path_lengths_from_cell_root"
-        )
-
-    @property
-    def cl_names(self) -> list[str]:
-        return sorted(self.ontology_term_id_to_name_dict.keys())
 
 
 class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
@@ -121,47 +76,23 @@ class CellTypeOntologyAwareConsensusStrategy(ConsensusStrategyInterface):
         gamma = -self.weighting_prefactor / np.median(neighbor_distances)
         weights = np.exp(gamma * neighbor_distances)
 
-        total_weight = 0
-        total_neighbors = 0
-        total_neighbors_unrecognized = 0
-        scores_dict = dict.fromkeys(self.cell_ontology_resource.ancestors_dictionary.keys(), 0)
+        term_ids = [metadata.cell_type_ontology_term_id for metadata in neighbor_metadata]
+        scores, total_neighbors_unrecognized = accumulate_ontology_scores(
+            resource=self.cell_ontology_resource, term_ids=term_ids, weights=weights
+        )
 
-        for neighbor_metadata, weight in zip(neighbor_metadata, weights, strict=False):
-            neighbor_cell_type_ontology_id = neighbor_metadata.cell_type_ontology_term_id
-
-            total_weight += weight
-            total_neighbors += 1
-
-            try:
-                # Add weight to the neighbor's ontology ID
-                scores_dict[neighbor_cell_type_ontology_id] += weight
-            except KeyError:
-                total_neighbors_unrecognized += 1
-                continue
-            else:
-                ancestor_ontology_ids = self.cell_ontology_resource.ancestors_dictionary[neighbor_cell_type_ontology_id]
-
-                # Propagate the weight to all ancestors (consistent subgraph of the cell type ontology)
-                for ancestor in ancestor_ontology_ids:
-                    scores_dict[ancestor] += weight
+        total_weight = float(weights.sum())
+        total_neighbors = len(neighbors)
 
         # Normalize the weights
-        scores_dict = {k: v / total_weight for k, v in scores_dict.items()}
+        scores = {k: v / total_weight for k, v in scores.items()}
 
-        if self.prune_threshold > 0.0:
-            scores_dict = {k: v for k, v in scores_dict.items() if v >= self.prune_threshold}
-
-        neighborhood_summary = [
-            schemas.NeighborhoodSummaryOntologyAware(
-                score=score,
-                cell_type_ontology_term_id=cell_type_ontology_term_id,
-                cell_type=self.cell_ontology_resource.ontology_term_id_to_name_dict[cell_type_ontology_term_id],
-            )
-            for cell_type_ontology_term_id, score in scores_dict.items()
-        ]
+        matches = build_ontology_matches(
+            resource=self.cell_ontology_resource, scores=scores, prune_threshold=self.prune_threshold
+        )
         return schemas.QueryCellNeighborhoodOntologyAware(
             query_cell_id=query_cell_id,
-            matches=neighborhood_summary,
+            matches=matches,
             total_weight=total_weight,
             total_neighbors=total_neighbors,
             total_neighbors_unrecognized=total_neighbors_unrecognized,

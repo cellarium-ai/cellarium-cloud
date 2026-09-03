@@ -17,8 +17,8 @@ from sqlalchemy.orm import Session
 from starlette_context.ctx import _request_scope_context_storage
 
 from cellarium.cas_backend.apps.compute.services import exceptions
+from cellarium.cas_backend.apps.compute.services.annotation.ontology import CellOntologyResource
 from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
-from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 from cellarium.cas_backend.apps.compute.vector_search import MatchResult
 from cellarium.cas_backend.core.constants import ContextKeys
 from cellarium.cas_backend.core.db import models
@@ -58,6 +58,21 @@ def cas_model(db_session: Session) -> models.CASModel:
     :return: CASModel instance.
     """
     return db_session.query(models.CASModel).filter(models.CASModel.model_name == constants.TEST_MODEL_NAME).first()
+
+
+@pytest.fixture
+def cas_classification_model(db_session: Session) -> models.CASModel:
+    """
+    Provides the classification CASModel instance from the test database.
+
+    :param db_session: Database session fixture.
+    :return: CASModel instance.
+    """
+    return (
+        db_session.query(models.CASModel)
+        .filter(models.CASModel.model_name == constants.TEST_CLASSIFICATION_MODEL_NAME)
+        .first()
+    )
 
 
 @pytest.fixture
@@ -265,9 +280,7 @@ def patch_strategy_init_with_resource(
 
     :param cell_ontology_resource_mock: Mocked ontology resource for the consensus strategy.
     """
-    strategy_patch_ref = (
-        "cellarium.cas_backend.apps.compute.services.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
-    )
+    strategy_patch_ref = "cellarium.cas_backend.apps.compute.services.annotation.consensus_engine.CellTypeOntologyAwareConsensusStrategy.__init__"
     ontology_resource_patch_ref = (
         "cellarium.cas_backend.apps.compute.services.cell_operations_service.CellOntologyResource"
     )
@@ -364,3 +377,137 @@ async def test_annotate_cell_type_ontology_aware_strategy_with_activity_logging(
     assert first_user_activity.event == models.UserActivityEvent.STARTED
     assert second_user_activity.event == models.UserActivityEvent.SUCCEEDED
     patch_strategy_init_with_resource.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_annotate_cell_type_ontology_aware_strategy_with_activity_logging_for_classification_model(
+    populate_db: None,
+    patch_bigquery_client: None,
+    patch_starlette_context: None,
+    patch_strategy_init_with_resource: Mock,
+    mock_valid_anndata: anndata.AnnData,
+    db_session: Session,
+    mock_file_with_anndata_read: io.BytesIO,
+    cell_operations_service_with_mocks: CellOperationsService,
+    cas_classification_model: models.CASModel,
+    user_with_quota: models.User,
+) -> None:
+    """
+    Tests `annotate_cell_type_ontology_aware_strategy_with_activity_logging` dispatches to the
+    classification path for a classification model.
+
+    Ensure that:
+    - The response has one entry per input cell.
+    - `MockModelService.predict_adata` was called and `embed_adata` was not -- the kNN embedding path
+      is never touched for a classification model.
+    - No vector-search patch is applied for this test, so a call to `vector_search.from_model` would
+      raise an error/fail the test outright, proving the kNN path is untouched.
+    - The `UserActivity` records are correctly created, including both `STARTED` and `SUCCEEDED` events.
+
+    :param populate_db: Use a fixture to populate the test database with mock data.
+    :param patch_bigquery_client: Use a fixture to patch the BigQuery client.
+    :param patch_starlette_context: Use a fixture to patch the `starlette_context`.
+    :param patch_strategy_init_with_resource: Use a fixture to inject a mocked ontology resource.
+    :param mock_valid_anndata: Mocked AnnData object containing input data.
+    :param db_session: Database session fixture.
+    :param mock_file_with_anndata: Mocked serialized AnnData file as input.
+    :param cell_operations_service_with_mocks: Mocked `CellOperationsService` instance.
+    :param cas_classification_model: Classification CASModel instance retrieved from the test database.
+    :param user_with_quota: User instance with sufficient quota from the test database.
+    """
+    service = cell_operations_service_with_mocks
+
+    response = await service.annotate_cell_type_ontology_aware_strategy_with_activity_logging(
+        user=user_with_quota,
+        file=mock_file_with_anndata_read,
+        model_name=cas_classification_model.model_name,
+        prune_threshold=0.1,
+        weighting_prefactor=1.0,
+        ontology_column_name="cell_type",
+    )
+
+    assert len(response) == len(mock_valid_anndata.obs)
+    cell_operations_service_with_mocks.model_service.predict_adata.assert_called_once()
+    cell_operations_service_with_mocks.model_service.embed_adata.assert_not_called()
+
+    user_activities = (
+        db_session.query(models.UserActivity)
+        .filter_by(
+            user_id=user_with_quota.id,
+            request_id=constants.TEST_REQUEST_ID_NEW,
+            model_name=cas_classification_model.model_name,
+            method=constants.ONTOLOGY_AWARE_METHOD,
+        )
+        .all()
+    )
+    assert len(user_activities) == 2
+    assert user_activities[0].event == models.UserActivityEvent.STARTED
+    assert user_activities[1].event == models.UserActivityEvent.SUCCEEDED
+
+
+@pytest.mark.asyncio
+async def test_annotate_cell_type_summary_statistics_strategy_rejects_classification_model(
+    populate_db: None,
+    patch_bigquery_client: None,
+    mock_file_with_anndata_read: io.BytesIO,
+    cell_operations_service_with_mocks: CellOperationsService,
+    db_session: Session,
+    cas_classification_model: models.CASModel,
+    user_with_quota: models.User,
+) -> None:
+    """
+    `annotate_cell_type_summary_statistics_strategy_with_activity_logging` rejects a classification model
+    with `InvalidInputError` (400) instead of failing deep inside the kNN path, and burns no quota.
+
+    :param populate_db: Use a fixture to populate the test database with mock data.
+    :param patch_bigquery_client: Use a fixture to patch the BigQuery client.
+    :param mock_file_with_anndata: Mocked serialized AnnData file as input.
+    :param cell_operations_service_with_mocks: Mocked `CellOperationsService` instance.
+    :param db_session: Database session fixture.
+    :param cas_classification_model: Classification CASModel instance retrieved from the test database.
+    :param user_with_quota: User instance with sufficient quota from the test database.
+    """
+    service = cell_operations_service_with_mocks
+
+    with pytest.raises(exceptions.InvalidInputError):
+        await service.annotate_cell_type_summary_statistics_strategy_with_activity_logging(
+            user=user_with_quota, file=mock_file_with_anndata_read, model_name=cas_classification_model.model_name
+        )
+
+    user_activities = (
+        db_session.query(models.UserActivity)
+        .filter_by(
+            user_id=user_with_quota.id,
+            model_name=cas_classification_model.model_name,
+            method=constants.SUMMARY_STATS_METHOD,
+        )
+        .all()
+    )
+    assert len(user_activities) == 0
+
+
+@pytest.mark.asyncio
+async def test_search_adata_file_rejects_classification_model(
+    populate_db: None,
+    patch_bigquery_client: None,
+    mock_file_with_anndata_read: io.BytesIO,
+    cell_operations_service_with_mocks: CellOperationsService,
+    cas_classification_model: models.CASModel,
+    user_with_quota: models.User,
+) -> None:
+    """
+    `search_adata_file` rejects a classification model with `InvalidInputError` (400).
+
+    :param populate_db: Use a fixture to populate the test database with mock data.
+    :param patch_bigquery_client: Use a fixture to patch the BigQuery client.
+    :param mock_file_with_anndata: Mocked serialized AnnData file as input.
+    :param cell_operations_service_with_mocks: Mocked `CellOperationsService` instance.
+    :param cas_classification_model: Classification CASModel instance retrieved from the test database.
+    :param user_with_quota: User instance with sufficient quota from the test database.
+    """
+    service = cell_operations_service_with_mocks
+
+    with pytest.raises(exceptions.InvalidInputError):
+        await service.search_adata_file(
+            user=user_with_quota, file=mock_file_with_anndata_read, model_name=cas_classification_model.model_name
+        )

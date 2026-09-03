@@ -22,7 +22,7 @@ from cellarium.cas_backend.apps.compute.vector_search.tiledb import (
     IndexType,
     validate_tiledb_index,
 )
-from cellarium.cas_backend.core import auth, settings
+from cellarium.cas_backend.core import auth, constants, settings
 from cellarium.cas_backend.core.db import models, ops
 from cellarium.cas_backend.core.utils.email_utils import EmailSender
 
@@ -309,6 +309,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "description",
         "model_file_path",
         "embedding_dimension",
+        "model_type",
         "admin_use_only",
         "schema_name",
         "is_default_model",
@@ -324,6 +325,10 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "description": "A more verbose description of the model, since the name is not always self-explanatory.",
         "model_file_path": "Filepath in the GCS storage bucket with the dumped model.",
         "embedding_dimension": "Model embedding output dimension.",
+        "model_type": (
+            "Kind of model. 'representation' models are embedded and searched via a vector index; "
+            "'classification' models predict cell-type probabilities directly."
+        ),
         "admin_use_only": (
             "Flag switching the access to this model to all the users. "
             "If false, only admin users can access the model endpoint. "
@@ -348,6 +353,7 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "description",
         "model_file_path",
         "embedding_dimension",
+        "model_type",
         "schema_name",
         "is_default_model",
         "admin_use_only",
@@ -356,6 +362,18 @@ class CASModelAdminView(CellariumCloudAdminModelView):
         "created_date",
     )
     form_widget_args = {"created_date": {"disabled": True}, "is_default_model": {"disabled": True}}
+    form_choices = {"model_type": [(m.value, m.value) for m in constants.ModelType]}
+
+    @tx.override
+    def on_model_change(self, form: BaseForm, model: models.CASModel, is_created: bool):
+        if model.model_type == constants.ModelType.REPRESENTATION.value:
+            if not model.embedding_dimension or model.embedding_dimension <= 0:
+                raise ValidationError(
+                    "embedding_dimension is required and must be greater than 0 for representation models."
+                )
+        elif model.model_type == constants.ModelType.CLASSIFICATION.value:
+            if model.embedding_dimension is not None:
+                raise ValidationError("embedding_dimension must be empty for classification models.")
 
     @expose("/set-default-model", methods=("GET",))
     def set_default_model(self) -> Response:
@@ -418,6 +436,9 @@ class CASVectorIndexAdminView(CellariumCloudAdminModelView):
     def on_model_change(self, form: BaseForm, model: models.CASVectorIndex, is_created: bool):
         if model.num_neighbors <= 0:
             raise ValidationError("num_neighbors must be greater than 0.")
+
+        if model.model is not None and model.model.model_type == constants.ModelType.CLASSIFICATION.value:
+            raise ValidationError("A vector index cannot be attached to a classification model.")
 
         if model.model is not None and model.embedding_dimension != model.model.embedding_dimension:
             raise ValidationError("embedding_dimension must match the linked model embedding_dimension.")

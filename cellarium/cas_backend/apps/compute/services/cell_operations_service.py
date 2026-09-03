@@ -11,11 +11,13 @@ import numpy as np
 from tenacity import Retrying, stop_after_attempt, wait_exponential, wait_random
 
 from cellarium.cas_backend.apps.compute import schemas, vector_search
-from cellarium.cas_backend.apps.compute.services import consensus_engine, exceptions
+from cellarium.cas_backend.apps.compute.services import exceptions
+from cellarium.cas_backend.apps.compute.services.annotation import classification, consensus_engine
+from cellarium.cas_backend.apps.compute.services.annotation.ontology import CellOntologyResource
 from cellarium.cas_backend.apps.compute.services.authorization import Authorizer
 from cellarium.cas_backend.apps.compute.services.cell_quota_service import CellQuotaService
-from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import CellOntologyResource
 from cellarium.cas_backend.apps.model_inference.services import ModelInferenceService
+from cellarium.cas_backend.core import constants
 from cellarium.cas_backend.core.data_managers import CellariumGeneralDataManager, CellOperationsDataManager
 from cellarium.cas_backend.core.data_managers import exceptions as dm_exc
 from cellarium.cas_backend.core.db import models
@@ -152,6 +154,20 @@ class CellOperationsService:
         query_ids, embeddings = self.model_service.embed_adata(adata=adata, model=model)
         return query_ids, embeddings
 
+    async def get_class_probabilities(
+        self, adata: anndata.AnnData, model: models.CASModel
+    ) -> tuple[list[str], np.ndarray, list[str]]:
+        """
+        Get class probabilities from the specified classification model.
+
+        :param adata: Object of :class:`anndata.AnnData` to classify.
+        :param model: Model to use for classification.
+
+        :return: Query ids (original cell ids from the input anndata), class probabilities, and class labels.
+        """
+        query_ids, probabilities, labels = self.model_service.predict_adata(adata=adata, model=model)
+        return query_ids, probabilities, labels
+
     @staticmethod
     def __validate_knn_response(embeddings: np.array, knn_response: vector_search.MatchResult) -> None:
         if len(knn_response.matches) != len(embeddings):
@@ -211,6 +227,21 @@ class CellOperationsService:
 
         return query_ids, knn_response
 
+    @staticmethod
+    def __require_representation_model(model: models.CASModel, operation: str) -> None:
+        """
+        Guard an operation that only makes sense for representation (embedding + vector index) models.
+
+        :param model: Model to check.
+        :param operation: Human-readable operation name, used in the error message.
+
+        :raises exceptions.InvalidInputError: If `model.model_type` is not `representation`.
+        """
+        if model.model_type != constants.ModelType.REPRESENTATION.value:
+            raise exceptions.InvalidInputError(
+                f"Model '{model.model_name}' is a {model.model_type} model and cannot be used for {operation}."
+            )
+
     async def annotate_cell_type_summary_statistics_strategy_with_activity_logging(
         self,
         user: models.User,
@@ -230,6 +261,7 @@ class CellOperationsService:
         :return: JSON response with annotations.
         """
         model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
+        self.__require_representation_model(model=model, operation="cell type summary statistics annotation")
 
         # Read the anndata file and validate it
         adata = self.__read_and_validate_anndata_file(file=file)
@@ -360,7 +392,69 @@ class CellOperationsService:
                 logger.error(f"Failed to log user activity: {e2}")
             raise e
 
+    def __resolve_cell_ontology_resource(
+        self, model: models.CASModel, ontology_column_name: str
+    ) -> CellOntologyResource:
+        """
+        Resolve the cell ontology resource configured for a model's ontological column.
+
+        :param model: Model whose `cell_info_metadata` supplies the ontological column configuration.
+        :param ontology_column_name: Name of the ontological column to resolve.
+
+        :raises exceptions.InvalidInputError: If the model has no ontological column named
+            `ontology_column_name`.
+
+        :return: The `CellOntologyResource` backing that ontological column.
+        """
+        if not any(col.column_name == ontology_column_name for col in model.cell_info_metadata.ontological_columns):
+            raise exceptions.InvalidInputError(
+                f"Model '{model.model_name}' does not have a configured ontology resource for '{ontology_column_name}'."
+            )
+        ontology_column = next(
+            col for col in model.cell_info_metadata.ontological_columns if col.column_name == ontology_column_name
+        )
+        return CellOntologyResource(ontology_resource_uri=ontology_column.ontology_resource_uri)
+
     async def __annotate_cell_type_ontology_aware_strategy(
+        self,
+        adata: anndata.AnnData,
+        model: models.CASModel,
+        prune_threshold: float,
+        weighting_prefactor: float,
+        ontology_column_name: str,
+    ) -> schemas.QueryAnnotationOntologyAwareType:
+        """
+        Annotate a single anndata file with Cellarium CAS using the ontology-aware strategy. Dispatches on
+        `model.model_type`: representation models are matched against the model's vector index and
+        summarized via `CellTypeOntologyAwareConsensusStrategy`; classification models run their predict
+        path and have their class probabilities uplifted over the cell type ontology via
+        `ClassificationOntologyUpliftStrategy`. `weighting_prefactor` only applies to representation models.
+
+        :param adata: Object of :class:`anndata.AnnData` to annotate.
+        :param model: Model to use for annotation. See `/list-models` endpoint for available models.
+        :param prune_threshold: Prune threshold for the ontology-aware annotation strategy.
+        :param weighting_prefactor: Distance exponential weighting prefactor. Ignored for classification models.
+        :param ontology_column_name: Name of the ontological column to use for annotation.
+
+        :return: JSON response with annotations.
+        """
+        if model.model_type == constants.ModelType.CLASSIFICATION.value:
+            return await self.__annotate_cell_type_ontology_aware_from_classifier(
+                adata=adata,
+                model=model,
+                prune_threshold=prune_threshold,
+                ontology_column_name=ontology_column_name,
+            )
+
+        return await self.__annotate_cell_type_ontology_aware_from_neighbors(
+            adata=adata,
+            model=model,
+            prune_threshold=prune_threshold,
+            weighting_prefactor=weighting_prefactor,
+            ontology_column_name=ontology_column_name,
+        )
+
+    async def __annotate_cell_type_ontology_aware_from_neighbors(
         self,
         adata: anndata.AnnData,
         model: models.CASModel,
@@ -383,14 +477,9 @@ class CellOperationsService:
         query_ids, knn_response = await self.get_knn_matches(adata=adata, model=model)
 
         logger.info("Applying CellTypeOntologyAwareConsensusStrategy to the query results")
-        if not any(col.column_name == ontology_column_name for col in model.cell_info_metadata.ontological_columns):
-            raise exceptions.InvalidInputError(
-                f"Model '{model.model_name}' does not have a configured ontology resource for '{ontology_column_name}'."
-            )
-        ontology_column = next(
-            col for col in model.cell_info_metadata.ontological_columns if col.column_name == ontology_column_name
+        cell_ontology_resource = self.__resolve_cell_ontology_resource(
+            model=model, ontology_column_name=ontology_column_name
         )
-        cell_ontology_resource = CellOntologyResource(ontology_resource_uri=ontology_column.ontology_resource_uri)
         strategy = consensus_engine.CellTypeOntologyAwareConsensusStrategy(
             cell_operations_dm=self.cell_operations_dm,
             cell_metadata_uri=model.cell_info_metadata.soma_dataframe_uri,
@@ -408,6 +497,42 @@ class CellOperationsService:
         except dm_exc.CellMetadataDatabaseError as e:
             raise exceptions.InvalidInputError(str(e))
 
+    async def __annotate_cell_type_ontology_aware_from_classifier(
+        self,
+        adata: anndata.AnnData,
+        model: models.CASModel,
+        prune_threshold: float,
+        ontology_column_name: str,
+    ) -> schemas.QueryAnnotationOntologyAwareType:
+        """
+        Annotate a single anndata file by running a classification model's predict path and uplifting its
+        class probabilities over the cell type ontology. Input file should be validated and sanitized
+        according to the model schema.
+
+        :param adata: Object of :class:`anndata.AnnData` to annotate.
+        :param model: Classification model to use for annotation. See `/list-models` endpoint for available
+            models.
+        :param prune_threshold: Prune threshold for the ontology uplift strategy.
+        :param ontology_column_name: Name of the ontological column to use for annotation.
+
+        :return: JSON response with annotations.
+        """
+        cell_ontology_resource = self.__resolve_cell_ontology_resource(
+            model=model, ontology_column_name=ontology_column_name
+        )
+
+        logger.info("Getting class probabilities")
+        query_ids, probabilities, labels = await self.get_class_probabilities(adata=adata, model=model)
+
+        if probabilities.size == 0:
+            return []
+
+        logger.info("Applying ClassificationOntologyUpliftStrategy to the query results")
+        strategy = classification.ClassificationOntologyUpliftStrategy(
+            cell_ontology_resource=cell_ontology_resource, prune_threshold=prune_threshold
+        )
+        return strategy.summarize(query_cell_ids=query_ids, probabilities=probabilities, labels=labels)
+
     async def search_adata_file(self, user: models.User, file: t.BinaryIO, model_name: str) -> list[dict[str, t.Any]]:
         """
         Search for similar cells in a single anndata file with Cellarium CAS. Input file should be validated and
@@ -423,6 +548,7 @@ class CellOperationsService:
         adata = self.__read_and_validate_anndata_file(file=file)
 
         model = self.authorizer.authorize_model_for_user(user=user, model_name=model_name)
+        self.__require_representation_model(model=model, operation="nearest neighbor search")
         query_ids, embeddings = await self.get_embeddings(adata=adata, model=model)
         if embeddings.size == 0:
             # No further processing needed if there are no embeddings
