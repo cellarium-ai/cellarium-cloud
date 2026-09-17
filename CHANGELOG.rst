@@ -7,7 +7,7 @@ The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
 
-1.8.5 - UNRELEASED
+1.8.5 - 2026-09-17
 ------------------
 
 Added
@@ -15,16 +15,23 @@ Added
 - Added ``create_vsindex`` script and CLI for building vector search indexes, moved from the external pipeline repository (#220, #221)
 - Added unit tests for the ``create_vsindex`` script
 - Added an allow-list (thinning) option to ``create_vsindex`` that filters cells by ``soma_joinid``, indexing only allowed cells while preserving the train/update split (#225)
+- Added ``model_type`` column (``representation`` | ``classification``) to ``CASModel`` with migration; existing rows backfilled as ``representation`` (#227)
+- Added ``ClassificationOntologyUpliftStrategy``, propagating per-class softmax probabilities up the full Cell Ontology using the same additive-sum math as SOCAM's internal ``propagate_probs``, cross-validated against the ``einsum`` formulation (#227)
+- Added ``ModelInferenceService.predict_adata`` to run SOCAM's ``predict`` path and extract class labels from softmax over ``y_logits_nc`` (#227)
 
 Fixed
 ~~~~~
 - Fixed model inference service running query embeddings with dropout active and BatchNorm using per-chunk statistics: ``_load_module_from_checkpoint`` now calls ``.eval()`` before caching the module, and the forward pass is wrapped in ``torch.inference_mode()`` (#230)
+- Fixed loading checkpoints saved with ``cellarium-ml <= 0.0.7`` by backfilling ``Filter.ordering`` and ``Filter.allow_missing`` on deserialization (#227)
+- Set ``torch._dynamo.config.suppress_errors = True`` at startup to fall back to eager execution when Torch Inductor has no C++ compiler, avoiding cold-start JIT latency (#227)
 
 Changed
 ~~~~~~~
-- Bumped ``cellarium-ml`` to ``0.0.10`` with updated ``torch`` and ``lightning`` dependencies (#218, #219)
-- Updated model inference service to support scVI models (``detach().numpy()`` on pipeline output)
+- Bumped ``cellarium-ml`` to ``0.0.13`` (#218, #219, #229)
+- Updated ``torch`` and ``lightning`` dependencies (#218, #219)
+- Updated model inference service to support scVI models: dummy ``batch_index_n``/``total_mrna_umis_n`` batch fields and ``detach().numpy()`` on pipeline output
 - Decreased Cloud Run ``cas-compute`` CPU from 8 to 4 vCPUs and memory from 32 GiB to 16 GiB in all deployment configurations (#222)
+- Extracted shared ontology scoring (``CellOntologyResource``, ``accumulate_ontology_scores``, ``build_ontology_matches``) into ``services/annotation/ontology.py``; moved consensus engine under ``services/annotation/consensus_engine/`` (response shape and client contract unchanged) (#227)
 
 1.8.4 - 2026-04-29
 ------------------
