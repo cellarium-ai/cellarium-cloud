@@ -1,3 +1,9 @@
+import torch._dynamo
+
+# Fall back to eager execution when torch.compile fails (e.g. no C++ compiler in the container).
+# Avoids cold-start JIT compile latency on the classification path without requiring g++.
+torch._dynamo.config.suppress_errors = True
+
 from cellarium.cas_backend.apps.compute.routers import cell_operations_router, cellarium_general_router
 from cellarium.cas_backend.core.app import CASService, RouterDef
 from cellarium.cas_backend.core.config import settings

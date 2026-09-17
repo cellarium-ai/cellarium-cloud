@@ -18,7 +18,8 @@ class CASModel(BaseModel):
     description: str = Field(example="1st version of PCA model for human data", default="")
     schema_name: str = Field(example="refdata-gex-mm10-2020-A")
     is_default_model: bool = Field(example=False)
-    embedding_dimension: int = Field(example=512)
+    embedding_dimension: int | None = Field(example=512, default=None)
+    model_type: str = Field(example="representation")
     ontological_columns: list[OntologicalColumnInfo] = Field(
         default_factory=list,
         validation_alias=AliasPath("cell_info_metadata", "ontological_columns"),

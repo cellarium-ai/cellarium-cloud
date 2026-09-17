@@ -1,0 +1,153 @@
+[
+  {
+    "query_cell_id": "query_cell_1",
+    "matches": [
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000000",
+        "cell_type": "cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000003",
+        "cell_type": "native cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000548",
+        "cell_type": "animal cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000988",
+        "cell_type": "hematopoietic cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0002371",
+        "cell_type": "somatic cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000738",
+        "cell_type": "leukocyte"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000084",
+        "cell_type": "T cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000542",
+        "cell_type": "lymphocyte"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000226",
+        "cell_type": "single nucleate cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000219",
+        "cell_type": "motile cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0002242",
+        "cell_type": "nucleate cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000255",
+        "cell_type": "eukaryotic cell"
+      },
+      {
+        "score": 0.9579899338659339,
+        "cell_type_ontology_term_id": "CL:0000842",
+        "cell_type": "mononuclear cell"
+      },
+      {
+        "score": 0.8437947344813395,
+        "cell_type_ontology_term_id": "CL:0000789",
+        "cell_type": "alpha-beta T cell"
+      }
+    ],
+    "total_weight": 1.0,
+    "total_neighbors": 3,
+    "total_neighbors_unrecognized": 1
+  },
+  {
+    "query_cell_id": "query_cell_2",
+    "matches": [
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000000",
+        "cell_type": "cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000003",
+        "cell_type": "native cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000548",
+        "cell_type": "animal cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000988",
+        "cell_type": "hematopoietic cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0002371",
+        "cell_type": "somatic cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000738",
+        "cell_type": "leukocyte"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000084",
+        "cell_type": "T cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000542",
+        "cell_type": "lymphocyte"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000226",
+        "cell_type": "single nucleate cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000219",
+        "cell_type": "motile cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0002242",
+        "cell_type": "nucleate cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000255",
+        "cell_type": "eukaryotic cell"
+      },
+      {
+        "score": 0.954721499256371,
+        "cell_type_ontology_term_id": "CL:0000842",
+        "cell_type": "mononuclear cell"
+      }
+    ],
+    "total_weight": 1.0,
+    "total_neighbors": 3,
+    "total_neighbors_unrecognized": 1
+  }
+]

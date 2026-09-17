@@ -9,10 +9,8 @@ from cellarium.cas_backend.core.data_managers.cell_operations import CellOperati
 from tests.unit.fixtures import mocks
 
 if t.TYPE_CHECKING:
+    from cellarium.cas_backend.apps.compute.services.annotation.ontology import CellOntologyResource
     from cellarium.cas_backend.apps.compute.services.cell_operations_service import CellOperationsService
-    from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import (
-        CellOntologyResource,
-    )
 
 
 @pytest.fixture
@@ -93,9 +91,7 @@ def cell_ontology_resource_mock() -> "CellOntologyResource":
 
     :return: A `CellOntologyResource` mock instance.
     """
-    from cellarium.cas_backend.apps.compute.services.consensus_engine.strategies.ontology_aware import (
-        CellOntologyResource,
-    )
+    from cellarium.cas_backend.apps.compute.services.annotation.ontology import CellOntologyResource
 
     resource_dict = load_ontology_resource_from_file()
     return CellOntologyResource(cell_ontology_resource_dict=resource_dict)
